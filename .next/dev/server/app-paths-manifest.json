@@ -1,0 +1,9 @@
+{
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
+  "/dashboard/customers/page": "app/dashboard/customers/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/rewards/page": "app/dashboard/rewards/page.js",
+  "/dashboard/scanner/page": "app/dashboard/scanner/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/page": "app/page.js"
+}

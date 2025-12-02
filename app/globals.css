@@ -1,0 +1,191 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Core Colors - LoyaltyHub Brand */
+  --primary: oklch(0.486 0.227 274.751); /* Deep Purple #6366f1 */
+  --primary-foreground: oklch(0.97 0 0); /* Light text on purple */
+  --secondary: oklch(0.559 0.191 202.24); /* Cyan #06b6d4 */
+  --secondary-foreground: oklch(0.145 0 0); /* Dark text on cyan */
+  --accent: oklch(0.559 0.191 202.24); /* Cyan accent */
+  --accent-foreground: oklch(0.145 0 0);
+
+  /* Status Colors */
+  --success: oklch(0.598 0.147 142.55); /* Green #10b981 */
+  --warning: oklch(0.704 0.198 74.348); /* Amber #f59e0b */
+  --destructive: oklch(0.577 0.245 27.325); /* Red #ef4444 */
+
+  /* Backgrounds */
+  --background: oklch(1 0 0); /* White */
+  --foreground: oklch(0.145 0 0); /* Dark text */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  /* UI Elements */
+  --muted: oklch(0.97 0 0); /* Light gray */
+  --muted-foreground: oklch(0.556 0 0); /* Medium gray text */
+  --border: oklch(0.92 0 0); /* Light border */
+  --input: oklch(0.96 0 0);
+  --ring: oklch(0.486 0.227 274.751); /* Purple focus ring */
+
+  /* Charts */
+  --chart-1: oklch(0.486 0.227 274.751); /* Purple */
+  --chart-2: oklch(0.559 0.191 202.24); /* Cyan */
+  --chart-3: oklch(0.598 0.147 142.55); /* Green */
+  --chart-4: oklch(0.704 0.198 74.348); /* Amber */
+  --chart-5: oklch(0.577 0.245 27.325); /* Red */
+
+  /* Sidebar */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.486 0.227 274.751);
+  --sidebar-primary-foreground: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.559 0.191 202.24);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: oklch(0.486 0.227 274.751);
+}
+
+.dark {
+  /* Updated dark mode color scheme for landing page and dashboard */
+  /* Dark Mode - Deep navy background */
+  --background: oklch(0.1 0 0); /* Almost black #0a0a0a */
+  --foreground: oklch(0.97 0 0); /* Light text */
+  --card: oklch(0.15 0 0); /* #1a1a1a */
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.15 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+
+  /* Enhanced colors for dark mode */
+  --primary: oklch(0.559 0.191 202.24); /* Cyan primary in dark */
+  --primary-foreground: oklch(0.1 0 0);
+
+  --secondary: oklch(0.486 0.227 274.751); /* Purple secondary in dark */
+  --secondary-foreground: oklch(0.97 0 0);
+
+  --accent: oklch(0.559 0.191 202.24); /* Cyan accent */
+  --accent-foreground: oklch(0.1 0 0);
+
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --border: oklch(0.25 0 0);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.559 0.191 202.24);
+
+  /* Dark mode sidebar */
+  --sidebar: oklch(0.12 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.559 0.191 202.24);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0.486 0.227 274.751);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.25 0 0);
+  --sidebar-ring: oklch(0.559 0.191 202.24);
+
+  /* Dark mode gradients */
+  --chart-1: oklch(0.559 0.191 202.24); /* Bright cyan in dark */
+  --chart-2: oklch(0.486 0.227 274.751); /* Purple in dark */
+  --chart-3: oklch(0.598 0.147 142.55); /* Bright green in dark */
+  --chart-4: oklch(0.704 0.198 74.348); /* Amber in dark */
+  --chart-5: oklch(0.577 0.245 27.325); /* Red in dark */
+}
+
+@theme inline {
+  --font-sans: "Inter", "Inter Fallback", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Glassmorphism effect for cards */
+  @supports (backdrop-filter: blur(10px)) {
+    .glass {
+      @apply bg-white/10 backdrop-blur-md border border-white/20;
+    }
+
+    .dark .glass {
+      @apply bg-white/5 backdrop-blur-md border border-white/10;
+    }
+  }
+
+  /* Gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary to-secondary;
+  }
+
+  .gradient-purple-to-pink {
+    @apply bg-gradient-to-r from-primary via-primary to-pink-400;
+  }
+
+  /* Dark mode specific animations for blob elements */
+  @keyframes dark-blob {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+  }
+
+  .dark .animate-blob {
+    animation: dark-blob 7s infinite;
+    opacity: 0.15;
+  }
+
+  /* Smooth transitions for theme switching */
+  * {
+    @apply transition-colors duration-200;
+  }
+}
