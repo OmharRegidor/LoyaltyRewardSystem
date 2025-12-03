@@ -12,7 +12,7 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [pointsRange, setPointsRange] = useState<number[]>([0, 5000]);
+  const [pointsRange, setPointsRange] = useState<[number, number]>([0, 5000]);
   const [sortBy, setSortBy] = useState('recent');
 
   return (

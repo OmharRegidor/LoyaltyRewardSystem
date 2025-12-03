@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion, type Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { DarkModeToggle } from '@/components/dark-mode-toggle';
+import Link from 'next/link';
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
@@ -36,7 +37,22 @@ export default function Home() {
           >
             LoyaltyHub
           </motion.h1>
-          <DarkModeToggle />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link href="/login">
+              <Button
+                variant="ghost"
+                className="text-foreground hover:bg-muted dark:hover:bg-muted/50 transition-colors"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button className="gradient-primary text-primary-foreground rounded-lg px-6 h-10 shadow-md hover:shadow-lg hover:scale-105 transition-all">
+                Sign Up
+              </Button>
+            </Link>
+            <DarkModeToggle />
+          </div>
         </div>
       </header>
 

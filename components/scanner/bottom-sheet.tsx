@@ -74,7 +74,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
               </div>
 
               {/* Points Display */}
-              <Card className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/50">
+              <Card className="p-4 bg-linear-to-r from-primary/10 to-secondary/10 border-primary/50">
                 <p className="text-sm text-muted-foreground mb-1">Current Points Balance</p>
                 <p className="text-4xl font-bold text-primary">{customer.currentPoints}</p>
               </Card>
