@@ -29,14 +29,37 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <motion.h1
-            className="text-2xl font-bold gradient-primary bg-clip-text text-transparent"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            LoyaltyHub
-          </motion.h1>
+          <a href="#home">
+            <motion.h1
+              className="text-2xl font-bold gradient-primary bg-clip-text text-transparent cursor-pointer"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              LoyaltyHub
+            </motion.h1>
+          </a>
+
+          <nav className="hidden md:flex items-center gap-8">
+            <a
+              href="#features"
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              How it Works
+            </a>
+            <a
+              href="#pricing"
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              Pricing
+            </a>
+          </nav>
           <div className="flex items-center gap-3 sm:gap-4">
             <Link href="/login">
               <Button
@@ -58,6 +81,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <motion.section
+        id="home"
         className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8 pt-24"
         initial="hidden"
         animate="visible"
@@ -113,7 +137,10 @@ export default function Home() {
       </motion.section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10">
+      <section
+        id="features"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10"
+      >
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -181,7 +208,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <motion.div
             className="text-center mb-16"
@@ -253,7 +280,10 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10">
+      <section
+        id="pricing"
+        className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10"
+      >
         <div className="max-w-5xl mx-auto">
           <motion.div
             className="text-center mb-16"

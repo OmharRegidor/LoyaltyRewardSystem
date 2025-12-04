@@ -132,9 +132,9 @@ export default function SignupPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
           {/* Logo/Brand Area */}
           <div className="mb-12">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl transform hover:rotate-12 transition-transform duration-300">
+            {/* <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl transform hover:rotate-12 transition-transform duration-300">
               <Award className="w-10 h-10 text-white" />
-            </div>
+            </div> */}
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Start growing
               <br />
