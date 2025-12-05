@@ -1,12 +1,14 @@
 {
-  "name": "my-v0-project",
+  "name": "loyaltyrewardhub",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
-    "lint": "eslint .",
-    "start": "next start"
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mobile": "npm start --workspace=apps/mobile"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
