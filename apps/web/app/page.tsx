@@ -193,7 +193,7 @@ export default function Home() {
                   },
                 }}
               >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 dark:from-primary/10 to-secondary/5 dark:to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-primary/5 dark:from-primary/10 to-secondary/5 dark:to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <feature.icon className="w-12 h-12 text-primary mb-4 relative z-10" />
                 <h3 className="text-xl font-semibold mb-3 relative z-10">
                   {feature.title}
@@ -227,7 +227,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connecting Line - Desktop Only */}
-            <div className="absolute top-24 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary dark:from-secondary dark:to-primary hidden md:block" />
+            <div className="absolute top-24 left-0 right-0 h-1 bg-linear-to-r from-primary to-secondary dark:from-secondary dark:to-primary hidden md:block" />
 
             {[
               {
@@ -384,7 +384,7 @@ export default function Home() {
                 <div className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-success flex-shrink-0" />
+                      <Check className="w-5 h-5 text-success shrink-0" />
                       <span>{feature}</span>
                     </div>
                   ))}
