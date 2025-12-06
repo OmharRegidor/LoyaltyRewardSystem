@@ -94,7 +94,7 @@ function RewardCard({
           </Badge>
         </div>
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
           <button className="w-full bg-white text-black font-semibold py-2 rounded-lg hover:bg-muted transition">
             View Details
           </button>
@@ -163,10 +163,10 @@ function RewardListItem({
     <Card className="p-4 hover:shadow-lg transition-all">
       <div className="flex gap-4">
         {/* Thumbnail */}
-        <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+        <div className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-muted">
           <img src={reward.image || "/placeholder.svg"} alt={reward.title} className="w-full h-full object-cover" />
         </div>
-
+s
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">

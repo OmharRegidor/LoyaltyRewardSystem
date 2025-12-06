@@ -58,7 +58,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
 
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Award className="w-5 h-5 text-primary flex-shrink-0" />
+                  <Award className="w-5 h-5 text-primary shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Total Points</p>
                     <p className="text-lg font-bold">{customer.points}</p>
@@ -66,7 +66,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-secondary flex-shrink-0" />
+                  <TrendingUp className="w-5 h-5 text-secondary shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Total Visits</p>
                     <p className="text-lg font-bold">{customer.visits}</p>
@@ -74,7 +74,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-success flex-shrink-0" />
+                  <Calendar className="w-5 h-5 text-success shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Last Visit</p>
                     <p className="text-lg font-bold">{customer.lastVisit}</p>
@@ -103,7 +103,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                     transition={{ delay: idx * 0.05 }}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         tx.type === "earned" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
                       }`}
                     >
@@ -114,7 +114,7 @@ export function CustomerDetailModal({ customer, onClose }: CustomerDetailModalPr
                       <p className="text-xs text-muted-foreground">{tx.date}</p>
                     </div>
                     <p
-                      className={`text-sm font-semibold flex-shrink-0 ${
+                      className={`text-sm font-semibold shrink-0 ${
                         tx.type === "earned" ? "text-success" : "text-foreground"
                       }`}
                     >
