@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
       {/* Left Side - Enhanced Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-blue-700 to-cyan-600">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div
@@ -85,7 +85,7 @@ export default function LoginPage() {
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Welcome back to
               <br />
-              <span className="bg-gradient-to-r from-cyan-200 to-white bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-cyan-200 to-white bg-clip-text text-transparent">
                 LoyaltyHub
               </span>
             </h1>
@@ -246,7 +246,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

@@ -100,7 +100,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
       {/* Left Side - Enhanced Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-600">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-indigo-700 to-purple-600">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div
@@ -138,7 +138,7 @@ export default function SignupPage() {
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Start growing
               <br />
-              <span className="bg-gradient-to-r from-cyan-200 via-blue-200 to-purple-200 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-cyan-200 via-blue-200 to-purple-200 bg-clip-text text-transparent">
                 your business
               </span>
             </h1>
@@ -158,7 +158,7 @@ export default function SignupPage() {
                   }}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <div className="w-14 h-14 rounded-xl bg-linear-to-br from-white/20 to-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
                       {benefit.icon}
                     </div>
                     <div className="flex-1">
@@ -186,7 +186,7 @@ export default function SignupPage() {
                 }}
               >
                 <div
-                  className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1 group-hover:scale-110 transition-transform`}
+                  className={`text-2xl font-bold bg-linear-to-r ${stat.color} bg-clip-text text-transparent mb-1 group-hover:scale-110 transition-transform`}
                 >
                   {stat.value}
                 </div>
@@ -246,7 +246,7 @@ export default function SignupPage() {
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base transition-all duration-300 ${
                       s <= step
-                        ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-lg'
+                        ? 'bg-linear-to-br from-blue-600 to-cyan-600 text-white shadow-lg'
                         : 'bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-400'
                     }`}
                   >
@@ -267,7 +267,7 @@ export default function SignupPage() {
             {/* Progress Line */}
             <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-600 to-cyan-600 transition-all duration-500 ease-out"
+                className="h-full bg-linear-to-r from-blue-600 to-cyan-600 transition-all duration-500 ease-out"
                 style={{ width: `${(step / 3) * 100}%` }}
               />
             </div>
@@ -420,7 +420,7 @@ export default function SignupPage() {
               </label>
 
               {/* Password Requirements */}
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-xl p-5 border border-blue-100 dark:border-gray-700">
+              <div className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-xl p-5 border border-blue-100 dark:border-gray-700">
                 <p className="text-sm font-bold mb-3 text-gray-900 dark:text-white">
                   Password requirements:
                 </p>
@@ -465,10 +465,10 @@ export default function SignupPage() {
           {/* Step 3: Agreement */}
           {step === 3 && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-6 border-2 border-blue-200 dark:border-gray-700">
+              <div className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-6 border-2 border-blue-200 dark:border-gray-700">
                 <div className="space-y-4">
                   <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
                       <Check className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -481,7 +481,7 @@ export default function SignupPage() {
                     </div>
                   </div>
                   <div className="flex gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
                       <Check className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -501,7 +501,7 @@ export default function SignupPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer mt-0.5 flex-shrink-0"
+                  className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer mt-0.5 shrink-0"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   I agree to the{' '}
@@ -542,7 +542,7 @@ export default function SignupPage() {
                     ? !businessName || !businessType || !phone
                     : !canProceedStep2
                 }
-                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 Next <ArrowRight className="w-5 h-5" />
               </button>
@@ -552,7 +552,7 @@ export default function SignupPage() {
               <button
                 onClick={handleSubmit}
                 disabled={!agreed || isLoading}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
