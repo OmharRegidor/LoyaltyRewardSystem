@@ -8,23 +8,23 @@ export interface Database {
           id: string;
           user_id: string;
           phone: string | null;
-          total_points: number;
+          total_points: number | null;
           qr_code_url: string | null;
           last_visit: string | null;
-          created_at: string;
+          created_at: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
-          phone?: string | null;
-          total_points?: number;
+          phone: string | null;
+          total_points?: number | null;
           qr_code_url?: string | null;
           last_visit?: string | null;
-          created_at?: string;
+          created_at?: string | null;
         };
         Update: {
           phone?: string | null;
-          total_points?: number;
+          total_points?: number | null;
           qr_code_url?: string | null;
           last_visit?: string | null;
         };
@@ -34,4 +34,5 @@ export interface Database {
 }
 
 export type Customer = Database['public']['Tables']['customers']['Row'];
-export type CustomerInsert = Database['public']['Tables']['customers']['Insert'];
+export type CustomerInsert =
+  Database['public']['Tables']['customers']['Insert'];

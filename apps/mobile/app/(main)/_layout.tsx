@@ -57,10 +57,6 @@ function TabIcon({
     rewards: '🎁',
     profile: '👤',
   };
-  
-  return (
-    <span style={{ fontSize: size, color }}>
-      {icons[name] || '•'}
-    </span>
-  );
+
+  return <span style={{ fontSize: size, color }}>{icons[name] || '•'}</span>;
 }

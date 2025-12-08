@@ -10,10 +10,10 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../src/hooks/useAuth';
-import { GoogleSignInButton } from '../../src/components/auth/GoogleSignInButton';
-import { Button } from '../../src/components/ui/Button';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../../src/lib/constants';
+import { useAuth } from '../../../src/hooks/useAuth';
+import { GoogleSignInButton } from '../../../src/components/auth/GoogleSignInButton';
+import { Button } from '../../../src/components/ui/Button';
+import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../../../src/lib/constants';
 
 export default function WelcomeScreen() {
   const { signInWithGoogle, isLoading } = useAuth();

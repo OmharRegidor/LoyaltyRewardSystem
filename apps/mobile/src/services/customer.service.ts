@@ -27,6 +27,7 @@ export const customerService = {
       user_id: userId,
       total_points: 0,
       qr_code_url: generateQRCodeUrl(tempId),
+      phone: null,
     };
 
     const { data, error } = await supabase

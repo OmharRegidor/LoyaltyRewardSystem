@@ -13,7 +13,7 @@ export default function Index() {
     if (!isInitialized) return;
 
     if (user) {
-      router.replace('/(main)');
+      router.replace('/');
     } else {
       router.replace('/(auth)/welcome');
     }
