@@ -1,7 +1,7 @@
 // src/components/ui/Loading.tsx
 
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
+import { View, StyleSheet, Animated, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, BORDER_RADIUS, SPACING } from '../../lib/constants';
 
@@ -9,7 +9,7 @@ interface SkeletonProps {
   width?: number | string;
   height?: number;
   borderRadius?: number;
-  style?: ViewStyle;
+  style?: any;
 }
 
 export function Skeleton({
@@ -58,7 +58,7 @@ export function Skeleton({
         ]}
       >
         <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.3)', 'transparent']}
+          colors={['transparent', 'rgba(255,255,255,0.4)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
@@ -78,7 +78,6 @@ export function LoadingSpinner({
   color = COLORS.primary,
 }: LoadingSpinnerProps) {
   const spinAnim = useRef(new Animated.Value(0)).current;
-
   const sizeMap = { sm: 24, md: 40, lg: 56 };
 
   useEffect(() => {
@@ -121,9 +120,7 @@ export function FullScreenLoading({ message }: FullScreenLoadingProps) {
   return (
     <View style={styles.fullScreen}>
       <LoadingSpinner size="lg" />
-      {message && (
-        <Animated.Text style={styles.loadingText}>{message}</Animated.Text>
-      )}
+      {message && <Text style={styles.loadingText}>{message}</Text>}
     </View>
   );
 }

@@ -1,12 +1,29 @@
+// src/lib/constants.ts
+
 export const COLORS = {
+  // Primary gradient (purple to blue)
   primary: '#6366f1',
+  primaryDark: '#4f46e5',
   secondary: '#06b6d4',
+  
+  // Gradient colors for header
+  gradient: {
+    start: '#8B5CF6',    // Purple
+    middle: '#6366F1',   // Indigo
+    end: '#3B82F6',      // Blue
+  },
+  
+  // Status colors
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
-
+  
+  // Accent
+  gold: '#F59E0B',
+  
   // Neutrals
   white: '#ffffff',
+  black: '#000000',
   gray: {
     50: '#f9fafb',
     100: '#f3f4f6',
@@ -19,7 +36,7 @@ export const COLORS = {
     800: '#1f2937',
     900: '#111827',
   },
-
+  
   // Dark mode
   dark: {
     background: '#0a0a0a',
@@ -43,17 +60,29 @@ export const FONT_SIZE = {
   xs: 12,
   sm: 14,
   base: 16,
-  lg: 20,
-  xl: 24,
-  '2xl': 32,
-  '3xl': 48,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
+  '4xl': 40,
+  '5xl': 48,
+} as const;
+
+export const FONT_WEIGHT = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
 } as const;
 
 export const BORDER_RADIUS = {
   sm: 4,
   base: 8,
-  lg: 12,
-  xl: 16,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
   full: 9999,
 } as const;
 
@@ -79,12 +108,46 @@ export const SHADOWS = {
     shadowRadius: 15,
     elevation: 5,
   },
+  colored: (color: string) => ({
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  }),
 } as const;
 
-export const ANIMATION = {
-  duration: {
-    fast: 150,
-    base: 200,
-    slow: 300,
-  },
+// Tier configuration
+export const TIERS = {
+  bronze: { name: 'Bronze', minPoints: 0, color: '#CD7F32' },
+  silver: { name: 'Silver', minPoints: 500, color: '#C0C0C0' },
+  gold: { name: 'Gold', minPoints: 1500, color: '#FFD700' },
+  platinum: { name: 'Platinum', minPoints: 5000, color: '#E5E4E2' },
 } as const;
+
+export const getTier = (points: number) => {
+  if (points >= TIERS.platinum.minPoints) return TIERS.platinum;
+  if (points >= TIERS.gold.minPoints) return TIERS.gold;
+  if (points >= TIERS.silver.minPoints) return TIERS.silver;
+  return TIERS.bronze;
+};
+
+export const getNextTier = (points: number) => {
+  if (points >= TIERS.platinum.minPoints) return null;
+  if (points >= TIERS.gold.minPoints) return TIERS.platinum;
+  if (points >= TIERS.silver.minPoints) return TIERS.gold;
+  return TIERS.silver;
+};
+
+export const getProgressToNextTier = (points: number) => {
+  const currentTier = getTier(points);
+  const nextTier = getNextTier(points);
+  
+  if (!nextTier) return { progress: 1, remaining: 0 };
+  
+  const range = nextTier.minPoints - currentTier.minPoints;
+  const progress = (points - currentTier.minPoints) / range;
+  const remaining = nextTier.minPoints - points;
+  
+  return { progress: Math.min(progress, 1), remaining };
+};

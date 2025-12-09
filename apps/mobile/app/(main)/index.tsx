@@ -3,107 +3,86 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
+  StatusBar,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
-import { Button } from '../../src/components/ui/Button';
-import { Skeleton } from '../../src/components/ui/Loading';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../src/lib/constants';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  HeaderSection,
+  BalanceCard,
+  MemberQRCard,
+  QuickActions,
+  NearbyBusinesses,
+} from '../../src/components/home';
+import { COLORS, SPACING } from '../../src/lib/constants';
 
 export default function HomeScreen() {
-  const { user, signOut, isLoading } = useAuth();
-  const { customer, qrCode, points } = useCustomer();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { user, isLoading } = useAuth();
+  const { qrCodeUrl, points } = useCustomer();
 
-  const displayName = customer?.full_name || user?.user_metadata?.full_name || 'Customer';
-  const firstName = displayName.split(' ')[0];
+  // Get display name from Google OAuth metadata
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const avatarUrl = user?.user_metadata?.avatar_url || null;
+
+  const handleAvatarPress = () => {
+    router.push('/(main)/profile');
+  };
+
+  const handleBusinessPress = (business: any) => {
+    console.log('Business pressed:', business.name);
+    // router.push(`/business/${business.id}`);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Hello, {firstName} 👋</Text>
-            <Text style={styles.subGreeting}>Welcome back!</Text>
-          </View>
-          <View style={styles.pointsBadge}>
-            <Text style={styles.pointsValue}>{points}</Text>
-            <Text style={styles.pointsLabel}>pts</Text>
-          </View>
-        </View>
-
-        {/* QR Code Card */}
-        <View style={styles.qrCard}>
-          <LinearGradient
-            colors={[COLORS.primary, COLORS.secondary]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.qrGradientBorder}
-          >
-            <View style={styles.qrInner}>
-              {qrCode ? (
-                <>
-                  <QRCode
-                    value={qrCode}
-                    size={180}
-                    backgroundColor={COLORS.white}
-                    color={COLORS.gray[900]}
-                  />
-                  <Text style={styles.qrCodeText}>{qrCode}</Text>
-                </>
-              ) : (
-                <View style={styles.qrPlaceholder}>
-                  <Skeleton width={180} height={180} />
-                  <Skeleton width={120} height={16} style={{ marginTop: SPACING.md }} />
-                </View>
-              )}
-            </View>
-          </LinearGradient>
-
-          <Text style={styles.qrInstruction}>
-            Show this code to earn points
-          </Text>
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionGrid}>
-            <ActionCard icon="🎁" label="Rewards" />
-            <ActionCard icon="📜" label="History" />
-            <ActionCard icon="⭐" label="Offers" />
-            <ActionCard icon="⚙️" label="Settings" />
-          </View>
-        </View>
-
-        {/* Sign Out */}
-        <Button
-          onPress={signOut}
-          variant="ghost"
-          loading={isLoading}
-          style={styles.signOutButton}
+        {/* Gradient Header Background */}
+        <LinearGradient
+          colors={[COLORS.gradient.start, COLORS.gradient.middle, COLORS.gradient.end]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.gradientHeader, { paddingTop: insets.top }]}
         >
-          Sign Out
-        </Button>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+          {/* Header with Welcome + Avatar */}
+          <HeaderSection
+            name={displayName}
+            avatarUri={avatarUrl}
+            onAvatarPress={handleAvatarPress}
+          />
 
-function ActionCard({ icon, label }: { icon: string; label: string }) {
-  return (
-    <View style={styles.actionCard}>
-      <Text style={styles.actionIcon}>{icon}</Text>
-      <Text style={styles.actionLabel}>{label}</Text>
+          {/* Points Balance + Tier Progress */}
+          <BalanceCard points={points} />
+        </LinearGradient>
+
+        {/* White Content Area */}
+        <View style={styles.contentArea}>
+          {/* QR Card - overlaps gradient */}
+          <MemberQRCard qrCodeUrl={qrCodeUrl} isLoading={isLoading} />
+
+          {/* Quick Actions */}
+          <QuickActions />
+
+          {/* Nearby Businesses */}
+          <NearbyBusinesses onBusinessPress={handleBusinessPress} />
+
+          {/* Bottom spacing for tab bar */}
+          <View style={{ height: SPACING['3xl'] }} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -113,107 +92,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.gray[50],
   },
-  scrollContent: {
-    padding: SPACING.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  greeting: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: '700',
-    color: COLORS.gray[900],
-  },
-  subGreeting: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.gray[500],
-    marginTop: 2,
-  },
-  pointsBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 2,
-  },
-  pointsValue: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  pointsLabel: {
-    fontSize: FONT_SIZE.xs,
-    color: COLORS.white,
-    opacity: 0.8,
-  },
-  qrCard: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
-  },
-  qrGradientBorder: {
-    padding: 3,
-    borderRadius: BORDER_RADIUS.xl,
-    ...SHADOWS.lg,
-  },
-  qrInner: {
-    backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.xl - 2,
-    padding: SPACING.xl,
-    alignItems: 'center',
-  },
-  qrCodeText: {
-    marginTop: SPACING.md,
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.gray[500],
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-  },
-  qrPlaceholder: {
-    alignItems: 'center',
-  },
-  qrInstruction: {
-    marginTop: SPACING.md,
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.gray[600],
-  },
-  quickActions: {
-    marginBottom: SPACING.xl,
-  },
-  sectionTitle: {
-    fontSize: FONT_SIZE.base,
-    fontWeight: '600',
-    color: COLORS.gray[900],
-    marginBottom: SPACING.md,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
-  actionCard: {
+  scrollView: {
     flex: 1,
-    minWidth: '45%',
-    backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.base,
-    alignItems: 'center',
-    ...SHADOWS.sm,
   },
-  actionIcon: {
-    fontSize: 28,
-    marginBottom: SPACING.xs,
+  scrollContent: {
+    flexGrow: 1,
   },
-  actionLabel: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.gray[700],
-    fontWeight: '500',
+  gradientHeader: {
+    paddingBottom: SPACING['3xl'] + SPACING.xl, // Extra space for QR card overlap
   },
-  signOutButton: {
-    marginTop: SPACING.lg,
+  contentArea: {
+    flex: 1,
+    backgroundColor: COLORS.gray[50],
+    marginTop: -SPACING.xl, // Pull up to meet gradient
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
 });
