@@ -8,7 +8,7 @@
     "scheme": "loyaltyhub",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#6366F1"
     },
@@ -33,6 +33,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "be2191a5-1512-4284-a3a5-25820121673a"
+      }
     }
   }
 }
