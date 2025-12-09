@@ -17,7 +17,7 @@ export function useCustomer() {
       setIsUpdating(true);
       setError(null);
 
-      try {
+      try { 
         // Implement update logic here if needed
         await refreshCustomer();
       } catch (err) {
