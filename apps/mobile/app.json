@@ -6,41 +6,53 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "loyaltyhub",
+    "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#6366F1"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.loyaltyhub.app"
     },
+
     "android": {
+      "package": "com.loyaltyhub.app",
       "adaptiveIcon": {
         "backgroundColor": "#6366F1",
         "foregroundImage": "./assets/images/icon.png"
       },
-      "package": "com.loyaltyhub.app"
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "loyaltyhub",
+              "host": "auth",
+              "pathPrefix": "/callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
+
     "plugins": [
       "expo-router",
       "expo-secure-store",
       "expo-font"
     ],
+
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "be2191a5-1512-4284-a3a5-25820121673a"
-      }
+      "router": { "origin": false },
+      "eas": { "projectId": "be2191a5-1512-4284-a3a5-25820121673a" }
     }
   }
 }

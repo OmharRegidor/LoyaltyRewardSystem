@@ -1,34 +1,40 @@
 // src/services/customer.service.ts
 
 import { supabase } from '../lib/supabase';
-import type { Customer, CustomerInsert } from '../types/database.types';
+import type { Customer } from '../types/database.types';
 import { nanoid } from 'nanoid/non-secure';
-
-const generateQRCodeUrl = (customerId: string): string => {
-  return `loyaltyhub://customer/${customerId}`;
-};
 
 export const customerService = {
   async getByUserId(userId: string): Promise<Customer | null> {
+    console.log('DB: getByUserId called with:', userId);
+
     const { data, error } = await supabase
       .from('customers')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle(); // ← Changed from .single() to .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    console.log('DB: getByUserId result:', { data, error });
+
+    if (error) {
+      console.error('DB: getByUserId error:', error);
+      throw error;
+    }
+
+    return data; // Returns null if no row found (no error)
   },
 
   async create(userId: string): Promise<Customer> {
-    const tempId = nanoid(12);
+    console.log('DB: create called with:', userId);
 
-    const customerData: CustomerInsert = {
+    const customerData = {
       user_id: userId,
-      total_points: 0,
-      qr_code_url: generateQRCodeUrl(tempId),
       phone: null,
+      total_points: 0,
+      qr_code_url: `loyaltyhub://customer/${nanoid(12)}`,
     };
+
+    console.log('DB: inserting:', customerData);
 
     const { data, error } = await supabase
       .from('customers')
@@ -36,27 +42,27 @@ export const customerService = {
       .select()
       .single();
 
-    if (error) throw error;
+    console.log('DB: create result:', { data, error });
 
-    // Update QR with actual ID
-    await supabase
-      .from('customers')
-      .update({ qr_code_url: generateQRCodeUrl(data.id) })
-      .eq('id', data.id);
+    if (error) {
+      console.error('DB: create error:', error);
+      throw error;
+    }
 
-    return { ...data, qr_code_url: generateQRCodeUrl(data.id) };
+    return data;
   },
 
   async findOrCreate(userId: string): Promise<Customer> {
-    const existing = await this.getByUserId(userId);
-    if (existing) return existing;
-    return this.create(userId);
-  },
+    console.log('DB: findOrCreate called with:', userId);
 
-  async updateLastVisit(customerId: string): Promise<void> {
-    await supabase
-      .from('customers')
-      .update({ last_visit: new Date().toISOString() })
-      .eq('id', customerId);
+    const existing = await this.getByUserId(userId);
+
+    if (existing) {
+      console.log('DB: found existing customer');
+      return existing;
+    }
+
+    console.log('DB: creating new customer');
+    return this.create(userId);
   },
 };

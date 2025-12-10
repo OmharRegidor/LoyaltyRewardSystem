@@ -10,14 +10,28 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
 import { GoogleSignInButton } from '../../src/components/auth/GoogleSignInButton';
 import { Button } from '../../src/components/ui/Button';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../../src/lib/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+} from '../../src/lib/constants';
 
 export default function WelcomeScreen() {
-  const { signInWithGoogle, isLoading } = useAuth();
+  const { signInWithGoogle, isLoading, user } = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+
+  // Navigate when user becomes available
+  React.useEffect(() => {
+    if (user) {
+      router.replace('/(main)');
+    }
+  }, [user]);
 
   const handleGoogleSignIn = async () => {
     try {

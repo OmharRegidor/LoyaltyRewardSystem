@@ -39,11 +39,11 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="reward"
         options={{
           title: 'Rewards',
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="🎁" focused={focused} isCenter />
+            <TabBarIcon emoji="🎁" focused={focused} isCenter  />
           ),
         }}
       />
