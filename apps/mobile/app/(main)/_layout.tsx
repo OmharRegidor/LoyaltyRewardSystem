@@ -7,8 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAuth } from '../../src/hooks/useAuth';
+import { useCustomer } from '../../src/hooks/useCustomer';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
-import { COLORS } from '../../src/lib/constants';
+
+import {
+  EarnPointsProvider,
+  useEarnPoints,
+} from '../../src/providers/EarnPointsProvider';
+import { QuickQRModal } from '@/src/components/home';
 
 // ============================================
 // ICON COMPONENTS - Clean outlined style
@@ -95,9 +101,10 @@ function ProfileIcon({ color, size = 24 }: { color: string; size?: number }) {
   );
 }
 
-function ScanIcon({ size = 28 }: { size?: number }) {
+function EarnIcon({ size = 28 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* QR Frame corners */}
       <Path
         d="M3 7V5C3 3.89543 3.89543 3 5 3H7"
         stroke="white"
@@ -122,6 +129,7 @@ function ScanIcon({ size = 28 }: { size?: number }) {
         strokeWidth={2}
         strokeLinecap="round"
       />
+      {/* QR code pattern */}
       <Rect x="7" y="7" width="4" height="4" rx={0.5} fill="white" />
       <Rect x="13" y="7" width="4" height="4" rx={0.5} fill="white" />
       <Rect x="7" y="13" width="4" height="4" rx={0.5} fill="white" />
@@ -138,6 +146,7 @@ function CustomTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { openModal } = useEarnPoints();
 
   const tabs = [
     { name: 'index', label: 'Home', Icon: HomeIcon, route: '/(main)' },
@@ -147,7 +156,7 @@ function CustomTabBar() {
       Icon: RewardsIcon,
       route: '/(main)/reward',
     },
-    { name: 'scan', label: 'Scan', Icon: null, route: null }, // Center button
+    { name: 'earn', label: 'Earn', Icon: null, route: null }, // Center button
     {
       name: 'wallet',
       label: 'Wallet',
@@ -169,9 +178,8 @@ function CustomTabBar() {
   };
 
   const handlePress = (route: string | null, name: string) => {
-    if (name === 'scan') {
-      // Handle scan action - could open modal or navigate to scan screen
-      console.log('Scan pressed');
+    if (name === 'earn') {
+      openModal();
       return;
     }
     if (route) {
@@ -186,8 +194,8 @@ function CustomTabBar() {
       {tabs.map((tab) => {
         const active = isActive(tab.name);
 
-        // Center Scan Button
-        if (tab.name === 'scan') {
+        // Center Earn Button
+        if (tab.name === 'earn') {
           return (
             <TouchableOpacity
               key={tab.name}
@@ -201,7 +209,7 @@ function CustomTabBar() {
                 end={{ x: 1, y: 1 }}
                 style={styles.centerButton}
               >
-                <ScanIcon size={28} />
+                <EarnIcon size={28} />
               </LinearGradient>
             </TouchableOpacity>
           );
@@ -228,8 +236,51 @@ function CustomTabBar() {
 }
 
 // ============================================
+// MODAL WRAPPER - Needs customer data
+// ============================================
+
+function QRModalWrapper() {
+  const { isModalVisible, closeModal } = useEarnPoints();
+  const { customer, points, qrCodeUrl } = useCustomer();
+  const { user } = useAuth();
+
+  const customerName =
+    user?.user_metadata?.full_name || user?.email || 'Customer';
+
+  return (
+    <QuickQRModal
+      visible={isModalVisible}
+      onClose={closeModal}
+      qrCodeUrl={qrCodeUrl || ''}
+      customerName={customerName}
+      points={points}
+    />
+  );
+}
+
+// ============================================
 // MAIN LAYOUT
 // ============================================
+
+function MainLayoutContent() {
+  return (
+    <View style={styles.container}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      >
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="reward" />
+        <Tabs.Screen name="wallet" />
+        <Tabs.Screen name="profile" />
+      </Tabs>
+      <CustomTabBar />
+      <QRModalWrapper />
+    </View>
+  );
+}
 
 export default function MainLayout() {
   const { user, isInitialized } = useAuth();
@@ -243,20 +294,9 @@ export default function MainLayout() {
   }
 
   return (
-    <View style={styles.container}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { display: 'none' }, // Hide default tab bar
-        }}
-      >
-        <Tabs.Screen name="index" />
-        <Tabs.Screen name="reward" />
-        <Tabs.Screen name="wallet" />
-        <Tabs.Screen name="profile" />
-      </Tabs>
-      <CustomTabBar />
-    </View>
+    <EarnPointsProvider>
+      <MainLayoutContent />
+    </EarnPointsProvider>
   );
 }
 
