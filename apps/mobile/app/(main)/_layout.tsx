@@ -1,11 +1,235 @@
 // app/(main)/_layout.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Tabs, Redirect } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Tabs, Redirect, usePathname, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAuth } from '../../src/hooks/useAuth';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
-import { COLORS, SHADOWS } from '../../src/lib/constants';
+import { COLORS } from '../../src/lib/constants';
+
+// ============================================
+// ICON COMPONENTS - Clean outlined style
+// ============================================
+
+function HomeIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 9.5L12 3L21 9.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9.5Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M9 22V12H15V22"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function RewardsIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect
+        x="3"
+        y="8"
+        width="18"
+        height="13"
+        rx="2"
+        stroke={color}
+        strokeWidth={1.8}
+      />
+      <Path d="M12 8V21" stroke={color} strokeWidth={1.8} />
+      <Path d="M3 12H21" stroke={color} strokeWidth={1.8} />
+      <Path
+        d="M7.5 8C7.5 8 7.5 3 12 3C16.5 3 16.5 8 16.5 8"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+function WalletIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect
+        x="2"
+        y="5"
+        width="20"
+        height="15"
+        rx="3"
+        stroke={color}
+        strokeWidth={1.8}
+      />
+      <Path
+        d="M22 10H17C15.8954 10 15 10.8954 15 12C15 13.1046 15.8954 14 17 14H22"
+        stroke={color}
+        strokeWidth={1.8}
+      />
+      <Circle cx="17" cy="12" r="1" fill={color} />
+    </Svg>
+  );
+}
+
+function ProfileIcon({ color, size = 24 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth={1.8} />
+      <Path
+        d="M4 21C4 17.134 7.58172 14 12 14C16.4183 14 20 17.134 20 21"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+function ScanIcon({ size = 28 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 7V5C3 3.89543 3.89543 3 5 3H7"
+        stroke="white"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M17 3H19C20.1046 3 21 3.89543 21 5V7"
+        stroke="white"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M21 17V19C21 20.1046 20.1046 21 19 21H17"
+        stroke="white"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M7 21H5C3.89543 21 3 20.1046 3 19V17"
+        stroke="white"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <Rect x="7" y="7" width="4" height="4" rx={0.5} fill="white" />
+      <Rect x="13" y="7" width="4" height="4" rx={0.5} fill="white" />
+      <Rect x="7" y="13" width="4" height="4" rx={0.5} fill="white" />
+      <Rect x="13" y="13" width="4" height="4" rx={0.5} fill="white" />
+    </Svg>
+  );
+}
+
+// ============================================
+// CUSTOM TAB BAR COMPONENT
+// ============================================
+
+function CustomTabBar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const tabs = [
+    { name: 'index', label: 'Home', Icon: HomeIcon, route: '/(main)' },
+    {
+      name: 'reward',
+      label: 'Rewards',
+      Icon: RewardsIcon,
+      route: '/(main)/reward',
+    },
+    { name: 'scan', label: 'Scan', Icon: null, route: null }, // Center button
+    {
+      name: 'wallet',
+      label: 'Wallet',
+      Icon: WalletIcon,
+      route: '/(main)/wallet',
+    },
+    {
+      name: 'profile',
+      label: 'Profile',
+      Icon: ProfileIcon,
+      route: '/(main)/profile',
+    },
+  ];
+
+  const isActive = (name: string) => {
+    if (name === 'index')
+      return pathname === '/' || pathname === '/(main)' || pathname === '';
+    return pathname.includes(name);
+  };
+
+  const handlePress = (route: string | null, name: string) => {
+    if (name === 'scan') {
+      // Handle scan action - could open modal or navigate to scan screen
+      console.log('Scan pressed');
+      return;
+    }
+    if (route) {
+      router.push(route as any);
+    }
+  };
+
+  return (
+    <View
+      style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}
+    >
+      {tabs.map((tab) => {
+        const active = isActive(tab.name);
+
+        // Center Scan Button
+        if (tab.name === 'scan') {
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              onPress={() => handlePress(tab.route, tab.name)}
+              activeOpacity={0.8}
+              style={styles.centerButtonContainer}
+            >
+              <LinearGradient
+                colors={['#60A5FA', '#818CF8', '#A78BFA']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.centerButton}
+              >
+                <ScanIcon size={28} />
+              </LinearGradient>
+            </TouchableOpacity>
+          );
+        }
+
+        const IconComponent = tab.Icon!;
+
+        return (
+          <TouchableOpacity
+            key={tab.name}
+            onPress={() => handlePress(tab.route, tab.name)}
+            activeOpacity={0.7}
+            style={styles.tabItem}
+          >
+            <IconComponent color={active ? '#7C5DFA' : '#B0B6C5'} size={24} />
+            <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+// ============================================
+// MAIN LAYOUT
+// ============================================
 
 export default function MainLayout() {
   const { user, isInitialized } = useAuth();
@@ -19,142 +243,78 @@ export default function MainLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.gray[400],
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-        tabBarItemStyle: styles.tabBarItem,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="🏠" focused={focused} />
-          ),
+    <View style={styles.container}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: 'none' }, // Hide default tab bar
         }}
-      />
-      <Tabs.Screen
-        name="reward"
-        options={{
-          title: 'Rewards',
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="🎁" focused={focused} isCenter  />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: 'Wallet',
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="💳" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ focused }) => (
-            <TabBarIcon emoji="👤" focused={focused} />
-          ),
-        }}
-      />
-    </Tabs>
-  );
-}
-
-// Simple tab bar icon with emoji
-function TabBarIcon({
-  emoji,
-  focused,
-  isCenter,
-}: {
-  emoji: string;
-  focused: boolean;
-  isCenter?: boolean;
-}) {
-  if (isCenter) {
-    return (
-      <View style={styles.centerButton}>
-        <View style={styles.centerButtonInner}>
-          <Text style={styles.centerEmoji}>{emoji}</Text>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.tabIcon}>
-      <Text style={[styles.emoji, { opacity: focused ? 1 : 0.6 }]}>
-        {emoji}
-      </Text>
+      >
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="reward" />
+        <Tabs.Screen name="wallet" />
+        <Tabs.Screen name="profile" />
+      </Tabs>
+      <CustomTabBar />
     </View>
   );
 }
 
+// ============================================
+// STYLES
+// ============================================
+
 const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: COLORS.white,
-    borderTopWidth: 0,
-    height: 80,
-    paddingBottom: 20,
-    paddingTop: 10,
-    ...SHADOWS.lg,
+  container: {
+    flex: 1,
   },
-  tabBarLabel: {
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingTop: 12,
+    paddingHorizontal: 8,
+    borderTopWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 8,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabLabel: {
     fontSize: 11,
     fontWeight: '500',
-    marginTop: 4,
+    color: '#B0B6C5',
+    marginTop: 6,
   },
-  tabBarItem: {
-    paddingTop: 8,
+  tabLabelActive: {
+    color: '#7C5DFA',
   },
-  iconContainer: {
+  centerButtonContainer: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconContainerActive: {
-    // Active state
-  },
-  iconInner: {
-    alignItems: 'center',
-  },
-  emojiContainer: {
-    alignItems: 'center',
-  },
-  emoji: {
-    fontSize: 24,
-  },
-  tabIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabIconFocused: {
-    // Focused state
+    justifyContent: 'flex-start',
+    marginTop: -28,
   },
   centerButton: {
-    position: 'absolute',
-    top: -20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerButtonInner: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.colored(COLORS.primary),
-  },
-  centerEmoji: {
-    fontSize: 24,
-    color: COLORS.white,
+    shadowColor: '#7C5DFA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });
