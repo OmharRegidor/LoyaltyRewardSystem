@@ -1,6 +1,6 @@
 // src/components/home/NearbyBusinesses.tsx
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,20 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  SHADOWS,
+} from '../../lib/constants';
+
+const CARD_WIDTH = 220;
+const CARD_GAP = 12;
 
 interface Business {
   id: string;
@@ -30,7 +42,8 @@ const MOCK_BUSINESSES: Business[] = [
     status: 'open',
     rating: 4.8,
     pointsMultiplier: '2x Points',
-    imageUrl: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=200&h=200&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=200&h=200&fit=crop',
   },
   {
     id: '2',
@@ -39,7 +52,8 @@ const MOCK_BUSINESSES: Business[] = [
     status: 'open',
     rating: 4.5,
     pointsMultiplier: '1.5x Points',
-    imageUrl: 'https://images.unsplash.com/photo-1517433670267-30f41c098e5e?w=200&h=200&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1517433670267-30f41c098e5e?w=200&h=200&fit=crop',
   },
   {
     id: '3',
@@ -48,7 +62,8 @@ const MOCK_BUSINESSES: Business[] = [
     status: 'open',
     rating: 4.6,
     pointsMultiplier: '2x Points',
-    imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop',
   },
 ];
 
@@ -57,14 +72,25 @@ interface NearbyBusinessesProps {
 }
 
 export function NearbyBusinesses({ onBusinessPress }: NearbyBusinessesProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / (CARD_WIDTH + CARD_GAP));
+    setActiveIndex(Math.min(index, MOCK_BUSINESSES.length - 1));
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Nearby Businesses</Text>
         <View style={styles.dots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+          {MOCK_BUSINESSES.map((_, index) => (
+            <View
+              key={index}
+              style={[styles.dot, activeIndex === index && styles.dotActive]}
+            />
+          ))}
         </View>
       </View>
 
@@ -72,6 +98,10 @@ export function NearbyBusinesses({ onBusinessPress }: NearbyBusinessesProps) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        snapToInterval={CARD_WIDTH + CARD_GAP}
+        decelerationRate="fast"
       >
         {MOCK_BUSINESSES.map((business) => (
           <TouchableOpacity
@@ -88,7 +118,12 @@ export function NearbyBusinesses({ onBusinessPress }: NearbyBusinessesProps) {
               <View style={styles.metaRow}>
                 <Text style={styles.distance}>{business.distance}</Text>
                 <Text style={styles.separator}>•</Text>
-                <Text style={[styles.status, business.status === 'open' && styles.statusOpen]}>
+                <Text
+                  style={[
+                    styles.status,
+                    business.status === 'open' && styles.statusOpen,
+                  ]}
+                >
                   {business.status === 'open' ? 'Open now' : 'Closed'}
                 </Text>
               </View>
@@ -97,7 +132,9 @@ export function NearbyBusinesses({ onBusinessPress }: NearbyBusinessesProps) {
                   <Text style={styles.star}>⭐</Text>
                   <Text style={styles.rating}>{business.rating}</Text>
                 </View>
-                <Text style={styles.multiplier}>{business.pointsMultiplier}</Text>
+                <Text style={styles.multiplier}>
+                  {business.pointsMultiplier}
+                </Text>
               </View>
             </View>
             <TouchableOpacity style={styles.arrowButton}>
@@ -113,6 +150,7 @@ export function NearbyBusinesses({ onBusinessPress }: NearbyBusinessesProps) {
 const styles = StyleSheet.create({
   container: {
     marginTop: SPACING.xl,
+    marginBottom: 35, // Space for bottom tab bar
   },
   header: {
     flexDirection: 'row',
@@ -131,29 +169,30 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: COLORS.gray[300],
   },
   dotActive: {
     backgroundColor: COLORS.primary,
-    width: 16,
+    width: 20,
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
+    paddingBottom: SPACING.base,
   },
   card: {
-    width: 200,
+    width: CARD_WIDTH,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
     overflow: 'hidden',
+    marginRight: CARD_GAP,
     ...SHADOWS.md,
   },
   image: {
     width: '100%',
-    height: 100,
+    height: 110,
     backgroundColor: COLORS.gray[200],
   },
   cardContent: {
