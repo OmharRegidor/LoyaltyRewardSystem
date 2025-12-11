@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
+import { COLORS, SHADOWS } from '../../lib/constants';
 
 interface AvatarProps {
   uri?: string | null;
@@ -38,9 +38,9 @@ export function Avatar({ uri, name, size = 44, onPress }: AvatarProps) {
           style={[
             styles.image,
             {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
+              width: size - 4, // Account for border
+              height: size - 4,
+              borderRadius: (size - 4) / 2,
             },
           ]}
         />
@@ -49,13 +49,13 @@ export function Avatar({ uri, name, size = 44, onPress }: AvatarProps) {
           style={[
             styles.fallback,
             {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
+              width: size - 4,
+              height: size - 4,
+              borderRadius: (size - 4) / 2,
             },
           ]}
         >
-          <Text style={[styles.initials, { fontSize: size * 0.4 }]}>
+          <Text style={[styles.initials, { fontSize: size * 0.35 }]}>
             {initials}
           </Text>
         </View>
@@ -78,18 +78,22 @@ const styles = StyleSheet.create({
   container: {
     borderWidth: 2,
     borderColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
     ...SHADOWS.md,
   },
   image: {
     resizeMode: 'cover',
   },
   fallback: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#F97316', // Orange color like in screenshot
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
     color: COLORS.white,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });
