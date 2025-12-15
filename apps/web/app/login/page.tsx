@@ -1,6 +1,9 @@
+// apps/web/app/login/page.tsx
+
 'use client';
 
 import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Mail,
   Lock,
@@ -10,21 +13,61 @@ import {
   Award,
   TrendingUp,
   Users,
+  AlertCircle,
 } from 'lucide-react';
+import { loginBusinessOwner } from '@/lib/auth';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: any) => {
+  // Check for error params (e.g., from middleware redirect)
+  const urlError = searchParams.get('error');
+  const redirectTo = searchParams.get('redirect');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    window.location.href = '/dashboard';
+
+    try {
+      const response = await loginBusinessOwner({ email, password });
+
+      if (!response.success) {
+        setError(response.error || 'Login failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - redirect based on role or original destination
+      const destination =
+        redirectTo || response.data?.redirectTo || '/dashboard';
+
+      // For cashiers, always go to scanner regardless of redirect param
+      if (response.data?.staff?.role === 'cashier') {
+        router.push('/scanner');
+      } else {
+        router.push(destination);
+      }
+
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
+      setIsLoading(false);
+    }
   };
+
+  // Show URL-based errors
+  const displayError =
+    error ||
+    (urlError === 'deactivated'
+      ? 'Your account has been deactivated. Contact your manager.'
+      : '');
 
   const features = [
     {
@@ -46,9 +89,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
-      {/* Left Side - Enhanced Brand Showcase */}
+      {/* Left Side - Brand Showcase (unchanged) */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-blue-700 to-cyan-600">
-        {/* Animated Background Elements */}
+        {/* ... keep existing left side code ... */}
         <div className="absolute inset-0">
           <div
             className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
@@ -64,7 +107,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Decorative Grid Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
@@ -77,11 +119,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
-          {/* Logo/Brand Area */}
           <div className="mb-12 transform hover:scale-105 transition-transform duration-300">
-            {/* <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl">
-              <Award className="w-10 h-10 text-white" />
-            </div> */}
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Welcome back to
               <br />
@@ -95,15 +133,11 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Enhanced Feature Cards */}
           <div className="space-y-4">
             {features.map((feature, i) => (
               <div
                 key={i}
                 className="group bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:translate-x-2 border border-white/20 shadow-lg hover:shadow-2xl"
-                style={{
-                  animation: `fadeInUp 0.6s ease-out ${0.2 + i * 0.1}s both`,
-                }}
               >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -122,7 +156,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Trust Indicators */}
           <div className="mt-12 pt-8 border-t border-white/20">
             <div className="flex items-center gap-8">
               <div className="text-center">
@@ -140,19 +173,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}</style>
       </div>
 
       {/* Right Side - Login Form */}
@@ -166,6 +186,18 @@ export default function LoginPage() {
               Access your dashboard and manage your loyalty program
             </p>
           </div>
+
+          {/* Error Alert */}
+          {displayError && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                  {displayError}
+                </p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
@@ -186,6 +218,7 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white placeholder-gray-400"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -208,11 +241,13 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -229,13 +264,14 @@ export default function LoginPage() {
                 <input
                   type="checkbox"
                   className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  disabled={isLoading}
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
                   Remember me
                 </span>
               </label>
               <a
-                href="#"
+                href="/forgot-password"
                 className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
               >
                 Forgot password?

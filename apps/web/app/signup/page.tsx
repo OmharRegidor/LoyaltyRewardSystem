@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Check,
@@ -8,11 +9,15 @@ import {
   TrendingUp,
   Zap,
   Shield,
+  AlertCircle,
 } from 'lucide-react';
+import { signupBusinessOwner } from '@/lib/auth';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Step 1: Business Information
   const [businessName, setBusinessName] = useState('');
@@ -35,30 +40,55 @@ export default function SignupPage() {
   };
 
   const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
+  const passwordsMatch = password === confirmPassword;
   const canProceedStep2 =
-    password &&
-    confirmPassword &&
-    password === confirmPassword &&
-    allRequirementsMet;
+    password && confirmPassword && passwordsMatch && allRequirementsMet;
 
   const handleNext = () => {
+    setError('');
     if (step === 1 && businessName && businessType && phone) {
-      setStep(2);
+      setStep(2); 
     } else if (step === 2 && canProceedStep2) {
       setStep(3);
     }
   };
 
   const handleBack = () => {
+    setError('');
     if (step > 1) setStep(step - 1);
   };
 
   const handleSubmit = async () => {
-    if (!agreed) return;
+    if (!agreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy');
+      return;
+    }
+
+    setError('');
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
-    window.location.href = '/dashboard';
+
+    try {
+      const response = await signupBusinessOwner({
+        email,
+        password,
+        businessName,
+        businessType,
+        phone,
+      });
+
+      if (!response.success) {
+        setError(response.error || 'Signup failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - redirect to dashboard
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
+      setIsLoading(false);
+    }
   };
 
   const benefits = [
@@ -132,9 +162,6 @@ export default function SignupPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
           {/* Logo/Brand Area */}
           <div className="mb-12">
-            {/* <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-xl transform hover:rotate-12 transition-transform duration-300">
-              <Award className="w-10 h-10 text-white" />
-            </div> */}
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Start growing
               <br />
@@ -286,6 +313,18 @@ export default function SignupPage() {
             </p>
           </div>
 
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                  {error}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Step 1: Business Information */}
           {step === 1 && (
             <div className="space-y-6">
@@ -303,6 +342,7 @@ export default function SignupPage() {
                   onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="Your business name"
                   className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  required
                 />
               </div>
 
@@ -318,6 +358,7 @@ export default function SignupPage() {
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  required
                 >
                   <option value="">Select your business type</option>
                   <option value="cafe">Café</option>
@@ -347,6 +388,7 @@ export default function SignupPage() {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="9123456789"
                     className="flex-1 px-4 py-3.5 rounded-r-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                    required
                   />
                 </div>
               </div>
@@ -370,6 +412,7 @@ export default function SignupPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  required
                 />
               </div>
 
@@ -387,6 +430,7 @@ export default function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  required
                 />
               </div>
 
@@ -404,7 +448,13 @@ export default function SignupPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  required
                 />
+                {confirmPassword && !passwordsMatch && (
+                  <p className="text-red-600 text-sm mt-2">
+                    Passwords do not match
+                  </p>
+                )}
               </div>
 
               <label className="flex items-center gap-2 cursor-pointer group">
@@ -528,7 +578,8 @@ export default function SignupPage() {
             {step > 1 && (
               <button
                 onClick={handleBack}
-                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold text-gray-700 dark:text-gray-300 transition-all"
+                disabled={isLoading}
+                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back
               </button>
