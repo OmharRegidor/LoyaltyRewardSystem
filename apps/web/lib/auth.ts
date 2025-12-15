@@ -10,7 +10,6 @@ import type { Database } from '../../../packages/shared/types/database';
 type StaffRole = 'owner' | 'manager' | 'cashier';
 type Business = Database['public']['Tables']['businesses']['Row'];
 
-// Manual Staff type until you regenerate database types
 interface StaffRecord {
   id: string;
   user_id: string;
@@ -59,7 +58,7 @@ export interface AuthResponse {
 }
 
 // ============================================
-// HELPER: Execute raw SQL for staff table
+// HELPER FUNCTIONS FOR STAFF TABLE
 // ============================================
 
 async function insertStaffRecord(
@@ -105,7 +104,7 @@ async function updateStaffLastLogin(
 }
 
 // ============================================
-// SIGNUP
+// SIGNUP - Requires Email Verification
 // ============================================
 
 export async function signupBusinessOwner(
@@ -126,7 +125,19 @@ export async function signupBusinessOwner(
       };
     }
 
-    // Step 1: Create auth user with full metadata
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return { success: false, error: 'Invalid email format' };
+    }
+
+    // Validate phone (basic)
+    if (data.phone && data.phone.length < 10) {
+      return { success: false, error: 'Invalid phone number' };
+    }
+
+    // Create auth user with metadata
+    // Email confirmation is REQUIRED - user must verify before accessing dashboard
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -139,11 +150,22 @@ export async function signupBusinessOwner(
           business_name: data.businessName,
           business_type: data.businessType,
         },
+        // Redirect URL after email confirmation
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
     if (authError) {
       console.error('Auth signup error:', authError);
+
+      // Handle specific errors
+      if (authError.message.includes('already registered')) {
+        return {
+          success: false,
+          error: 'This email is already registered. Please login instead.',
+        };
+      }
+
       return { success: false, error: authError.message };
     }
 
@@ -151,24 +173,82 @@ export async function signupBusinessOwner(
       return { success: false, error: 'User creation failed' };
     }
 
-    // Check if email confirmation is required
-    if (!authData.session) {
+    // IMPORTANT: When email confirmation is enabled, session will be NULL
+    // User must click the confirmation link in their email first
+    // Business and staff records will be created in /auth/callback after confirmation
+
+    return {
+      success: true,
+      needsEmailConfirmation: true,
+      data: {
+        user: authData.user,
+        redirectTo: '/verify-email',
+      },
+    };
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    return {
+      success: false,
+      error: error.message || 'An unexpected error occurred',
+    };
+  }
+}
+
+// ============================================
+// COMPLETE SIGNUP - Called after email verification
+// ============================================
+
+export async function completeSignupAfterVerification(): Promise<AuthResponse> {
+  const supabase = createClient();
+
+  try {
+    // Get the verified user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
       return {
-        success: true,
-        needsEmailConfirmation: true,
-        data: {
-          user: authData.user,
-          redirectTo: '/check-email',
-        },
+        success: false,
+        error: 'No authenticated user found. Please login.',
       };
     }
 
-    // Step 2: Create business entry
+    // Check if email is confirmed
+    if (!user.email_confirmed_at) {
+      return {
+        success: false,
+        error: 'Email not yet verified. Please check your inbox.',
+      };
+    }
+
+    // Check if business already exists (prevent duplicates)
+    const { data: existingBusiness } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle();
+
+    if (existingBusiness) {
+      // Already set up - just redirect
+      return {
+        success: true,
+        data: { redirectTo: '/dashboard' },
+      };
+    }
+
+    // Get business info from user metadata
+    const metadata = user.user_metadata;
+    const businessName =
+      metadata?.business_name || metadata?.full_name || 'My Business';
+
+    // Create business
     const { data: businessData, error: businessError } = await supabase
       .from('businesses')
       .insert({
-        owner_id: authData.user.id,
-        name: data.businessName,
+        owner_id: user.id,
+        name: businessName,
         points_per_purchase: 10,
       })
       .select()
@@ -176,37 +256,31 @@ export async function signupBusinessOwner(
 
     if (businessError) {
       console.error('Business creation error:', businessError);
-      await supabase.auth.signOut();
       return {
         success: false,
-        error: `Failed to create business: ${businessError.message}`,
+        error: 'Failed to create business. Please contact support.',
       };
     }
 
-    // Step 3: Create staff record using RPC
-    const { error: staffError } = await insertStaffRecord(supabase, {
-      user_id: authData.user.id,
+    // Create staff record for owner
+    await insertStaffRecord(supabase, {
+      user_id: user.id,
       business_id: businessData.id,
       role: 'owner',
-      name: data.businessName,
-      email: data.email,
+      name: businessName,
+      email: user.email!,
     });
-
-    if (staffError) {
-      console.error('Staff creation error (non-fatal):', staffError);
-    }
 
     return {
       success: true,
       data: {
-        user: authData.user,
-        session: authData.session,
+        user,
         business: businessData,
         redirectTo: '/dashboard',
       },
     };
   } catch (error: any) {
-    console.error('Signup error:', error);
+    console.error('Complete signup error:', error);
     return {
       success: false,
       error: error.message || 'An unexpected error occurred',
@@ -241,7 +315,8 @@ export async function loginBusinessOwner(
       if (authError.message.includes('Email not confirmed')) {
         return {
           success: false,
-          error: 'Please confirm your email before logging in',
+          error:
+            'Please verify your email before logging in. Check your inbox for the confirmation link.',
         };
       }
       return { success: false, error: authError.message };
@@ -263,7 +338,7 @@ export async function loginBusinessOwner(
     }
 
     if (!business) {
-      // Try to create business from user metadata
+      // User verified email but business wasn't created - complete setup
       const metadata = authData.user.user_metadata;
       if (metadata?.business_name) {
         const { data: newBusiness, error: createBizError } = await supabase
@@ -282,7 +357,6 @@ export async function loginBusinessOwner(
           return { success: false, error: 'Failed to complete account setup.' };
         }
 
-        // Create staff record
         await insertStaffRecord(supabase, {
           user_id: authData.user.id,
           business_id: newBusiness.id,
@@ -327,7 +401,6 @@ export async function loginBusinessOwner(
         return { success: false, error: 'Your account has been deactivated.' };
       }
 
-      // Update last login
       await updateStaffLastLogin(supabase, staffRecord.id);
     }
 
@@ -346,6 +419,34 @@ export async function loginBusinessOwner(
       success: false,
       error: error.message || 'An unexpected error occurred',
     };
+  }
+}
+
+// ============================================
+// RESEND VERIFICATION EMAIL
+// ============================================
+
+export async function resendVerificationEmail(
+  email: string
+): Promise<AuthResponse> {
+  const supabase = createClient();
+
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 

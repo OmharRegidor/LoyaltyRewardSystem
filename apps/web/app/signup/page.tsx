@@ -47,7 +47,7 @@ export default function SignupPage() {
   const handleNext = () => {
     setError('');
     if (step === 1 && businessName && businessType && phone) {
-      setStep(2); 
+      setStep(2);
     } else if (step === 2 && canProceedStep2) {
       setStep(3);
     }
@@ -82,9 +82,14 @@ export default function SignupPage() {
         return;
       }
 
-      // Success - redirect to dashboard
-      router.push('/dashboard');
-      router.refresh();
+      // Store email for resend functionality
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pendingVerificationEmail', email);
+      }
+
+      // Always redirect to verify email page
+      // User must verify email before accessing dashboard
+      router.push('/verify-email');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
       setIsLoading(false);
