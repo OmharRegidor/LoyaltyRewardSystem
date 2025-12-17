@@ -1,7 +1,6 @@
-// apps/web/app/dashboard/customers/page.tsx
-
 'use client';
 
+import { DashboardLayout } from '@/components/dashboard/layout';
 import { CustomersHeader } from '@/components/customers/header';
 import { CustomersFilters } from '@/components/customers/filters';
 import { CustomersTable } from '@/components/customers/table';
@@ -17,34 +16,36 @@ export default function CustomersPage() {
   const [sortBy, setSortBy] = useState('recent');
 
   return (
-    <motion.div
-      className="space-y-6"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <CustomersHeader onSearchChange={setSearchTerm} />
-      <CustomersFilters
-        status={statusFilter}
-        onStatusChange={setStatusFilter}
-        pointsRange={pointsRange}
-        onPointsRangeChange={setPointsRange}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-      />
-      <CustomersTable
-        searchTerm={searchTerm}
-        statusFilter={statusFilter}
-        pointsRange={pointsRange}
-        sortBy={sortBy}
-        onSelectCustomer={setSelectedCustomer}
-      />
-      {selectedCustomer && (
-        <CustomerDetailModal
-          customer={selectedCustomer}
-          onClose={() => setSelectedCustomer(null)}
+    <DashboardLayout>
+      <motion.div
+        className="space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <CustomersHeader onSearchChange={setSearchTerm} />
+        <CustomersFilters
+          status={statusFilter}
+          onStatusChange={setStatusFilter}
+          pointsRange={pointsRange}
+          onPointsRangeChange={setPointsRange}
+          sortBy={sortBy}
+          onSortByChange={setSortBy}
         />
-      )}
-    </motion.div>
+        <CustomersTable
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          pointsRange={pointsRange}
+          sortBy={sortBy}
+          onSelectCustomer={setSelectedCustomer}
+        />
+        {selectedCustomer && (
+          <CustomerDetailModal
+            customer={selectedCustomer}
+            onClose={() => setSelectedCustomer(null)}
+          />
+        )}
+      </motion.div>
+    </DashboardLayout>
   );
 }

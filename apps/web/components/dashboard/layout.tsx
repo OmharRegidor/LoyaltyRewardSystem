@@ -1,46 +1,217 @@
-"use client"
+// apps/web/components/dashboard/layout.tsx
 
-import type React from "react"
+'use client';
 
-import { useState } from "react"
-import { Sidebar } from "./sidebar"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import {
+  LayoutDashboard,
+  Users,
+  Gift,
+  QrCode,
+  BarChart3,
+  Settings,
+  LogOut,
+  Sun,
+  Moon,
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase';
+import { logout } from '@/lib/auth';
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+interface UserData {
+  name: string;
+  email: string;
+  businessName: string;
+  role: 'owner' | 'manager' | 'cashier';
+}
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState<UserData>({
+    name: '',
+    email: '',
+    businessName: '',
+    role: 'owner',
+  });
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const supabase = createClient();
+
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error || !user) {
+          router.push('/login');
+          return;
+        }
+
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('name')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        const metadata = user.user_metadata || {};
+
+        setUserData({
+          name:
+            metadata.full_name ||
+            metadata.business_name ||
+            user.email?.split('@')[0] ||
+            'User',
+          email: user.email || '',
+          businessName:
+            business?.name || metadata.business_name || 'My Business',
+          role: 'owner',
+        });
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading user:', error);
+        router.push('/login');
+      }
+    };
+
+    loadUserData();
+
+    // Check dark mode
+    const isDark = localStorage.getItem('darkMode') !== 'false';
+    setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [router]);
+
+  const toggleDarkMode = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/login';
+  };
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Customers', href: '/dashboard/customers', icon: Users },
+    { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  ];
+
+  const isActive = (href: string) => {
+    if (href === '/dashboard') return pathname === '/dashboard';
+    return pathname.startsWith(href);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-background">
-      <AnimatePresence mode="wait">
-        {sidebarOpen && (
-          <motion.div initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }} transition={{ duration: 0.3 }}>
-            <Sidebar onClose={() => setSidebarOpen(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <div className="bg-card border-b border-border px-8 py-4 flex items-center justify-between">
-          {!sidebarOpen && (
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-muted rounded-lg transition">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          )}
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-900 dark:bg-gray-950 flex flex-col fixed h-full z-50">
+        {/* Logo */}
+        <div className="p-6">
+          <Link
+            href="/dashboard"
+            className="text-2xl font-bold text-cyan-400 italic"
+          >
+            LoyaltyHub
+          </Link>
         </div>
 
-        {/* Main Content */}
-        <motion.div
-          className="flex-1 overflow-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <div className="p-8">{children}</div>
-        </motion.div>
-      </div>
+        {/* Navigation */}
+        <nav className="flex-1 px-4 space-y-1">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                isActive(item.href)
+                  ? 'bg-linear-to-r from-cyan-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/30'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="p-4 space-y-2 border-t border-gray-800">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
+          >
+            {isDarkMode ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+          </button>
+
+          {/* User Info */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-xl">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0">
+              <span className="text-white font-bold">
+                {userData.businessName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {userData.businessName}
+              </p>
+              <p className="text-xs text-gray-400 capitalize">
+                {userData.role}
+              </p>
+            </div>
+          </div>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 ml-64 min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="p-8">{children}</div>
+      </main>
     </div>
-  )
+  );
 }
