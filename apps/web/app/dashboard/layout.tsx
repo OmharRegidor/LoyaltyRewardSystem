@@ -17,23 +17,20 @@ import {
   Bell,
   ChevronDown,
 } from 'lucide-react';
-import { getCurrentUser, getCurrentBusiness, logout } from '@/lib/auth';
+import { createClient } from '@/lib/supabase';
+import { logout } from '@/lib/auth';
 
 // ============================================
 // CONFIGURATION: Toggle for Mock Data
-// Set to false when going live with real data
+// Set USE_MOCK_DATA = false when going live
 // ============================================
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false; // Changed to false to use real data
 
-// Mock data for development
-const MOCK_OWNER = {
-  name: 'John Doe',
-  email: 'john@example.com',
-  avatar: null,
-  businessName: 'Coffee Corner',
-  businessType: 'cafe',
-  phone: '+63 912 345 6789',
-};
+interface UserData {
+  name: string;
+  email: string;
+  businessName: string;
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -45,56 +42,66 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Owner data state
-  const [ownerData, setOwnerData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
     businessName: '',
   });
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { user } = await getCurrentUser();
+    const loadUserData = async () => {
+      try {
+        const supabase = createClient();
 
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+        // Get current user
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-      if (USE_MOCK_DATA) {
-        // Use mock data for development
-        setOwnerData({
-          name: MOCK_OWNER.name,
-          email: MOCK_OWNER.email,
-          businessName: MOCK_OWNER.businessName,
-        });
-      } else {
-        // Use real data from Supabase
-        const business = await getCurrentBusiness();
-        setOwnerData({
+        if (userError || !user) {
+          console.log('No user found, redirecting to login');
+          router.push('/login');
+          return;
+        }
+
+        // Get business data
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('name')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        // Set real user data
+        const metadata = user.user_metadata || {};
+
+        setUserData({
           name:
-            user.user_metadata?.full_name ||
+            metadata.full_name ||
+            metadata.business_name ||
             user.email?.split('@')[0] ||
-            'Owner',
+            'User',
           email: user.email || '',
-          businessName: business?.name || 'My Business',
+          businessName:
+            business?.name || metadata.business_name || 'My Business',
         });
-      }
 
-      setIsLoading(false);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        router.push('/login');
+      }
     };
 
-    checkAuth();
+    loadUserData();
   }, [router]);
 
   const handleLogout = async () => {
     await logout();
     router.push('/login');
-    router.refresh();
   };
 
-  // Navigation items - Scanner removed for business owner
+  // Navigation items
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
@@ -113,7 +120,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading dashboard...
+          </p>
+        </div>
       </div>
     );
   }
@@ -158,6 +170,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                 isActive(item.href)
                   ? 'bg-linear-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/30'
@@ -197,7 +210,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Business Name */}
           <div className="hidden lg:block">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {ownerData.businessName}
+              {userData.businessName}
             </h1>
           </div>
 
@@ -217,41 +230,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <div className="w-8 h-8 bg-linear-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold text-sm">
-                    {ownerData.name.charAt(0).toUpperCase()}
+                    {userData.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {ownerData.name}
+                    {userData.name}
                   </p>
-                  <p className="text-xs text-gray-500">{ownerData.email}</p>
+                  <p className="text-xs text-gray-500">{userData.email}</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
 
               {/* Dropdown */}
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {ownerData.name}
-                    </p>
-                    <p className="text-xs text-gray-500">{ownerData.email}</p>
-                  </div>
-                  <Link
-                    href="/dashboard/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
                     onClick={() => setUserMenuOpen(false)}
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {userData.name}
+                      </p>
+                      <p className="text-xs text-gray-500">{userData.email}</p>
+                    </div>
+                    <Link
+                      href="/dashboard/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -11,7 +11,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { getCurrentUser, getCurrentBusiness } from '@/lib/auth';
+import { createClient } from '@/lib/supabase';
 
 // ============================================
 // CONFIGURATION: Toggle for Mock Data
@@ -46,12 +46,7 @@ const MOCK_RECENT_ACTIVITY = [
     reward: 'Free Coffee',
     time: '15 minutes ago',
   },
-  {
-    id: '3',
-    type: 'signup',
-    customer: 'Anna Reyes',
-    time: '1 hour ago',
-  },
+  { id: '3', type: 'signup', customer: 'Anna Reyes', time: '1 hour ago' },
   {
     id: '4',
     type: 'points',
@@ -76,43 +71,44 @@ const MOCK_TOP_CUSTOMERS = [
   { id: '5', name: 'Lisa Mendoza', points: 1120, visits: 16 },
 ];
 
-interface Stats {
-  totalCustomers: number;
-  customersGrowth: number;
-  activeRewards: number;
-  rewardsGrowth: number;
-  pointsIssued: number;
-  pointsGrowth: number;
-  redemptions: number;
-  redemptionsGrowth: number;
-}
-
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats>(MOCK_STATS);
+  const [stats, setStats] = useState(MOCK_STATS);
   const [recentActivity, setRecentActivity] = useState(MOCK_RECENT_ACTIVITY);
   const [topCustomers, setTopCustomers] = useState(MOCK_TOP_CUSTOMERS);
   const [isLoading, setIsLoading] = useState(true);
-  const [businessName, setBusinessName] = useState('');
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
+      const supabase = createClient();
+
+      // Get user info for greeting
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const name =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.business_name ||
+          user.email?.split('@')[0] ||
+          'there';
+        setUserName(name);
+      }
+
       if (USE_MOCK_DATA) {
-        // Using mock data - simulate loading delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Using mock data
+        await new Promise((resolve) => setTimeout(resolve, 300));
         setStats(MOCK_STATS);
         setRecentActivity(MOCK_RECENT_ACTIVITY);
         setTopCustomers(MOCK_TOP_CUSTOMERS);
-        setBusinessName('Coffee Corner'); // Mock business name
       } else {
         // TODO: Fetch real data from Supabase when going live
-        // const { user } = await getCurrentUser();
-        // const business = await getCurrentBusiness();
-        // setBusinessName(business?.name || 'My Business');
-        //
-        // Fetch stats:
-        // const customerCount = await supabase.from('customer_businesses')...
-        // const rewardsCount = await supabase.from('rewards')...
-        // etc.
+        // Example:
+        // const { data: customers } = await supabase
+        //   .from('customer_businesses')
+        //   .select('*', { count: 'exact' })
+        //   .eq('business_id', businessId);
+        // setStats({ ...stats, totalCustomers: customers?.length || 0 });
       }
 
       setIsLoading(false);
@@ -155,7 +151,6 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        {/* Skeleton Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -177,16 +172,16 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Welcome back! 👋
+            Welcome back, {userName}! 👋
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Here's what's happening with your loyalty program today.
           </p>
         </div>
         {USE_MOCK_DATA && (
-          <div className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-xs font-medium">
+          <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-xs font-medium w-fit">
             Demo Mode
-          </div>
+          </span>
         )}
       </div>
 

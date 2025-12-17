@@ -109,32 +109,30 @@ export default function RewardsPage() {
   };
 
   return (
-    <DashboardLayout>
-      <motion.div
-        className="space-y-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <RewardsHeader
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onCreateClick={() => setIsCreateOpen(true)}
-        />
+    <motion.div
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <RewardsHeader
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onCreateClick={() => setIsCreateOpen(true)}
+      />
 
-        <RewardsGrid
-          rewards={rewards}
-          viewMode={viewMode}
-          onDelete={handleDeleteReward}
-          onToggleStatus={handleToggleStatus}
-        />
+      <RewardsGrid
+        rewards={rewards}
+        viewMode={viewMode}
+        onDelete={handleDeleteReward}
+        onToggleStatus={handleToggleStatus}
+      />
 
-        <CreateRewardModal
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onCreate={handleCreateReward}
-        />
-      </motion.div>
-    </DashboardLayout>
+      <CreateRewardModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreate={handleCreateReward}
+      />
+    </motion.div>
   );
 }
