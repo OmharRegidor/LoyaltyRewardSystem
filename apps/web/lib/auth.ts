@@ -208,7 +208,12 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
+    if (userError) {
+      console.error('Get user error:', userError);
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    if (!user) {
       return {
         success: false,
         error: 'No authenticated user found. Please login.',
@@ -217,16 +222,13 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
 
     // Check if email is confirmed
     if (!user.email_confirmed_at) {
-      return {
-        success: false,
-        error: 'Email not yet verified. Please check your inbox.',
-      };
+      return { success: false, error: 'Email not yet verified.' };
     }
 
     // Check if business already exists (prevent duplicates)
     const { data: existingBusiness } = await supabase
       .from('businesses')
-      .select('id')
+      .select('id, name')
       .eq('owner_id', user.id)
       .maybeSingle();
 
@@ -234,7 +236,11 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
       // Already set up - just redirect
       return {
         success: true,
-        data: { redirectTo: '/dashboard' },
+        data: {
+          user,
+          business: existingBusiness as any,
+          redirectTo: '/dashboard',
+        },
       };
     }
 
@@ -256,20 +262,44 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
 
     if (businessError) {
       console.error('Business creation error:', businessError);
+
+      // If it's a unique constraint error, business already exists
+      if (businessError.code === '23505') {
+        const { data: existingBiz } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('owner_id', user.id)
+          .single();
+
+        return {
+          success: true,
+          data: {
+            user,
+            business: existingBiz || undefined,
+            redirectTo: '/dashboard',
+          },
+        };
+      }
+
       return {
         success: false,
-        error: 'Failed to create business. Please contact support.',
+        error: 'Failed to create business. Please try again.',
       };
     }
 
     // Create staff record for owner
-    await insertStaffRecord(supabase, {
-      user_id: user.id,
-      business_id: businessData.id,
-      role: 'owner',
-      name: businessName,
-      email: user.email!,
-    });
+    try {
+      await insertStaffRecord(supabase, {
+        user_id: user.id,
+        business_id: businessData.id,
+        role: 'owner',
+        name: businessName,
+        email: user.email!,
+      });
+    } catch (staffError) {
+      console.error('Staff creation error (non-fatal):', staffError);
+      // Continue anyway - staff record is not critical
+    }
 
     return {
       success: true,
@@ -287,9 +317,8 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
     };
   }
 }
-
 // ============================================
-// LOGIN
+// LOGIN - Simplified version
 // ============================================
 
 export async function loginBusinessOwner(
@@ -302,6 +331,9 @@ export async function loginBusinessOwner(
       return { success: false, error: 'Email and password are required' };
     }
 
+    console.log('Auth: Signing in...');
+
+    // Authenticate
     const { data: authData, error: authError } =
       await supabase.auth.signInWithPassword({
         email: data.email,
@@ -309,15 +341,13 @@ export async function loginBusinessOwner(
       });
 
     if (authError) {
+      console.log('Auth: Error', authError.message);
+
       if (authError.message.includes('Invalid login credentials')) {
         return { success: false, error: 'Invalid email or password' };
       }
       if (authError.message.includes('Email not confirmed')) {
-        return {
-          success: false,
-          error:
-            'Please verify your email before logging in. Check your inbox for the confirmation link.',
-        };
+        return { success: false, error: 'Please verify your email first.' };
       }
       return { success: false, error: authError.message };
     }
@@ -326,95 +356,83 @@ export async function loginBusinessOwner(
       return { success: false, error: 'Login failed' };
     }
 
-    // Check for existing business
-    const { data: business, error: bizError } = await supabase
+    console.log('Auth: User authenticated');
+
+    // Check for business (with timeout protection)
+    const businessPromise = supabase
       .from('businesses')
       .select('*')
       .eq('owner_id', authData.user.id)
       .maybeSingle();
 
-    if (bizError) {
-      console.error('Business fetch error:', bizError);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database timeout')), 5000)
+    );
+
+    let business = null;
+
+    try {
+      const result = (await Promise.race([
+        businessPromise,
+        timeoutPromise,
+      ])) as any;
+      business = result.data;
+      console.log('Auth: Business check complete', { found: !!business });
+    } catch (e) {
+      console.log('Auth: Business check failed, continuing anyway');
     }
 
+    // If no business, create one
     if (!business) {
-      // User verified email but business wasn't created - complete setup
-      const metadata = authData.user.user_metadata;
-      if (metadata?.business_name) {
-        const { data: newBusiness, error: createBizError } = await supabase
+      console.log('Auth: Creating business...');
+
+      const metadata = authData.user.user_metadata || {};
+      const businessName = metadata.business_name || 'My Business';
+
+      try {
+        const { data: newBiz } = await supabase
           .from('businesses')
           .insert({
             owner_id: authData.user.id,
-            name: metadata.business_name,
+            name: businessName,
             points_per_purchase: 10,
           })
           .select()
           .single();
 
-        if (createBizError) {
-          console.error('Business creation on login error:', createBizError);
-          await supabase.auth.signOut();
-          return { success: false, error: 'Failed to complete account setup.' };
+        business = newBiz;
+        console.log('Auth: Business created');
+
+        // Create staff record (fire and forget)
+        if (newBiz) {
+          supabase
+            .rpc('insert_staff_record', {
+              p_user_id: authData.user.id,
+              p_business_id: newBiz.id,
+              p_role: 'owner',
+              p_name: businessName,
+              p_email: String(authData.user.email),
+            })
+            .match(() => {});
         }
-
-        await insertStaffRecord(supabase, {
-          user_id: authData.user.id,
-          business_id: newBusiness.id,
-          role: 'owner',
-          name: metadata.business_name || metadata.full_name,
-          email: authData.user.email!,
-        });
-
-        return {
-          success: true,
-          data: {
-            user: authData.user,
-            session: authData.session,
-            business: newBusiness,
-            redirectTo: '/dashboard',
-          },
-        };
+      } catch (e) {
+        console.log('Auth: Business creation skipped');
       }
-
-      await supabase.auth.signOut();
-      return {
-        success: false,
-        error: 'No business account found. Please sign up first.',
-      };
     }
 
-    // Get staff info for role-based redirect
-    let redirectTo = '/dashboard';
-
-    const staffRecord = await getStaffByUserId(
-      supabase,
-      authData.user.id,
-      business.id
-    );
-
-    if (staffRecord) {
-      if (staffRecord.role === 'cashier') {
-        redirectTo = '/scanner';
-      }
-      if (!staffRecord.is_active) {
-        await supabase.auth.signOut();
-        return { success: false, error: 'Your account has been deactivated.' };
-      }
-
-      await updateStaffLastLogin(supabase, staffRecord.id);
-    }
+    console.log('Auth: Login complete');
 
     return {
       success: true,
       data: {
         user: authData.user,
         session: authData.session,
-        business,
-        redirectTo,
+        business: business || undefined,
+        redirectTo: '/dashboard',
       },
     };
   } catch (error: any) {
-    console.error('Login error:', error);
+    console.error('Auth: Unexpected error', error);
     return {
       success: false,
       error: error.message || 'An unexpected error occurred',

@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
-import { completeSignupAfterVerification } from '@/lib/auth';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -17,139 +16,225 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      const supabase = createClient();
+
       try {
-        const supabase = createClient();
+        const params = new URLSearchParams(window.location.search);
+        const tokenHash = params.get('token_hash');
+        const type = params.get('type');
+        const code = params.get('code');
+        const error = params.get('error');
+        const errorDesc = params.get('error_description');
 
-        // Get session from URL hash (Supabase puts tokens in URL fragment)
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        console.log('=== AUTH CALLBACK ===');
+        console.log('token_hash:', tokenHash);
+        console.log('type:', type);
+        console.log('code:', code);
+        console.log('error:', error);
 
-        if (sessionError) {
-          console.error('Session error:', sessionError);
+        // Handle error param
+        if (error) {
           setStatus('error');
-          setMessage('Verification failed. The link may have expired.');
+          setMessage(errorDesc || 'Verification failed');
           return;
         }
 
-        if (!session) {
-          // Try to exchange the code from URL
-          const hashParams = new URLSearchParams(
-            window.location.hash.substring(1)
-          );
-          const accessToken = hashParams.get('access_token');
-          const refreshToken = hashParams.get('refresh_token');
+        // Method 1: Token hash (OTP verification) - RECOMMENDED
+        if (tokenHash && type) {
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type as 'signup' | 'email',
+          });
 
-          if (accessToken && refreshToken) {
-            const { error: setSessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (setSessionError) {
-              console.error('Set session error:', setSessionError);
-              setStatus('error');
-              setMessage('Failed to verify session. Please try logging in.');
-              return;
-            }
-          } else {
+          if (verifyError) {
+            console.error('Verify OTP error:', verifyError);
             setStatus('error');
-            setMessage('Invalid verification link. Please request a new one.');
+            setMessage('Verification link expired. Please request a new one.');
+            return;
+          }
+
+          if (data.user) {
+            await setupAccount(supabase, data.user);
             return;
           }
         }
 
-        // Complete the signup process (create business + staff)
-        setMessage('Setting up your account...');
-        const result = await completeSignupAfterVerification();
+        // Method 2: Code exchange (PKCE) - fallback
+        if (code) {
+          try {
+            const { data, error: exchangeError } =
+              await supabase.auth.exchangeCodeForSession(code);
 
-        if (result.success) {
-          setStatus('success');
-          setMessage('Email verified! Redirecting to dashboard...');
+            if (exchangeError) {
+              console.error('Exchange error:', exchangeError);
+              // Try OTP as fallback
+              setStatus('error');
+              setMessage(
+                'Link expired. Please request a new verification email.'
+              );
+              return;
+            }
 
-          // Clear stored email
-          localStorage.removeItem('pendingVerificationEmail');
-
-          // Redirect after short delay
-          setTimeout(() => {
-            router.push('/dashboard');
-            router.refresh();
-          }, 1500);
-        } else {
-          setStatus('error');
-          setMessage(
-            result.error || 'Failed to complete setup. Please try again.'
-          );
+            if (data.user) {
+              await setupAccount(supabase, data.user);
+              return;
+            }
+          } catch (e) {
+            console.error('Code exchange failed:', e);
+          }
         }
-      } catch (error: any) {
-        console.error('Callback error:', error);
+
+        // Method 3: Check if already authenticated
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          await setupAccount(supabase, user);
+          return;
+        }
+
+        // No valid auth found
         setStatus('error');
-        setMessage('An unexpected error occurred. Please try again.');
+        setMessage('Invalid verification link. Please sign up again.');
+      } catch (err) {
+        console.error('Callback error:', err);
+        setStatus('error');
+        setMessage('Something went wrong. Please try again.');
       }
     };
 
-    handleCallback();
+    const setupAccount = async (supabase: any, user: any) => {
+      try {
+        setMessage('Setting up your account...');
+
+        // Check if business exists
+        const { data: existingBiz } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (!existingBiz) {
+          // Create business
+          const name = user.user_metadata?.business_name || 'My Business';
+
+          const { data: newBiz, error: bizErr } = await supabase
+            .from('businesses')
+            .insert({
+              owner_id: user.id,
+              name,
+              points_per_purchase: 10,
+            })
+            .select()
+            .single();
+
+          if (bizErr && bizErr.code !== '23505') {
+            console.error('Business creation error:', bizErr);
+          }
+
+          // Create staff record
+          if (newBiz) {
+            try {
+              await supabase.rpc('insert_staff_record', {
+                p_user_id: user.id,
+                p_business_id: newBiz.id,
+                p_role: 'owner',
+                p_name: name,
+                p_email: user.email,
+              });
+            } catch (staffErr) {
+              console.error('Staff error (non-fatal):', staffErr);
+            }
+          }
+        }
+
+        // Clear stored email
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('pendingVerificationEmail');
+        }
+
+        setStatus('success');
+        setMessage('Email verified! Redirecting to dashboard...');
+
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
+      } catch (err) {
+        console.error('Setup error:', err);
+        setStatus('error');
+        setMessage('Account setup failed. Please try logging in.');
+      }
+    };
+
+    // Run after small delay
+    setTimeout(handleCallback, 100);
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-          {/* Status Icon */}
-          <div className="mb-6">
-            {status === 'loading' && (
-              <div className="w-16 h-16 mx-auto">
-                <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
-              </div>
-            )}
-            {status === 'success' && (
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
-              </div>
-            )}
-            {status === 'error' && (
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
-                <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
-              </div>
-            )}
-          </div>
-
-          {/* Message */}
-          <h1
-            className={`text-xl font-bold mb-2 ${
-              status === 'error'
-                ? 'text-red-600 dark:text-red-400'
-                : status === 'success'
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-gray-900 dark:text-white'
-            }`}
-          >
-            {status === 'loading' && 'Please wait...'}
-            {status === 'success' && 'Success!'}
-            {status === 'error' && 'Verification Failed'}
-          </h1>
-
-          <p className="text-gray-600 dark:text-gray-400">{message}</p>
-
-          {/* Error Actions */}
-          {status === 'error' && (
-            <div className="mt-6 space-y-3">
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full px-6 py-3 rounded-xl bg-linear-to-r from-blue-600 to-cyan-600 text-white font-semibold hover:shadow-lg transition-all"
-              >
-                Go to Login
-              </button>
-              <button
-                onClick={() => router.push('/signup')}
-                className="w-full px-6 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-              >
-                Sign Up Again
-              </button>
-            </div>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center max-w-md w-full">
+        {/* Icon */}
+        <div
+          className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
+            status === 'loading'
+              ? 'bg-linear-to-br from-blue-500 to-cyan-500'
+              : status === 'success'
+              ? 'bg-linear-to-br from-green-500 to-emerald-500'
+              : 'bg-linear-to-br from-red-500 to-rose-500'
+          }`}
+        >
+          {status === 'loading' && (
+            <Loader2 className="w-10 h-10 text-white animate-spin" />
           )}
+          {status === 'success' && (
+            <CheckCircle className="w-10 h-10 text-white" />
+          )}
+          {status === 'error' && <XCircle className="w-10 h-10 text-white" />}
         </div>
+
+        {/* Title */}
+        <h1
+          className={`text-2xl font-bold mb-3 ${
+            status === 'success'
+              ? 'text-green-600'
+              : status === 'error'
+              ? 'text-red-600'
+              : 'text-gray-900 dark:text-white'
+          }`}
+        >
+          {status === 'loading' && 'Verifying...'}
+          {status === 'success' && 'Success! 🎉'}
+          {status === 'error' && 'Verification Failed'}
+        </h1>
+
+        {/* Message */}
+        <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+
+        {/* Loading bar */}
+        {status === 'loading' && (
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-linear-to-r from-blue-500 to-cyan-500 animate-pulse w-2/3" />
+          </div>
+        )}
+
+        {/* Error actions */}
+        {status === 'error' && (
+          <div className="space-y-3">
+            <button
+              onClick={() => (window.location.href = '/login')}
+              className="w-full py-3.5 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+            >
+              Go to Login
+            </button>
+            <button
+              onClick={() => (window.location.href = '/signup')}
+              className="w-full py-3.5 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+              Sign Up Again
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

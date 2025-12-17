@@ -35,29 +35,32 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
+    console.log('=== LOGIN START ===');
+
     try {
       const response = await loginBusinessOwner({ email, password });
 
+      console.log('=== LOGIN RESPONSE ===', response);
+
       if (!response.success) {
-        setError(response.error || 'Login failed. Please try again.');
+        console.log('=== LOGIN FAILED ===', response.error);
+        setError(response.error || 'Login failed');
         setIsLoading(false);
         return;
       }
 
-      // Success - redirect based on role or original destination
+      localStorage.removeItem('pendingVerificationEmail');
+
       const destination =
         redirectTo || response.data?.redirectTo || '/dashboard';
 
-      // For cashiers, always go to scanner regardless of redirect param
-      if (response.data?.staff?.role === 'cashier') {
-        router.push('/scanner');
-      } else {
-        router.push(destination);
-      }
+      console.log('=== REDIRECTING TO ===', destination);
 
-      router.refresh();
+      // Force redirect
+      window.location.replace(destination);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+      console.error('=== LOGIN ERROR ===', err);
+      setError(err.message || 'An error occurred');
       setIsLoading(false);
     }
   };

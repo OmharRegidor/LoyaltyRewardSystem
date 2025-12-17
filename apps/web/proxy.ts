@@ -1,8 +1,7 @@
-// apps/web/middleware.ts
+// apps/web/proxy.ts
 
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Public routes that don't require authentication
 const publicRoutes = [
   '/login',
   '/signup',
@@ -12,15 +11,18 @@ const publicRoutes = [
   '/auth/callback',
 ];
 
-export function middleware(request: NextRequest) {
+// Next.js 16 uses 'proxy' as the export name
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  console.log('Proxy hit:', pathname);
 
   // Allow public routes
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Allow static files and API routes
+  // Allow static files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -28,23 +30,29 @@ export function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
+  
+  // Check auth cookie - log what we find
+  const allCookies = request.cookies.getAll();
+  const authCookies = allCookies.filter(
+    (cookie) => cookie.name.includes('supabase') || cookie.name.includes('auth')
+  );
 
-  // Check for Supabase auth cookie
-  const hasAuthCookie = request.cookies
-    .getAll()
-    .some(
-      (cookie) =>
-        cookie.name.includes('supabase') && cookie.name.includes('auth')
-    );
+  console.log(
+    'Auth cookies found:',
+    authCookies.map((c) => c.name)
+  );
 
-  // Redirect to login if no auth cookie
+  const hasAuthCookie = authCookies.length > 0;
+
   if (!hasAuthCookie) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    console.log('No auth cookie, redirecting to login');
+    return NextResponse.redirect(
+      new URL('/login?redirect=' + pathname, request.url)
+    );
   }
 
-  // Redirect root to dashboard
+  console.log('Auth cookie found, allowing through');
+
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

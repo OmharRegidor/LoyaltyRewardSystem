@@ -82,20 +82,18 @@ export default function SignupPage() {
         return;
       }
 
-      // Store email for resend functionality
+      // Store email for verification page
       if (typeof window !== 'undefined') {
         localStorage.setItem('pendingVerificationEmail', email);
       }
 
-      // Always redirect to verify email page
-      // User must verify email before accessing dashboard
-      router.push('/verify-email');
+      // Redirect to verify email page with email param
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
       setIsLoading(false);
     }
   };
-
   const benefits = [
     {
       icon: <TrendingUp className="w-8 h-8" />,
