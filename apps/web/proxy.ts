@@ -9,6 +9,7 @@ const publicRoutes = [
   '/reset-password',
   '/verify-email',
   '/auth/callback',
+  '/invite',
 ];
 
 // Next.js 16 uses 'proxy' as the export name
@@ -30,7 +31,7 @@ export function proxy(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
-  
+
   // Check auth cookie - log what we find
   const allCookies = request.cookies.getAll();
   const authCookies = allCookies.filter(

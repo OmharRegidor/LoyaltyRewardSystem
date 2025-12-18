@@ -9,12 +9,14 @@ import {
   LayoutDashboard,
   Users,
   Gift,
-  QrCode,
   BarChart3,
   Settings,
   LogOut,
   Sun,
   Moon,
+  UsersRound,
+  Menu,
+  X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
@@ -35,6 +37,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
@@ -112,16 +115,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.location.href = '/login';
   };
 
+  // Main navigation items
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
     { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
+    { name: 'Team', href: '/dashboard/settings/team', icon: UsersRound },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
+    if (href === '/dashboard/settings/team')
+      return pathname === '/dashboard/settings/team';
+    if (href === '/dashboard/settings')
+      return pathname === '/dashboard/settings' && !pathname.includes('/team');
     return pathname.startsWith(href);
   };
 
@@ -134,25 +143,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 dark:bg-gray-950 flex flex-col fixed h-full z-50">
+      <aside
+        className={`fixed top-0 left-0 z-50 w-64 h-full bg-gray-900 dark:bg-gray-950 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Logo */}
-        <div className="p-6">
+        <div className="p-6 flex items-center justify-between">
           <Link
             href="/dashboard"
             className="text-2xl font-bold text-cyan-400 italic"
           >
             LoyaltyHub
           </Link>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden p-2 text-gray-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                 isActive(item.href)
                   ? 'bg-linear-to-r from-cyan-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/30'
@@ -208,9 +236,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-30">
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 text-gray-400 hover:text-white"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <span className="text-lg font-bold text-cyan-400 italic">
+          LoyaltyHub
+        </span>
+        <div className="w-10" /> {/* Spacer for centering */}
+      </header>
+
       {/* Main Content */}
-      <main className="flex-1 ml-64 min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="p-8">{children}</div>
+      <main className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="p-4 pt-20 lg:p-8 lg:pt-8">{children}</div>
       </main>
     </div>
   );
