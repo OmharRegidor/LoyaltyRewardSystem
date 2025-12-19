@@ -71,7 +71,7 @@ export default function Home() {
             </Link>
             <Link href="/signup">
               <Button className="gradient-primary text-primary-foreground rounded-lg px-6 h-10 shadow-md hover:shadow-lg hover:scale-105 transition-all">
-                Sign Up
+                Sign Up - It's Free!
               </Button>
             </Link>
             <DarkModeToggle />
