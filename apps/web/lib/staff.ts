@@ -96,7 +96,7 @@ export async function getCurrentStaffRole(): Promise<StaffRoleInfo> {
     // Check if user is staff (cashier)
     const { data: staff } = await supabase
       .from('staff')
-      .select('id, role, business_id, branch_name, businesses(name)')
+      .select('*, businesses(name)')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .maybeSingle();
@@ -241,6 +241,15 @@ export async function sendStaffInvite(
       return { success: false, error: 'This person is already a team member' };
     }
 
+    console.log('📤 Creating invite with data:', {
+      business_id: businessId,
+      email: normalizedEmail,
+      name: params.name.trim(),
+      role: 'cashier',
+      branch_name: params.branchName?.trim() || null,
+      invited_by: user.id,
+    });
+
     // Create the invite
     const { data: invite, error } = await supabase
       .from('staff_invites')
@@ -253,15 +262,42 @@ export async function sendStaffInvite(
         invited_by: user.id,
       })
       .select()
-      .single();
+      .maybeSingle();
+
+    console.log('📥 Insert response:', { invite, error });
 
     if (error) {
       console.error('[sendStaffInvite] Insert error:', error);
       return {
         success: false,
-        error: 'Failed to create invite. Please try again.',
+        error: `Failed to create invite: ${error.message}`,
       };
     }
+
+    if (!invite) {
+      console.error('[sendStaffInvite] No invite returned from insert');
+      return {
+        success: false,
+        error: 'Failed to create invite. No data returned.',
+      };
+    }
+
+    if (!invite.token) {
+      console.error(
+        '[sendStaffInvite] Invite created but has no token:',
+        invite
+      );
+      return {
+        success: false,
+        error: 'Failed to generate invite token. Please try again.',
+      };
+    }
+
+    console.log('✅ Invite created successfully:', {
+      id: invite.id,
+      token: invite.token,
+      email: invite.email,
+    });
 
     const typedInvite = invite as StaffInvite;
 
@@ -356,7 +392,7 @@ export async function getInviteByToken(token: string): Promise<{
       .from('staff_invites')
       .select('*, businesses(name)')
       .eq('token', token)
-      .single();
+      .maybeSingle();
 
     if (error || !invite) {
       return { success: false, error: 'Invite not found' };
@@ -383,9 +419,16 @@ export async function getInviteByToken(token: string): Promise<{
   }
 }
 
+// In apps/web/lib/staff.ts - Replace the acceptInvite function
+
 export async function acceptInvite(token: string): Promise<{
   success: boolean;
   error?: string;
+  data?: {
+    businessId: string;
+    role: string;
+  };
+  // For backwards compatibility
   businessId?: string;
   role?: string;
 }> {
@@ -428,6 +471,11 @@ export async function acceptInvite(token: string): Promise<{
 
     return {
       success: true,
+      data: {
+        businessId: result.business_id ?? '',
+        role: result.role ?? 'cashier',
+      },
+      // Backwards compatibility
       businessId: result.business_id,
       role: result.role,
     };
