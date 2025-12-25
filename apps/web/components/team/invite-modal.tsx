@@ -3,8 +3,21 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, Loader2, Copy, Mail, MapPin, User } from 'lucide-react';
-import { sendStaffInvite } from '@/lib/staff';
+import { createClient } from '@/lib/supabase';
+import {
+  X,
+  UserPlus,
+  Mail,
+  User,
+  MapPin,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  CheckCircle,
+  Copy,
+  AlertCircle,
+} from 'lucide-react';
 
 interface InviteModalProps {
   businessId: string;
@@ -12,49 +25,132 @@ interface InviteModalProps {
   onSuccess: () => void;
 }
 
-export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps) {
+type ModalState = 'form' | 'submitting' | 'success' | 'error';
+
+interface CreateAccountResponse {
+  success: boolean;
+  userId?: string;
+  email?: string;
+  error?: string;
+  code?: string;
+}
+
+export function InviteModal({
+  businessId,
+  onClose,
+  onSuccess,
+}: InviteModalProps) {
+  const [state, setState] = useState<ModalState>('form');
+  const [error, setError] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [branchName, setBranchName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [inviteLink, setInviteLink] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = (): boolean => {
+    if (!name.trim()) {
+      setError('Name is required');
+      return false;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setError('Valid email is required');
+      return false;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
     setError('');
-    setIsLoading(true);
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setState('submitting');
+    setError('');
+
+    const supabase = createClient();
 
     try {
-      const result = await sendStaffInvite(businessId, { 
-        name: name.trim(), 
-        email: email.trim().toLowerCase(), 
-        role: 'cashier', // Always cashier - no manager role needed
-        branchName: branchName.trim() || undefined,
-      });
-
-      if (!result.success) {
-        setError(result.error || 'Failed to create invite');
-        setIsLoading(false);
+      // Get current user (owner)
+      const {
+        data: { user: owner },
+      } = await supabase.auth.getUser();
+      if (!owner) {
+        setError('You must be logged in');
+        setState('form');
         return;
       }
 
-      // Check if we have the invite data
-      if ('data' in result && result.data) {
-        setInviteLink(`${window.location.origin}/invite/${result.data.token}`);
-      } else if ('invite' in result && result.invite) {
-        // Fallback for old response format
-        setInviteLink(`${window.location.origin}/invite/${(result as any).invite.token}`);
-      } else {
-        setError('Invite created but could not generate link. Please check Team page.');
+      // Step 1: Create staff account via API route (auto-confirmed email)
+      const response = await fetch('/staff/create-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password: password,
+          fullName: name.trim(),
+        }),
+      });
+
+      const result: CreateAccountResponse = await response.json();
+
+      if (!result.success) {
+        // If user already exists, we can still create the invite
+        if (result.code === 'USER_EXISTS') {
+          setError(
+            'This email is already registered. The cashier can use their existing password to login.'
+          );
+          setState('form');
+          return;
+        }
+        setError(result.error || 'Failed to create account');
+        setState('form');
+        return;
       }
 
-      setIsLoading(false);
+      // Step 2: Create the invite record
+      const { data: invite, error: inviteError } = await supabase
+        .from('staff_invites')
+        .insert({
+          business_id: businessId,
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
+          role: 'cashier',
+          branch_name: branchName.trim() || null,
+          invited_by: owner.id,
+          status: 'pending',
+        })
+        .select('token')
+        .single();
+
+      if (inviteError) {
+        setError(inviteError.message);
+        setState('form');
+        return;
+      }
+
+      // Step 3: Generate invite link
+      const link = `${window.location.origin}/invite/${invite.token}`;
+      setInviteLink(link);
+      setState('success');
     } catch (err) {
-      console.error('Invite error:', err);
-      setError('An unexpected error occurred. Please try again.');
-      setIsLoading(false);
+      console.error('Invite creation error:', err);
+      setError('Failed to create invite. Please try again.');
+      setState('form');
     }
   };
 
@@ -63,7 +159,7 @@ export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps
       await navigator.clipboard.writeText(inviteLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = inviteLink;
@@ -76,137 +172,105 @@ export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps
     }
   };
 
-  const handleClose = () => {
-    if (inviteLink) {
-      onSuccess();
-    } else {
-      onClose();
-    }
+  const handleDone = () => {
+    onSuccess();
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {inviteLink ? 'Invite Created!' : 'Invite Cashier'}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-cyan-400" />
+            {state === 'success' ? 'Invite Created!' : 'Invite Cashier'}
           </h2>
           <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            onClick={onClose}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          {inviteLink ? (
+          {state === 'success' ? (
             // Success State
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              
-              <p className="text-gray-600 dark:text-gray-400 mb-1">
-                Invite created for
-              </p>
-              <p className="font-semibold text-gray-900 dark:text-white mb-1">{name}</p>
-              {branchName && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Branch: {branchName}
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                </div>
+                <p className="text-gray-300">
+                  Invite created for{' '}
+                  <span className="text-white font-medium">{name}</span>
                 </p>
-              )}
-              
-              <p className="text-sm text-gray-500 mb-4">
-                Share this link with them to join your team:
-              </p>
+                {branchName && (
+                  <p className="text-gray-500 text-sm">Branch: {branchName}</p>
+                )}
+              </div>
 
-              {/* Invite Link Box */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-4">
+              {/* Invite Link */}
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <p className="text-sm text-gray-400 mb-2">Share this link:</p>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={inviteLink}
-                    readOnly
-                    className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-200 outline-none font-mono"
-                    style={{ minWidth: 0 }}
-                  />
+                  <code className="flex-1 bg-gray-900 px-3 py-2 rounded-lg text-cyan-400 text-sm truncate">
+                    {inviteLink}
+                  </code>
                   <button
                     onClick={copyLink}
-                    className={`px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium shrink-0 ${
-                      copied 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600' 
-                        : 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 hover:bg-cyan-200 dark:hover:bg-cyan-900/50'
+                    className={`p-2 rounded-lg transition-colors ${
+                      copied
+                        ? 'bg-green-600 hover:bg-green-700'
+                        : 'bg-cyan-600 hover:bg-cyan-700'
                     }`}
                   >
                     {copied ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Copied!
-                      </>
+                      <CheckCircle className="w-5 h-5 text-white" />
                     ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
+                      <Copy className="w-5 h-5 text-white" />
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Important Notice */}
-              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 mb-6 text-left">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-                  ⚠️ Important: Share this link manually
-                </p>
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  No email is sent automatically. Please send this link to <strong>{name}</strong> via SMS, Messenger, or any messaging app.
-                </p>
-              </div>
-
-              {/* Steps */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 text-left">
-                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-                  What happens next:
-                </p>
-                <ol className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
-                  <li>{name} opens the link you shared</li>
-                  <li>They create an account or login</li>
-                  <li>They're added to your team as a Cashier</li>
-                  <li>They can start scanning customer QR codes</li>
-                </ol>
+              {/* Password Reminder */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="text-amber-200 font-medium">
+                      Share with your cashier:
+                    </p>
+                    <ul className="text-amber-200/70 mt-2 space-y-1">
+                      <li>• The invite link above</li>
+                      <li>
+                        • Password:{' '}
+                        <code className="bg-amber-900/30 px-2 py-0.5 rounded text-amber-300">
+                          {password}
+                        </code>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               <button
-                onClick={handleClose}
-                className="w-full py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                onClick={handleDone}
+                className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium transition-colors"
               >
                 Done
               </button>
             </div>
           ) : (
             // Form State
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                </div>
-              )}
-
-              {/* Info Banner */}
-              <div className="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-xl">
-                <p className="text-sm text-cyan-800 dark:text-cyan-200">
-                  <strong>Cashier Role:</strong> Can only scan customer QR codes and award points. No access to dashboard, reports, or settings.
-                </p>
-              </div>
-
-              {/* Name Field */}
+            <div className="space-y-4">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Cashier's Full Name <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Cashier Name <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -214,18 +278,17 @@ export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Maria Santos"
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all text-gray-900 dark:text-white placeholder-gray-400"
-                    required
-                    disabled={isLoading}
+                    placeholder="Enter cashier's name"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    disabled={state === 'submitting'}
                   />
                 </div>
               </div>
 
-              {/* Email Field */}
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Address <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -233,21 +296,17 @@ export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="maria@example.com"
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all text-gray-900 dark:text-white placeholder-gray-400"
-                    required
-                    disabled={isLoading}
+                    placeholder="cashier@email.com"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    disabled={state === 'submitting'}
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  This email will be used for their login account
-                </p>
               </div>
 
-              {/* Branch Name Field (Optional) */}
+              {/* Branch Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Branch Name <span className="text-gray-400 font-normal">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Branch Name <span className="text-gray-500">(optional)</span>
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -255,42 +314,101 @@ export function InviteModal({ businessId, onClose, onSuccess }: InviteModalProps
                     type="text"
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
-                    placeholder="e.g., SM Mall Branch, Main Store"
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all text-gray-900 dark:text-white placeholder-gray-400"
-                    disabled={isLoading}
+                    placeholder="e.g., San Pedro Branch"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    disabled={state === 'submitting'}
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Useful if you have multiple store locations
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-700 pt-4">
+                <p className="text-sm text-gray-400 mb-4">
+                  Set login credentials for this cashier:
                 </p>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isLoading}
-                  className="flex-1 py-3 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading || !name.trim() || !email.trim()}
-                  className="flex-1 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Invite'
-                  )}
-                </button>
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full pl-12 pr-12 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    disabled={state === 'submitting'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
-            </form>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm Password <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm password"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    disabled={state === 'submitting'}
+                  />
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <p className="text-sm text-blue-300">
+                  💡 You'll need to share this password with your cashier along
+                  with the invite link.
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                onClick={handleSubmit}
+                disabled={state === 'submitting'}
+                className="w-full py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {state === 'submitting' ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Creating Account & Invite...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5" />
+                    Create Invite
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>

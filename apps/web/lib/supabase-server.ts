@@ -3,10 +3,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '../../../packages/shared/types/database';
-
-// ============================================
-// SERVER CLIENT (for server components, API routes)
-// ============================================
+/**
+ * Creates a Supabase client for Server Components and API Routes
+ * Use this in: Server Components, Route Handlers, Server Actions
+ */
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
@@ -31,5 +31,8 @@ export async function createServerSupabaseClient() {
     }
   );
 }
+
+// Alias for cleaner imports
+export const createClient = createServerSupabaseClient;
 
 export type { Database };

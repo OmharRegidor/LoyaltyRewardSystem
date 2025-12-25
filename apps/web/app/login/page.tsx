@@ -4,6 +4,8 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase';
 import {
   Mail,
   Lock,
@@ -15,18 +17,19 @@ import {
   Users,
   AlertCircle,
 } from 'lucide-react';
-import { loginBusinessOwner } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Check for error params (e.g., from middleware redirect)
+  // Check for error/redirect params
   const urlError = searchParams.get('error');
   const redirectTo = searchParams.get('redirect');
 
@@ -35,42 +38,98 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    console.log('=== LOGIN START ===');
+    const supabase = createClient();
 
     try {
-      const response = await loginBusinessOwner({ email, password });
+      // Sign in with Supabase
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password,
+        });
 
-      console.log('=== LOGIN RESPONSE ===', response);
-
-      if (!response.success) {
-        console.log('=== LOGIN FAILED ===', response.error);
-        setError(response.error || 'Login failed');
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password');
+        } else {
+          setError(signInError.message);
+        }
         setIsLoading(false);
         return;
       }
 
-      localStorage.removeItem('pendingVerificationEmail');
+      if (!data.user) {
+        setError('Login failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
 
-      const destination =
-        redirectTo || response.data?.redirectTo || '/dashboard';
+      // Handle "Remember Me" - set session persistence
+      if (rememberMe) {
+        // Session will persist for 30 days (default Supabase behavior)
+        // Store preference in localStorage
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        // Session expires when browser closes
+        // We'll handle this by not storing the preference
+        localStorage.removeItem('rememberMe');
 
-      console.log('=== REDIRECTING TO ===', destination);
+        // Set session to expire on browser close by updating session
+        // Note: Supabase handles this via cookie settings
+      }
 
-      // Force redirect
-      window.location.replace(destination);
-    } catch (err: any) {
-      console.error('=== LOGIN ERROR ===', err);
-      setError(err.message || 'An error occurred');
+      // Check if user is business owner
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', data.user.id)
+        .maybeSingle();
+
+      if (business) {
+        // Is owner - redirect to dashboard or requested page
+        const destination = redirectTo || '/dashboard';
+        window.location.replace(destination);
+        return;
+      }
+
+      // Check if user is staff
+      const { data: staff } = await supabase
+        .from('staff')
+        .select('id, role, is_active')
+        .eq('user_id', data.user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (staff) {
+        // Is staff - redirect to staff page
+        window.location.replace('/staff');
+        return;
+      }
+
+      // Not owner or staff - show error
+      setError('No account found. Please contact your administrator.');
+      await supabase.auth.signOut();
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
 
-  // Show URL-based errors
-  const displayError =
-    error ||
-    (urlError === 'deactivated'
-      ? 'Your account has been deactivated. Contact your manager.'
-      : '');
+  // Display error from URL params
+  const getDisplayError = () => {
+    if (error) return error;
+    if (urlError === 'unauthorized')
+      return 'You do not have permission to access that page.';
+    if (urlError === 'deactivated')
+      return 'Your account has been deactivated. Contact your manager.';
+    if (urlError === 'session_expired')
+      return 'Your session has expired. Please sign in again.';
+    return '';
+  };
+
+  const displayError = getDisplayError();
 
   const features = [
     {
@@ -92,9 +151,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
-      {/* Left Side - Brand Showcase (unchanged) */}
+      {/* Left Side - Brand Showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-blue-700 to-cyan-600">
-        {/* ... keep existing left side code ... */}
+        {/* Background Effects */}
         <div className="absolute inset-0">
           <div
             className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
@@ -110,6 +169,7 @@ export default function LoginPage() {
           />
         </div>
 
+        {/* Grid Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
@@ -121,6 +181,7 @@ export default function LoginPage() {
           />
         </div>
 
+        {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
           <div className="mb-12 transform hover:scale-105 transition-transform duration-300">
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
@@ -222,6 +283,7 @@ export default function LoginPage() {
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white placeholder-gray-400"
                   required
                   disabled={isLoading}
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -245,6 +307,7 @@ export default function LoginPage() {
                   className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
                   required
                   disabled={isLoading}
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -266,19 +329,21 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
                   disabled={isLoading}
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
-                  Remember me
+                  Remember me!
                 </span>
               </label>
-              <a
+              <Link
                 href="/forgot-password"
                 className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Sign In Button */}
@@ -312,12 +377,23 @@ export default function LoginPage() {
           {/* Sign Up Link */}
           <p className="text-center text-gray-600 dark:text-gray-400">
             Don't have an account?{' '}
-            <a
+            <Link
               href="/signup"
               className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
             >
               Sign up
-            </a>
+            </Link>
+          </p>
+
+          {/* Staff Login Link */}
+          <p className="text-center text-gray-500 dark:text-gray-500 text-sm mt-4">
+            Are you a staff member?{' '}
+            <Link
+              href="/staff/login"
+              className="font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+            >
+              Staff Login
+            </Link>
           </p>
         </div>
       </div>
