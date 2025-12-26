@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, HelpCircle } from "lucide-react"
-import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface QRScannerProps {
-  onScan: (result: string) => void
+  onScan: (result: string) => void;
 }
 
 export function QRScanner({ onScan }: QRScannerProps) {
-  const [isCameraActive, setIsCameraActive] = useState(true)
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const [isCameraActive, setIsCameraActive] = useState(true);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Request camera permission
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "environment" } })
+      .getUserMedia({ video: { facingMode: 'environment' } })
       .then(() => setHasPermission(true))
-      .catch(() => setHasPermission(false))
-  }, [])
+      .catch(() => setHasPermission(false));
+  }, []);
 
   const handleSimulatedScan = () => {
-    onScan("CUST_" + Math.random().toString(36).substr(2, 9))
-  }
+    onScan('CUST_' + Math.random().toString(36).substr(2, 9));
+  };
 
   return (
     <div className="h-full bg-black relative overflow-hidden flex flex-col">
@@ -50,13 +50,16 @@ export function QRScanner({ onScan }: QRScannerProps) {
         transition={{ duration: 0.5 }}
       >
         {/* Simulated camera feed with gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/50 to-transparent" />
 
         {/* QR Viewfinder Frame */}
         <motion.div
           className="absolute w-64 h-64 border-4 border-cyan-400 rounded-2xl"
           animate={{
-            boxShadow: ["0 0 0 0 rgba(6, 182, 212, 0.4)", "0 0 0 30px rgba(6, 182, 212, 0)"],
+            boxShadow: [
+              '0 0 0 0 rgba(6, 182, 212, 0.4)',
+              '0 0 0 30px rgba(6, 182, 212, 0)',
+            ],
           }}
           transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
         >
@@ -89,8 +92,12 @@ export function QRScanner({ onScan }: QRScannerProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <p className="text-white text-lg font-medium">Point QR code at camera</p>
-        <p className="text-gray-300 text-sm mt-2">Scanning will start automatically</p>
+        <p className="text-white text-lg font-medium">
+          Point QR code at camera
+        </p>
+        <p className="text-gray-300 text-sm mt-2">
+          Scanning will start automatically
+        </p>
 
         {/* Test Scan Button */}
         <motion.button
@@ -114,11 +121,13 @@ export function QRScanner({ onScan }: QRScannerProps) {
           >
             <div className="text-center text-white space-y-4 px-6">
               <h2 className="text-2xl font-bold">Camera Permission Denied</h2>
-              <p className="text-gray-300">Please enable camera access to use the QR scanner</p>
+              <p className="text-gray-300">
+                Please enable camera access to use the QR scanner
+              </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
