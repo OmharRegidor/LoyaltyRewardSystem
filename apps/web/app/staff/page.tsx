@@ -287,42 +287,95 @@ export default function StaffScannerPage() {
   // CUSTOMER LOOKUP
   // ============================================
 
-  const lookupCustomer = async (customerId: string) => {
+  const lookupCustomer = async (scannedCode: string) => {
     const supabase = createClient();
 
+    console.log('Looking up customer with code:', scannedCode);
+
     try {
-      // Try to find customer by ID or QR code URL pattern
       let customerData = null;
 
-      // Check if it's a short code or full ID
-      if (customerId.length < 36) {
-        // Short code - search in qr_code_url
-        const { data } = await supabase
+      // Method 1: Try exact match on qr_code_url (full URL)
+      const fullUrl = scannedCode.startsWith('loyaltyhub://')
+        ? scannedCode
+        : `loyaltyhub://customer/${scannedCode}`;
+
+      console.log('Trying exact match:', fullUrl);
+
+      const { data: exactMatch } = await supabase
+        .from('customers')
+        .select('id, user_id, total_points, qr_code_url')
+        .eq('qr_code_url', fullUrl)
+        .maybeSingle();
+
+      if (exactMatch) {
+        console.log('Found by exact match:', exactMatch.id);
+        customerData = exactMatch;
+      }
+
+      // Method 2: Try partial match (case-insensitive) if exact match fails
+      if (!customerData) {
+        console.log('Trying partial match with:', scannedCode);
+
+        const { data: partialMatch } = await supabase
           .from('customers')
-          .select('id, user_id, total_points')
-          .like('qr_code_url', `%${customerId}%`)
+          .select('id, user_id, total_points, qr_code_url')
+          .ilike('qr_code_url', `%${scannedCode}%`)
           .maybeSingle();
-        customerData = data;
-      } else {
-        // Full UUID
-        const { data } = await supabase
+
+        if (partialMatch) {
+          console.log('Found by partial match:', partialMatch.id);
+          customerData = partialMatch;
+        }
+      }
+
+      // Method 3: Try by customer ID directly (if UUID was scanned)
+      if (!customerData && scannedCode.length === 36) {
+        console.log('Trying UUID match:', scannedCode);
+
+        const { data: idMatch } = await supabase
           .from('customers')
-          .select('id, user_id, total_points')
-          .eq('id', customerId)
+          .select('id, user_id, total_points, qr_code_url')
+          .eq('id', scannedCode)
           .maybeSingle();
-        customerData = data;
+
+        if (idMatch) {
+          console.log('Found by ID match:', idMatch.id);
+          customerData = idMatch;
+        }
       }
 
       if (!customerData) {
+        console.log('Customer not found for code:', scannedCode);
         setError('Customer not found. Please try again.');
         setScannerState('error');
         return;
       }
 
-      // Generate display name from customer ID
-      const customerName = `Customer #${customerData.id
-        .slice(-6)
-        .toUpperCase()}`;
+      // Get customer name from auth.users metadata via API
+      let customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
+
+      // Try to get the actual name from user metadata
+      try {
+        const response = await fetch(
+          `/api/customer/${customerData.user_id}/profile`
+        );
+        if (response.ok) {
+          const profile = await response.json();
+          if (profile.name) {
+            customerName = profile.name;
+          }
+        }
+      } catch {
+        // Use default name if API fails
+        console.log('Could not fetch customer profile, using default name');
+      }
+
+      console.log('Customer found:', {
+        id: customerData.id,
+        name: customerName,
+        points: customerData.total_points,
+      });
 
       setCustomer({
         id: customerData.id,
