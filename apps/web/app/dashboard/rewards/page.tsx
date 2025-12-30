@@ -5,108 +5,254 @@ import { RewardsHeader } from '@/components/rewards/header';
 import { RewardsGrid } from '@/components/rewards/grid';
 import { CreateRewardModal } from '@/components/rewards/create-modal';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
 
-type Reward = {
-  id: number;
+// ============================================
+// TYPES
+// ============================================
+
+interface Reward {
+  id: string;
   title: string;
   description: string;
   pointsCost: number;
   stock: number;
   category: string;
-  status: 'active' | 'inactive'; // Ensuring status can only be "active" or "inactive"
+  status: 'active' | 'inactive';
   image: string;
-};
+  isVisible: boolean;
+}
+
+interface RewardFromDB {
+  id: string;
+  title: string;
+  description: string | null;
+  points_cost: number;
+  stock: number | null;
+  category: string | null;
+  is_active: boolean | null;
+  is_visible: boolean | null;
+  image_url: string | null;
+  created_at: string | null;
+}
+
+interface CreateRewardData {
+  title: string;
+  description: string;
+  pointsCost: number;
+  stock: number;
+  category: string;
+  expiryDate?: string;
+  image?: string;
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function RewardsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [rewards, setRewards] = useState<Reward[]>([
-    {
-      id: 1,
-      title: 'Free Coffee',
-      description: 'Get a free regular coffee',
-      pointsCost: 250,
-      stock: 45,
-      category: 'Food',
-      status: 'active',
-      image: '/free-coffee-reward.jpg',
-    },
-    {
-      id: 2,
-      title: '20% Discount',
-      description: 'Enjoy 20% off on your next purchase',
-      pointsCost: 500,
-      stock: 0,
-      category: 'Discount',
-      status: 'active',
-      image: '/discount-coupon.png',
-    },
-    {
-      id: 3,
-      title: 'Free Pastry',
-      description: 'Choice of any pastry item',
-      pointsCost: 200,
-      stock: 32,
-      category: 'Food',
-      status: 'active',
-      image: '/pastry-basket.jpg',
-    },
-    {
-      id: 4,
-      title: 'Birthday Special',
-      description: '₱500 worth of items free on your birthday',
-      pointsCost: 1000,
-      stock: 8,
-      category: 'Service',
-      status: 'active',
-      image: '/birthday-celebration.jpg',
-    },
-    {
-      id: 5,
-      title: 'Free Lunch',
-      description: 'Full meal combo on us',
-      pointsCost: 750,
-      stock: 0,
-      category: 'Food',
-      status: 'inactive',
-      image: '/lunch-meal-combo.jpg',
-    },
-    {
-      id: 6,
-      title: 'Double Points Day',
-      description: 'Earn 2x points on next visit',
-      pointsCost: 300,
-      stock: 100,
-      category: 'Product',
-      status: 'active',
-      image: '/double-points-bonus.jpg',
-    },
-  ]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [businessId, setBusinessId] = useState<string | null>(null);
 
-  const handleCreateReward = (newReward: any) => {
-    const reward = {
-      id: Math.max(...rewards.map((r) => r.id), 0) + 1,
-      ...newReward,
-      status: 'active',
-    };
-    setRewards([...rewards, reward]);
-    setIsCreateOpen(false);
+  // ============================================
+  // LOAD REWARDS FROM SUPABASE
+  // ============================================
+
+  useEffect(() => {
+    loadRewards();
+  }, []);
+
+  const loadRewards = async () => {
+    const supabase = createClient();
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get business ID
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single();
+
+      if (!business) return;
+      setBusinessId(business.id);
+
+      // Fetch rewards from database
+      const { data: rewardsData, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading rewards:', error);
+        return;
+      }
+
+      // Transform database format to UI format
+      const transformedRewards: Reward[] = (rewardsData || []).map((r: RewardFromDB) => ({
+        id: r.id,
+        title: r.title,
+        description: r.description || '',
+        pointsCost: r.points_cost,
+        stock: r.stock ?? 0,
+        category: r.category || 'Food',
+        status: (r.is_active && r.is_visible && (r.stock === null || r.stock === -1 || r.stock > 0)) 
+          ? 'active' 
+          : 'inactive',
+        image: r.image_url || '/reward-item.png',
+        isVisible: r.is_visible ?? true,
+      }));
+
+      setRewards(transformedRewards);
+    } catch (error) {
+      console.error('Load rewards error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteReward = (id: number) => {
-    setRewards(rewards.filter((r) => r.id !== id));
+  // ============================================
+  // CREATE REWARD
+  // ============================================
+
+  const handleCreateReward = async (newReward: CreateRewardData) => {
+    if (!businessId) return;
+
+    const supabase = createClient();
+
+    try {
+      const { data, error } = await supabase
+        .from('rewards')
+        .insert({
+          business_id: businessId,
+          title: newReward.title,
+          description: newReward.description,
+          points_cost: newReward.pointsCost,
+          stock: newReward.stock,
+          category: newReward.category.toLowerCase(),
+          image_url: newReward.image || null,
+          is_active: true,
+          is_visible: true,
+          valid_until: newReward.expiryDate || null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating reward:', error);
+        return;
+      }
+
+      // Add to local state
+      const createdReward: Reward = {
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        pointsCost: data.points_cost,
+        stock: data.stock ?? 0,
+        category: newReward.category,
+        status: 'active',
+        image: data.image_url || '/reward-item.png',
+        isVisible: true,
+      };
+
+      setRewards([createdReward, ...rewards]);
+      setIsCreateOpen(false);
+    } catch (error) {
+      console.error('Create reward error:', error);
+    }
   };
 
-  const handleToggleStatus = (id: number) => {
-    setRewards(
-      rewards.map((r) =>
-        r.id === id
-          ? { ...r, status: r.status === 'active' ? 'inactive' : 'active' }
-          : r
-      )
+  // ============================================
+  // DELETE REWARD
+  // ============================================
+
+  const handleDeleteReward = async (id: string) => {
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting reward:', error);
+        return;
+      }
+
+      // Remove from local state
+      setRewards(rewards.filter((r) => r.id !== id));
+    } catch (error) {
+      console.error('Delete reward error:', error);
+    }
+  };
+
+  // ============================================
+  // TOGGLE STATUS (Hide/Show)
+  // ============================================
+
+  const handleToggleStatus = async (id: string) => {
+    const supabase = createClient();
+    const reward = rewards.find((r) => r.id === id);
+    if (!reward) return;
+
+    const newIsVisible = !reward.isVisible;
+
+    try {
+      const { error } = await supabase
+        .from('rewards')
+        .update({ is_visible: newIsVisible })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error toggling reward status:', error);
+        return;
+      }
+
+      // Update local state
+      setRewards(
+        rewards.map((r) =>
+          r.id === id
+            ? { 
+                ...r, 
+                isVisible: newIsVisible,
+                status: newIsVisible && r.stock !== 0 ? 'active' : 'inactive'
+              }
+            : r
+        )
+      );
+    } catch (error) {
+      console.error('Toggle status error:', error);
+    }
+  };
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
     );
-  };
+  }
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <DashboardLayout>

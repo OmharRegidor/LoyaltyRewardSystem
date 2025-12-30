@@ -27,7 +27,7 @@ interface StaffData {
   businessId: string;
   businessName: string;
   userName: string;
-  pointsPerPurchase: number;
+  pesosPerPoint: number; // How many pesos = 1 point
 }
 
 interface CustomerData {
@@ -114,7 +114,7 @@ export default function StaffScannerPage() {
         // Check if owner
         const { data: business } = await supabase
           .from('businesses')
-          .select('id, name, points_per_purchase')
+          .select('id, name, pesos_per_point')
           .eq('owner_id', user.id)
           .maybeSingle();
 
@@ -127,7 +127,7 @@ export default function StaffScannerPage() {
               user.user_metadata?.full_name ||
               user.email?.split('@')[0] ||
               'Owner',
-            pointsPerPurchase: business.points_per_purchase || 1,
+            pesosPerPoint: business.pesos_per_point || 10,
           });
           setIsLoading(false);
           return;
@@ -140,7 +140,7 @@ export default function StaffScannerPage() {
       // Get business info
       const { data: business } = await supabase
         .from('businesses')
-        .select('name, points_per_purchase')
+        .select('name, pesos_per_point')
         .eq('id', staffRecord.business_id)
         .single();
 
@@ -149,7 +149,7 @@ export default function StaffScannerPage() {
         businessId: staffRecord.business_id,
         businessName: business?.name || 'Business',
         userName: staffRecord.name || user.user_metadata?.full_name || 'Staff',
-        pointsPerPurchase: business?.points_per_purchase || 1,
+        pesosPerPoint: business?.pesos_per_point || 10,
       });
 
       // Load today's stats
@@ -268,15 +268,9 @@ export default function StaffScannerPage() {
     // Stop scanner immediately
     await stopScanner();
 
-    // Parse QR code - format: loyaltyhub://customer/{id} or just customer ID
-    let customerId = decodedText;
-
-    if (decodedText.startsWith('loyaltyhub://customer/')) {
-      customerId = decodedText.replace('loyaltyhub://customer/', '');
-    }
-
-    // Look up customer
-    await lookupCustomer(customerId);
+    // Pass the full scanned text to lookupCustomer
+    // It will handle both full URL and short code formats
+    await lookupCustomer(decodedText);
   }, []);
 
   const onScanFailure = (error: string) => {
@@ -302,11 +296,15 @@ export default function StaffScannerPage() {
 
       console.log('Trying exact match:', fullUrl);
 
-      const { data: exactMatch } = await supabase
+      const { data: exactMatch, error: exactError } = await supabase
         .from('customers')
         .select('id, user_id, total_points, qr_code_url')
         .eq('qr_code_url', fullUrl)
         .maybeSingle();
+
+      if (exactError) {
+        console.error('Exact match error:', exactError);
+      }
 
       if (exactMatch) {
         console.log('Found by exact match:', exactMatch.id);
@@ -315,13 +313,22 @@ export default function StaffScannerPage() {
 
       // Method 2: Try partial match (case-insensitive) if exact match fails
       if (!customerData) {
-        console.log('Trying partial match with:', scannedCode);
+        // Extract short code for partial matching
+        const shortCode = scannedCode.startsWith('loyaltyhub://customer/')
+          ? scannedCode.replace('loyaltyhub://customer/', '')
+          : scannedCode;
 
-        const { data: partialMatch } = await supabase
+        console.log('Trying partial match with:', shortCode);
+
+        const { data: partialMatch, error: partialError } = await supabase
           .from('customers')
           .select('id, user_id, total_points, qr_code_url')
-          .ilike('qr_code_url', `%${scannedCode}%`)
+          .ilike('qr_code_url', `%${shortCode}%`)
           .maybeSingle();
+
+        if (partialError) {
+          console.error('Partial match error:', partialError);
+        }
 
         if (partialMatch) {
           console.log('Found by partial match:', partialMatch.id);
@@ -333,11 +340,15 @@ export default function StaffScannerPage() {
       if (!customerData && scannedCode.length === 36) {
         console.log('Trying UUID match:', scannedCode);
 
-        const { data: idMatch } = await supabase
+        const { data: idMatch, error: idError } = await supabase
           .from('customers')
           .select('id, user_id, total_points, qr_code_url')
           .eq('id', scannedCode)
           .maybeSingle();
+
+        if (idError) {
+          console.error('UUID match error:', idError);
+        }
 
         if (idMatch) {
           console.log('Found by ID match:', idMatch.id);
@@ -366,7 +377,7 @@ export default function StaffScannerPage() {
             customerName = profile.name;
           }
         }
-      } catch {
+      } catch (profileErr) {
         // Use default name if API fails
         console.log('Could not fetch customer profile, using default name');
       }
@@ -399,7 +410,8 @@ export default function StaffScannerPage() {
   useEffect(() => {
     if (transactionAmount && staffData) {
       const amount = parseFloat(transactionAmount) || 0;
-      const points = Math.floor(amount * staffData.pointsPerPurchase);
+      // Points = Amount / PesosPerPoint (e.g., ₱100 / 10 = 10 points)
+      const points = Math.floor(amount / staffData.pesosPerPoint);
       setCalculatedPoints(points);
     } else {
       setCalculatedPoints(0);
@@ -512,7 +524,7 @@ export default function StaffScannerPage() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-gray-900 to-gray-950 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white">
       {/* Header */}
       <header className="p-4 flex items-center justify-between border-b border-gray-800">
         <div>
@@ -539,7 +551,7 @@ export default function StaffScannerPage() {
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <button
               onClick={startScanner}
-              className="w-40 h-40 bg-linear-to-br from-cyan-600 to-blue-600 rounded-full flex flex-col items-center justify-center mb-6 hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95"
+              className="w-40 h-40 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full flex flex-col items-center justify-center mb-6 hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95"
             >
               <QrCode className="w-14 h-14 mb-2" />
               <span className="font-semibold text-sm">Scan Customer</span>
@@ -641,7 +653,7 @@ export default function StaffScannerPage() {
             </div>
 
             {/* Points Calculation */}
-            <div className="bg-linear-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 rounded-xl p-4 mb-6">
+            <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Coins className="w-5 h-5 text-cyan-400" />
@@ -652,7 +664,7 @@ export default function StaffScannerPage() {
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                Rate: {staffData?.pointsPerPurchase} point(s) per ₱1
+                Rate: ₱{staffData?.pesosPerPoint} = 1 point
               </p>
             </div>
 
@@ -667,7 +679,7 @@ export default function StaffScannerPage() {
               <button
                 onClick={awardPoints}
                 disabled={calculatedPoints <= 0}
-                className="flex-1 py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Award Points
               </button>
@@ -707,7 +719,7 @@ export default function StaffScannerPage() {
 
             <button
               onClick={resetScanner}
-              className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
             >
               Scan Next Customer
             </button>
@@ -730,7 +742,7 @@ export default function StaffScannerPage() {
             </p>
             <button
               onClick={resetScanner}
-              className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
             >
               Try Again
             </button>

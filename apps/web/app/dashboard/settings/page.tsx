@@ -1,347 +1,484 @@
+// apps/web/app/dashboard/settings/page.tsx
+
 'use client';
 
-import type React from 'react';
-
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import {
   Building2,
-  Bell,
+  Coins,
   Lock,
-  CreditCard,
-  Zap,
   Save,
   Upload,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Calculator,
+  Info,
 } from 'lucide-react';
-import { useState } from 'react';
+import { createClient } from '@/lib/supabase';
+
+// ============================================
+// TYPES
+// ============================================
+
+interface FormState {
+  businessName: string;
+  logoUrl: string | null;
+  pesosPerPoint: number;
+  minPurchase: number;
+  maxPointsPerTransaction: string;
+  pointsExpiryDays: string;
+}
+
+type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
+
+// ============================================
+// PRESET OPTIONS
+// ============================================
+
+const POINTS_RATE_PRESETS = [
+  {
+    label: '₱5 = 1 point',
+    value: 5,
+    description: 'Generous - Great for cafes',
+  },
+  { label: '₱10 = 1 point', value: 10, description: 'Standard - Most common' },
+  { label: '₱20 = 1 point', value: 20, description: 'Balanced - Retail shops' },
+  {
+    label: '₱50 = 1 point',
+    value: 50,
+    description: 'Conservative - High-value items',
+  },
+  {
+    label: '₱100 = 1 point',
+    value: 100,
+    description: 'Premium - Luxury businesses',
+  },
+  { label: 'Custom', value: 0, description: 'Set your own rate' },
+];
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function SettingsPage() {
-  const [formData, setFormData] = useState({
-    businessName: "Juan's Cafe",
-    email: 'juan@cafe.com',
-    phone: '+63 912 345 6789',
-    address: 'Manila, Philippines',
-    website: 'juanscafe.com',
-    timezone: 'UTC+8 (Asia/Manila)',
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [businessId, setBusinessId] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState<FormState>({
+    businessName: '',
+    logoUrl: null,
+    pesosPerPoint: 10,
+    minPurchase: 0,
+    maxPointsPerTransaction: '',
+    pointsExpiryDays: '',
   });
+
+  const [selectedPreset, setSelectedPreset] = useState<number>(10);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [previewAmount, setPreviewAmount] = useState('500');
+
+  // ============================================
+  // LOAD SETTINGS
+  // ============================================
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    const supabase = createClient();
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: business, error } = await supabase
+        .from('businesses')
+        .select(
+          'id, name, logo_url, pesos_per_point, min_purchase_for_points, max_points_per_transaction, points_expiry_days'
+        )
+        .eq('owner_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (business) {
+        setBusinessId(business.id);
+        setFormData({
+          businessName: business.name || '',
+          logoUrl: business.logo_url,
+          pesosPerPoint: business.pesos_per_point || 10,
+          minPurchase: business.min_purchase_for_points || 0,
+          maxPointsPerTransaction:
+            business.max_points_per_transaction?.toString() || '',
+          pointsExpiryDays: business.points_expiry_days?.toString() || '',
+        });
+
+        // Set preset selection
+        const matchingPreset = POINTS_RATE_PRESETS.find(
+          (p) => p.value === business.pesos_per_point
+        );
+        if (matchingPreset && matchingPreset.value !== 0) {
+          setSelectedPreset(matchingPreset.value);
+          setShowCustomInput(false);
+        } else {
+          setSelectedPreset(0);
+          setShowCustomInput(true);
+        }
+      }
+    } catch (error) {
+      console.error('Load settings error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ============================================
+  // SAVE SETTINGS
+  // ============================================
+
+  const saveSettings = async () => {
+    if (!businessId) return;
+
+    setSaveStatus('saving');
+    setErrorMessage('');
+
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({
+          name: formData.businessName,
+          logo_url: formData.logoUrl,
+          pesos_per_point: formData.pesosPerPoint,
+          min_purchase_for_points: formData.minPurchase,
+          max_points_per_transaction: formData.maxPointsPerTransaction
+            ? parseInt(formData.maxPointsPerTransaction)
+            : null,
+          points_expiry_days: formData.pointsExpiryDays
+            ? parseInt(formData.pointsExpiryDays)
+            : null,
+        })
+        .eq('id', businessId);
+
+      if (error) throw error;
+
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Save settings error:', error);
+      setSaveStatus('error');
+      setErrorMessage('Failed to save settings. Please try again.');
+    }
+  };
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+
+  const handlePresetChange = (value: number) => {
+    setSelectedPreset(value);
+    if (value === 0) {
+      setShowCustomInput(true);
+    } else {
+      setShowCustomInput(false);
+      setFormData((prev) => ({ ...prev, pesosPerPoint: value }));
+    }
+  };
+
+  const handleCustomRateChange = (value: string) => {
+    const numValue = parseInt(value) || 1;
+    setFormData((prev) => ({ ...prev, pesosPerPoint: Math.max(1, numValue) }));
+  };
+
+  // Calculate preview points
+  const calculatePoints = (amount: number): number => {
+    if (formData.pesosPerPoint <= 0) return 0;
+    let points = Math.floor(amount / formData.pesosPerPoint);
+
+    if (formData.maxPointsPerTransaction) {
+      const maxPoints = parseInt(formData.maxPointsPerTransaction);
+      points = Math.min(points, maxPoints);
+    }
+
+    return points;
+  };
+
+  // ============================================
+  // ANIMATION VARIANTS
+  // ============================================
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 },
     },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-8"
+        className="space-y-8 max-w-4xl"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
       >
         {/* Header */}
         <motion.div variants={itemVariants}>
-          <div>
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your business profile and preferences
-            </p>
-          </div>
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your business profile and loyalty program settings
+          </p>
         </motion.div>
 
         {/* Business Profile */}
         <motion.div variants={itemVariants}>
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Building2 className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold">Business Profile</h2>
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Building2 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Business Profile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Basic information about your business
+                </p>
+              </div>
             </div>
 
             <div className="space-y-6">
-              {/* Logo Upload */}
+              {/* Logo */}
               <div>
                 <label className="block text-sm font-medium mb-3">
                   Business Logo
                 </label>
                 <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 bg-linear-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-2xl">JC</span>
+                  <div className="w-20 h-20 bg-linear-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-2xl">
+                      {formData.businessName.charAt(0).toUpperCase() || 'B'}
+                    </span>
                   </div>
-                  <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition">
+                  <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition text-sm">
                     <Upload className="w-4 h-4" />
-                    Change Logo
+                    Upload Logo
                   </button>
                 </div>
               </div>
 
-              {/* Form Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  />
+              {/* Business Name */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Business Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.businessName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      businessName: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                  placeholder="Enter your business name"
+                />
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Loyalty Points Settings */}
+        <motion.div variants={itemVariants}>
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <Coins className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Loyalty Points Settings</h2>
+                <p className="text-sm text-muted-foreground">
+                  Configure how customers earn points
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Points Rate Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-3">
+                  Points Earning Rate
+                  <span className="text-muted-foreground font-normal ml-2">
+                    How much should customers spend to earn 1 point?
+                  </span>
+                </label>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {POINTS_RATE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => handlePresetChange(preset.value)}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        selectedPreset === preset.value
+                          ? 'border-primary bg-primary/5 shadow-md'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm">{preset.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {preset.description}
+                      </p>
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Website
-                  </label>
-                  <input
-                    type="text"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  />
+
+                {/* Custom Input */}
+                {showCustomInput && (
+                  <div className="mt-4 p-4 bg-muted/50 rounded-xl">
+                    <label className="block text-sm font-medium mb-2">
+                      Custom Rate
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground">₱</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.pesosPerPoint}
+                        onChange={(e) => handleCustomRateChange(e.target.value)}
+                        className="w-24 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background text-center font-semibold"
+                      />
+                      <span className="text-muted-foreground">= 1 point</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Live Preview Calculator */}
+              <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calculator className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-sm">
+                    Points Calculator Preview
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">
-                    Business Address
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">
-                    Timezone
-                  </label>
-                  <select
-                    name="timezone"
-                    value={formData.timezone}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition bg-background"
-                  >
-                    <option>UTC+8 (Asia/Manila)</option>
-                    <option>UTC+7 (Asia/Bangkok)</option>
-                    <option>UTC+9 (Asia/Tokyo)</option>
-                  </select>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-muted-foreground text-sm">
+                    If customer spends
+                  </span>
+                  <div className="flex items-center">
+                    <span className="text-muted-foreground">₱</span>
+                    <input
+                      type="number"
+                      value={previewAmount}
+                      onChange={(e) => setPreviewAmount(e.target.value)}
+                      className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold ml-1"
+                    />
+                  </div>
+                  <span className="text-muted-foreground text-sm">
+                    they earn
+                  </span>
+                  <span className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold">
+                    {calculatePoints(parseFloat(previewAmount) || 0)} points
+                  </span>
                 </div>
               </div>
 
-              <button className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition">
-                <Save className="w-4 h-4" />
-                Save Profile
-              </button>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Notifications */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Bell className="w-5 h-5 text-secondary" />
-              <h2 className="text-xl font-bold">Notification Preferences</h2>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                {
-                  id: 'email-sales',
-                  label: 'Email for new sales',
-                  desc: 'Get notified when a customer completes a transaction',
-                },
-                {
-                  id: 'email-rewards',
-                  label: 'Email for reward redemptions',
-                  desc: 'Alerts when customers redeem rewards',
-                },
-                {
-                  id: 'sms-alerts',
-                  label: 'SMS alerts for high activity',
-                  desc: "Receive SMS when there's unusual activity",
-                },
-                {
-                  id: 'weekly-digest',
-                  label: 'Weekly performance digest',
-                  desc: 'Get a summary of weekly metrics every Monday',
-                },
-                {
-                  id: 'low-stock',
-                  label: 'Low stock alerts',
-                  desc: 'Notify when reward inventory is running low',
-                },
-              ].map((notification) => (
-                <div
-                  key={notification.id}
-                  className="flex items-start justify-between p-3 bg-muted rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{notification.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {notification.desc}
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-5 h-5 rounded cursor-pointer accent-primary mt-1"
-                  />
+              {/* Advanced Settings */}
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Advanced Options
+                  </span>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
 
-        {/* Payment & Billing */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <CreditCard className="w-5 h-5 text-warning" />
-              <h2 className="text-xl font-bold">Payment & Billing</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="flex items-start justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Minimum Purchase */}
                   <div>
-                    <p className="font-medium">Current Plan: Growth</p>
-                    <p className="text-sm text-muted-foreground">
-                      Unlimited customers, advanced features
-                    </p>
-                    <p className="text-sm font-semibold mt-2">₱4,999/month</p>
-                  </div>
-                  <button className="px-4 py-1 text-sm border border-border rounded hover:bg-background transition">
-                    Change Plan
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border border-border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Payment Method
-                  </p>
-                  <p className="font-medium">Visa ending in 4242</p>
-                  <button className="text-sm text-primary hover:underline mt-2">
-                    Update Payment
-                  </button>
-                </div>
-                <div className="p-4 border border-border rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Next Billing Date
-                  </p>
-                  <p className="font-medium">January 15, 2026</p>
-                  <button className="text-sm text-primary hover:underline mt-2">
-                    View Invoice
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Integrations */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Zap className="w-5 h-5 text-secondary" />
-              <h2 className="text-xl font-bold">Integrations</h2>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                {
-                  name: 'Slack',
-                  status: 'connected',
-                  desc: 'Send notifications to Slack',
-                },
-                {
-                  name: 'Google Analytics',
-                  status: 'connected',
-                  desc: 'Track analytics',
-                },
-                {
-                  name: 'Facebook Pixel',
-                  status: 'disconnected',
-                  desc: 'Run ads and track conversions',
-                },
-                {
-                  name: 'Mailchimp',
-                  status: 'disconnected',
-                  desc: 'Email marketing automation',
-                },
-              ].map((integration, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{integration.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {integration.desc}
+                    <label className="block text-sm font-medium mb-2">
+                      Minimum Purchase for Points
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        ₱
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.minPurchase}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            minPurchase: parseFloat(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                        placeholder="0"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Customers must spend at least this amount to earn points
                     </p>
                   </div>
-                  <button
-                    className={`px-4 py-1 text-sm rounded transition ${
-                      integration.status === 'connected'
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'border border-border hover:bg-background'
-                    }`}
-                  >
-                    {integration.status === 'connected'
-                      ? 'Connected'
-                      : 'Connect'}
-                  </button>
+
+                  {/* Max Points Per Transaction */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Max Points Per Transaction
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.maxPointsPerTransaction}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          maxPointsPerTransaction: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      placeholder="No limit"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave empty for unlimited points per transaction
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
           </Card>
         </motion.div>
@@ -350,63 +487,70 @@ export default function SettingsPage() {
         <motion.div variants={itemVariants}>
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Lock className="w-5 h-5 text-error" />
-              <h2 className="text-xl font-bold">Security</h2>
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <Lock className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Security</h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage your account security
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg flex items-center justify-between">
+            <div className="space-y-3">
+              <div className="p-4 bg-muted/50 rounded-xl flex items-center justify-between">
                 <div>
                   <p className="font-medium">Change Password</p>
                   <p className="text-sm text-muted-foreground">
-                    Update your password regularly
+                    Update your account password
                   </p>
                 </div>
-                <button className="px-4 py-2 border border-border rounded-lg hover:bg-background transition">
+                <button className="px-4 py-2 border border-border rounded-lg hover:bg-background transition text-sm font-medium">
                   Change
-                </button>
-              </div>
-
-              <div className="p-4 bg-muted rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Two-Factor Authentication</p>
-                  <p className="text-sm text-muted-foreground">
-                    Add an extra layer of security
-                  </p>
-                </div>
-                <button className="px-4 py-2 border border-border rounded-lg hover:bg-background transition">
-                  Enable
-                </button>
-              </div>
-
-              <div className="p-4 bg-muted rounded-lg flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Active Sessions</p>
-                  <p className="text-sm text-muted-foreground">
-                    Manage your active login sessions
-                  </p>
-                </div>
-                <button className="px-4 py-2 border border-border rounded-lg hover:bg-background transition">
-                  View
                 </button>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        {/* Danger Zone */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6 border-error/50 bg-error/5">
-            <h2 className="text-xl font-bold text-error mb-4">Danger Zone</h2>
-            <div className="flex items-center justify-between p-4 bg-error/10 rounded-lg border border-error/20">
-              <div>
-                <p className="font-medium">Delete Account</p>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all data
-                </p>
+        {/* Save Button */}
+        <motion.div variants={itemVariants} className="sticky bottom-6">
+          <Card className="p-4 bg-background/80 backdrop-blur-lg border-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {saveStatus === 'success' && (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">
+                      Settings saved successfully!
+                    </span>
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="flex items-center gap-2 text-red-600">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">{errorMessage}</span>
+                  </div>
+                )}
               </div>
-              <button className="px-4 py-2 bg-error text-white rounded-lg hover:bg-error/90 transition">
-                Delete
+
+              <button
+                onClick={saveSettings}
+                disabled={saveStatus === 'saving'}
+                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition font-medium disabled:opacity-50"
+              >
+                {saveStatus === 'saving' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save Settings
+                  </>
+                )}
               </button>
             </div>
           </Card>

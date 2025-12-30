@@ -1,29 +1,35 @@
-"use client"
+'use client';
 
-import { motion } from "framer-motion"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Eye, EyeOff, Coins } from "lucide-react"
+import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2, Eye, EyeOff, Coins } from 'lucide-react';
 
 interface Reward {
-  id: number
-  title: string
-  description: string
-  pointsCost: number
-  stock: number
-  category: string
-  status: "active" | "inactive"
-  image: string
+  id: string;
+  title: string;
+  description: string;
+  pointsCost: number;
+  stock: number;
+  category: string;
+  status: 'active' | 'inactive';
+  image: string;
+  isVisible?: boolean;
 }
 
 interface RewardsGridProps {
-  rewards: Reward[]
-  viewMode: "grid" | "list"
-  onDelete: (id: number) => void
-  onToggleStatus: (id: number) => void
+  rewards: Reward[];
+  viewMode: 'grid' | 'list';
+  onDelete: (id: string) => void;
+  onToggleStatus: (id: string) => void;
 }
 
-export function RewardsGrid({ rewards, viewMode, onDelete, onToggleStatus }: RewardsGridProps) {
+export function RewardsGrid({
+  rewards,
+  viewMode,
+  onDelete,
+  onToggleStatus,
+}: RewardsGridProps) {
   if (rewards.length === 0) {
     return (
       <Card className="p-12 text-center">
@@ -32,15 +38,21 @@ export function RewardsGrid({ rewards, viewMode, onDelete, onToggleStatus }: Rew
             <span className="text-3xl">+</span>
           </div>
           <h3 className="font-semibold mb-2">Create Your First Reward</h3>
-          <p className="text-muted-foreground">Start building your rewards catalog</p>
+          <p className="text-muted-foreground">
+            Start building your rewards catalog
+          </p>
         </div>
       </Card>
-    )
+    );
   }
 
   return (
     <motion.div
-      className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
+      className={
+        viewMode === 'grid'
+          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+          : 'space-y-4'
+      }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -52,15 +64,23 @@ export function RewardsGrid({ rewards, viewMode, onDelete, onToggleStatus }: Rew
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: idx * 0.05 }}
         >
-          {viewMode === "grid" ? (
-            <RewardCard reward={reward} onDelete={onDelete} onToggleStatus={onToggleStatus} />
+          {viewMode === 'grid' ? (
+            <RewardCard
+              reward={reward}
+              onDelete={onDelete}
+              onToggleStatus={onToggleStatus}
+            />
           ) : (
-            <RewardListItem reward={reward} onDelete={onDelete} onToggleStatus={onToggleStatus} />
+            <RewardListItem
+              reward={reward}
+              onDelete={onDelete}
+              onToggleStatus={onToggleStatus}
+            />
           )}
         </motion.div>
       ))}
     </motion.div>
-  )
+  );
 }
 
 function RewardCard({
@@ -68,30 +88,39 @@ function RewardCard({
   onDelete,
   onToggleStatus,
 }: {
-  reward: Reward
-  onDelete: (id: number) => void
-  onToggleStatus: (id: number) => void
+  reward: Reward;
+  onDelete: (id: string) => void;
+  onToggleStatus: (id: string) => void;
 }) {
+  const isOutOfStock = reward.stock === 0;
+  const isHidden = reward.isVisible === false;
+
+  // Determine badge status
+  const getBadgeStatus = () => {
+    if (isHidden)
+      return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
+    if (isOutOfStock)
+      return {
+        text: 'OUT OF STOCK',
+        className: 'bg-destructive text-destructive-foreground',
+      };
+    return { text: 'ACTIVE', className: 'bg-success text-success-foreground' };
+  };
+
+  const badgeStatus = getBadgeStatus();
+
   return (
     <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group">
       {/* Image */}
       <div className="relative h-40 bg-muted overflow-hidden">
         <img
-          src={reward.image || "/placeholder.svg"}
+          src={reward.image || '/placeholder.svg'}
           alt={reward.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
         />
         {/* Status Badge */}
         <div className="absolute top-3 right-3">
-          <Badge
-            className={
-              reward.status === "active"
-                ? "bg-success text-success-foreground"
-                : "bg-destructive text-destructive-foreground"
-            }
-          >
-            {reward.status === "active" ? "ACTIVE" : "OUT OF STOCK"}
-          </Badge>
+          <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>
         </div>
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
@@ -105,7 +134,9 @@ function RewardCard({
       <div className="p-4 space-y-3">
         <div>
           <h3 className="font-bold line-clamp-2">{reward.title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{reward.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+            {reward.description}
+          </p>
         </div>
 
         <div className="flex items-center justify-between">
@@ -113,7 +144,9 @@ function RewardCard({
             <Coins className="w-4 h-4 text-primary" />
             <span className="font-bold text-lg">{reward.pointsCost}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{reward.stock} left</span>
+          <span className="text-xs text-muted-foreground">
+            {reward.stock === -1 ? 'Unlimited' : `${reward.stock} left`}
+          </span>
         </div>
 
         {/* Actions */}
@@ -122,7 +155,7 @@ function RewardCard({
             onClick={() => onToggleStatus(reward.id)}
             className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
           >
-            {reward.status === "active" ? (
+            {reward.isVisible !== false ? (
               <>
                 <EyeOff className="w-4 h-4" />
                 Hide
@@ -147,7 +180,7 @@ function RewardCard({
         </div>
       </div>
     </Card>
-  )
+  );
 }
 
 function RewardListItem({
@@ -155,34 +188,49 @@ function RewardListItem({
   onDelete,
   onToggleStatus,
 }: {
-  reward: Reward
-  onDelete: (id: number) => void
-  onToggleStatus: (id: number) => void
+  reward: Reward;
+  onDelete: (id: string) => void;
+  onToggleStatus: (id: string) => void;
 }) {
+  const isOutOfStock = reward.stock === 0;
+  const isHidden = reward.isVisible === false;
+
+  // Determine badge status
+  const getBadgeStatus = () => {
+    if (isHidden)
+      return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
+    if (isOutOfStock)
+      return {
+        text: 'OUT',
+        className: 'bg-destructive text-destructive-foreground',
+      };
+    return { text: 'ACTIVE', className: 'bg-success text-success-foreground' };
+  };
+
+  const badgeStatus = getBadgeStatus();
+
   return (
     <Card className="p-4 hover:shadow-lg transition-all">
       <div className="flex gap-4">
         {/* Thumbnail */}
         <div className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-muted">
-          <img src={reward.image || "/placeholder.svg"} alt={reward.title} className="w-full h-full object-cover" />
+          <img
+            src={reward.image || '/placeholder.svg'}
+            alt={reward.title}
+            className="w-full h-full object-cover"
+          />
         </div>
-s
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
               <h3 className="font-bold">{reward.title}</h3>
-              <p className="text-sm text-muted-foreground">{reward.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {reward.description}
+              </p>
             </div>
-            <Badge
-              className={
-                reward.status === "active"
-                  ? "bg-success text-success-foreground"
-                  : "bg-destructive text-destructive-foreground"
-              }
-            >
-              {reward.status === "active" ? "ACTIVE" : "OUT"}
-            </Badge>
+            <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>
           </div>
 
           <div className="flex items-center justify-between">
@@ -191,12 +239,21 @@ s
                 <Coins className="w-4 h-4 text-primary" />
                 <span className="font-bold">{reward.pointsCost}</span>
               </div>
-              <span className="text-sm text-muted-foreground">Stock: {reward.stock}</span>
+              <span className="text-sm text-muted-foreground">
+                Stock: {reward.stock === -1 ? 'Unlimited' : reward.stock}
+              </span>
             </div>
 
             <div className="flex gap-2">
-              <button onClick={() => onToggleStatus(reward.id)} className="p-2 hover:bg-muted rounded-lg transition">
-                {reward.status === "active" ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <button
+                onClick={() => onToggleStatus(reward.id)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+              >
+                {reward.isVisible !== false ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
               <button className="p-2 hover:bg-muted rounded-lg transition">
                 <Edit className="w-4 h-4" />
@@ -212,5 +269,5 @@ s
         </div>
       </div>
     </Card>
-  )
+  );
 }
