@@ -4,6 +4,8 @@ import { DashboardLayout } from '@/components/dashboard/layout';
 import { RewardsHeader } from '@/components/rewards/header';
 import { RewardsGrid } from '@/components/rewards/grid';
 import { CreateRewardModal } from '@/components/rewards/create-modal';
+import { EditRewardModal } from '@/components/rewards/edit-modal';
+import { ViewRewardModal } from '@/components/rewards/view-modal';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
@@ -13,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 // TYPES
 // ============================================
 
-interface Reward {
+export interface Reward {
   id: string;
   title: string;
   description: string;
@@ -23,6 +25,7 @@ interface Reward {
   status: 'active' | 'inactive';
   image: string;
   isVisible: boolean;
+  expiryDate?: string;
 }
 
 interface RewardFromDB {
@@ -36,9 +39,10 @@ interface RewardFromDB {
   is_visible: boolean | null;
   image_url: string | null;
   created_at: string | null;
+  valid_until: string | null;
 }
 
-interface CreateRewardData {
+export interface CreateRewardData {
   title: string;
   description: string;
   pointsCost: number;
@@ -48,6 +52,11 @@ interface CreateRewardData {
   image?: string;
 }
 
+export interface UpdateRewardData extends CreateRewardData {
+  id: string;
+  isVisible: boolean;
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -55,6 +64,9 @@ interface CreateRewardData {
 export default function RewardsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -71,11 +83,11 @@ export default function RewardsPage() {
     const supabase = createClient();
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get business ID
       const { data: business } = await supabase
         .from('businesses')
         .select('id')
@@ -85,7 +97,6 @@ export default function RewardsPage() {
       if (!business) return;
       setBusinessId(business.id);
 
-      // Fetch rewards from database
       const { data: rewardsData, error } = await supabase
         .from('rewards')
         .select('*')
@@ -97,20 +108,25 @@ export default function RewardsPage() {
         return;
       }
 
-      // Transform database format to UI format
-      const transformedRewards: Reward[] = (rewardsData || []).map((r: RewardFromDB) => ({
-        id: r.id,
-        title: r.title,
-        description: r.description || '',
-        pointsCost: r.points_cost,
-        stock: r.stock ?? 0,
-        category: r.category || 'Food',
-        status: (r.is_active && r.is_visible && (r.stock === null || r.stock === -1 || r.stock > 0)) 
-          ? 'active' 
-          : 'inactive',
-        image: r.image_url || '/reward-item.png',
-        isVisible: r.is_visible ?? true,
-      }));
+      const transformedRewards: Reward[] = (rewardsData || []).map(
+        (r: RewardFromDB) => ({
+          id: r.id,
+          title: r.title,
+          description: r.description || '',
+          pointsCost: r.points_cost,
+          stock: r.stock ?? 0,
+          category: r.category || 'Food',
+          status:
+            r.is_active !== false &&
+            r.is_visible !== false &&
+            (r.stock === null || r.stock === -1 || r.stock > 0)
+              ? 'active'
+              : 'inactive',
+          image: r.image_url || '/reward-item.png',
+          isVisible: r.is_visible ?? true,
+          expiryDate: r.valid_until || undefined,
+        })
+      );
 
       setRewards(transformedRewards);
     } catch (error) {
@@ -152,7 +168,6 @@ export default function RewardsPage() {
         return;
       }
 
-      // Add to local state
       const createdReward: Reward = {
         id: data.id,
         title: data.title,
@@ -163,12 +178,72 @@ export default function RewardsPage() {
         status: 'active',
         image: data.image_url || '/reward-item.png',
         isVisible: true,
+        expiryDate: data.valid_until || undefined,
       };
 
       setRewards([createdReward, ...rewards]);
       setIsCreateOpen(false);
     } catch (error) {
       console.error('Create reward error:', error);
+    }
+  };
+
+  // ============================================
+  // UPDATE REWARD
+  // ============================================
+
+  const handleUpdateReward = async (updatedReward: UpdateRewardData) => {
+    const supabase = createClient();
+
+    try {
+      const { data, error } = await supabase
+        .from('rewards')
+        .update({
+          title: updatedReward.title,
+          description: updatedReward.description,
+          points_cost: updatedReward.pointsCost,
+          stock: updatedReward.stock,
+          category: updatedReward.category.toLowerCase(),
+          image_url: updatedReward.image || null,
+          is_visible: updatedReward.isVisible,
+          valid_until: updatedReward.expiryDate || null,
+        })
+        .eq('id', updatedReward.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating reward:', error);
+        return;
+      }
+
+      setRewards(
+        rewards.map((r) =>
+          r.id === updatedReward.id
+            ? {
+                ...r,
+                title: data.title,
+                description: data.description || '',
+                pointsCost: data.points_cost,
+                stock: data.stock ?? 0,
+                category: updatedReward.category,
+                image: data.image_url || '/reward-item.png',
+                isVisible: data.is_visible ?? true,
+                status:
+                  data.is_visible &&
+                  (data.stock === null || data.stock === -1 || data.stock > 0)
+                    ? 'active'
+                    : 'inactive',
+                expiryDate: data.valid_until || undefined,
+              }
+            : r
+        )
+      );
+
+      setIsEditOpen(false);
+      setSelectedReward(null);
+    } catch (error) {
+      console.error('Update reward error:', error);
     }
   };
 
@@ -180,17 +255,13 @@ export default function RewardsPage() {
     const supabase = createClient();
 
     try {
-      const { error } = await supabase
-        .from('rewards')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('rewards').delete().eq('id', id);
 
       if (error) {
         console.error('Error deleting reward:', error);
         return;
       }
 
-      // Remove from local state
       setRewards(rewards.filter((r) => r.id !== id));
     } catch (error) {
       console.error('Delete reward error:', error);
@@ -198,7 +269,7 @@ export default function RewardsPage() {
   };
 
   // ============================================
-  // TOGGLE STATUS (Hide/Show)
+  // TOGGLE VISIBILITY (Hide/Show)
   // ============================================
 
   const handleToggleStatus = async (id: string) => {
@@ -219,20 +290,39 @@ export default function RewardsPage() {
         return;
       }
 
-      // Update local state
       setRewards(
         rewards.map((r) =>
           r.id === id
-            ? { 
-                ...r, 
+            ? {
+                ...r,
                 isVisible: newIsVisible,
-                status: newIsVisible && r.stock !== 0 ? 'active' : 'inactive'
+                status: newIsVisible && r.stock !== 0 ? 'active' : 'inactive',
               }
             : r
         )
       );
     } catch (error) {
       console.error('Toggle status error:', error);
+    }
+  };
+
+  // ============================================
+  // VIEW & EDIT HANDLERS
+  // ============================================
+
+  const handleViewReward = (id: string) => {
+    const reward = rewards.find((r) => r.id === id);
+    if (reward) {
+      setSelectedReward(reward);
+      setIsViewOpen(true);
+    }
+  };
+
+  const handleEditReward = (id: string) => {
+    const reward = rewards.find((r) => r.id === id);
+    if (reward) {
+      setSelectedReward(reward);
+      setIsEditOpen(true);
     }
   };
 
@@ -273,6 +363,8 @@ export default function RewardsPage() {
           viewMode={viewMode}
           onDelete={handleDeleteReward}
           onToggleStatus={handleToggleStatus}
+          onView={handleViewReward}
+          onEdit={handleEditReward}
         />
 
         <CreateRewardModal
@@ -280,6 +372,33 @@ export default function RewardsPage() {
           onClose={() => setIsCreateOpen(false)}
           onCreate={handleCreateReward}
         />
+
+        {selectedReward && (
+          <>
+            <EditRewardModal
+              isOpen={isEditOpen}
+              onClose={() => {
+                setIsEditOpen(false);
+                setSelectedReward(null);
+              }}
+              onUpdate={handleUpdateReward}
+              reward={selectedReward}
+            />
+
+            <ViewRewardModal
+              isOpen={isViewOpen}
+              onClose={() => {
+                setIsViewOpen(false);
+                setSelectedReward(null);
+              }}
+              reward={selectedReward}
+              onEdit={() => {
+                setIsViewOpen(false);
+                setIsEditOpen(true);
+              }}
+            />
+          </>
+        )}
       </motion.div>
     </DashboardLayout>
   );

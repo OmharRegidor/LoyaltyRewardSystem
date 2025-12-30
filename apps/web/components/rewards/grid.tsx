@@ -22,6 +22,8 @@ interface RewardsGridProps {
   viewMode: 'grid' | 'list';
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  onView?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
 export function RewardsGrid({
@@ -29,6 +31,8 @@ export function RewardsGrid({
   viewMode,
   onDelete,
   onToggleStatus,
+  onView,
+  onEdit,
 }: RewardsGridProps) {
   if (rewards.length === 0) {
     return (
@@ -69,12 +73,16 @@ export function RewardsGrid({
               reward={reward}
               onDelete={onDelete}
               onToggleStatus={onToggleStatus}
+              onView={onView}
+              onEdit={onEdit}
             />
           ) : (
             <RewardListItem
               reward={reward}
               onDelete={onDelete}
               onToggleStatus={onToggleStatus}
+              onView={onView}
+              onEdit={onEdit}
             />
           )}
         </motion.div>
@@ -87,15 +95,18 @@ function RewardCard({
   reward,
   onDelete,
   onToggleStatus,
+  onView,
+  onEdit,
 }: {
   reward: Reward;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  onView?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }) {
   const isOutOfStock = reward.stock === 0;
   const isHidden = reward.isVisible === false;
 
-  // Determine badge status
   const getBadgeStatus = () => {
     if (isHidden)
       return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
@@ -122,9 +133,12 @@ function RewardCard({
         <div className="absolute top-3 right-3">
           <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>
         </div>
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-          <button className="w-full bg-white text-black font-semibold py-2 rounded-lg hover:bg-muted transition">
+        {/* Gradient Overlay with View Details Button */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+          <button
+            onClick={() => onView?.(reward.id)}
+            className="w-full bg-white text-black font-semibold py-2 rounded-lg hover:bg-gray-100 transition"
+          >
             View Details
           </button>
         </div>
@@ -167,7 +181,10 @@ function RewardCard({
               </>
             )}
           </button>
-          <button className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm">
+          <button
+            onClick={() => onEdit?.(reward.id)}
+            className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
+          >
             <Edit className="w-4 h-4" />
             Edit
           </button>
@@ -187,15 +204,18 @@ function RewardListItem({
   reward,
   onDelete,
   onToggleStatus,
+  onView,
+  onEdit,
 }: {
   reward: Reward;
   onDelete: (id: string) => void;
   onToggleStatus: (id: string) => void;
+  onView?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }) {
   const isOutOfStock = reward.stock === 0;
   const isHidden = reward.isVisible === false;
 
-  // Determine badge status
   const getBadgeStatus = () => {
     if (isHidden)
       return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
@@ -213,7 +233,10 @@ function RewardListItem({
     <Card className="p-4 hover:shadow-lg transition-all">
       <div className="flex gap-4">
         {/* Thumbnail */}
-        <div className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-muted">
+        <div
+          className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-muted cursor-pointer"
+          onClick={() => onView?.(reward.id)}
+        >
           <img
             src={reward.image || '/placeholder.svg'}
             alt={reward.title}
@@ -225,7 +248,12 @@ function RewardListItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
-              <h3 className="font-bold">{reward.title}</h3>
+              <h3
+                className="font-bold cursor-pointer hover:text-primary transition"
+                onClick={() => onView?.(reward.id)}
+              >
+                {reward.title}
+              </h3>
               <p className="text-sm text-muted-foreground">
                 {reward.description}
               </p>
@@ -255,7 +283,10 @@ function RewardListItem({
                   <Eye className="w-4 h-4" />
                 )}
               </button>
-              <button className="p-2 hover:bg-muted rounded-lg transition">
+              <button
+                onClick={() => onEdit?.(reward.id)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+              >
                 <Edit className="w-4 h-4" />
               </button>
               <button
