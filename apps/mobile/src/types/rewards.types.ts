@@ -18,7 +18,13 @@ export interface Reward {
   };
 }
 
-export type RewardCategory = 'all' | 'food' | 'drinks' | 'discounts' | 'free';
+export type RewardCategory =
+  | 'all'
+  | 'food'
+  | 'drinks'
+  | 'discounts'
+  | 'free'
+  | 'prods';
 
 export interface RewardFilter {
   category: RewardCategory;
