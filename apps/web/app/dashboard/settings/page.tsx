@@ -202,6 +202,71 @@ export default function SettingsPage() {
   };
 
   // ============================================
+  // LOGO UPLOAD HANDLER
+  // ============================================
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !businessId) return;
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage('Image must be less than 2MB');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+
+    // Validate file type
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      setErrorMessage('Only PNG and JPG images are allowed');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+
+    setSaveStatus('saving');
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${businessId}-logo-${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(fileName);
+
+      const logoUrl = urlData.publicUrl;
+
+      // Update business record
+      const { error: updateError } = await supabase
+        .from('businesses')
+        .update({ logo_url: logoUrl })
+        .eq('id', businessId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setProfile((prev) => ({ ...prev, logoUrl }));
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      setErrorMessage('Failed to upload logo. Please try again.');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  };
+
+  // ============================================
   // SAVE SETTINGS
   // ============================================
 
@@ -365,22 +430,33 @@ export default function SettingsPage() {
                           </span>
                         )}
                       </div>
-                      <button className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                         <Camera className="w-5 h-5 text-white" />
-                      </button>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
                     <div>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl transition text-sm font-medium">
+                      <label className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl transition text-sm font-medium cursor-pointer">
                         <Upload className="w-4 h-4" />
                         Upload Logo
-                      </button>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                      </label>
                       <p className="text-xs text-muted-foreground mt-1">
                         PNG, JPG up to 2MB
                       </p>
                     </div>
                   </div>
                 </div>
-
                 {/* Business Name */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -698,19 +774,22 @@ export default function SettingsPage() {
         </div>
 
         {/* Floating Save Button */}
-        <motion.div variants={itemVariants} className="sticky bottom-6">
-          <Card className="p-4 bg-background/80 backdrop-blur-xl border-2 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+        <motion.div variants={itemVariants} className="sticky bottom-6 z-10">
+          <Card className="p-4 bg-background/95 backdrop-blur-xl border-2 border-border/50 shadow-2xl">
+            <div className="flex items-center justify-between gap-4">
+              {/* Status Messages */}
+              <div className="flex-1 min-w-0">
                 {saveStatus === 'success' && (
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-green-600"
+                    className="flex items-center gap-2 text-green-600 dark:text-green-400"
                   >
-                    <CheckCircle className="w-5 h-5" />
+                    <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <CheckCircle className="w-4 h-4" />
+                    </div>
                     <span className="text-sm font-medium">
-                      Saved successfully!
+                      Settings saved successfully!
                     </span>
                   </motion.div>
                 )}
@@ -718,28 +797,38 @@ export default function SettingsPage() {
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-red-600"
+                    className="flex items-center gap-2 text-red-600 dark:text-red-400"
                   >
-                    <AlertCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">{errorMessage}</span>
+                    <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded-full">
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-medium truncate">
+                      {errorMessage}
+                    </span>
                   </motion.div>
+                )}
+                {saveStatus === 'idle' && (
+                  <p className="text-sm text-muted-foreground">
+                    Make changes and click save to update your settings
+                  </p>
                 )}
               </div>
 
+              {/* Save Button */}
               <button
                 onClick={saveSettings}
                 disabled={saveStatus === 'saving'}
-                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition font-medium disabled:opacity-50 shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-primary to-primary/80 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
               >
                 {saveStatus === 'saving' ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    Save Settings
+                    <Save className="w-5 h-5" />
+                    <span>Save Settings</span>
                   </>
                 )}
               </button>
