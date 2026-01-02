@@ -11,6 +11,7 @@ import {
   X,
   Moon,
   Sun,
+  UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -57,7 +58,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
     { icon: Users, label: 'Customers', href: '/dashboard/customers' },
     { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
-    { icon: QrCode, label: 'Scan QR', href: '/dashboard/scanner' },
+    { icon: UserRound, label: 'Team', href: '/dashboard/team' },
     { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
     { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
   ];

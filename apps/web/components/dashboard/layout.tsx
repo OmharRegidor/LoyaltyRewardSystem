@@ -120,17 +120,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
     { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
-    { name: 'Team', href: '/dashboard/settings/team', icon: UsersRound },
+    { name: 'Team', href: '/dashboard/team', icon: UsersRound },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
-    if (href === '/dashboard/settings/team')
-      return pathname === '/dashboard/settings/team';
+    if (href === '/dashboard/team') return pathname === '/dashboard/team';
     if (href === '/dashboard/settings')
-      return pathname === '/dashboard/settings' && !pathname.includes('/team');
+      return pathname === '/dashboard/settings';
     return pathname.startsWith(href);
   };
 

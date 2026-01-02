@@ -1,15 +1,20 @@
-// apps/web/app/dashboard/settings/page.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
-import { Card } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import {
   Building2,
   Coins,
-  Lock,
+  Shield,
   Save,
   Upload,
   Loader2,
@@ -17,6 +22,12 @@ import {
   AlertCircle,
   Calculator,
   Info,
+  Phone,
+  Mail,
+  MapPin,
+  Briefcase,
+  ChevronRight,
+  Camera,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 
@@ -24,9 +35,18 @@ import { createClient } from '@/lib/supabase';
 // TYPES
 // ============================================
 
-interface FormState {
+interface BusinessProfile {
   businessName: string;
+  businessType: string;
+  phone: string;
+  ownerEmail: string;
+  address: string;
+  city: string;
+  description: string;
   logoUrl: string | null;
+}
+
+interface LoyaltySettings {
   pesosPerPoint: number;
   minPurchase: number;
   maxPointsPerTransaction: string;
@@ -36,8 +56,20 @@ interface FormState {
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
 // ============================================
-// PRESET OPTIONS
+// CONSTANTS
 // ============================================
+
+const BUSINESS_TYPES = [
+  { value: 'cafe', label: 'Café' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'retail', label: 'Retail Store' },
+  { value: 'gym', label: 'Gym / Fitness' },
+  { value: 'spa', label: 'Spa / Wellness' },
+  { value: 'salon', label: 'Salon / Barbershop' },
+  { value: 'grocery', label: 'Grocery Store' },
+  { value: 'pharmacy', label: 'Pharmacy' },
+  { value: 'other', label: 'Other' },
+];
 
 const POINTS_RATE_PRESETS = [
   {
@@ -65,14 +97,26 @@ const POINTS_RATE_PRESETS = [
 // ============================================
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<FormState>({
+  // Business Profile State
+  const [profile, setProfile] = useState<BusinessProfile>({
     businessName: '',
+    businessType: '',
+    phone: '',
+    ownerEmail: '',
+    address: '',
+    city: '',
+    description: '',
     logoUrl: null,
+  });
+
+  // Loyalty Settings State
+  const [loyalty, setLoyalty] = useState<LoyaltySettings>({
     pesosPerPoint: 10,
     minPurchase: 0,
     maxPointsPerTransaction: '',
@@ -95,16 +139,19 @@ export default function SettingsPage() {
     const supabase = createClient();
 
     try {
+      // Get current user
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
+      // Get business data
       const { data: business, error } = await supabase
         .from('businesses')
-        .select(
-          'id, name, logo_url, pesos_per_point, min_purchase_for_points, max_points_per_transaction, points_expiry_days'
-        )
+        .select('*')
         .eq('owner_id', user.id)
         .single();
 
@@ -112,9 +159,22 @@ export default function SettingsPage() {
 
       if (business) {
         setBusinessId(business.id);
-        setFormData({
+
+        // Get user metadata for business_type and phone if not in business table
+        const metadata = user.user_metadata || {};
+
+        setProfile({
           businessName: business.name || '',
+          businessType: business.business_type || metadata.business_type || '',
+          phone: business.phone || metadata.phone || '',
+          ownerEmail: user.email || '',
+          address: business.address || '',
+          city: business.city || '',
+          description: business.description || '',
           logoUrl: business.logo_url,
+        });
+
+        setLoyalty({
           pesosPerPoint: business.pesos_per_point || 10,
           minPurchase: business.min_purchase_for_points || 0,
           maxPointsPerTransaction:
@@ -157,15 +217,20 @@ export default function SettingsPage() {
       const { error } = await supabase
         .from('businesses')
         .update({
-          name: formData.businessName,
-          logo_url: formData.logoUrl,
-          pesos_per_point: formData.pesosPerPoint,
-          min_purchase_for_points: formData.minPurchase,
-          max_points_per_transaction: formData.maxPointsPerTransaction
-            ? parseInt(formData.maxPointsPerTransaction)
+          name: profile.businessName,
+          business_type: profile.businessType,
+          phone: profile.phone,
+          address: profile.address,
+          city: profile.city,
+          description: profile.description,
+          logo_url: profile.logoUrl,
+          pesos_per_point: loyalty.pesosPerPoint,
+          min_purchase_for_points: loyalty.minPurchase,
+          max_points_per_transaction: loyalty.maxPointsPerTransaction
+            ? parseInt(loyalty.maxPointsPerTransaction)
             : null,
-          points_expiry_days: formData.pointsExpiryDays
-            ? parseInt(formData.pointsExpiryDays)
+          points_expiry_days: loyalty.pointsExpiryDays
+            ? parseInt(loyalty.pointsExpiryDays)
             : null,
         })
         .eq('id', businessId);
@@ -191,25 +256,22 @@ export default function SettingsPage() {
       setShowCustomInput(true);
     } else {
       setShowCustomInput(false);
-      setFormData((prev) => ({ ...prev, pesosPerPoint: value }));
+      setLoyalty((prev) => ({ ...prev, pesosPerPoint: value }));
     }
   };
 
   const handleCustomRateChange = (value: string) => {
     const numValue = parseInt(value) || 1;
-    setFormData((prev) => ({ ...prev, pesosPerPoint: Math.max(1, numValue) }));
+    setLoyalty((prev) => ({ ...prev, pesosPerPoint: Math.max(1, numValue) }));
   };
 
-  // Calculate preview points
   const calculatePoints = (amount: number): number => {
-    if (formData.pesosPerPoint <= 0) return 0;
-    let points = Math.floor(amount / formData.pesosPerPoint);
-
-    if (formData.maxPointsPerTransaction) {
-      const maxPoints = parseInt(formData.maxPointsPerTransaction);
+    if (loyalty.pesosPerPoint <= 0) return 0;
+    let points = Math.floor(amount / loyalty.pesosPerPoint);
+    if (loyalty.maxPointsPerTransaction) {
+      const maxPoints = parseInt(loyalty.maxPointsPerTransaction);
       points = Math.min(points, maxPoints);
     }
-
     return points;
   };
 
@@ -251,7 +313,7 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-8 max-w-4xl"
+        className="w-full max-w-6xl mx-auto space-y-8"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -264,281 +326,410 @@ export default function SettingsPage() {
           </p>
         </motion.div>
 
-        {/* Business Profile */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Business Profile</h2>
-                <p className="text-sm text-muted-foreground">
-                  Basic information about your business
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Logo */}
-              <div>
-                <label className="block text-sm font-medium mb-3">
-                  Business Logo
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-linear-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-2xl">
-                      {formData.businessName.charAt(0).toUpperCase() || 'B'}
-                    </span>
-                  </div>
-                  <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg hover:bg-muted transition text-sm">
-                    <Upload className="w-4 h-4" />
-                    Upload Logo
-                  </button>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Business Profile */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-primary/10 rounded-xl">
+                  <Building2 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Business Profile</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Your business information
+                  </p>
                 </div>
               </div>
 
-              {/* Business Name */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Business Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.businessName}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      businessName: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
-                  placeholder="Enter your business name"
-                />
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Loyalty Points Settings */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-amber-500/10 rounded-lg">
-                <Coins className="w-5 h-5 text-amber-500" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Loyalty Points Settings</h2>
-                <p className="text-sm text-muted-foreground">
-                  Configure how customers earn points
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Points Rate Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-3">
-                  Points Earning Rate
-                  <span className="text-muted-foreground font-normal ml-2">
-                    How much should customers spend to earn 1 point?
-                  </span>
-                </label>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {POINTS_RATE_PRESETS.map((preset) => (
-                    <button
-                      key={preset.value}
-                      type="button"
-                      onClick={() => handlePresetChange(preset.value)}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        selectedPreset === preset.value
-                          ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                      }`}
-                    >
-                      <p className="font-semibold text-sm">{preset.label}</p>
+              <div className="space-y-5">
+                {/* Logo Upload */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">
+                    Business Logo
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative group">
+                      <div className="w-20 h-20 bg-linear-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                        {profile.logoUrl ? (
+                          <img
+                            src={profile.logoUrl}
+                            alt="Logo"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-bold text-2xl">
+                            {profile.businessName.charAt(0).toUpperCase() ||
+                              'B'}
+                          </span>
+                        )}
+                      </div>
+                      <button className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                    <div>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl transition text-sm font-medium">
+                        <Upload className="w-4 h-4" />
+                        Upload Logo
+                      </button>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {preset.description}
+                        PNG, JPG up to 2MB
                       </p>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Input */}
-                {showCustomInput && (
-                  <div className="mt-4 p-4 bg-muted/50 rounded-xl">
-                    <label className="block text-sm font-medium mb-2">
-                      Custom Rate
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground">₱</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.pesosPerPoint}
-                        onChange={(e) => handleCustomRateChange(e.target.value)}
-                        className="w-24 px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background text-center font-semibold"
-                      />
-                      <span className="text-muted-foreground">= 1 point</span>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Live Preview Calculator */}
-              <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calculator className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-sm">
-                    Points Calculator Preview
-                  </span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-muted-foreground text-sm">
-                    If customer spends
-                  </span>
-                  <div className="flex items-center">
+                {/* Business Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    <Building2 className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                    Business Name
+                  </label>
+                  <input
+                    type="text"
+                    value={profile.businessName}
+                    onChange={(e) =>
+                      setProfile((prev) => ({
+                        ...prev,
+                        businessName: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    placeholder="Your business name"
+                  />
+                </div>
+
+                {/* Business Type */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    <Briefcase className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                    Business Type
+                  </label>
+                  <select
+                    value={profile.businessType}
+                    onChange={(e) =>
+                      setProfile((prev) => ({
+                        ...prev,
+                        businessType: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                  >
+                    <option value="">Select business type</option>
+                    {BUSINESS_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    <Phone className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                    Phone Number
+                  </label>
+                  <div className="flex">
+                    <span className="px-4 py-3 bg-muted border border-r-0 border-border rounded-l-xl text-muted-foreground text-sm font-medium">
+                      +63
+                    </span>
+                    <input
+                      type="tel"
+                      value={profile.phone}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      className="flex-1 px-4 py-3 border border-border rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      placeholder="9123456789"
+                    />
+                  </div>
+                </div>
+
+                {/* Owner Email (Read Only) */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    <Mail className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                    Owner Email
+                  </label>
+                  <input
+                    type="email"
+                    value={profile.ownerEmail}
+                    disabled
+                    className="w-full px-4 py-3 border border-border rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Contact support to change email
+                  </p>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    <MapPin className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                    Business Address
+                  </label>
+                  <input
+                    type="text"
+                    value={profile.address}
+                    onChange={(e) =>
+                      setProfile((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    placeholder="Street address"
+                  />
+                </div>
+
+                {/* City */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">City</label>
+                  <input
+                    type="text"
+                    value={profile.city}
+                    onChange={(e) =>
+                      setProfile((prev) => ({ ...prev, city: e.target.value }))
+                    }
+                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    placeholder="City"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Business Description
+                  </label>
+                  <textarea
+                    value={profile.description}
+                    onChange={(e) =>
+                      setProfile((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none"
+                    placeholder="Tell customers about your business..."
+                  />
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Right Column - Loyalty Settings & Security */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            {/* Loyalty Points Settings */}
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-amber-500/10 rounded-xl">
+                  <Coins className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Loyalty Points</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Configure earning rates
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {/* Points Rate Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-3">
+                    Points Earning Rate
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {POINTS_RATE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() => handlePresetChange(preset.value)}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${
+                          selectedPreset === preset.value
+                            ? 'border-primary bg-primary/5 shadow-md'
+                            : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                        }`}
+                      >
+                        <p className="font-semibold text-sm">{preset.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {preset.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Input */}
+                  {showCustomInput && (
+                    <div className="mt-3 p-3 bg-muted/50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="text-muted-foreground">₱</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={loyalty.pesosPerPoint}
+                          onChange={(e) =>
+                            handleCustomRateChange(e.target.value)
+                          }
+                          className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
+                        />
+                        <span className="text-muted-foreground">= 1 point</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview Calculator */}
+                <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calculator className="w-4 h-4 text-primary" />
+                    <span className="font-medium text-sm">Preview</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="text-muted-foreground">₱</span>
                     <input
                       type="number"
                       value={previewAmount}
                       onChange={(e) => setPreviewAmount(e.target.value)}
-                      className="w-24 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold ml-1"
+                      className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
                     />
+                    <span className="text-muted-foreground">=</span>
+                    <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
+                      {calculatePoints(parseFloat(previewAmount) || 0)} pts
+                    </span>
                   </div>
-                  <span className="text-muted-foreground text-sm">
-                    they earn
-                  </span>
-                  <span className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-bold">
-                    {calculatePoints(parseFloat(previewAmount) || 0)} points
-                  </span>
-                </div>
-              </div>
-
-              {/* Advanced Settings */}
-              <div className="pt-4 border-t border-border">
-                <div className="flex items-center gap-2 mb-4">
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Advanced Options
-                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Minimum Purchase */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Minimum Purchase for Points
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        ₱
-                      </span>
+                {/* Advanced Options */}
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Advanced
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5">
+                        Min. Purchase
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                          ₱
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={loyalty.minPurchase}
+                          onChange={(e) =>
+                            setLoyalty((prev) => ({
+                              ...prev,
+                              minPurchase: parseFloat(e.target.value) || 0,
+                            }))
+                          }
+                          className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1.5">
+                        Max Points/Txn
+                      </label>
                       <input
                         type="number"
                         min="0"
-                        value={formData.minPurchase}
+                        value={loyalty.maxPointsPerTransaction}
                         onChange={(e) =>
-                          setFormData((prev) => ({
+                          setLoyalty((prev) => ({
                             ...prev,
-                            minPurchase: parseFloat(e.target.value) || 0,
+                            maxPointsPerTransaction: e.target.value,
                           }))
                         }
-                        className="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
-                        placeholder="0"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                        placeholder="No limit"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Customers must spend at least this amount to earn points
-                    </p>
-                  </div>
-
-                  {/* Max Points Per Transaction */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Max Points Per Transaction
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.maxPointsPerTransaction}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          maxPointsPerTransaction: e.target.value,
-                        }))
-                      }
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
-                      placeholder="No limit"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Leave empty for unlimited points per transaction
-                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        </motion.div>
+            </Card>
 
-        {/* Security */}
-        <motion.div variants={itemVariants}>
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-red-500/10 rounded-lg">
-                <Lock className="w-5 h-5 text-red-500" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">Security</h2>
-                <p className="text-sm text-muted-foreground">
-                  Manage your account security
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-4 bg-muted/50 rounded-xl flex items-center justify-between">
+            {/* Security Card */}
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-red-500/10 rounded-xl">
+                  <Shield className="w-5 h-5 text-red-500" />
+                </div>
                 <div>
-                  <p className="font-medium">Change Password</p>
+                  <h2 className="text-xl font-bold">Security</h2>
                   <p className="text-sm text-muted-foreground">
-                    Update your account password
+                    Manage account security
                   </p>
                 </div>
-                <button className="px-4 py-2 border border-border rounded-lg hover:bg-background transition text-sm font-medium">
-                  Change
-                </button>
               </div>
-            </div>
-          </Card>
-        </motion.div>
 
-        {/* Save Button */}
+              <button
+                onClick={() => router.push('/dashboard/settings/security')}
+                className="w-full p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between transition group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-background rounded-lg">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Change Password</p>
+                    <p className="text-sm text-muted-foreground">
+                      Update your account password
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </button>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Floating Save Button */}
         <motion.div variants={itemVariants} className="sticky bottom-6">
-          <Card className="p-4 bg-background/80 backdrop-blur-lg border-2">
+          <Card className="p-4 bg-background/80 backdrop-blur-xl border-2 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {saveStatus === 'success' && (
-                  <div className="flex items-center gap-2 text-green-600">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 text-green-600"
+                  >
                     <CheckCircle className="w-5 h-5" />
                     <span className="text-sm font-medium">
-                      Settings saved successfully!
+                      Saved successfully!
                     </span>
-                  </div>
+                  </motion.div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="flex items-center gap-2 text-red-600">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 text-red-600"
+                  >
                     <AlertCircle className="w-5 h-5" />
                     <span className="text-sm font-medium">{errorMessage}</span>
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
               <button
                 onClick={saveSettings}
                 disabled={saveStatus === 'saving'}
-                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition font-medium disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition font-medium disabled:opacity-50 shadow-lg shadow-primary/20"
               >
                 {saveStatus === 'saving' ? (
                   <>
