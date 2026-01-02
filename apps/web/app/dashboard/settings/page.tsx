@@ -378,7 +378,7 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="w-full max-w-6xl mx-auto space-y-8"
+        className="w-full max-w-4xl mx-auto space-y-6"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -391,125 +391,109 @@ export default function SettingsPage() {
           </p>
         </motion.div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Business Profile */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-primary/10 rounded-xl">
-                  <Building2 className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Business Profile</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Your business information
+        {/* Single Column Layout */}
+        <div className="space-y-6">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-primary/10 rounded-xl">
+                <Building2 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Business Profile</h2>
+                <p className="text-sm text-muted-foreground">
+                  Your business information
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Logo + Business Name Row */}
+              <div className="flex items-start gap-6">
+                {/* Logo Upload */}
+                <div className="shrink-0">
+                  <div className="relative group">
+                    <div className="w-24 h-24 bg-linear-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                      {profile.logoUrl ? (
+                        <img
+                          src={profile.logoUrl}
+                          alt="Logo"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-3xl">
+                          {profile.businessName.charAt(0).toUpperCase() || 'B'}
+                        </span>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <Camera className="w-6 h-6 text-white" />
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Click to upload
                   </p>
+                </div>
+
+                {/* Name & Type */}
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Business Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.businessName}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          businessName: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      placeholder="Your business name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Business Type
+                    </label>
+                    <select
+                      value={profile.businessType}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          businessType: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    >
+                      <option value="">Select type</option>
+                      {BUSINESS_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-5">
-                {/* Logo Upload */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Business Logo
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <div className="relative group">
-                      <div className="w-20 h-20 bg-linear-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                        {profile.logoUrl ? (
-                          <img
-                            src={profile.logoUrl}
-                            alt="Logo"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white font-bold text-2xl">
-                            {profile.businessName.charAt(0).toUpperCase() ||
-                              'B'}
-                          </span>
-                        )}
-                      </div>
-                      <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                        <Camera className="w-5 h-5 text-white" />
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/jpg"
-                          onChange={handleLogoUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                    <div>
-                      <label className="flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted/80 rounded-xl transition text-sm font-medium cursor-pointer">
-                        <Upload className="w-4 h-4" />
-                        Upload Logo
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/jpg"
-                          onChange={handleLogoUpload}
-                          className="hidden"
-                        />
-                      </label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PNG, JPG up to 2MB
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {/* Business Name */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Building2 className="w-4 h-4 inline mr-2 text-muted-foreground" />
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.businessName}
-                    onChange={(e) =>
-                      setProfile((prev) => ({
-                        ...prev,
-                        businessName: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
-                    placeholder="Your business name"
-                  />
-                </div>
-
-                {/* Business Type */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Briefcase className="w-4 h-4 inline mr-2 text-muted-foreground" />
-                    Business Type
-                  </label>
-                  <select
-                    value={profile.businessType}
-                    onChange={(e) =>
-                      setProfile((prev) => ({
-                        ...prev,
-                        businessType: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
-                  >
-                    <option value="">Select business type</option>
-                    {BUSINESS_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
+              {/* Two Column Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Phone className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                  <label className="block text-sm font-medium mb-1.5">
+                    <Phone className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
                     Phone Number
                   </label>
                   <div className="flex">
-                    <span className="px-4 py-3 bg-muted border border-r-0 border-border rounded-l-xl text-muted-foreground text-sm font-medium">
+                    <span className="px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-xl text-muted-foreground text-sm">
                       +63
                     </span>
                     <input
@@ -521,34 +505,31 @@ export default function SettingsPage() {
                           phone: e.target.value,
                         }))
                       }
-                      className="flex-1 px-4 py-3 border border-border rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className="flex-1 px-4 py-2.5 border border-border rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                       placeholder="9123456789"
                     />
                   </div>
                 </div>
 
-                {/* Owner Email (Read Only) */}
+                {/* Owner Email */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <Mail className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                  <label className="block text-sm font-medium mb-1.5">
+                    <Mail className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
                     Owner Email
                   </label>
                   <input
                     type="email"
                     value={profile.ownerEmail}
                     disabled
-                    className="w-full px-4 py-3 border border-border rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed"
+                    className="w-full px-4 py-2.5 border border-border rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed text-sm"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Contact support to change email
-                  </p>
                 </div>
 
                 {/* Address */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2 text-muted-foreground" />
-                    Business Address
+                  <label className="block text-sm font-medium mb-1.5">
+                    <MapPin className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
+                    Address
                   </label>
                   <input
                     type="text"
@@ -559,218 +540,218 @@ export default function SettingsPage() {
                         address: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     placeholder="Street address"
                   />
                 </div>
 
                 {/* City */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">City</label>
+                  <label className="block text-sm font-medium mb-1.5">
+                    City
+                  </label>
                   <input
                     type="text"
                     value={profile.city}
                     onChange={(e) =>
                       setProfile((prev) => ({ ...prev, city: e.target.value }))
                     }
-                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     placeholder="City"
                   />
                 </div>
+              </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Business Description
-                  </label>
-                  <textarea
-                    value={profile.description}
-                    onChange={(e) =>
-                      setProfile((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                    rows={3}
-                    className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none"
-                    placeholder="Tell customers about your business..."
+              {/* Description - Full Width */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Description
+                  <span className="text-muted-foreground font-normal ml-1">
+                    (optional)
+                  </span>
+                </label>
+                <textarea
+                  value={profile.description}
+                  onChange={(e) =>
+                    setProfile((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  rows={2}
+                  className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none text-sm"
+                  placeholder="Brief description of your business..."
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Loyalty Points Settings */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-amber-500/10 rounded-xl">
+                <Coins className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Loyalty Points</h2>
+                <p className="text-sm text-muted-foreground">
+                  Configure earning rates
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {/* Points Rate Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-3">
+                  Points Earning Rate
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {POINTS_RATE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => handlePresetChange(preset.value)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        selectedPreset === preset.value
+                          ? 'border-primary bg-primary/5 shadow-md'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm">{preset.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {preset.description}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Input */}
+                {showCustomInput && (
+                  <div className="mt-3 p-3 bg-muted/50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground">₱</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={loyalty.pesosPerPoint}
+                        onChange={(e) => handleCustomRateChange(e.target.value)}
+                        className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
+                      />
+                      <span className="text-muted-foreground">= 1 point</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Calculator */}
+              <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calculator className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-sm">Preview</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">₱</span>
+                  <input
+                    type="number"
+                    value={previewAmount}
+                    onChange={(e) => setPreviewAmount(e.target.value)}
+                    className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
                   />
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Right Column - Loyalty Settings & Security */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            {/* Loyalty Points Settings */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-amber-500/10 rounded-xl">
-                  <Coins className="w-5 h-5 text-amber-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Loyalty Points</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Configure earning rates
-                  </p>
+                  <span className="text-muted-foreground">=</span>
+                  <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
+                    {calculatePoints(parseFloat(previewAmount) || 0)} pts
+                  </span>
                 </div>
               </div>
 
-              <div className="space-y-5">
-                {/* Points Rate Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    Points Earning Rate
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {POINTS_RATE_PRESETS.map((preset) => (
-                      <button
-                        key={preset.value}
-                        type="button"
-                        onClick={() => handlePresetChange(preset.value)}
-                        className={`p-3 rounded-xl border-2 text-left transition-all ${
-                          selectedPreset === preset.value
-                            ? 'border-primary bg-primary/5 shadow-md'
-                            : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                        }`}
-                      >
-                        <p className="font-semibold text-sm">{preset.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {preset.description}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Custom Input */}
-                  {showCustomInput && (
-                    <div className="mt-3 p-3 bg-muted/50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground">₱</span>
-                        <input
-                          type="number"
-                          min="1"
-                          value={loyalty.pesosPerPoint}
-                          onChange={(e) =>
-                            handleCustomRateChange(e.target.value)
-                          }
-                          className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
-                        />
-                        <span className="text-muted-foreground">= 1 point</span>
-                      </div>
-                    </div>
-                  )}
+              {/* Advanced Options */}
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Advanced
+                  </span>
                 </div>
-
-                {/* Preview Calculator */}
-                <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calculator className="w-4 h-4 text-primary" />
-                    <span className="font-medium text-sm">Preview</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">₱</span>
-                    <input
-                      type="number"
-                      value={previewAmount}
-                      onChange={(e) => setPreviewAmount(e.target.value)}
-                      className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
-                    />
-                    <span className="text-muted-foreground">=</span>
-                    <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
-                      {calculatePoints(parseFloat(previewAmount) || 0)} pts
-                    </span>
-                  </div>
-                </div>
-
-                {/* Advanced Options */}
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Info className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Advanced
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium mb-1.5">
-                        Min. Purchase
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                          ₱
-                        </span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={loyalty.minPurchase}
-                          onChange={(e) =>
-                            setLoyalty((prev) => ({
-                              ...prev,
-                              minPurchase: parseFloat(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium mb-1.5">
-                        Max Points/Txn
-                      </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">
+                      Min. Purchase
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                        ₱
+                      </span>
                       <input
                         type="number"
                         min="0"
-                        value={loyalty.maxPointsPerTransaction}
+                        value={loyalty.minPurchase}
                         onChange={(e) =>
                           setLoyalty((prev) => ({
                             ...prev,
-                            maxPointsPerTransaction: e.target.value,
+                            minPurchase: parseFloat(e.target.value) || 0,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
-                        placeholder="No limit"
+                        className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
+                        placeholder="0"
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">
+                      Max Points/Txn
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={loyalty.maxPointsPerTransaction}
+                      onChange={(e) =>
+                        setLoyalty((prev) => ({
+                          ...prev,
+                          maxPointsPerTransaction: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                      placeholder="No limit"
+                    />
+                  </div>
                 </div>
               </div>
-            </Card>
+            </div>
+          </Card>
 
-            {/* Security Card */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-red-500/10 rounded-xl">
-                  <Shield className="w-5 h-5 text-red-500" />
+          {/* Security Card */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-red-500/10 rounded-xl">
+                <Shield className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Security</h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage account security
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push('/dashboard/settings/security')}
+              className="w-full p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-background rounded-lg">
+                  <Shield className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Security</h2>
+                <div className="text-left">
+                  <p className="font-medium">Change Password</p>
                   <p className="text-sm text-muted-foreground">
-                    Manage account security
+                    Update your account password
                   </p>
                 </div>
               </div>
-
-              <button
-                onClick={() => router.push('/dashboard/settings/security')}
-                className="w-full p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between transition group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-background rounded-lg">
-                    <Shield className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium">Change Password</p>
-                    <p className="text-sm text-muted-foreground">
-                      Update your account password
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </button>
-            </Card>
-          </motion.div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Card>
         </div>
 
         {/* Floating Save Button */}
