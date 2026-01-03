@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Upload, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase';
 import {
   Select,
   SelectContent,
@@ -44,6 +45,9 @@ export function CreateRewardModal({
   onCreate,
 }: CreateRewardModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -84,6 +88,9 @@ export function CreateRewardModal({
         expiryDate: '',
         image: '/reward-item.png',
       });
+
+      setImagePreview(null);
+      setUploadError(null);
     } catch (error) {
       console.error('Error creating reward:', error);
     } finally {
@@ -93,7 +100,66 @@ export function CreateRewardModal({
 
   const handleClose = () => {
     if (!isSubmitting) {
+      // Reset image states
+      setImagePreview(null);
+      setUploadError(null);
       onClose();
+    }
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset error
+    setUploadError(null);
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image must be less than 2MB');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError('Only PNG, JPG, and WebP images are allowed');
+      return;
+    }
+
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    // Upload to Supabase
+    setIsUploadingImage(true);
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `reward-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('reward-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('reward-images')
+        .getPublicUrl(fileName);
+
+      // Update form data with the uploaded URL
+      setFormData((prev) => ({ ...prev, image: urlData.publicUrl }));
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setUploadError('Failed to upload image. Please try again.');
+      setImagePreview(null);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -115,21 +181,49 @@ export function CreateRewardModal({
             {/* Left - Image Upload */}
             <div className="space-y-3">
               <label className="text-sm font-medium">Reward Image</label>
-              <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition h-48">
-                <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">Upload image</p>
-                <p className="text-xs text-muted-foreground">
-                  or drag and drop
-                </p>
-                <input type="file" className="hidden" accept="image/*" />
-              </Card>
-              <div className="h-24 rounded-lg bg-muted overflow-hidden">
-                <img
-                  src={formData.image || '/placeholder.svg'}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
+              <label className="block cursor-pointer">
+                <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center hover:bg-muted/50 hover:border-primary/50 transition h-48 relative overflow-hidden">
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <Upload className="w-8 h-8 mx-auto mb-2" />
+                          <p className="text-sm font-medium">Change image</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {isUploadingImage ? (
+                        <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                      ) : (
+                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                      )}
+                      <p className="text-sm font-medium">
+                        {isUploadingImage ? 'Uploading...' : 'Click to upload'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG up to 2MB
+                      </p>
+                    </>
+                  )}
+                </Card>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handleImageSelect}
+                  disabled={isSubmitting || isUploadingImage}
                 />
-              </div>
+              </label>
+              {uploadError && (
+                <p className="text-xs text-red-500">{uploadError}</p>
+              )}
             </div>
 
             {/* Right - Form Fields */}
