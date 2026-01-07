@@ -1,26 +1,30 @@
 // src/lib/constants.ts
 
+// ============================================
+// COLORS
+// ============================================
+
 export const COLORS = {
   // Primary gradient (purple to blue)
   primary: '#6366f1',
   primaryDark: '#4f46e5',
   secondary: '#06b6d4',
-  
+
   // Gradient colors for header
   gradient: {
-    start: '#8B5CF6',    // Purple
-    middle: '#6366F1',   // Indigo
-    end: '#3B82F6',      // Blue
+    start: '#8B5CF6',
+    middle: '#6366F1',
+    end: '#3B82F6',
   },
-  
+
   // Status colors
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
-  
+
   // Accent
   gold: '#F59E0B',
-  
+
   // Neutrals
   white: '#ffffff',
   black: '#000000',
@@ -36,7 +40,7 @@ export const COLORS = {
     800: '#1f2937',
     900: '#111827',
   },
-  
+
   // Dark mode
   dark: {
     background: '#0a0a0a',
@@ -44,6 +48,10 @@ export const COLORS = {
     border: '#262626',
   },
 } as const;
+
+// ============================================
+// SPACING
+// ============================================
 
 export const SPACING = {
   xs: 4,
@@ -55,6 +63,10 @@ export const SPACING = {
   '2xl': 48,
   '3xl': 64,
 } as const;
+
+// ============================================
+// TYPOGRAPHY
+// ============================================
 
 export const FONT_SIZE = {
   xs: 12,
@@ -75,6 +87,10 @@ export const FONT_WEIGHT = {
   bold: '700',
 } as const;
 
+// ============================================
+// BORDER RADIUS
+// ============================================
+
 export const BORDER_RADIUS = {
   sm: 4,
   base: 8,
@@ -85,6 +101,10 @@ export const BORDER_RADIUS = {
   '3xl': 32,
   full: 9999,
 } as const;
+
+// ============================================
+// SHADOWS
+// ============================================
 
 export const SHADOWS = {
   sm: {
@@ -117,37 +137,53 @@ export const SHADOWS = {
   }),
 } as const;
 
-// Tier configuration
+// ============================================
+// TIER SYSTEM
+// ============================================
+
 export const TIERS = {
-  bronze: { name: 'Bronze', minPoints: 0, color: '#CD7F32' },
-  silver: { name: 'Silver', minPoints: 500, color: '#C0C0C0' },
-  gold: { name: 'Gold', minPoints: 1500, color: '#FFD700' },
-  platinum: { name: 'Platinum', minPoints: 5000, color: '#E5E4E2' },
+  bronze: { name: 'Bronze', minPoints: 0, multiplier: 1.0, color: '#CD7F32' },
+  silver: {
+    name: 'Silver',
+    minPoints: 500,
+    multiplier: 1.25,
+    color: '#C0C0C0',
+  },
+  gold: { name: 'Gold', minPoints: 2000, multiplier: 1.5, color: '#FFD700' },
+  platinum: {
+    name: 'Platinum',
+    minPoints: 5000,
+    multiplier: 2.0,
+    color: '#E5E4E2',
+  },
 } as const;
 
-export const getTier = (points: number) => {
-  if (points >= TIERS.platinum.minPoints) return TIERS.platinum;
-  if (points >= TIERS.gold.minPoints) return TIERS.gold;
-  if (points >= TIERS.silver.minPoints) return TIERS.silver;
+export type TierKey = keyof typeof TIERS;
+export type Tier = (typeof TIERS)[TierKey];
+
+export const getTier = (lifetimePoints: number): Tier => {
+  if (lifetimePoints >= TIERS.platinum.minPoints) return TIERS.platinum;
+  if (lifetimePoints >= TIERS.gold.minPoints) return TIERS.gold;
+  if (lifetimePoints >= TIERS.silver.minPoints) return TIERS.silver;
   return TIERS.bronze;
 };
 
-export const getNextTier = (points: number) => {
-  if (points >= TIERS.platinum.minPoints) return null;
-  if (points >= TIERS.gold.minPoints) return TIERS.platinum;
-  if (points >= TIERS.silver.minPoints) return TIERS.gold;
+export const getNextTier = (lifetimePoints: number): Tier | null => {
+  if (lifetimePoints >= TIERS.platinum.minPoints) return null;
+  if (lifetimePoints >= TIERS.gold.minPoints) return TIERS.platinum;
+  if (lifetimePoints >= TIERS.silver.minPoints) return TIERS.gold;
   return TIERS.silver;
 };
 
-export const getProgressToNextTier = (points: number) => {
-  const currentTier = getTier(points);
-  const nextTier = getNextTier(points);
-  
+export const getProgressToNextTier = (lifetimePoints: number) => {
+  const currentTier = getTier(lifetimePoints);
+  const nextTier = getNextTier(lifetimePoints);
+
   if (!nextTier) return { progress: 1, remaining: 0 };
-  
+
   const range = nextTier.minPoints - currentTier.minPoints;
-  const progress = (points - currentTier.minPoints) / range;
-  const remaining = nextTier.minPoints - points;
-  
+  const progress = (lifetimePoints - currentTier.minPoints) / range;
+  const remaining = nextTier.minPoints - lifetimePoints;
+
   return { progress: Math.min(progress, 1), remaining };
 };

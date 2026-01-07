@@ -6,20 +6,26 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "loyaltyhub",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#6366F1"
     },
-    "assetBundlePatterns": ["**/*"],
-
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.loyaltyhub.app"
+      "bundleIdentifier": "com.loyaltyhub.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-
     "android": {
       "package": "com.loyaltyhub.app",
       "adaptiveIcon": {
@@ -36,23 +42,28 @@
               "pathPrefix": "/callback"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
-
     "plugins": [
       "expo-router",
       "expo-secure-store",
       "expo-font"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": { "origin": false },
-      "eas": { "projectId": "be2191a5-1512-4284-a3a5-25820121673a" }
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "be2191a5-1512-4284-a3a5-25820121673a"
+      }
     }
   }
 }

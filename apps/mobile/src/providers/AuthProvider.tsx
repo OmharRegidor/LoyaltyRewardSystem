@@ -1,7 +1,14 @@
 // src/providers/AuthProvider.tsx
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
+import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
@@ -38,8 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const redirectTo = Linking.createURL('auth/callback');
   const isLoadingCustomer = useRef(false);
+  const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
-  // Separate function to load customer - called outside onAuthStateChange
+  // Separate function to load customer
   const loadCustomer = useCallback(async (user: User, session: Session) => {
     if (isLoadingCustomer.current) return;
     isLoadingCustomer.current = true;
@@ -57,6 +65,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
         isInitialized: true,
       });
+
+      // Setup realtime subscription for this customer
+      if (customer?.id) {
+        setupRealtimeSubscription(customer.id);
+      }
     } catch (error) {
       console.error('Customer error:', error);
       setState({
@@ -71,52 +84,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Setup realtime subscription for customer points updates
+  const setupRealtimeSubscription = useCallback((customerId: string) => {
+    // Clean up existing subscription
+    if (realtimeChannelRef.current) {
+      supabase.removeChannel(realtimeChannelRef.current);
+    }
+
+    console.log('Setting up realtime subscription for customer:', customerId);
+
+    const channel = supabase
+      .channel(`customer-${customerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'customers',
+          filter: `id=eq.${customerId}`,
+        },
+        (payload) => {
+          console.log('Customer updated via realtime:', payload.new);
+
+          // Update customer state with new data
+          setState((prev) => ({
+            ...prev,
+            customer: prev.customer
+              ? {
+                  ...prev.customer,
+                  total_points: (payload.new as Customer).total_points,
+                  lifetime_points: (payload.new as Customer).lifetime_points,
+                  tier: (payload.new as Customer).tier,
+                  last_visit: (payload.new as Customer).last_visit,
+                }
+              : null,
+          }));
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
+
+    realtimeChannelRef.current = channel;
+  }, []);
+
+  // Cleanup realtime subscription
+  const cleanupRealtimeSubscription = useCallback(() => {
+    if (realtimeChannelRef.current) {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(realtimeChannelRef.current);
+      realtimeChannelRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
         if (session?.user) {
           await loadCustomer(session.user, session);
         } else {
-          setState(prev => ({ ...prev, isInitialized: true }));
+          setState((prev) => ({ ...prev, isInitialized: true }));
         }
       } catch (error) {
         console.error('Auth init error:', error);
-        setState(prev => ({ ...prev, isInitialized: true }));
+        setState((prev) => ({ ...prev, isInitialized: true }));
       }
     };
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
 
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Use setTimeout to escape the callback context
-          setTimeout(() => {
-            loadCustomer(session.user, session);
-          }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          setState({
-            user: null,
-            customer: null,
-            session: null,
-            isLoading: false,
-            isInitialized: true,
-          });
-        }
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTimeout(() => {
+          loadCustomer(session.user, session);
+        }, 0);
+      } else if (event === 'SIGNED_OUT') {
+        cleanupRealtimeSubscription();
+        setState({
+          user: null,
+          customer: null,
+          session: null,
+          isLoading: false,
+          isInitialized: true,
+        });
       }
-    );
+    });
 
-    return () => subscription.unsubscribe();
-  }, [loadCustomer]);
+    return () => {
+      subscription.unsubscribe();
+      cleanupRealtimeSubscription();
+    };
+  }, [loadCustomer, cleanupRealtimeSubscription]);
 
   const signInWithGoogle = useCallback(async () => {
     try {
       console.log('1. Starting Google sign in');
-      setState(prev => ({ ...prev, isLoading: true }));
+      setState((prev) => ({ ...prev, isLoading: true }));
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -130,7 +201,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data.url) throw new Error('No OAuth URL returned');
 
       console.log('2. Opening browser');
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectTo
+      );
       console.log('3. Browser closed, type:', result.type);
 
       if (result.type === 'success' && result.url) {
@@ -162,19 +236,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         console.log('4. Browser cancelled or failed');
-        setState(prev => ({ ...prev, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
-
     } catch (error) {
       console.error('Sign in error:', error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   }, [redirectTo]);
 
   const signOut = useCallback(async () => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
+      setState((prev) => ({ ...prev, isLoading: true }));
+      cleanupRealtimeSubscription();
       await supabase.auth.signOut();
     } catch (error) {
       console.error('Sign out error:', error);
@@ -186,14 +260,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isInitialized: true,
       });
     }
-  }, []);
+  }, [cleanupRealtimeSubscription]);
 
   const refreshCustomer = useCallback(async () => {
     if (!state.user) return;
 
     try {
       const customer = await customerService.getByUserId(state.user.id);
-      setState(prev => ({ ...prev, customer }));
+      setState((prev) => ({ ...prev, customer }));
     } catch (error) {
       console.error('Refresh customer error:', error);
     }

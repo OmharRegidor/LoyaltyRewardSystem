@@ -1,7 +1,7 @@
 // src/hooks/useWallet.ts
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { walletService } from '../services/wallet.service';
+import { supabase } from '../lib/supabase';
 import { useCustomer } from './useCustomer';
 import type {
   Transaction,
@@ -10,194 +10,69 @@ import type {
   WalletTab,
 } from '../types/wallet.types';
 
-// Mock transactions for development
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    customer_id: 'c1',
-    business_id: 'b1',
-    type: 'credit',
-    amount: 50,
-    title: 'Purchase at Bean & Brew',
-    description: null,
-    reference_id: null,
-    reference_type: 'purchase',
-    created_at: new Date().toISOString(),
-    business: { id: 'b1', name: 'Bean & Brew', logo_url: null },
-  },
-  {
-    id: '2',
-    customer_id: 'c1',
-    business_id: null,
-    type: 'credit',
-    amount: 100,
-    title: 'Referral Bonus',
-    description: 'Friend signed up using your code',
-    reference_id: null,
-    reference_type: 'referral',
-    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-    business: null,
-  },
-  {
-    id: '3',
-    customer_id: 'c1',
-    business_id: 'b1',
-    type: 'debit',
-    amount: 100,
-    title: 'Redeemed: Free Coffee',
-    description: null,
-    reference_id: null,
-    reference_type: 'redemption',
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Yesterday
-    business: { id: 'b1', name: 'Bean & Brew', logo_url: null },
-  },
-  {
-    id: '4',
-    customer_id: 'c1',
-    business_id: 'b2',
-    type: 'credit',
-    amount: 35,
-    title: 'Purchase at Sweet Delights',
-    description: null,
-    reference_id: null,
-    reference_type: 'purchase',
-    created_at: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(), // Yesterday
-    business: { id: 'b2', name: 'Sweet Delights', logo_url: null },
-  },
-  {
-    id: '5',
-    customer_id: 'c1',
-    business_id: null,
-    type: 'credit',
-    amount: 80,
-    title: 'Double Points Event',
-    description: 'Weekend bonus',
-    reference_id: null,
-    reference_type: 'bonus',
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // Nov 28
-    business: null,
-  },
-  {
-    id: '6',
-    customer_id: 'c1',
-    business_id: 'b3',
-    type: 'debit',
-    amount: 50,
-    title: 'Redeemed: 10% Discount',
-    description: null,
-    reference_id: null,
-    reference_type: 'redemption',
-    created_at: new Date(
-      Date.now() - 3 * 24 * 60 * 60 * 1000 - 4 * 60 * 60 * 1000
-    ).toISOString(),
-    business: { id: 'b3', name: 'Pizza Palace', logo_url: null },
-  },
-];
+// ============================================
+// TYPES
+// ============================================
 
-const MOCK_REDEMPTIONS: CustomerRedemption[] = [
-  {
-    id: 'r1',
-    customer_id: 'c1',
-    reward_id: 'rw1',
-    business_id: 'b1',
-    points_used: 500,
-    redemption_code: 'RDM-ABC12345',
-    status: 'pending',
-    expires_at: new Date(Date.now() + 20 * 60 * 60 * 1000).toISOString(), // 20 hours left
-    completed_at: null,
-    created_at: new Date().toISOString(),
-    reward: {
-      id: 'rw1',
-      title: 'Free Coffee & Pastry',
-      description: 'Enjoy a complimentary coffee with a pastry',
-      image_url:
-        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400',
-      points_cost: 500,
-    },
-    business: { id: 'b1', name: 'Bean & Brew Cafe', logo_url: null },
-  },
-  {
-    id: 'r2',
-    customer_id: 'c1',
-    reward_id: 'rw2',
-    business_id: 'b2',
-    points_used: 750,
-    redemption_code: 'RDM-XYZ98765',
-    status: 'completed',
-    expires_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    completed_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    reward: {
-      id: 'rw2',
-      title: '20% Off Next Order',
-      description: 'Get 20% off your entire order',
-      image_url:
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400',
-      points_cost: 750,
-    },
-    business: { id: 'b2', name: 'Downtown Bistro', logo_url: null },
-  },
-  {
-    id: 'r3',
-    customer_id: 'c1',
-    reward_id: 'rw3',
-    business_id: 'b3',
-    points_used: 600,
-    redemption_code: 'RDM-DEF45678',
-    status: 'expired',
-    expires_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    completed_at: null,
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    reward: {
-      id: 'rw3',
-      title: '2-for-1 Happy Hour',
-      description: 'Buy one cocktail, get one free',
-      image_url:
-        'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400',
-      points_cost: 600,
-    },
-    business: { id: 'b3', name: 'The Sunset Lounge', logo_url: null },
-  },
-];
-
-// Toggle for mock vs real data
-const USE_MOCK_DATA = true;
-
-/**
- * Group transactions by date (TODAY, YESTERDAY, or date)
- */
-function groupTransactionsByDate(
-  transactions: Transaction[]
-): GroupedTransactions[] {
-  const groups: Map<string, Transaction[]> = new Map();
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  transactions.forEach((tx) => {
-    const txDate = new Date(tx.created_at);
-    let groupKey: string;
-
-    if (isSameDay(txDate, today)) {
-      groupKey = 'TODAY';
-    } else if (isSameDay(txDate, yesterday)) {
-      groupKey = 'YESTERDAY';
-    } else {
-      groupKey = formatDateHeader(txDate);
-    }
-
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, []);
-    }
-    groups.get(groupKey)!.push(tx);
-  });
-
-  return Array.from(groups.entries()).map(([title, data]) => ({
-    title,
-    data,
-  }));
+interface BusinessJoin {
+  id: string;
+  name: string;
+  logo_url: string | null;
 }
 
+interface RewardJoin {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  points_cost: number;
+}
+
+interface TransactionRow {
+  id: string;
+  customer_id: string;
+  business_id: string | null;
+  reward_id: string | null;
+  type: string;
+  points: number;
+  amount_spent: number | null;
+  description: string | null;
+  created_at: string;
+  businesses: unknown;
+}
+
+interface RedemptionRow {
+  id: string;
+  customer_id: string;
+  reward_id: string;
+  business_id: string;
+  points_used: number;
+  redemption_code: string;
+  status: string;
+  expires_at: string;
+  completed_at: string | null;
+  created_at: string;
+  rewards: unknown;
+  businesses: unknown;
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+/**
+ * Safely extracts the first item from a Supabase joined relation
+ * Supabase returns joins as arrays, so we need to handle this consistently
+ */
+function extractFirstFromJoin<T>(data: unknown): T | null {
+  if (!data) return null;
+  if (Array.isArray(data)) return data[0] ?? null;
+  return data as T;
+}
+
+/**
+ * Checks if two dates are the same day
+ */
 function isSameDay(d1: Date, d2: Date): boolean {
   return (
     d1.getFullYear() === d2.getFullYear() &&
@@ -206,15 +81,169 @@ function isSameDay(d1: Date, d2: Date): boolean {
   );
 }
 
+/**
+ * Formats a date for section headers (e.g., "NOV 28")
+ */
 function formatDateHeader(date: Date): string {
   return date
     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     .toUpperCase();
 }
 
+/**
+ * Gets the group key for a transaction date (TODAY, YESTERDAY, or formatted date)
+ */
+function getDateGroupKey(date: Date): string {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (isSameDay(date, today)) return 'TODAY';
+  if (isSameDay(date, yesterday)) return 'YESTERDAY';
+  return formatDateHeader(date);
+}
+
+/**
+ * Groups transactions by date
+ */
+function groupTransactionsByDate(
+  transactions: Transaction[]
+): GroupedTransactions[] {
+  const groups = new Map<string, Transaction[]>();
+
+  transactions.forEach((tx) => {
+    const groupKey = getDateGroupKey(new Date(tx.created_at));
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, []);
+    }
+    groups.get(groupKey)!.push(tx);
+  });
+
+  return Array.from(groups.entries()).map(([title, data]) => ({ title, data }));
+}
+
+// ============================================
+// TRANSFORMERS
+// ============================================
+
+/**
+ * Transforms a database transaction row to the Transaction type
+ */
+function transformTransaction(row: TransactionRow): Transaction {
+  const business = extractFirstFromJoin<BusinessJoin>(row.businesses);
+  const isEarn = row.type === 'earn';
+
+  return {
+    id: row.id,
+    customer_id: row.customer_id,
+    business_id: row.business_id,
+    type: isEarn ? 'credit' : 'debit',
+    amount: row.points,
+    title: row.description ?? (isEarn ? 'Points Earned' : 'Points Redeemed'),
+    description: row.amount_spent
+      ? `₱${row.amount_spent.toFixed(2)} spent`
+      : null,
+    reference_id: row.reward_id,
+    reference_type: isEarn ? 'purchase' : 'redemption',
+    created_at: row.created_at,
+    business: business
+      ? {
+          id: business.id,
+          name: business.name,
+          logo_url: business.logo_url,
+        }
+      : null,
+  };
+}
+
+/**
+ * Transforms a database redemption row to the CustomerRedemption type
+ */
+function transformRedemption(row: RedemptionRow): CustomerRedemption {
+  const reward = extractFirstFromJoin<RewardJoin>(row.rewards);
+  const business = extractFirstFromJoin<BusinessJoin>(row.businesses);
+
+  const defaultReward = {
+    id: '',
+    title: 'Unknown Reward',
+    description: '',
+    image_url: '',
+    points_cost: row.points_used,
+  };
+
+  return {
+    id: row.id,
+    customer_id: row.customer_id,
+    reward_id: row.reward_id,
+    business_id: row.business_id,
+    points_used: row.points_used,
+    redemption_code: row.redemption_code,
+    status: row.status as CustomerRedemption['status'],
+    expires_at: row.expires_at,
+    completed_at: row.completed_at,
+    created_at: row.created_at,
+    reward: reward
+      ? {
+          id: reward.id,
+          title: reward.title,
+          description: reward.description ?? '',
+          image_url: reward.image_url ?? '',
+          points_cost: reward.points_cost,
+        }
+      : defaultReward,
+    business: business
+      ? {
+          id: business.id,
+          name: business.name,
+          logo_url: business.logo_url,
+        }
+      : null,
+  };
+}
+
+// ============================================
+// QUERY DEFINITIONS
+// ============================================
+
+const TRANSACTION_SELECT = `
+  id,
+  customer_id,
+  business_id,
+  reward_id,
+  type,
+  points,
+  amount_spent,
+  description,
+  created_at,
+  businesses:business_id (id, name, logo_url)
+` as const;
+
+const REDEMPTION_SELECT = `
+  id,
+  customer_id,
+  reward_id,
+  business_id,
+  points_used,
+  redemption_code,
+  status,
+  expires_at,
+  completed_at,
+  created_at,
+  rewards:reward_id (id, title, description, image_url, points_cost),
+  businesses:business_id (id, name, logo_url)
+` as const;
+
+const TRANSACTION_LIMIT = 50;
+
+// ============================================
+// HOOK
+// ============================================
+
 export function useWallet() {
   const { customer, points } = useCustomer();
 
+  // State
   const [activeTab, setActiveTab] = useState<WalletTab>('transactions');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [redemptions, setRedemptions] = useState<CustomerRedemption[]>([]);
@@ -223,29 +252,73 @@ export function useWallet() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Fetch data
-  const fetchData = useCallback(async () => {
-    if (!customer) return;
+  // ============================================
+  // DATA FETCHING
+  // ============================================
+
+  const fetchTransactions = useCallback(
+    async (customerId: string): Promise<Transaction[]> => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(TRANSACTION_SELECT)
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false })
+        .limit(TRANSACTION_LIMIT);
+
+      if (error) throw error;
+
+      return (data as TransactionRow[]).map(transformTransaction);
+    },
+    []
+  );
+
+  const fetchRedemptions = useCallback(
+    async (customerId: string): Promise<CustomerRedemption[]> => {
+      const { data, error } = await supabase
+        .from('redemptions')
+        .select(REDEMPTION_SELECT)
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return (data as RedemptionRow[]).map(transformRedemption);
+    },
+    []
+  );
+
+  const fetchLifetimePoints = useCallback(
+    async (customerId: string): Promise<number> => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('lifetime_points')
+        .eq('id', customerId)
+        .single();
+
+      if (error) throw error;
+
+      return (data as { lifetime_points: number | null })?.lifetime_points ?? 0;
+    },
+    []
+  );
+
+  const fetchAllData = useCallback(async () => {
+    if (!customer?.id) return;
 
     try {
       setError(null);
 
-      if (USE_MOCK_DATA) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setTransactions(MOCK_TRANSACTIONS);
-        setRedemptions(MOCK_REDEMPTIONS);
-        setLifetimePoints(3420);
-      } else {
-        const [txData, redemptionData, lifetime] = await Promise.all([
-          walletService.getTransactions(customer.id),
-          walletService.getRedemptions(customer.id),
-          walletService.getLifetimePoints(customer.id),
-        ]);
-        setTransactions(txData);
-        setRedemptions(redemptionData);
-        setLifetimePoints(lifetime);
-      }
+      const [txData, redemptionData, lifetime] = await Promise.all([
+        fetchTransactions(customer.id),
+        fetchRedemptions(customer.id),
+        fetchLifetimePoints(customer.id),
+      ]);
+
+      setTransactions(txData);
+      setRedemptions(redemptionData);
+      setLifetimePoints(lifetime);
     } catch (err) {
+      console.error('Wallet fetch error:', err);
       setError(
         err instanceof Error ? err : new Error('Failed to fetch wallet data')
       );
@@ -253,25 +326,63 @@ export function useWallet() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [customer]);
+  }, [customer?.id, fetchTransactions, fetchRedemptions, fetchLifetimePoints]);
 
+  // ============================================
+  // EFFECTS
+  // ============================================
+
+  // Initial fetch
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (customer?.id) {
+      fetchAllData();
+    }
+  }, [customer?.id, fetchAllData]);
 
-  // Refresh handler
+  // Realtime subscription for new transactions
+  useEffect(() => {
+    if (!customer?.id) return;
+
+    const channel = supabase
+      .channel(`wallet-${customer.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `customer_id=eq.${customer.id}`,
+        },
+        () => {
+          console.log('New transaction detected, refreshing...');
+          fetchAllData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [customer?.id, fetchAllData]);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
-    await fetchData();
-  }, [fetchData]);
+    await fetchAllData();
+  }, [fetchAllData]);
 
-  // Group transactions by date
+  // ============================================
+  // COMPUTED VALUES
+  // ============================================
+
   const groupedTransactions = useMemo(
     () => groupTransactionsByDate(transactions),
     [transactions]
   );
 
-  // Separate redemptions by status
   const activeRedemptions = useMemo(
     () => redemptions.filter((r) => r.status === 'pending'),
     [redemptions]
@@ -281,6 +392,10 @@ export function useWallet() {
     () => redemptions.filter((r) => r.status !== 'pending'),
     [redemptions]
   );
+
+  // ============================================
+  // RETURN
+  // ============================================
 
   return {
     // Tab state
@@ -302,6 +417,8 @@ export function useWallet() {
     isLoading,
     isRefreshing,
     error,
+
+    // Actions
     refresh,
   };
 }

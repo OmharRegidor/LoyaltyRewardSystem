@@ -8,19 +8,23 @@ export interface Database {
           id: string;
           user_id: string;
           phone: string | null;
-          total_points: number | null;
+          total_points: number;
+          lifetime_points: number;
+          tier: string;
           qr_code_url: string | null;
           last_visit: string | null;
           created_at: string | null;
         };
         Insert: {
-          id?: string;
+          id: string;
           user_id: string;
           phone: string | null;
-          total_points?: number | null;
-          qr_code_url?: string | null;
-          last_visit?: string | null;
-          created_at?: string | null;
+          total_points: number;
+          lifetime_points: number;
+          tier: string;
+          qr_code_url: string | null;
+          last_visit: string | null;
+          created_at: string | null;
         };
         Update: {
           phone?: string | null;

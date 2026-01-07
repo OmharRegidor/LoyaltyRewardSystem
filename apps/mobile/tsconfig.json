@@ -2,18 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "ignoreDeprecations": "6.0",
+    "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./*"],
       "@loyaltyhub/shared/*": ["../../packages/shared/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "expo-env.d.ts",
-    ".expo/types/**/*.ts",
-    "**/*.css"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
