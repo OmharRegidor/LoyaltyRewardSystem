@@ -443,25 +443,47 @@ export default function StaffScannerPage() {
 
       if (scanError) throw scanError;
 
+      // Get current lifetime points
+      const { data: customerData, error: fetchError } = await supabase
+        .from('customers')
+        .select('total_points, lifetime_points')
+        .eq('id', customer.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Fetch error:', fetchError);
+        // Continue with just total_points update if lifetime_points doesn't exist
+      }
+
+      // Calculate new values
+      const currentLifetime =
+        (customerData as { lifetime_points?: number })?.lifetime_points || 0;
+      const newTotalPoints = customer.currentPoints + calculatedPoints;
+      const newLifetimePoints = currentLifetime + calculatedPoints;
+
       // Update customer points
       const { error: updateError } = await supabase
         .from('customers')
         .update({
-          total_points: customer.currentPoints + calculatedPoints,
+          total_points: newTotalPoints,
+          lifetime_points: newLifetimePoints,
           last_visit: new Date().toISOString(),
         })
         .eq('id', customer.id);
 
       if (updateError) throw updateError;
 
-      // Record transaction
-      await supabase.from('transactions').insert({
+      // Record transaction with description
+      const { error: txError } = await supabase.from('transactions').insert({
         customer_id: customer.id,
         business_id: staffData.businessId,
         type: 'earn',
         points: calculatedPoints,
         amount_spent: amount,
+        description: `Purchase at ${staffData.businessName}`,
       });
+
+      if (txError) console.error('Transaction insert error:', txError);
 
       // Update local stats
       setStats((prev) => ({
@@ -473,15 +495,15 @@ export default function StaffScannerPage() {
         success: true,
         customerName: customer.name,
         pointsAwarded: calculatedPoints,
-        newTotal: customer.currentPoints + calculatedPoints,
+        newTotal: newTotalPoints,
       });
 
       setScannerState('success');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Award points error:', err);
       setScanResult({
         success: false,
-        error: err.message || 'Failed to award points',
+        error: err instanceof Error ? err.message : 'Failed to award points',
       });
       setScannerState('error');
     }
