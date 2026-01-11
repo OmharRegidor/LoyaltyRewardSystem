@@ -20,6 +20,7 @@ import {
 import { useRewards } from '../../src/hooks/useRewards';
 import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
 import type { Reward } from '../../src/types/rewards.types';
+import { getTierInfo } from '../../src/types/rewards.types';
 
 export default function RewardsScreen() {
   const insets = useSafeAreaInsets();
@@ -35,6 +36,8 @@ export default function RewardsScreen() {
     redeemReward,
     redeemingId,
     userPoints,
+    userTier,
+    isLocked,
   } = useRewards();
 
   const [searchDebounce, setSearchDebounce] = useState('');
@@ -43,9 +46,7 @@ export default function RewardsScreen() {
   const handleSearch = useCallback(
     (text: string) => {
       setSearchDebounce(text);
-      const timer = setTimeout(() => {
-        setSearchQuery(text);
-      }, 300);
+      const timer = setTimeout(() => setSearchQuery(text), 300);
       return () => clearTimeout(timer);
     },
     [setSearchQuery]
@@ -54,9 +55,22 @@ export default function RewardsScreen() {
   // Handle redeem
   const handleRedeem = useCallback(
     async (reward: Reward) => {
+      // Check if locked
+      if (isLocked(reward)) {
+        const tierInfo = getTierInfo(reward.tier_required!);
+        Alert.alert(
+          '🔒 Tier Locked',
+          `This reward requires ${tierInfo.emoji} ${tierInfo.name} membership.\n\nKeep earning points to unlock higher tiers!`,
+          [{ text: 'Got it' }]
+        );
+        return;
+      }
+
       Alert.alert(
         'Redeem Reward',
-        `Are you sure you want to redeem "${reward.title}" for ${reward.points_cost} points?`,
+        `Redeem "${
+          reward.title
+        }" for ${reward.points_cost.toLocaleString()} points?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -66,7 +80,7 @@ export default function RewardsScreen() {
                 const redemption = await redeemReward(reward);
                 Alert.alert(
                   '🎉 Success!',
-                  `Your redemption code is:\n\n${redemption.redemption_code}\n\nShow this to the cashier within 24 hours.`,
+                  `Your code:\n\n${redemption.redemption_code}\n\nShow to cashier within 24 hours.`,
                   [{ text: 'OK' }]
                 );
               } catch (error) {
@@ -82,7 +96,7 @@ export default function RewardsScreen() {
         ]
       );
     },
-    [redeemReward]
+    [redeemReward, isLocked]
   );
 
   // Render reward card
@@ -91,24 +105,39 @@ export default function RewardsScreen() {
       <RewardCard
         reward={item}
         userPoints={userPoints}
+        userTier={userTier}
         onRedeem={handleRedeem}
         isRedeeming={redeemingId === item.id}
       />
     ),
-    [userPoints, handleRedeem, redeemingId]
+    [userPoints, userTier, handleRedeem, redeemingId]
   );
 
-  // Key extractor
   const keyExtractor = useCallback((item: Reward) => item.id, []);
+
+  // Header with tier info
+  const tierInfo = getTierInfo(userTier);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Available Rewards</Text>
+        <View style={styles.tierIndicator}>
+          <Text style={styles.tierEmoji}>{tierInfo.emoji}</Text>
+          <Text style={[styles.tierName, { color: tierInfo.color }]}>
+            {tierInfo.name}
+          </Text>
+        </View>
       </View>
 
-      {/* Search Bar */}
+      {/* Points Display */}
+      <View style={styles.pointsBar}>
+        <Text style={styles.pointsLabel}>Your Points</Text>
+        <Text style={styles.pointsValue}>{userPoints.toLocaleString()}</Text>
+      </View>
+
+      {/* Search */}
       <SearchBar
         value={searchDebounce}
         onChangeText={handleSearch}
@@ -126,11 +155,11 @@ export default function RewardsScreen() {
         <RewardSkeletonList count={3} />
       ) : rewards.length === 0 ? (
         <EmptyState
-          title={searchQuery ? 'No results found' : 'No Rewards Found'}
+          title={searchQuery ? 'No results found' : 'No Rewards Available'}
           subtitle={
             searchQuery
               ? `No rewards match "${searchQuery}"`
-              : 'Try a different category or check back later'
+              : 'Check back later for new rewards!'
           }
         />
       ) : (
@@ -160,14 +189,53 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[50],
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.base,
-    paddingBottom: SPACING.base,
+    paddingBottom: SPACING.sm,
   },
   title: {
     fontSize: FONT_SIZE['2xl'],
     fontWeight: '700',
     color: COLORS.gray[900],
+  },
+  tierIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.gray[100],
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  tierEmoji: {
+    fontSize: 14,
+  },
+  tierName: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  pointsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: 12,
+  },
+  pointsLabel: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.gray[600],
+  },
+  pointsValue: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   listContent: {
     paddingHorizontal: SPACING.lg,

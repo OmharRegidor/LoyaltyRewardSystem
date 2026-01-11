@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -26,11 +27,19 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isLoading } = useAuth();
-  const { qrCodeUrl, points } = useCustomer();
+  const { qrCodeUrl, points, lifetimePoints, refreshCustomer } = useCustomer();
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Get display name from Google OAuth metadata
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName =
+    user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
   const avatarUrl = user?.user_metadata?.avatar_url || null;
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshCustomer();
+    setIsRefreshing(false);
+  };
 
   const handleAvatarPress = () => {
     router.push('/(main)/profile');
@@ -44,15 +53,27 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.white}
+            colors={[COLORS.white]}
+          />
+        }
       >
         {/* Gradient Header Background */}
         <LinearGradient
-          colors={[COLORS.gradient.start, COLORS.gradient.middle, COLORS.gradient.end]}
+          colors={[
+            COLORS.gradient.start,
+            COLORS.gradient.middle,
+            COLORS.gradient.end,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.gradientHeader, { paddingTop: insets.top }]}
@@ -65,7 +86,7 @@ export default function HomeScreen() {
           />
 
           {/* Points Balance + Tier Progress */}
-          <BalanceCard points={points} />
+          <BalanceCard points={points} lifetimePoints={lifetimePoints} />
         </LinearGradient>
 
         {/* White Content Area */}

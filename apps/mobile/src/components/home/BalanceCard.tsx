@@ -3,16 +3,24 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ProgressBar } from '../ui/ProgressBar';
-import { COLORS, SPACING, FONT_SIZE, getTier, getNextTier, getProgressToNextTier } from '../../lib/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  getTier,
+  getNextTier,
+  getProgressToNextTier,
+} from '../../lib/constants';
 
 interface BalanceCardProps {
   points: number;
+  lifetimePoints: number;
 }
 
-export function BalanceCard({ points }: BalanceCardProps) {
-  const currentTier = getTier(points);
-  const nextTier = getNextTier(points);
-  const { progress, remaining } = getProgressToNextTier(points);
+export function BalanceCard({ points, lifetimePoints }: BalanceCardProps) {
+  const currentTier = getTier(lifetimePoints);
+  const nextTier = getNextTier(lifetimePoints);
+  const { progress, remaining } = getProgressToNextTier(lifetimePoints);
 
   return (
     <View style={styles.container}>
@@ -33,7 +41,9 @@ export function BalanceCard({ points }: BalanceCardProps) {
           backgroundColor="rgba(255,255,255,0.3)"
           fillColor={COLORS.success}
           label={`${currentTier.name} Member`}
-          rightLabel={nextTier ? `${remaining} pts to ${nextTier.name}` : 'Max Tier!'}
+          rightLabel={
+            nextTier ? `${remaining} pts to ${nextTier.name}` : 'Max Tier!'
+          }
           showLabel
         />
       </View>

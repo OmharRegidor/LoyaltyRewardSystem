@@ -4,65 +4,110 @@ import { supabase } from '../lib/supabase';
 import type { Customer } from '../types/database.types';
 import { nanoid } from 'nanoid/non-secure';
 
+// ============================================
+// CONSTANTS
+// ============================================
+
+/**
+ * Explicit column selection to ensure all fields are fetched
+ * This prevents issues where SELECT * might not return new columns
+ */
+const CUSTOMER_COLUMNS = `
+  id,
+  user_id,
+  phone,
+  total_points,
+  lifetime_points,
+  tier,
+  qr_code_url,
+  last_visit,
+  created_at
+` as const;
+
+// ============================================
+// SERVICE
+// ============================================
+
 export const customerService = {
+  /**
+   * Get customer by user ID with all fields
+   */
   async getByUserId(userId: string): Promise<Customer | null> {
-    console.log('DB: getByUserId called with:', userId);
+    console.log('[CustomerService] getByUserId:', userId);
 
     const { data, error } = await supabase
       .from('customers')
-      .select('*')
+      .select(CUSTOMER_COLUMNS)
       .eq('user_id', userId)
-      .maybeSingle(); // ← Changed from .single() to .maybeSingle()
-
-    console.log('DB: getByUserId result:', { data, error });
+      .maybeSingle();
 
     if (error) {
-      console.error('DB: getByUserId error:', error);
+      console.error('[CustomerService] getByUserId error:', error.message);
       throw error;
     }
 
-    return data; // Returns null if no row found (no error)
-  },
-
-  async create(userId: string): Promise<Customer> {
-    console.log('DB: create called with:', userId);
-
-    const customerData = {
-      user_id: userId,
-      phone: null,
-      total_points: 0,
-      qr_code_url: `loyaltyhub://customer/${nanoid(12)}`,
-    };
-
-    console.log('DB: inserting:', customerData);
-
-    const { data, error } = await supabase
-      .from('customers')
-      .insert(customerData)
-      .select()
-      .single();
-
-    console.log('DB: create result:', { data, error });
-
-    if (error) {
-      console.error('DB: create error:', error);
-      throw error;
-    }
+    console.log('[CustomerService] getByUserId result:', {
+      id: data?.id,
+      total_points: data?.total_points,
+      lifetime_points: data?.lifetime_points,
+      tier: data?.tier,
+    });
 
     return data;
   },
 
-  async findOrCreate(userId: string): Promise<Customer> {
-    console.log('DB: findOrCreate called with:', userId);
+  /**
+   * Create new customer with default values
+   */
+  async create(userId: string): Promise<Customer> {
+    console.log('[CustomerService] create:', userId);
 
-    const existing = await this.getByUserId(userId);
+    const { data, error } = await supabase
+      .from('customers')
+      .insert({
+        user_id: userId,
+        phone: null,
+        total_points: 0,
+        lifetime_points: 0,
+        tier: 'bronze',
+        qr_code_url: `loyaltyhub://customer/${nanoid(12)}`,
+      })
+      .select(CUSTOMER_COLUMNS)
+      .single();
 
-    if (existing) {
-      console.log('DB: found existing customer');
-      return existing;
+    if (error) {
+      console.error('[CustomerService] create error:', error.message);
+      throw error;
     }
 
-    console.log('DB: creating new customer');
+    console.log('[CustomerService] created customer:', data?.id);
+    return data;
+  },
+
+  /**
+   * Find existing customer or create new one
+   */
+  async findOrCreate(userId: string): Promise<Customer> {
+    const existing = await this.getByUserId(userId);
+    if (existing) return existing;
     return this.create(userId);
+  },
+
+  /**
+   * Get customer by ID (for staff lookups)
+   */
+  async getById(customerId: string): Promise<Customer | null> {
+    const { data, error } = await supabase
+      .from('customers')
+      .select(CUSTOMER_COLUMNS)
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[CustomerService] getById error:', error.message);
+      throw error;
+    }
+
+    return data;
   },
 };

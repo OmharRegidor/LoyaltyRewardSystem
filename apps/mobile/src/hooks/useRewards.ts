@@ -1,9 +1,10 @@
-// apps/mobile/src/hooks/useRewards.ts
+// src/hooks/useRewards.ts
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCustomer } from './useCustomer';
-import type { Reward, RewardCategory } from '../types/rewards.types';
+import type { Reward, RewardCategory, TierLevel } from '../types/rewards.types';
+import { canAccessReward, TIER_ORDER } from '../types/rewards.types';
 
 // ============================================
 // TYPES
@@ -15,10 +16,6 @@ interface BusinessInfo {
   logo_url: string | null;
 }
 
-/**
- * Raw reward data from Supabase query
- * Using explicit types instead of 'any'
- */
 interface RewardFromSupabase {
   id: string;
   business_id: string;
@@ -30,8 +27,7 @@ interface RewardFromSupabase {
   image_url: string | null;
   is_active: boolean | null;
   is_visible: boolean | null;
-  discount_type: string | null;
-  discount_value: number | null;
+  tier_required: string | null;
   valid_from: string | null;
   valid_until: string | null;
   created_at: string | null;
@@ -47,35 +43,6 @@ interface RedeemResult {
   error?: string;
 }
 
-interface UseRewardsReturn {
-  rewards: Reward[];
-  allRewards: Reward[];
-  isLoading: boolean;
-  isRefreshing: boolean;
-  error: Error | null;
-  activeCategory: RewardCategory;
-  setActiveCategory: (category: RewardCategory) => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  refresh: () => Promise<void>;
-  canRedeem: (reward: Reward) => boolean;
-  pointsNeeded: (reward: Reward) => number;
-  redeemReward: (reward: Reward) => Promise<{
-    id: string | undefined;
-    customer_id: string;
-    reward_id: string;
-    business_id: string;
-    points_used: number | undefined;
-    redemption_code: string | undefined;
-    status: 'pending';
-    expires_at: string | undefined;
-    completed_at: null;
-    created_at: string;
-  }>;
-  redeemingId: string | null;
-  userPoints: number;
-}
-
 // ============================================
 // CONSTANTS
 // ============================================
@@ -89,14 +56,17 @@ const VALID_CATEGORIES: readonly RewardCategory[] = [
   'prods',
 ] as const;
 
+const VALID_TIERS: readonly TierLevel[] = [
+  'bronze',
+  'silver',
+  'gold',
+  'platinum',
+] as const;
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Safely extracts BusinessInfo from Supabase's response
- * Handles both array and single object responses from foreign key joins
- */
 function extractBusiness(
   businesses: BusinessInfo | BusinessInfo[] | null
 ): BusinessInfo | undefined {
@@ -105,9 +75,6 @@ function extractBusiness(
   return businesses;
 }
 
-/**
- * Type guard for valid reward categories
- */
 function isValidCategory(category: unknown): category is RewardCategory {
   return (
     typeof category === 'string' &&
@@ -115,38 +82,30 @@ function isValidCategory(category: unknown): category is RewardCategory {
   );
 }
 
-/**
- * Validates if reward is within valid date range
- */
+function isValidTier(tier: unknown): tier is TierLevel {
+  return typeof tier === 'string' && VALID_TIERS.includes(tier as TierLevel);
+}
+
 function isWithinValidDateRange(
   validFrom: string | null,
   validUntil: string | null
 ): boolean {
   const now = Date.now();
-
-  if (validFrom && new Date(validFrom).getTime() > now) {
-    return false;
-  }
-
-  if (validUntil && new Date(validUntil).getTime() < now) {
-    return false;
-  }
-
+  if (validFrom && new Date(validFrom).getTime() > now) return false;
+  if (validUntil && new Date(validUntil).getTime() < now) return false;
   return true;
 }
 
-/**
- * Transforms raw Supabase data to app Reward type
- * Returns null if reward is invalid (expired, etc.)
- */
 function transformToReward(raw: RewardFromSupabase): Reward | null {
-  // Skip rewards outside valid date range
   if (!isWithinValidDateRange(raw.valid_from, raw.valid_until)) {
     return null;
   }
 
   const business = extractBusiness(raw.businesses);
   const category = isValidCategory(raw.category) ? raw.category : 'all';
+  const tierRequired = isValidTier(raw.tier_required)
+    ? raw.tier_required
+    : null;
 
   return {
     id: raw.id,
@@ -159,6 +118,7 @@ function transformToReward(raw: RewardFromSupabase): Reward | null {
     image_url: raw.image_url,
     active: raw.is_active ?? false,
     created_at: raw.created_at ?? new Date().toISOString(),
+    tier_required: tierRequired,
     business: business
       ? {
           id: business.id,
@@ -173,8 +133,9 @@ function transformToReward(raw: RewardFromSupabase): Reward | null {
 // HOOK
 // ============================================
 
-export function useRewards(): UseRewardsReturn {
-  const { customer, points, refreshCustomer } = useCustomer();
+export function useRewards() {
+  const { customer, points, tier, refreshCustomer } = useCustomer();
+  const userTier = (isValidTier(tier) ? tier : 'bronze') as TierLevel;
 
   // State
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -193,15 +154,6 @@ export function useRewards(): UseRewardsReturn {
     try {
       setError(null);
 
-      // Debug: Check auth state
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('[useRewards] Auth session exists:', !!sessionData?.session);
-      console.log(
-        '[useRewards] User ID:',
-        sessionData?.session?.user?.id ?? 'none'
-      );
-
-      // Simplified query - fetch rewards directly without complex joins first
       const { data, error: fetchError } = await supabase
         .from('rewards')
         .select(
@@ -216,46 +168,22 @@ export function useRewards(): UseRewardsReturn {
           image_url,
           is_active,
           is_visible,
-          discount_type,
-          discount_value,
+          tier_required,
           valid_from,
           valid_until,
           created_at,
-          businesses (
-            id,
-            name,
-            logo_url
-          )
+          businesses (id, name, logo_url)
         `
         )
         .eq('is_active', true)
         .eq('is_visible', true)
-        .order('created_at', { ascending: false });
+        .order('points_cost', { ascending: true });
 
-      // Debug: Log raw response
-      console.log('[useRewards] Fetch error:', fetchError?.message ?? 'none');
-      console.log('[useRewards] Raw data count:', data?.length ?? 0);
-      console.log('[useRewards] Raw data:', JSON.stringify(data, null, 2));
+      if (fetchError) throw new Error(fetchError.message);
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      if (!data || data.length === 0) {
-        console.log('[useRewards] No rewards returned from database');
-        setRewards([]);
-        return;
-      }
-
-      // Transform data with type safety
       const transformedRewards = (data as RewardFromSupabase[])
         .map(transformToReward)
         .filter((reward): reward is Reward => reward !== null);
-
-      console.log(
-        '[useRewards] Transformed rewards count:',
-        transformedRewards.length
-      );
 
       setRewards(transformedRewards);
     } catch (err) {
@@ -276,24 +204,14 @@ export function useRewards(): UseRewardsReturn {
   useEffect(() => {
     fetchRewards();
 
-    // Real-time subscription for rewards changes
     const channel = supabase
       .channel('rewards_realtime')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rewards',
-        },
-        (payload) => {
-          console.log('[useRewards] Realtime update:', payload.eventType);
-          fetchRewards();
-        }
+        { event: '*', schema: 'public', table: 'rewards' },
+        () => fetchRewards()
       )
-      .subscribe((status) => {
-        console.log('[useRewards] Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -301,17 +219,7 @@ export function useRewards(): UseRewardsReturn {
   }, [fetchRewards]);
 
   // ============================================
-  // REFRESH HANDLER
-  // ============================================
-
-  const refresh = useCallback(async (): Promise<void> => {
-    console.log('[useRewards] Manual refresh triggered');
-    setIsRefreshing(true);
-    await fetchRewards();
-  }, [fetchRewards]);
-
-  // ============================================
-  // FILTERED REWARDS (Memoized)
+  // FILTERED & SORTED REWARDS
   // ============================================
 
   const filteredRewards = useMemo((): Reward[] => {
@@ -319,24 +227,31 @@ export function useRewards(): UseRewardsReturn {
 
     // Filter by category
     if (activeCategory !== 'all') {
-      result = result.filter((reward) => reward.category === activeCategory);
+      result = result.filter((r) => r.category === activeCategory);
     }
 
-    // Filter by search query
-    const trimmedQuery = searchQuery.trim().toLowerCase();
-    if (trimmedQuery) {
-      result = result.filter((reward) => {
-        const titleMatch = reward.title.toLowerCase().includes(trimmedQuery);
-        const descMatch =
-          reward.description?.toLowerCase().includes(trimmedQuery) ?? false;
-        const businessMatch =
-          reward.business?.name.toLowerCase().includes(trimmedQuery) ?? false;
-        return titleMatch || descMatch || businessMatch;
+    // Filter by search
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      result = result.filter((r) => {
+        const titleMatch = r.title.toLowerCase().includes(query);
+        const descMatch = r.description?.toLowerCase().includes(query) ?? false;
+        const bizMatch =
+          r.business?.name.toLowerCase().includes(query) ?? false;
+        return titleMatch || descMatch || bizMatch;
       });
     }
 
-    return result;
-  }, [rewards, activeCategory, searchQuery]);
+    // Sort: Accessible rewards first, then by points cost
+    return result.sort((a, b) => {
+      const aAccessible = canAccessReward(userTier, a.tier_required);
+      const bAccessible = canAccessReward(userTier, b.tier_required);
+
+      if (aAccessible && !bAccessible) return -1;
+      if (!aAccessible && bAccessible) return 1;
+      return a.points_cost - b.points_cost;
+    });
+  }, [rewards, activeCategory, searchQuery, userTier]);
 
   // ============================================
   // REDEMPTION HELPERS
@@ -344,17 +259,23 @@ export function useRewards(): UseRewardsReturn {
 
   const canRedeem = useCallback(
     (reward: Reward): boolean => {
-      const hasEnoughPoints = points >= reward.points_cost;
+      const hasPoints = points >= reward.points_cost;
       const inStock = reward.stock === -1 || reward.stock > 0;
-      return hasEnoughPoints && inStock;
+      const hasTier = canAccessReward(userTier, reward.tier_required);
+      return hasPoints && inStock && hasTier;
     },
-    [points]
+    [points, userTier]
+  );
+
+  const isLocked = useCallback(
+    (reward: Reward): boolean => {
+      return !canAccessReward(userTier, reward.tier_required);
+    },
+    [userTier]
   );
 
   const pointsNeeded = useCallback(
-    (reward: Reward): number => {
-      return Math.max(0, reward.points_cost - points);
-    },
+    (reward: Reward): number => Math.max(0, reward.points_cost - points),
     [points]
   );
 
@@ -364,13 +285,8 @@ export function useRewards(): UseRewardsReturn {
 
   const redeemReward = useCallback(
     async (reward: Reward) => {
-      if (!customer) {
-        throw new Error('Not logged in');
-      }
-
-      if (!canRedeem(reward)) {
-        throw new Error('Cannot redeem this reward');
-      }
+      if (!customer) throw new Error('Not logged in');
+      if (!canRedeem(reward)) throw new Error('Cannot redeem this reward');
 
       try {
         setRedeemingId(reward.id);
@@ -383,17 +299,12 @@ export function useRewards(): UseRewardsReturn {
           }
         );
 
-        if (redeemError) {
-          throw new Error(redeemError.message);
-        }
+        if (redeemError) throw new Error(redeemError.message);
 
         const result = data as RedeemResult;
-
-        if (!result.success) {
+        if (!result.success)
           throw new Error(result.error ?? 'Redemption failed');
-        }
 
-        // Refresh data
         await Promise.all([refreshCustomer(), fetchRewards()]);
 
         return {
@@ -408,17 +319,21 @@ export function useRewards(): UseRewardsReturn {
           completed_at: null,
           created_at: new Date().toISOString(),
         };
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Redemption failed';
-        console.error('[useRewards] Redeem error:', errorMessage);
-        throw new Error(errorMessage);
       } finally {
         setRedeemingId(null);
       }
     },
     [customer, canRedeem, refreshCustomer, fetchRewards]
   );
+
+  // ============================================
+  // REFRESH
+  // ============================================
+
+  const refresh = useCallback(async (): Promise<void> => {
+    setIsRefreshing(true);
+    await fetchRewards();
+  }, [fetchRewards]);
 
   // ============================================
   // RETURN
@@ -436,9 +351,11 @@ export function useRewards(): UseRewardsReturn {
     setSearchQuery,
     refresh,
     canRedeem,
+    isLocked,
     pointsNeeded,
     redeemReward,
     redeemingId,
     userPoints: points,
+    userTier,
   };
 }
