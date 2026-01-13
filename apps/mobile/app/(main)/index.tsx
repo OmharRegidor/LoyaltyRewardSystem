@@ -62,8 +62,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={COLORS.white}
-            colors={[COLORS.white]}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
           />
         }
       >

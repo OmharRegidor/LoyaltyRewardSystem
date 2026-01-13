@@ -176,6 +176,7 @@ function RewardsTab({
           refreshing={isRefreshing}
           onRefresh={onRefresh}
           tintColor={COLORS.primary}
+          colors={[COLORS.primary]}
         />
       }
       stickySectionHeadersEnabled={false}
