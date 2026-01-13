@@ -1,0 +1,154 @@
+// apps/web/lib/qr-code.ts
+
+import QRCode from 'qrcode';
+import crypto from 'crypto';
+
+// ============================================
+// CONSTANTS
+// ============================================
+
+const QR_CODE_OPTIONS: QRCode.QRCodeToDataURLOptions = {
+  errorCorrectionLevel: 'H', // High error correction for printability
+  type: 'image/png',
+  margin: 2,
+  width: 300,
+  color: {
+    dark: '#000000',
+    light: '#FFFFFF',
+  },
+};
+
+const QR_CODE_OPTIONS_HIGH_RES: QRCode.QRCodeToDataURLOptions = {
+  ...QR_CODE_OPTIONS,
+  width: 600, // Higher resolution for PDF
+};
+
+// ============================================
+// QR CODE GENERATION (SERVER-ONLY)
+// ============================================
+
+/**
+ * Generate a unique QR token
+ * Uses cryptographically secure random bytes
+ */
+export function generateQRToken(): string {
+  const bytes = crypto.randomBytes(12);
+  // URL-safe base64 encoding
+  return bytes.toString('base64url');
+}
+
+/**
+ * Generate QR code URL for a customer
+ * Format: loyaltyhub://customer/{token}
+ */
+export function generateQRCodeUrl(token: string): string {
+  return `loyaltyhub://customer/${token}`;
+}
+
+/**
+ * Generate QR code as base64 data URL
+ * @param content - The content to encode in QR
+ * @param highRes - Use high resolution for PDF
+ */
+export async function generateQRCodeDataUrl(
+  content: string,
+  highRes: boolean = false
+): Promise<string> {
+  const options = highRes ? QR_CODE_OPTIONS_HIGH_RES : QR_CODE_OPTIONS;
+  return QRCode.toDataURL(content, options);
+}
+
+/**
+ * Generate QR code as buffer (for email attachments)
+ */
+export async function generateQRCodeBuffer(content: string): Promise<Buffer> {
+  return QRCode.toBuffer(content, {
+    ...QR_CODE_OPTIONS_HIGH_RES,
+    type: 'png',
+  });
+}
+
+// ============================================
+// CARD TOKEN (HMAC-SIGNED)
+// ============================================
+
+const CARD_TOKEN_SECRET =
+  process.env.CARD_TOKEN_SECRET || process.env.QR_SECRET_KEY!;
+
+interface CardTokenPayload {
+  customerId: string;
+  createdAt: number;
+}
+
+/**
+ * Generate HMAC-signed card token for secure card view links
+ * Format: {base64_payload}.{hmac_signature}
+ */
+export function generateCardToken(customerId: string): string {
+  const payload: CardTokenPayload = {
+    customerId,
+    createdAt: Date.now(),
+  };
+
+  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString(
+    'base64url'
+  );
+  const signature = crypto
+    .createHmac('sha256', CARD_TOKEN_SECRET)
+    .update(payloadBase64)
+    .digest('base64url');
+
+  return `${payloadBase64}.${signature}`;
+}
+
+/**
+ * Verify and decode card token
+ * Returns null if invalid or tampered
+ */
+export function verifyCardToken(token: string): CardTokenPayload | null {
+  try {
+    const [payloadBase64, signature] = token.split('.');
+
+    if (!payloadBase64 || !signature) {
+      return null;
+    }
+
+    // Verify signature
+    const expectedSignature = crypto
+      .createHmac('sha256', CARD_TOKEN_SECRET)
+      .update(payloadBase64)
+      .digest('base64url');
+
+    // Time-safe comparison to prevent timing attacks
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature)
+      )
+    ) {
+      return null;
+    }
+
+    // Decode payload
+    const payload = JSON.parse(
+      Buffer.from(payloadBase64, 'base64url').toString('utf-8')
+    ) as CardTokenPayload;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract customer ID from QR code URL
+ * Input: loyaltyhub://customer/{token}
+ * Output: {token}
+ */
+export function extractQRToken(qrCodeUrl: string): string | null {
+  const prefix = 'loyaltyhub://customer/';
+  if (!qrCodeUrl.startsWith(prefix)) {
+    return null;
+  }
+  return qrCodeUrl.slice(prefix.length);
+}

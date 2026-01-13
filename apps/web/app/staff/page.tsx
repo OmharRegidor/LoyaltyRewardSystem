@@ -2,6 +2,8 @@
 
 'use client';
 
+import { UserPlus } from 'lucide-react';
+import { AddCustomerModal } from '@/components/staff/add-customer-modal';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -89,6 +91,7 @@ export default function StaffScannerPage() {
   const router = useRouter();
 
   // State
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [staffData, setStaffData] = useState<StaffData | null>(null);
   const [stats, setStats] = useState({ scansToday: 0, pointsAwardedToday: 0 });
@@ -297,7 +300,9 @@ export default function StaffScannerPage() {
 
       const { data: exactMatch } = await supabase
         .from('customers')
-        .select('id, user_id, total_points, lifetime_points, tier, qr_code_url')
+        .select(
+          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
+        )
         .eq('qr_code_url', fullUrl)
         .maybeSingle();
 
@@ -314,7 +319,7 @@ export default function StaffScannerPage() {
         const { data: partialMatch } = await supabase
           .from('customers')
           .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url'
+            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
           )
           .ilike('qr_code_url', `%${shortCode}%`)
           .maybeSingle();
@@ -327,7 +332,7 @@ export default function StaffScannerPage() {
         const { data: idMatch } = await supabase
           .from('customers')
           .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url'
+            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
           )
           .eq('id', scannedCode)
           .maybeSingle();
@@ -341,18 +346,25 @@ export default function StaffScannerPage() {
         return;
       }
 
-      // Get customer name
-      let customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
-      try {
-        const response = await fetch(
-          `/api/customer/${customerData.user_id}/profile`
-        );
-        if (response.ok) {
-          const profile = await response.json();
-          if (profile.name) customerName = profile.name;
+      // Get customer name - prefer full_name from staff-created, then try user metadata
+      let customerName = customerData.full_name || '';
+
+      if (!customerName && customerData.user_id) {
+        try {
+          const response = await fetch(
+            `/api/customer/${customerData.user_id}/profile`
+          );
+          if (response.ok) {
+            const profile = await response.json();
+            if (profile.name) customerName = profile.name;
+          }
+        } catch {
+          // Use fallback
         }
-      } catch {
-        // Use default name
+      }
+
+      if (!customerName) {
+        customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
       }
 
       const tier = (customerData.tier as TierKey) || 'bronze';
@@ -360,7 +372,7 @@ export default function StaffScannerPage() {
       setCustomer({
         id: customerData.id,
         name: customerName,
-        email: '',
+        email: customerData.email || '',
         currentPoints: customerData.total_points || 0,
         lifetimePoints: customerData.lifetime_points || 0,
         tier,
@@ -549,8 +561,20 @@ export default function StaffScannerPage() {
               <QrCode className="w-14 h-14 mb-2" />
               <span className="font-semibold text-sm">Scan Customer</span>
             </button>
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm mb-8">
               Tap to scan customer QR code
+            </p>
+
+            {/* Add Customer Button */}
+            <button
+              onClick={() => setIsAddCustomerModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+            >
+              <UserPlus className="w-5 h-5 text-cyan-400" />
+              <span className="text-gray-300">Add New Customer</span>
+            </button>
+            <p className="text-gray-600 text-xs mt-2">
+              For customers without the app
             </p>
           </div>
         )}
@@ -792,6 +816,13 @@ export default function StaffScannerPage() {
             </button>
           </div>
         )}
+
+        {/* Add Customer Modal */}
+        <AddCustomerModal
+          isOpen={isAddCustomerModalOpen}
+          onClose={() => setIsAddCustomerModalOpen(false)}
+          businessName={staffData?.businessName || 'Business'}
+        />
       </main>
 
       {/* Footer Stats */}
