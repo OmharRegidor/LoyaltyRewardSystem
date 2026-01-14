@@ -104,12 +104,12 @@ export function CardView({ customer, token }: CardViewProps) {
           className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />
-          {isDownloading ? 'Downloading...' : 'Download Tickets'}
+          {isDownloading ? 'Downloading...' : 'Download Card (PDF)'}
         </button>
       </div>
 
       {/* Loyalty Card */}
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-3xl mx-auto">
         <div
           className={`bg-linear-to-br ${tierStyle.bg} rounded-2xl shadow-2xl overflow-hidden`}
         >
