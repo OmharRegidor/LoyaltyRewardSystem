@@ -1,3 +1,5 @@
+// apps/web/components/customers/table.tsx
+
 "use client"
 
 import { motion } from "framer-motion"

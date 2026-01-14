@@ -17,7 +17,7 @@ interface SendWelcomeEmailParams {
   customerName: string;
   businessName: string;
   businessLogo?: string | null;
-  qrCodeDataUrl: string;
+  qrCodeContent: string; // The QR code content (loyaltyhub://customer/xxx)
   cardViewUrl: string;
 }
 
@@ -36,9 +36,12 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
     customerName,
     businessName,
     businessLogo,
-    qrCodeDataUrl,
+    qrCodeContent,
     cardViewUrl,
   } = params;
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const qrCodeImageUrl = `${appUrl}/api/qr/${encodeURIComponent(qrCodeContent)}`;
 
   return `
 <!DOCTYPE html>
@@ -74,7 +77,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
               
               <!-- QR Code -->
               <div style="display: inline-block; padding: 16px; background-color: #ffffff; border: 2px solid #e5e7eb; border-radius: 12px;">
-                <img src="${qrCodeDataUrl}" alt="Your QR Code" style="width: 180px; height: 180px; display: block;" />
+                <img src="${qrCodeImageUrl}" alt="Your QR Code" width="180" height="180" style="width: 180px; height: 180px; display: block;" />
               </div>
               
               <!-- View Card Button -->
@@ -93,20 +96,20 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
                 Hello ${customerName.split(' ')[0]},
               </h3>
               <p style="margin: 0 0 16px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                We are happy to welcome you to the <strong>${businessName}</strong> loyalty rewards program!
+                Welcome to the <strong>${businessName}</strong> loyalty rewards program!
               </p>
               
               <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; color: #111827; font-size: 14px; font-weight: 600;">Please note:</p>
+                <p style="margin: 0 0 12px 0; color: #111827; font-size: 14px; font-weight: 600;">How to earn points:</p>
                 <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
                   <li><strong>Show your QR code</strong> at checkout to earn points on every purchase.</li>
                   <li><strong>Earn rewards faster</strong> by reaching higher membership tiers.</li>
-                  <li><strong>Download the LoyaltyHub app</strong> for the best experience and real-time point tracking.</li>
+                  <li><strong>Download the LoyaltyHub app</strong> for the best experience.</li>
                 </ul>
               </div>
               
               <p style="margin: 24px 0 0 0; color: #4b5563; font-size: 14px; line-height: 1.6;">
-                You can also download your membership card as a PDF by clicking "View Your Card" above.
+                Click "View Your Card" above to see your digital loyalty card and download it as a PDF.
               </p>
             </td>
           </tr>
@@ -157,15 +160,15 @@ Welcome to ${businessName} Loyalty Program!
 
 Hello ${customerName},
 
-We are happy to welcome you to the ${businessName} loyalty rewards program!
+Welcome to the ${businessName} loyalty rewards program!
 
 To view your membership card and QR code, visit:
 ${cardViewUrl}
 
 How to earn points:
-• Show your QR code at checkout to earn points on every purchase
-• Earn rewards faster by reaching higher membership tiers
-• Download the LoyaltyHub app for real-time point tracking
+- Show your QR code at checkout to earn points on every purchase
+- Earn rewards faster by reaching higher membership tiers
+- Download the LoyaltyHub app for real-time point tracking
 
 Download the LoyaltyHub app: https://loyaltyhub.app/download
 
@@ -182,47 +185,37 @@ This email was sent by ${businessName}.
 export async function sendWelcomeEmail(
   params: SendWelcomeEmailParams
 ): Promise<EmailResult> {
+  console.log('=== SEND WELCOME EMAIL CALLED ===');
+  console.log('To:', params.to);
+  console.log('Business:', params.businessName);
+  console.log('QR Content:', params.qrCodeContent);
+
   try {
     const { to, businessName } = params;
 
     const { data, error } = await resend.emails.send({
-      from: `${businessName} <rewards@${
-        process.env.RESEND_DOMAIN || 'loyaltyhub.app'
-      }>`,
+      from: 'onboarding@resend.dev',
       to: [to],
       subject: `Welcome to ${businessName} Loyalty Rewards! 🎉`,
       html: generateWelcomeEmailHtml(params),
       text: generateWelcomeEmailText(params),
-      tags: [
-        { name: 'type', value: 'welcome' },
-        { name: 'business', value: businessName },
-      ],
     });
+
+    console.log('Resend response - Data:', data);
+    console.log('Resend response - Error:', error);
 
     if (error) {
       console.error('Resend error:', error);
       return { success: false, error: error.message };
     }
 
+    console.log('Email sent successfully! ID:', data?.id);
     return { success: true, messageId: data?.id };
   } catch (error) {
-    console.error('Send email error:', error);
+    console.error('Send email catch error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
-}
-
-// ============================================
-// RESEND EMAIL (for existing customers)
-// ============================================
-
-export async function resendWelcomeEmail(
-  params: SendWelcomeEmailParams
-): Promise<EmailResult> {
-  // Same as sendWelcomeEmail but could have different subject
-  return sendWelcomeEmail({
-    ...params,
-  });
 }

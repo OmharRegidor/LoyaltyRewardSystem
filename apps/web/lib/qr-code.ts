@@ -7,9 +7,8 @@ import crypto from 'crypto';
 // CONSTANTS
 // ============================================
 
-const QR_CODE_OPTIONS: QRCode.QRCodeToDataURLOptions = {
-  errorCorrectionLevel: 'H', // High error correction for printability
-  type: 'image/png',
+const QR_CODE_BASE_OPTIONS = {
+  errorCorrectionLevel: 'H' as const,
   margin: 2,
   width: 300,
   color: {
@@ -18,10 +17,7 @@ const QR_CODE_OPTIONS: QRCode.QRCodeToDataURLOptions = {
   },
 };
 
-const QR_CODE_OPTIONS_HIGH_RES: QRCode.QRCodeToDataURLOptions = {
-  ...QR_CODE_OPTIONS,
-  width: 600, // Higher resolution for PDF
-};
+const QR_CODE_HIGH_RES_WIDTH = 600;
 
 // ============================================
 // QR CODE GENERATION (SERVER-ONLY)
@@ -33,7 +29,6 @@ const QR_CODE_OPTIONS_HIGH_RES: QRCode.QRCodeToDataURLOptions = {
  */
 export function generateQRToken(): string {
   const bytes = crypto.randomBytes(12);
-  // URL-safe base64 encoding
   return bytes.toString('base64url');
 }
 
@@ -47,14 +42,16 @@ export function generateQRCodeUrl(token: string): string {
 
 /**
  * Generate QR code as base64 data URL
- * @param content - The content to encode in QR
- * @param highRes - Use high resolution for PDF
  */
 export async function generateQRCodeDataUrl(
   content: string,
   highRes: boolean = false
 ): Promise<string> {
-  const options = highRes ? QR_CODE_OPTIONS_HIGH_RES : QR_CODE_OPTIONS;
+  const options: QRCode.QRCodeToDataURLOptions = {
+    ...QR_CODE_BASE_OPTIONS,
+    type: 'image/png',
+    width: highRes ? QR_CODE_HIGH_RES_WIDTH : QR_CODE_BASE_OPTIONS.width,
+  };
   return QRCode.toDataURL(content, options);
 }
 
@@ -62,9 +59,22 @@ export async function generateQRCodeDataUrl(
  * Generate QR code as buffer (for email attachments)
  */
 export async function generateQRCodeBuffer(content: string): Promise<Buffer> {
-  return QRCode.toBuffer(content, {
-    ...QR_CODE_OPTIONS_HIGH_RES,
-    type: 'png',
+  return new Promise((resolve, reject) => {
+    const options: QRCode.QRCodeToBufferOptions = {
+      errorCorrectionLevel: 'H',
+      type: 'png',
+      margin: 2,
+      width: QR_CODE_HIGH_RES_WIDTH,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF',
+      },
+    };
+
+    QRCode.toBuffer(content, options, (err, buffer) => {
+      if (err) reject(err);
+      else resolve(buffer);
+    });
   });
 }
 

@@ -3,30 +3,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
-// ============================================
-// TYPES
-// ============================================
-
 interface RouteParams {
   params: Promise<{ code: string }>;
 }
-
-// ============================================
-// GET: Generate QR Code Image
-// ============================================
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { code } = await params;
     const decodedCode = decodeURIComponent(code);
-
-    // Validate QR code format
-    if (!decodedCode.startsWith('loyaltyhub://')) {
-      return NextResponse.json(
-        { error: 'Invalid QR code format' },
-        { status: 400 }
-      );
-    }
 
     // Generate QR code as PNG buffer
     const qrBuffer = await QRCode.toBuffer(decodedCode, {
@@ -41,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
 
     // Return PNG image
-    return new NextResponse(qrBuffer, {
+    return new NextResponse(new Uint8Array(qrBuffer), {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=31536000, immutable',

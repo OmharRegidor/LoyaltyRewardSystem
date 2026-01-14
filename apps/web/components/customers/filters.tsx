@@ -1,3 +1,4 @@
+// apps/web/components/customers/filters.tsx
 "use client"
 
 import { motion } from "framer-motion"
