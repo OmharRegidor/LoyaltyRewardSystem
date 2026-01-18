@@ -55,9 +55,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        // DEBUG: Log what client sees
-        console.log('DashboardLayout session:', session ? 'EXISTS' : 'NULL');
-        console.log('DashboardLayout session user:', session?.user?.id);
+        
 
         // If no session, try getUser as fallback
         let user: User | null = session?.user ?? null;

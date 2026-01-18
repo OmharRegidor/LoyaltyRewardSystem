@@ -1,4 +1,4 @@
-// apps/web/app/dashboard/settings/team/page.tsx
+// apps/web/app/dashboard/team/page.tsx
 
 'use client';
 
@@ -9,6 +9,8 @@ import {
   TeamMemberCard,
   TeamMemberActivity,
 } from '@/components/team';
+import { UpgradeModal } from '@/components/upgrade-modal';
+import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import {
   Users,
   Plus,
@@ -31,6 +33,10 @@ import {
 import { createClient } from '@/lib/supabase';
 
 export default function TeamManagementPage() {
+  // Subscription gate
+  const { checkAndGate, showUpgradeModal, setShowUpgradeModal } =
+    useSubscriptionGate();
+
   const [teamMembers, setTeamMembers] = useState<StaffMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<StaffInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +49,35 @@ export default function TeamManagementPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Set up real-time subscription for staff stats
+  useEffect(() => {
+    if (!businessId) return;
+
+    const supabase = createClient();
+
+    // Subscribe to real-time transaction updates to refresh staff stats
+    const channel = supabase
+      .channel('team-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `business_id=eq.${businessId}`,
+        },
+        () => {
+          // Reload team data when new transaction comes in
+          loadData();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [businessId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -71,15 +106,50 @@ export default function TeamManagementPage() {
       getPendingInvites(business.id),
     ]);
 
-    setTeamMembers(members);
+    // Fetch today's stats for each staff member
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const membersWithStats = await Promise.all(
+      members.map(async (member) => {
+        if (member.role === 'owner') return member;
+
+        // Get today's transactions for this staff member
+        const { data: todayTx } = await supabase
+          .from('transactions')
+          .select('points')
+          .eq('business_id', business.id)
+          .eq('staff_id', member.id)
+          .gte('created_at', today.toISOString());
+
+        const scansToday = todayTx?.length || 0;
+        const pointsToday =
+          todayTx?.reduce((sum, tx) => sum + (tx.points || 0), 0) || 0;
+
+        return {
+          ...member,
+          scansToday,
+          pointsToday,
+        };
+      }),
+    );
+
+    setTeamMembers(membersWithStats);
     setPendingInvites(invites);
     setIsLoading(false);
+  };
+
+  // Gated invite handler
+  const handleInviteClick = () => {
+    if (checkAndGate('Invite Team Member')) {
+      setShowInviteModal(true);
+    }
   };
 
   const handleDeactivate = async (staffId: string) => {
     if (
       !confirm(
-        'Are you sure you want to deactivate this team member? They will no longer be able to scan customers.'
+        'Are you sure you want to deactivate this team member? They will no longer be able to scan customers.',
       )
     ) {
       return;
@@ -88,6 +158,8 @@ export default function TeamManagementPage() {
     const result = await deactivateStaff(staffId);
     if (result.success) {
       loadData();
+    } else {
+      alert(result.error || 'Failed to deactivate staff member');
     }
   };
 
@@ -95,6 +167,8 @@ export default function TeamManagementPage() {
     const result = await reactivateStaff(staffId);
     if (result.success) {
       loadData();
+    } else {
+      alert(result.error || 'Failed to reactivate staff member');
     }
   };
 
@@ -114,6 +188,10 @@ export default function TeamManagementPage() {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
+  const handleViewActivity = (member: StaffMember) => {
+    setSelectedMemberForActivity(member);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -126,7 +204,7 @@ export default function TeamManagementPage() {
 
   // Count active vs inactive
   const activeMembers = teamMembers.filter(
-    (m) => m.is_active && m.role !== 'owner'
+    (m) => m.is_active && m.role !== 'owner',
   );
   const inactiveMembers = teamMembers.filter((m) => !m.is_active);
 
@@ -144,8 +222,8 @@ export default function TeamManagementPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowInviteModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all"
+            onClick={handleInviteClick}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Invite Team Member
@@ -262,7 +340,7 @@ export default function TeamManagementPage() {
                 program
               </p>
               <button
-                onClick={() => setShowInviteModal(true)}
+                onClick={handleInviteClick}
                 className="inline-flex items-center gap-2 px-5 py-3 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors"
               >
                 <Plus className="w-5 h-5" />
@@ -277,7 +355,7 @@ export default function TeamManagementPage() {
                   member={member}
                   onDeactivate={handleDeactivate}
                   onReactivate={handleReactivate}
-                  onViewActivity={(m) => setSelectedMemberForActivity(m)}
+                  onViewActivity={handleViewActivity}
                 />
               ))}
             </div>
@@ -323,6 +401,13 @@ export default function TeamManagementPage() {
           onClose={() => setSelectedMemberForActivity(null)}
         />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Invite Team Member"
+      />
     </DashboardLayout>
   );
 }

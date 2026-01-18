@@ -1,3 +1,5 @@
+// apps/web/app/dashboard/rewards/page.tsx
+
 'use client';
 
 import { DashboardLayout } from '@/components/dashboard/layout';
@@ -6,6 +8,8 @@ import { RewardsGrid } from '@/components/rewards/grid';
 import { CreateRewardModal } from '@/components/rewards/create-modal';
 import { EditRewardModal } from '@/components/rewards/edit-modal';
 import { ViewRewardModal } from '@/components/rewards/view-modal';
+import { UpgradeModal } from '@/components/upgrade-modal';
+import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
@@ -62,6 +66,9 @@ export interface UpdateRewardData extends CreateRewardData {
 // ============================================
 
 export default function RewardsPage() {
+  const { isPreview, checkAndGate, showUpgradeModal, setShowUpgradeModal } =
+    useSubscriptionGate();
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -125,7 +132,7 @@ export default function RewardsPage() {
           image: r.image_url || '/reward-item.png',
           isVisible: r.is_visible ?? true,
           expiryDate: r.valid_until || undefined,
-        })
+        }),
       );
 
       setRewards(transformedRewards);
@@ -134,6 +141,17 @@ export default function RewardsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // ============================================
+  // GATED CREATE HANDLER
+  // ============================================
+
+  const handleCreateClick = () => {
+    if (checkAndGate('Add Reward')) {
+      setIsCreateOpen(true);
+    }
+    // If gated, checkAndGate will show the upgrade modal
   };
 
   // ============================================
@@ -236,8 +254,8 @@ export default function RewardsPage() {
                     : 'inactive',
                 expiryDate: data.valid_until || undefined,
               }
-            : r
-        )
+            : r,
+        ),
       );
 
       setIsEditOpen(false);
@@ -298,8 +316,8 @@ export default function RewardsPage() {
                 isVisible: newIsVisible,
                 status: newIsVisible && r.stock !== 0 ? 'active' : 'inactive',
               }
-            : r
-        )
+            : r,
+        ),
       );
     } catch (error) {
       console.error('Toggle status error:', error);
@@ -355,7 +373,7 @@ export default function RewardsPage() {
         <RewardsHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          onCreateClick={() => setIsCreateOpen(true)}
+          onCreateClick={handleCreateClick}
         />
 
         <RewardsGrid
@@ -399,6 +417,13 @@ export default function RewardsPage() {
             />
           </>
         )}
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="Add Reward"
+        />
       </motion.div>
     </DashboardLayout>
   );

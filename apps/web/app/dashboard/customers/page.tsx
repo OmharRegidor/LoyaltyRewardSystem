@@ -8,6 +8,8 @@ import { CustomersFilters } from '@/components/customers/filters';
 import { CustomersTable } from '@/components/customers/table';
 import { CustomerDetailModal } from '@/components/customers/detail-modal';
 import { AddCustomerModal } from '@/components/customers/add-customer-modal';
+import { UpgradeModal } from '@/components/upgrade-modal';
+import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { motion } from 'framer-motion';
 import { useState, useCallback } from 'react';
 import { useCustomers, type Customer } from '@/hooks/useCustomers';
@@ -15,6 +17,10 @@ import { useBusinessContext } from '@/hooks/useBusinessContext';
 import { Loader2 } from 'lucide-react';
 
 export default function CustomersPage() {
+  // Subscription gate
+  const { checkAndGate, showUpgradeModal, setShowUpgradeModal } =
+    useSubscriptionGate();
+
   // Business context
   const { business, isLoading: isLoadingBusiness } = useBusinessContext();
 
@@ -28,13 +34,21 @@ export default function CustomersPage() {
 
   // UI State
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
+    null,
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [pointsRange, setPointsRange] = useState<[number, number]>([0, 5000]);
   const [sortBy, setSortBy] = useState('recent');
+
+  // Gated add customer handler
+  const handleAddCustomerClick = () => {
+    if (checkAndGate('Add Customer')) {
+      setIsAddModalOpen(true);
+    }
+    // If gated, checkAndGate will show the upgrade modal
+  };
 
   // Loading business context
   if (isLoadingBusiness) {
@@ -71,7 +85,7 @@ export default function CustomersPage() {
       >
         <CustomersHeader
           onSearchChange={setSearchTerm}
-          onAddCustomer={() => setIsAddModalOpen(true)}
+          onAddCustomer={handleAddCustomerClick}
         />
 
         <CustomersFilters
@@ -102,7 +116,7 @@ export default function CustomersPage() {
               name: selectedCustomer.fullName,
               phone: selectedCustomer.phone || '',
               points: selectedCustomer.totalPoints,
-              visits: 0, // TODO: Calculate from transactions
+              visits: 0,
               lastVisit: selectedCustomer.lastVisit
                 ? formatRelativeTime(selectedCustomer.lastVisit)
                 : 'Never',
@@ -113,9 +127,9 @@ export default function CustomersPage() {
                   : 'inactive'
                 : 'inactive',
               avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                selectedCustomer.fullName
+                selectedCustomer.fullName,
               )}`,
-              customerId: selectedCustomer.id, // Pass the actual UUID
+              customerId: selectedCustomer.id,
             }}
             onClose={() => setSelectedCustomer(null)}
           />
@@ -126,6 +140,13 @@ export default function CustomersPage() {
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           businessName={business.name}
+        />
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="Add Customer"
         />
       </motion.div>
     </DashboardLayout>
