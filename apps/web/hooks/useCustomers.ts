@@ -44,7 +44,7 @@ interface UseCustomersReturn {
 // HELPER FUNCTIONS
 // ============================================
 
-function mapDatabaseCustomer(dbCustomer: {
+interface DatabaseCustomer {
   id: string;
   full_name: string | null;
   email: string | null;
@@ -56,7 +56,9 @@ function mapDatabaseCustomer(dbCustomer: {
   created_at: string | null;
   created_by_staff_id: string | null;
   created_by_business_id: string | null;
-}): Customer {
+}
+
+function mapDatabaseCustomer(dbCustomer: DatabaseCustomer): Customer {
   return {
     id: dbCustomer.id,
     fullName: dbCustomer.full_name || 'Unknown Customer',
@@ -72,12 +74,6 @@ function mapDatabaseCustomer(dbCustomer: {
   };
 }
 
-function isValidTier(tier: string | null): tier is TierLevel {
-  return (
-    tier !== null && ['bronze', 'silver', 'gold', 'platinum'].includes(tier)
-  );
-}
-
 // ============================================
 // NOTIFICATION SOUND
 // ============================================
@@ -85,9 +81,13 @@ function isValidTier(tier: string | null): tier is TierLevel {
 function playNotificationSound() {
   try {
     // Create a simple notification beep using Web Audio API
-    const audioContext = new (window.AudioContext ||
-      (window as typeof window & { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext)();
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -130,7 +130,7 @@ export function useCustomers({
     customersRef.current = customers;
   }, [customers]);
 
-  // Fetch customers
+  // Fetch customers - ALL customers who have interacted with this business
   const fetchCustomers = useCallback(async () => {
     if (!businessId) {
       setIsLoading(false);
@@ -143,24 +143,43 @@ export function useCustomers({
       setIsLoading(true);
       setError(null);
 
-      const {
-        data,
-        error: fetchError,
-        count,
-      } = await supabase
+      // Get all unique customer IDs who have transactions with this business
+      // OR were created by this business (staff-added)
+      const { data, error: fetchError } = await supabase
         .from('customers')
-        .select('*', { count: 'exact' })
-        .eq('created_by_business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .select(
+          `
+          id,
+          full_name,
+          email,
+          phone,
+          total_points,
+          lifetime_points,
+          tier,
+          last_visit,
+          created_at,
+          created_by_staff_id,
+          created_by_business_id
+        `
+        )
+        .or(
+          `created_by_business_id.eq.${businessId},id.in.(${await getCustomerIdsWithTransactions(
+            supabase,
+            businessId
+          )})`
+        )
+        .order('created_at', { ascending: false });
 
       if (fetchError) {
         throw fetchError;
       }
 
-      const mappedCustomers = (data || []).map(mapDatabaseCustomer);
+      // Remove duplicates (in case a customer matches both conditions)
+      const uniqueCustomers = removeDuplicates(data || []);
+      const mappedCustomers = uniqueCustomers.map(mapDatabaseCustomer);
+
       setCustomers(mappedCustomers);
-      setTotalCount(count || 0);
+      setTotalCount(mappedCustomers.length);
     } catch (err) {
       console.error('Fetch customers error:', err);
       setError(
@@ -176,14 +195,15 @@ export function useCustomers({
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Realtime subscription
+  // Realtime subscription for new customers and updates
   useEffect(() => {
     if (!businessId) return;
 
     const supabase = createClient();
 
-    const channel = supabase
-      .channel(`customers-${businessId}`)
+    // Subscribe to customer inserts (staff-added)
+    const insertChannel = supabase
+      .channel(`customers-insert-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -192,37 +212,23 @@ export function useCustomers({
           table: 'customers',
           filter: `created_by_business_id=eq.${businessId}`,
         },
-        (
-          payload: RealtimePostgresChangesPayload<{
-            id: string;
-            full_name: string | null;
-            email: string | null;
-            phone: string | null;
-            total_points: number | null;
-            lifetime_points: number | null;
-            tier: string | null;
-            last_visit: string | null;
-            created_at: string | null;
-            created_by_staff_id: string | null;
-            created_by_business_id: string | null;
-          }>
-        ) => {
+        (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
           console.log('[Realtime] New customer:', payload);
 
           if (payload.new && 'id' in payload.new) {
             const newCustomer: Customer = {
-              ...mapDatabaseCustomer(payload.new),
-              isNew: true, // Mark for highlighting
+              ...mapDatabaseCustomer(payload.new as DatabaseCustomer),
+              isNew: true,
             };
 
-            // Add to top of list
-            setCustomers((prev) => [newCustomer, ...prev]);
+            // Add to top of list if not already present
+            setCustomers((prev) => {
+              if (prev.some((c) => c.id === newCustomer.id)) return prev;
+              return [newCustomer, ...prev];
+            });
             setTotalCount((prev) => prev + 1);
 
-            // Play sound
             playNotificationSound();
-
-            // Callback
             onNewCustomer?.(newCustomer);
 
             // Remove highlight after 3 seconds
@@ -236,6 +242,11 @@ export function useCustomers({
           }
         }
       )
+      .subscribe();
+
+    // Subscribe to customer updates (points changes, tier upgrades)
+    const updateChannel = supabase
+      .channel(`customers-update-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -243,33 +254,25 @@ export function useCustomers({
           schema: 'public',
           table: 'customers',
         },
-        (
-          payload: RealtimePostgresChangesPayload<{
-            id: string;
-            full_name: string | null;
-            email: string | null;
-            phone: string | null;
-            total_points: number | null;
-            lifetime_points: number | null;
-            tier: string | null;
-            last_visit: string | null;
-            created_at: string | null;
-            created_by_staff_id: string | null;
-            created_by_business_id: string | null;
-          }>
-        ) => {
+        (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
           console.log('[Realtime] Customer updated:', payload);
 
           if (payload.new && 'id' in payload.new) {
-            const updatedCustomer = mapDatabaseCustomer(payload.new);
-
-            setCustomers((prev) =>
-              prev.map((c) =>
-                c.id === updatedCustomer.id
-                  ? { ...updatedCustomer, isNew: true }
-                  : c
-              )
+            const updatedCustomer = mapDatabaseCustomer(
+              payload.new as DatabaseCustomer
             );
+
+            setCustomers((prev) => {
+              const exists = prev.some((c) => c.id === updatedCustomer.id);
+              if (exists) {
+                return prev.map((c) =>
+                  c.id === updatedCustomer.id
+                    ? { ...updatedCustomer, isNew: true }
+                    : c
+                );
+              }
+              return prev;
+            });
 
             // Remove highlight after 3 seconds
             setTimeout(() => {
@@ -282,13 +285,84 @@ export function useCustomers({
           }
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Subscription status:', status);
-      });
+      .subscribe();
+
+    // Subscribe to new transactions (to add customers who just got scanned)
+    const transactionChannel = supabase
+      .channel(`transactions-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `business_id=eq.${businessId}`,
+        },
+        async (payload) => {
+          console.log('[Realtime] New transaction:', payload);
+
+          if (payload.new && 'customer_id' in payload.new) {
+            const customerId = payload.new.customer_id as string;
+
+            // Check if customer is already in the list
+            const alreadyExists = customersRef.current.some(
+              (c) => c.id === customerId
+            );
+
+            if (!alreadyExists) {
+              // Fetch the customer and add to list
+              const { data: customerData } = await supabase
+                .from('customers')
+                .select(
+                  `
+                  id,
+                  full_name,
+                  email,
+                  phone,
+                  total_points,
+                  lifetime_points,
+                  tier,
+                  last_visit,
+                  created_at,
+                  created_by_staff_id,
+                  created_by_business_id
+                `
+                )
+                .eq('id', customerId)
+                .single();
+
+              if (customerData) {
+                const newCustomer: Customer = {
+                  ...mapDatabaseCustomer(customerData),
+                  isNew: true,
+                };
+
+                setCustomers((prev) => [newCustomer, ...prev]);
+                setTotalCount((prev) => prev + 1);
+
+                playNotificationSound();
+                onNewCustomer?.(newCustomer);
+
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                  setCustomers((prev) =>
+                    prev.map((c) =>
+                      c.id === newCustomer.id ? { ...c, isNew: false } : c
+                    )
+                  );
+                }, 3000);
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      console.log('[Realtime] Unsubscribing from customers channel');
-      supabase.removeChannel(channel);
+      console.log('[Realtime] Unsubscribing from channels');
+      supabase.removeChannel(insertChannel);
+      supabase.removeChannel(updateChannel);
+      supabase.removeChannel(transactionChannel);
     };
   }, [businessId, onNewCustomer]);
 
@@ -299,4 +373,40 @@ export function useCustomers({
     refetch: fetchCustomers,
     totalCount,
   };
+}
+
+// ============================================
+// HELPER: Get customer IDs with transactions
+// ============================================
+
+async function getCustomerIdsWithTransactions(
+  supabase: ReturnType<typeof createClient>,
+  businessId: string
+): Promise<string> {
+  const { data } = await supabase
+    .from('transactions')
+    .select('customer_id')
+    .eq('business_id', businessId);
+
+  if (!data || data.length === 0) {
+    // Return a UUID that won't match anything
+    return '00000000-0000-0000-0000-000000000000';
+  }
+
+  // Get unique customer IDs
+  const uniqueIds = [...new Set(data.map((t) => t.customer_id))];
+  return uniqueIds.join(',');
+}
+
+// ============================================
+// HELPER: Remove duplicate customers
+// ============================================
+
+function removeDuplicates(customers: DatabaseCustomer[]): DatabaseCustomer[] {
+  const seen = new Set<string>();
+  return customers.filter((c) => {
+    if (seen.has(c.id)) return false;
+    seen.add(c.id);
+    return true;
+  });
 }

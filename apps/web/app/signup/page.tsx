@@ -1,23 +1,102 @@
+// apps/web/app/signup/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Check,
-  Award,
   TrendingUp,
   Zap,
   Shield,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { signupBusinessOwner } from '@/lib/auth';
+
+// ============================================
+// VALIDATION HELPERS
+// ============================================
+
+const PHONE_REGEX = /^9\d{9}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface ValidationErrors {
+  businessName?: string;
+  businessType?: string;
+  phone?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+function validateStep1(
+  businessName: string,
+  businessType: string,
+  phone: string
+): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+  if (!businessName.trim()) {
+    errors.businessName = 'Business name is required';
+  } else if (businessName.trim().length < 2) {
+    errors.businessName = 'Business name must be at least 2 characters';
+  } else if (businessName.trim().length > 100) {
+    errors.businessName = 'Business name must be less than 100 characters';
+  }
+
+  if (!businessType) {
+    errors.businessType = 'Please select a business type';
+  }
+
+  if (!phone) {
+    errors.phone = 'Phone number is required';
+  } else if (!PHONE_REGEX.test(phone)) {
+    errors.phone = 'Enter a valid 10-digit mobile number starting with 9';
+  }
+
+  return errors;
+}
+
+function validateStep2(
+  email: string,
+  password: string,
+  confirmPassword: string
+): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+  if (!email) {
+    errors.email = 'Email is required';
+  } else if (!EMAIL_REGEX.test(email)) {
+    errors.email = 'Enter a valid email address';
+  }
+
+  if (!password) {
+    errors.password = 'Password is required';
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = 'Please confirm your password';
+  } else if (password !== confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match';
+  }
+
+  return errors;
+}
+
+// ============================================
+// COMPONENT
+// ============================================
 
 export default function SignupPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
 
   // Step 1: Business Information
   const [businessName, setBusinessName] = useState('');
@@ -33,28 +112,86 @@ export default function SignupPage() {
   // Step 3: Agreement
   const [agreed, setAgreed] = useState(false);
 
+  // Password requirements
   const passwordRequirements = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
     number: /[0-9]/.test(password),
   };
 
   const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
-  const passwordsMatch = password === confirmPassword;
-  const canProceedStep2 =
-    password && confirmPassword && passwordsMatch && allRequirementsMet;
 
+  // Phone number input handler - only allow digits, max 10
+  const handlePhoneChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+      if (value.length <= 10) {
+        setPhone(value);
+        // Clear validation error when user types
+        if (validationErrors.phone) {
+          setValidationErrors((prev) => ({ ...prev, phone: undefined }));
+        }
+      }
+    },
+    [validationErrors.phone]
+  );
+
+  // Business name input handler
+  const handleBusinessNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      if (value.length <= 100) {
+        setBusinessName(value);
+        if (validationErrors.businessName) {
+          setValidationErrors((prev) => ({ ...prev, businessName: undefined }));
+        }
+      }
+    },
+    [validationErrors.businessName]
+  );
+
+  // Email input handler
+  const handleEmailChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.toLowerCase().trim();
+      setEmail(value);
+      if (validationErrors.email) {
+        setValidationErrors((prev) => ({ ...prev, email: undefined }));
+      }
+    },
+    [validationErrors.email]
+  );
+
+  // Validate and proceed to next step
   const handleNext = () => {
     setError('');
-    if (step === 1 && businessName && businessType && phone) {
+
+    if (step === 1) {
+      const errors = validateStep1(businessName, businessType, phone);
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        return;
+      }
+      setValidationErrors({});
       setStep(2);
-    } else if (step === 2 && canProceedStep2) {
+    } else if (step === 2) {
+      const errors = validateStep2(email, password, confirmPassword);
+      if (Object.keys(errors).length > 0 || !allRequirementsMet) {
+        setValidationErrors(errors);
+        if (!allRequirementsMet) {
+          setError('Please meet all password requirements');
+        }
+        return;
+      }
+      setValidationErrors({});
       setStep(3);
     }
   };
 
   const handleBack = () => {
     setError('');
+    setValidationErrors({});
     if (step > 1) setStep(step - 1);
   };
 
@@ -71,9 +208,9 @@ export default function SignupPage() {
       const response = await signupBusinessOwner({
         email,
         password,
-        businessName,
+        businessName: businessName.trim(),
         businessType,
-        phone,
+        phone: `+63${phone}`,
       });
 
       if (!response.success) {
@@ -89,11 +226,14 @@ export default function SignupPage() {
 
       // Redirect to verify email page with email param
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
+
   const benefits = [
     {
       icon: <TrendingUp className="w-8 h-8" />,
@@ -130,9 +270,19 @@ export default function SignupPage() {
     },
   ];
 
+  // Check if step can proceed
+  const canProceedStep1 =
+    businessName.trim() && businessType && phone.length === 10;
+  const canProceedStep2 =
+    email &&
+    password &&
+    confirmPassword &&
+    allRequirementsMet &&
+    password === confirmPassword;
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
-      {/* Left Side - Enhanced Brand Showcase */}
+      {/* Left Side - Brand Showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-indigo-700 to-purple-600">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
@@ -150,13 +300,13 @@ export default function SignupPage() {
           />
         </div>
 
-        {/* Decorative Elements */}
+        {/* Decorative Grid */}
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
             style={{
               backgroundImage:
-                'radial-gradient(circle, white 1px, transparent 1px)',
+                'radial-linear(circle, white 1px, transparent 1px)',
               backgroundSize: '30px 30px',
             }}
           />
@@ -342,11 +492,24 @@ export default function SignupPage() {
                   id="businessName"
                   type="text"
                   value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
+                  onChange={handleBusinessNameChange}
                   placeholder="Your business name"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                    validationErrors.businessName
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
                   required
+                  maxLength={100}
                 />
+                {validationErrors.businessName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.businessName}
+                  </p>
+                )}
+                <p className="text-gray-400 text-xs mt-1">
+                  {businessName.length}/100 characters
+                </p>
               </div>
 
               <div>
@@ -359,8 +522,20 @@ export default function SignupPage() {
                 <select
                   id="businessType"
                   value={businessType}
-                  onChange={(e) => setBusinessType(e.target.value)}
-                  className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  onChange={(e) => {
+                    setBusinessType(e.target.value);
+                    if (validationErrors.businessType) {
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        businessType: undefined,
+                      }));
+                    }
+                  }}
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                    validationErrors.businessType
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
                   required
                 >
                   <option value="">Select your business type</option>
@@ -369,8 +544,16 @@ export default function SignupPage() {
                   <option value="gym">Gym</option>
                   <option value="spa">Spa</option>
                   <option value="retail">Retail</option>
+                  <option value="salon">Salon / Barbershop</option>
+                  <option value="bakery">Bakery</option>
+                  <option value="grocery">Grocery / Convenience Store</option>
                   <option value="other">Other</option>
                 </select>
+                {validationErrors.businessType && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.businessType}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -387,13 +570,28 @@ export default function SignupPage() {
                   <input
                     id="phone"
                     type="tel"
+                    inputMode="numeric"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={handlePhoneChange}
                     placeholder="9123456789"
-                    className="flex-1 px-4 py-3.5 rounded-r-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                    className={`flex-1 px-4 py-3.5 rounded-r-xl bg-white dark:bg-gray-800 border-2 ${
+                      validationErrors.phone
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                    } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
                     required
+                    maxLength={10}
                   />
                 </div>
+                {validationErrors.phone ? (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.phone}
+                  </p>
+                ) : (
+                  <p className="text-gray-400 text-xs mt-1">
+                    Enter 10-digit mobile number starting with 9
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -412,11 +610,20 @@ export default function SignupPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                    validationErrors.email
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
                   required
                 />
+                {validationErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -426,15 +633,37 @@ export default function SignupPage() {
                 >
                   Password
                 </label>
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full px-4 py-3.5 pr-12 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                      validationErrors.password
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                    } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {validationErrors.password && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -450,27 +679,19 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                    validationErrors.confirmPassword
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
+                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
                   required
                 />
-                {confirmPassword && !passwordsMatch && (
-                  <p className="text-red-600 text-sm mt-2">
-                    Passwords do not match
+                {validationErrors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.confirmPassword}
                   </p>
                 )}
               </div>
-
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={showPassword}
-                  onChange={(e) => setShowPassword(e.target.checked)}
-                  className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
-                  Show password
-                </span>
-              </label>
 
               {/* Password Requirements */}
               <div className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-xl p-5 border border-blue-100 dark:border-gray-700">
@@ -485,9 +706,16 @@ export default function SignupPage() {
                     },
                     {
                       met: passwordRequirements.uppercase,
-                      label: 'One uppercase letter',
+                      label: 'One uppercase letter (A-Z)',
                     },
-                    { met: passwordRequirements.number, label: 'One number' },
+                    {
+                      met: passwordRequirements.lowercase,
+                      label: 'One lowercase letter (a-z)',
+                    },
+                    {
+                      met: passwordRequirements.number,
+                      label: 'One number (0-9)',
+                    },
                   ].map((req, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
                       <div
@@ -546,6 +774,19 @@ export default function SignupPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white">
+                        Phone Number
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        +63 {phone}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -559,14 +800,16 @@ export default function SignupPage() {
                 <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   I agree to the{' '}
                   <a
-                    href="#"
+                    href="/terms"
+                    target="_blank"
                     className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                   >
                     Terms of Service
                   </a>{' '}
                   and{' '}
                   <a
-                    href="#"
+                    href="/privacy"
+                    target="_blank"
                     className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                   >
                     Privacy Policy
@@ -591,11 +834,7 @@ export default function SignupPage() {
             {step < 3 && (
               <button
                 onClick={handleNext}
-                disabled={
-                  step === 1
-                    ? !businessName || !businessType || !phone
-                    : !canProceedStep2
-                }
+                disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
                 className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 Next <ArrowRight className="w-5 h-5" />

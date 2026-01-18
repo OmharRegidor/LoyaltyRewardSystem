@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
+import { User } from '@supabase/supabase-js';
 
 interface UserData {
   name: string;
@@ -50,12 +51,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       try {
         const supabase = createClient();
 
+        // First try getSession (reads from cookie directly)
         const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+          data: { session },
+        } = await supabase.auth.getSession();
+        // DEBUG: Log what client sees
+        console.log('DashboardLayout session:', session ? 'EXISTS' : 'NULL');
+        console.log('DashboardLayout session user:', session?.user?.id);
 
-        if (error || !user) {
+        // If no session, try getUser as fallback
+        let user: User | null = session?.user ?? null;
+        if (!user) {
+          const {
+            data: { user: fetchedUser },
+          } = await supabase.auth.getUser();
+          user = fetchedUser;
+        }
+
+        if (!user) {
           router.push('/login');
           return;
         }

@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
 // Routes that start with these prefixes are public
 const PUBLIC_PREFIXES = [
   '/invite/', // /invite/[token] is public
+  '/checkout/', // /checkout/[planId] is public (signup flow)
 ];
 
 // Owner-only routes
@@ -99,21 +100,34 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Get current session
+  // Try getSession first (faster, reads from cookie)
+  // Then validate with getUser if session exists
   const {
     data: { session },
-    error: sessionError,
   } = await supabase.auth.getSession();
 
-  // No session = redirect to login
-  if (!session || sessionError) {
+  let user = session?.user ?? null;
+
+  // If session exists, validate it
+  if (session) {
+    const {
+      data: { user: validatedUser },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (!userError && validatedUser) {
+      user = validatedUser;
+    }
+  }
+
+  // No user = redirect to login
+  if (!user) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Session exists - now check role-based access
-  const userId = session.user.id;
+  // User exists - now check role-based access
+  const userId = user.id;
 
   // Check if user is a business owner
   const { data: business } = await supabase
@@ -133,7 +147,6 @@ export async function proxy(request: NextRequest) {
     .maybeSingle();
 
   const isStaff = !!staff;
-  const staffRole = staff?.role;
 
   // ============================================
   // ROUTE PROTECTION LOGIC

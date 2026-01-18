@@ -1,3 +1,5 @@
+// apps/web/app/dashboard/analytics/page.tsx
+
 'use client';
 
 import { DashboardLayout } from '@/components/dashboard/layout';

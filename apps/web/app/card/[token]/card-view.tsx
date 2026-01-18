@@ -100,7 +100,7 @@ export function CardView({ customer, token }: CardViewProps) {
       <div className="max-w-lg mx-auto mb-4 flex justify-end">
         <button
           onClick={handleDownloadPDF}
-          disabled={isDownloading}
+          disabled
           className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="w-4 h-4" />

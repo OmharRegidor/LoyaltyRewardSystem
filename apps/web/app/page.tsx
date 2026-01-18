@@ -1,3 +1,4 @@
+// apps/web/app/page.tsx
 'use client';
 
 import { ArrowRight, BarChart3, Gift, QrCode, Check } from 'lucide-react';
@@ -6,6 +7,248 @@ import { motion, type Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { DarkModeToggle } from '@/components/dark-mode-toggle';
 import Link from 'next/link';
+
+// ============================================
+// PRICING DATA
+// ============================================
+
+const PLANS = [
+  {
+    id: 'core',
+    name: 'Core',
+    description: 'Perfect for small to medium businesses',
+    priceMonthly: 3499,
+    priceAnnual: 34990,
+    features: [
+      'Up to 3,000 customers',
+      'Up to 3 branches',
+      '3 staff per branch',
+      'QR-based loyalty rewards',
+      'Points & stamps system',
+      'Basic analytics',
+      'Email support',
+    ],
+    cta: 'Get Started',
+    highlighted: false,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    description: 'For growing businesses with multiple locations',
+    priceMonthly: 9999,
+    priceAnnual: 99990,
+    features: [
+      'Unlimited customers',
+      'Unlimited branches',
+      'Unlimited staff',
+      'Advanced analytics',
+      'API access',
+      'Webhooks integration',
+      'Custom branding',
+      'Priority support',
+      'Dedicated account manager',
+    ],
+    cta: 'Contact Sales',
+    highlighted: true,
+  },
+];
+
+// ============================================
+// PRICING SECTION COMPONENT
+// ============================================
+
+function PricingSection({
+  containerVariants,
+}: {
+  containerVariants: Variants;
+}) {
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
+    'annual'
+  );
+
+  const formatPrice = (price: number): string => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const getAnnualSavings = (monthly: number, annual: number): number => {
+    const yearlyIfMonthly = monthly * 12;
+    return Math.round(((yearlyIfMonthly - annual) / yearlyIfMonthly) * 100);
+  };
+
+  return (
+    <section
+      id="pricing"
+      className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10"
+    >
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          className="text-center mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+        >
+          <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            Choose the plan that fits your business
+          </p>
+
+          {/* Billing Interval Toggle */}
+          <div className="inline-flex items-center gap-3 p-1.5 bg-muted dark:bg-muted/50 rounded-full">
+            <button
+              onClick={() => setBillingInterval('monthly')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+                billingInterval === 'monthly'
+                  ? 'bg-background dark:bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingInterval('annual')}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                billingInterval === 'annual'
+                  ? 'bg-background dark:bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Annual
+              <span className="bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full">
+                Save 17%
+              </span>
+            </button>
+          </div>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {PLANS.map((plan, index) => {
+            const price =
+              billingInterval === 'annual'
+                ? plan.priceAnnual
+                : plan.priceMonthly;
+            const period = billingInterval === 'annual' ? '/year' : '/month';
+            const savings = getAnnualSavings(
+              plan.priceMonthly,
+              plan.priceAnnual
+            );
+
+            return (
+              <motion.div
+                key={plan.id}
+                className={`relative rounded-2xl p-8 border transition-all duration-300 ${
+                  plan.highlighted
+                    ? 'border-secondary shadow-2xl dark:shadow-secondary/20 md:scale-105'
+                    : 'border-border dark:border-border hover:border-secondary/50 dark:hover:border-secondary/40'
+                }`}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={{
+                  hidden: { opacity: 0, scale: 0.95 },
+                  visible: {
+                    opacity: 1,
+                    scale: plan.highlighted ? 1.05 : 1,
+                    transition: { duration: 0.5, delay: index * 0.1 },
+                  },
+                }}
+              >
+                {plan.highlighted && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-secondary text-secondary-foreground text-sm font-semibold rounded-full">
+                    Most Popular
+                  </div>
+                )}
+
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <p className="text-muted-foreground mb-6">{plan.description}</p>
+
+                <div className="mb-2">
+                  <span className="text-5xl font-bold">
+                    {formatPrice(price)}
+                  </span>
+                  <span className="text-muted-foreground ml-2">{period}</span>
+                </div>
+
+                {billingInterval === 'annual' && (
+                  <p className="text-sm text-green-600 dark:text-green-400 mb-6">
+                    Save {savings}% compared to monthly
+                  </p>
+                )}
+                {billingInterval === 'monthly' && (
+                  <p className="text-sm text-muted-foreground mb-6">
+                    or {formatPrice(plan.priceAnnual)}/year (save {savings}%)
+                  </p>
+                )}
+
+                <Link href={`/checkout/${plan.id}?interval=${billingInterval}`}>
+                  <Button
+                    className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
+                      plan.highlighted
+                        ? 'gradient-primary text-primary-foreground hover:opacity-90'
+                        : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
+                    }`}
+                    variant={plan.highlighted ? 'default' : 'outline'}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+
+                <div className="space-y-3">
+                  {plan.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-500 shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Target Markets */}
+        <motion.div
+          className="mt-16 text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+        >
+          <p className="text-muted-foreground mb-6">
+            Trusted by businesses across the Philippines
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {[
+              'Retail Stores',
+              'Restaurants & Cafés',
+              'Salons & Spas',
+              'Hotels & Travel',
+            ].map((market) => (
+              <span
+                key={market}
+                className="px-4 py-2 bg-muted/50 dark:bg-muted/30 rounded-full text-sm text-muted-foreground"
+              >
+                {market}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// MAIN PAGE COMPONENT
+// ============================================
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
@@ -118,13 +361,15 @@ export default function Home() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             variants={containerVariants}
           >
-            <Button
-              size="lg"
-              className="gradient-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-            >
-              Start Free Trial
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link href="#pricing">
+              <Button
+                size="lg"
+                className="gradient-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              >
+                View Pricing
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button
               size="lg"
               variant="outline"
@@ -280,120 +525,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section
-        id="pricing"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30 dark:bg-muted/10"
-      >
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={containerVariants}
-          >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Choose the plan that fits your business
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {[
-              {
-                name: 'Starter',
-                price: '₱0',
-                period: 'forever free',
-                description: 'Perfect for getting started',
-                features: [
-                  'Up to 100 customers',
-                  '1 location',
-                  'Basic QR code rewards',
-                  'Email support',
-                  'Manual reports',
-                ],
-                cta: 'Get Started',
-                highlighted: false,
-              },
-              {
-                name: 'Growth',
-                price: '₱999',
-                period: '/month',
-                description: 'For scaling businesses',
-                features: [
-                  'Unlimited customers',
-                  'Multiple locations',
-                  'Advanced analytics',
-                  'Custom rewards catalog',
-                  'Priority support',
-                  'API access',
-                  'White-label options',
-                ],
-                cta: 'Start Free Trial',
-                highlighted: true,
-              },
-            ].map((plan, index) => (
-              <motion.div
-                key={index}
-                className={`relative rounded-2xl p-8 border transition-all duration-300 ${
-                  plan.highlighted
-                    ? 'border-secondary shadow-2xl dark:shadow-secondary/20 scale-105'
-                    : 'border-border dark:border-border hover:border-secondary/50 dark:hover:border-secondary/40'
-                }`}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, scale: 0.9 },
-                  visible: {
-                    opacity: 1,
-                    scale: 1,
-                    transition: { duration: 0.5, delay: index * 0.1 },
-                  },
-                }}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-secondary text-secondary-foreground text-sm font-semibold rounded-full">
-                    Most Popular
-                  </div>
-                )}
-
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <p className="text-muted-foreground mb-4">{plan.description}</p>
-
-                <div className="mb-6">
-                  <span className="text-5xl font-bold">{plan.price}</span>
-                  <span className="text-muted-foreground ml-2">
-                    {plan.period}
-                  </span>
-                </div>
-
-                <Button
-                  className={`w-full mb-8 rounded-lg h-11 ${
-                    plan.highlighted
-                      ? 'gradient-primary text-primary-foreground'
-                      : 'border border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
-                  }`}
-                  variant={plan.highlighted ? 'default' : 'outline'}
-                >
-                  {plan.cta}
-                </Button>
-
-                <div className="space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-success shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection containerVariants={containerVariants} />
 
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -411,13 +543,15 @@ export default function Home() {
             Join hundreds of small businesses in the Philippines already using
             LoyaltyHub
           </p>
-          <Button
-            size="lg"
-            className="bg-white text-primary hover:bg-muted rounded-full px-8 h-12 font-semibold"
-          >
-            Start Your Free Trial Today
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <Link href="#pricing">
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-muted rounded-full px-8 h-12 font-semibold"
+            >
+              Get Started Today
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
         </motion.div>
       </section>
 
@@ -435,12 +569,18 @@ export default function Home() {
               <h5 className="font-semibold mb-4">Product</h5>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition">
+                  <a
+                    href="#features"
+                    className="hover:text-foreground transition"
+                  >
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition">
+                  <a
+                    href="#pricing"
+                    className="hover:text-foreground transition"
+                  >
                     Pricing
                   </a>
                 </li>
