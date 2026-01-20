@@ -206,7 +206,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Bottom Section */}
         <div className="p-4 space-y-2 border-t border-gray-800">
           {/* Dark Mode Toggle */}
-          <button
+          {/* <button
             onClick={toggleDarkMode}
             className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
           >
@@ -216,7 +216,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Moon className="w-5 h-5" />
             )}
             {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-          </button>
+          </button> */}
 
           {/* User Info */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-xl">

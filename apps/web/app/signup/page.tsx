@@ -12,8 +12,10 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ArrowLeft,
 } from 'lucide-react';
 import { signupBusinessOwner } from '@/lib/auth';
+import Link from 'next/link';
 
 // ============================================
 // VALIDATION HELPERS
@@ -34,7 +36,7 @@ interface ValidationErrors {
 function validateStep1(
   businessName: string,
   businessType: string,
-  phone: string
+  phone: string,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -62,7 +64,7 @@ function validateStep1(
 function validateStep2(
   email: string,
   password: string,
-  confirmPassword: string
+  confirmPassword: string,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
@@ -95,7 +97,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
-    {}
+    {},
   );
 
   // Step 1: Business Information
@@ -134,7 +136,7 @@ export default function SignupPage() {
         }
       }
     },
-    [validationErrors.phone]
+    [validationErrors.phone],
   );
 
   // Business name input handler
@@ -148,7 +150,7 @@ export default function SignupPage() {
         }
       }
     },
-    [validationErrors.businessName]
+    [validationErrors.businessName],
   );
 
   // Email input handler
@@ -160,7 +162,7 @@ export default function SignupPage() {
         setValidationErrors((prev) => ({ ...prev, email: undefined }));
       }
     },
-    [validationErrors.email]
+    [validationErrors.email],
   );
 
   // Validate and proceed to next step
@@ -313,6 +315,15 @@ export default function SignupPage() {
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
+          <div className="absolute top-8 left-8 z-20">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </Link>
+          </div>
           {/* Logo/Brand Area */}
           <div className="mb-12">
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">

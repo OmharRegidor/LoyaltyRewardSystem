@@ -15,7 +15,7 @@ import {
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 // ============================================
@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
     // Check for recurring events
     if (event.event) {
       const eventType = event.event;
-      console.log('Xendit webhook received:', eventType);
 
       switch (eventType) {
         // Recurring/Subscription Events
@@ -88,7 +87,6 @@ export async function POST(request: NextRequest) {
           break;
 
         default:
-          console.log('Unhandled Xendit event:', eventType);
       }
     }
 
@@ -97,7 +95,7 @@ export async function POST(request: NextRequest) {
     console.error('Xendit webhook error:', error);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -119,8 +117,6 @@ async function handleInvoiceEvent(invoice: {
   const externalId = invoice.external_id;
   const status = invoice.status;
 
-  console.log(`Invoice ${invoice.id} status: ${status}`);
-
   // Extract business_id from external_id (format: business_id-timestamp)
   const businessId = externalId.split('-')[0];
 
@@ -133,7 +129,7 @@ async function handleInvoiceEvent(invoice: {
         current_period_start: new Date().toISOString(),
         current_period_end: calculatePeriodEnd(
           new Date().toISOString(),
-          'MONTH'
+          'MONTH',
         ),
         updated_at: new Date().toISOString(),
       })
@@ -171,9 +167,7 @@ async function handleInvoiceEvent(invoice: {
 // RECURRING EVENT HANDLERS
 // ============================================
 
-async function handlePlanCreated(data: { id: string }) {
-  console.log('Plan created:', data.id);
-}
+async function handlePlanCreated(data: { id: string }) {}
 
 async function handleSubscriptionCreated(data: {
   id: string;
@@ -198,7 +192,7 @@ async function handleSubscriptionCreated(data: {
     },
     {
       onConflict: 'business_id',
-    }
+    },
   );
 
   await logAuditEvent('subscription_created', businessId, data);
@@ -217,7 +211,7 @@ async function handleSubscriptionActivated(data: {
       current_period_end: data.current_cycle?.scheduled_timestamp
         ? calculatePeriodEnd(
             data.current_cycle.scheduled_timestamp,
-            data.schedule?.interval
+            data.schedule?.interval,
           )
         : null,
       updated_at: new Date().toISOString(),
@@ -297,7 +291,7 @@ async function handlePaymentSucceeded(data: {
       current_period_start: data.scheduled_timestamp,
       current_period_end: calculatePeriodEnd(
         data.scheduled_timestamp || new Date().toISOString(),
-        data.metadata?.interval
+        data.metadata?.interval,
       ),
       updated_at: new Date().toISOString(),
     })
@@ -379,7 +373,7 @@ async function handlePaymentMethodActivated(data: {
 // ============================================
 
 async function getBusinessIdFromSubscription(
-  xenditSubscriptionId: string
+  xenditSubscriptionId: string,
 ): Promise<string | null> {
   const { data } = await supabase
     .from('subscriptions')
@@ -403,7 +397,7 @@ function calculatePeriodEnd(startDate: string, interval?: string): string {
 async function logAuditEvent(
   eventType: string,
   businessId: string,
-  data: unknown
+  data: unknown,
 ) {
   await supabase.from('audit_logs').insert({
     event_type: eventType,

@@ -69,7 +69,7 @@ async function insertStaffRecord(
     role: StaffRole;
     name: string;
     email: string;
-  }
+  },
 ): Promise<{ data: StaffRecord | null; error: any }> {
   const { data, error } = await supabase.rpc('insert_staff_record', {
     p_user_id: record.user_id,
@@ -85,7 +85,7 @@ async function insertStaffRecord(
 async function getStaffByUserId(
   supabase: ReturnType<typeof createClient>,
   userId: string,
-  businessId: string
+  businessId: string,
 ): Promise<StaffRecord | null> {
   const { data, error } = await supabase.rpc('get_staff_by_user', {
     p_user_id: userId,
@@ -98,7 +98,7 @@ async function getStaffByUserId(
 
 async function updateStaffLastLogin(
   supabase: ReturnType<typeof createClient>,
-  staffId: string
+  staffId: string,
 ): Promise<void> {
   await supabase.rpc('update_staff_last_login', { p_staff_id: staffId });
 }
@@ -108,7 +108,7 @@ async function updateStaffLastLogin(
 // ============================================
 
 export async function signupBusinessOwner(
-  data: SignupData
+  data: SignupData,
 ): Promise<AuthResponse> {
   const supabase = createClient();
 
@@ -322,7 +322,7 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
 // ============================================
 
 export async function loginBusinessOwner(
-  data: LoginData
+  data: LoginData,
 ): Promise<AuthResponse> {
   const supabase = createClient();
 
@@ -330,8 +330,6 @@ export async function loginBusinessOwner(
     if (!data.email || !data.password) {
       return { success: false, error: 'Email and password are required' };
     }
-
-    console.log('Auth: Signing in...');
 
     // Authenticate
     const { data: authData, error: authError } =
@@ -341,8 +339,6 @@ export async function loginBusinessOwner(
       });
 
     if (authError) {
-      console.log('Auth: Error', authError.message);
-
       if (authError.message.includes('Invalid login credentials')) {
         return { success: false, error: 'Invalid email or password' };
       }
@@ -356,8 +352,6 @@ export async function loginBusinessOwner(
       return { success: false, error: 'Login failed' };
     }
 
-    console.log('Auth: User authenticated');
-
     // Check for business (with timeout protection)
     const businessPromise = supabase
       .from('businesses')
@@ -366,7 +360,7 @@ export async function loginBusinessOwner(
       .maybeSingle();
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Database timeout')), 5000)
+      setTimeout(() => reject(new Error('Database timeout')), 5000),
     );
 
     let business = null;
@@ -377,15 +371,10 @@ export async function loginBusinessOwner(
         timeoutPromise,
       ])) as any;
       business = result.data;
-      console.log('Auth: Business check complete', { found: !!business });
-    } catch (e) {
-      console.log('Auth: Business check failed, continuing anyway');
-    }
+    } catch (e) {}
 
     // If no business, create one
     if (!business) {
-      console.log('Auth: Creating business...');
-
       const metadata = authData.user.user_metadata || {};
       const businessName = metadata.business_name || 'My Business';
 
@@ -401,7 +390,6 @@ export async function loginBusinessOwner(
           .single();
 
         business = newBiz;
-        console.log('Auth: Business created');
 
         // Create staff record (fire and forget)
         if (newBiz) {
@@ -415,12 +403,8 @@ export async function loginBusinessOwner(
             })
             .match(() => {});
         }
-      } catch (e) {
-        console.log('Auth: Business creation skipped');
-      }
+      } catch (e) {}
     }
-
-    console.log('Auth: Login complete');
 
     return {
       success: true,
@@ -445,7 +429,7 @@ export async function loginBusinessOwner(
 // ============================================
 
 export async function resendVerificationEmail(
-  email: string
+  email: string,
 ): Promise<AuthResponse> {
   const supabase = createClient();
 
@@ -533,7 +517,7 @@ export async function isAuthenticated(): Promise<boolean> {
 // ============================================
 
 export async function requestPasswordReset(
-  email: string
+  email: string,
 ): Promise<AuthResponse> {
   const supabase = createClient();
 
@@ -552,7 +536,7 @@ export async function requestPasswordReset(
 }
 
 export async function updatePassword(
-  newPassword: string
+  newPassword: string,
 ): Promise<AuthResponse> {
   const supabase = createClient();
 

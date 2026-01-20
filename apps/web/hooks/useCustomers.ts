@@ -100,14 +100,12 @@ function playNotificationSound() {
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(
       0.01,
-      audioContext.currentTime + 0.3
+      audioContext.currentTime + 0.3,
     );
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
-  } catch (err) {
-    console.log('Could not play notification sound:', err);
-  }
+  } catch (err) {}
 }
 
 // ============================================
@@ -160,13 +158,13 @@ export function useCustomers({
           created_at,
           created_by_staff_id,
           created_by_business_id
-        `
+        `,
         )
         .or(
           `created_by_business_id.eq.${businessId},id.in.(${await getCustomerIdsWithTransactions(
             supabase,
-            businessId
-          )})`
+            businessId,
+          )})`,
         )
         .order('created_at', { ascending: false });
 
@@ -183,7 +181,7 @@ export function useCustomers({
     } catch (err) {
       console.error('Fetch customers error:', err);
       setError(
-        err instanceof Error ? err.message : 'Failed to fetch customers'
+        err instanceof Error ? err.message : 'Failed to fetch customers',
       );
     } finally {
       setIsLoading(false);
@@ -213,8 +211,6 @@ export function useCustomers({
           filter: `created_by_business_id=eq.${businessId}`,
         },
         (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
-          console.log('[Realtime] New customer:', payload);
-
           if (payload.new && 'id' in payload.new) {
             const newCustomer: Customer = {
               ...mapDatabaseCustomer(payload.new as DatabaseCustomer),
@@ -235,12 +231,12 @@ export function useCustomers({
             setTimeout(() => {
               setCustomers((prev) =>
                 prev.map((c) =>
-                  c.id === newCustomer.id ? { ...c, isNew: false } : c
-                )
+                  c.id === newCustomer.id ? { ...c, isNew: false } : c,
+                ),
               );
             }, 3000);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -255,11 +251,9 @@ export function useCustomers({
           table: 'customers',
         },
         (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
-          console.log('[Realtime] Customer updated:', payload);
-
           if (payload.new && 'id' in payload.new) {
             const updatedCustomer = mapDatabaseCustomer(
-              payload.new as DatabaseCustomer
+              payload.new as DatabaseCustomer,
             );
 
             setCustomers((prev) => {
@@ -268,7 +262,7 @@ export function useCustomers({
                 return prev.map((c) =>
                   c.id === updatedCustomer.id
                     ? { ...updatedCustomer, isNew: true }
-                    : c
+                    : c,
                 );
               }
               return prev;
@@ -278,12 +272,12 @@ export function useCustomers({
             setTimeout(() => {
               setCustomers((prev) =>
                 prev.map((c) =>
-                  c.id === updatedCustomer.id ? { ...c, isNew: false } : c
-                )
+                  c.id === updatedCustomer.id ? { ...c, isNew: false } : c,
+                ),
               );
             }, 3000);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -299,14 +293,12 @@ export function useCustomers({
           filter: `business_id=eq.${businessId}`,
         },
         async (payload) => {
-          console.log('[Realtime] New transaction:', payload);
-
           if (payload.new && 'customer_id' in payload.new) {
             const customerId = payload.new.customer_id as string;
 
             // Check if customer is already in the list
             const alreadyExists = customersRef.current.some(
-              (c) => c.id === customerId
+              (c) => c.id === customerId,
             );
 
             if (!alreadyExists) {
@@ -326,7 +318,7 @@ export function useCustomers({
                   created_at,
                   created_by_staff_id,
                   created_by_business_id
-                `
+                `,
                 )
                 .eq('id', customerId)
                 .single();
@@ -347,19 +339,18 @@ export function useCustomers({
                 setTimeout(() => {
                   setCustomers((prev) =>
                     prev.map((c) =>
-                      c.id === newCustomer.id ? { ...c, isNew: false } : c
-                    )
+                      c.id === newCustomer.id ? { ...c, isNew: false } : c,
+                    ),
                   );
                 }, 3000);
               }
             }
           }
-        }
+        },
       )
       .subscribe();
 
     return () => {
-      console.log('[Realtime] Unsubscribing from channels');
       supabase.removeChannel(insertChannel);
       supabase.removeChannel(updateChannel);
       supabase.removeChannel(transactionChannel);
@@ -381,7 +372,7 @@ export function useCustomers({
 
 async function getCustomerIdsWithTransactions(
   supabase: ReturnType<typeof createClient>,
-  businessId: string
+  businessId: string,
 ): Promise<string> {
   const { data } = await supabase
     .from('transactions')

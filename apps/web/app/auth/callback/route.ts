@@ -25,8 +25,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(
       new URL(
         `/login?error=${encodeURIComponent(error_description || error)}`,
-        requestUrl.origin
-      )
+        requestUrl.origin,
+      ),
     );
   }
 
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
   // Create response with redirect
   const response = NextResponse.redirect(
-    new URL(redirectPath, requestUrl.origin)
+    new URL(redirectPath, requestUrl.origin),
   );
 
   // Store cookies to apply to final response
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
           });
         },
       },
-    }
+    },
   );
 
   let userId: string | null = null;
@@ -92,8 +92,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(
         new URL(
           `/login?error=${encodeURIComponent(verifyError.message)}`,
-          requestUrl.origin
-        )
+          requestUrl.origin,
+        ),
       );
     }
 
@@ -114,8 +114,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(
         new URL(
           `/login?error=${encodeURIComponent(exchangeError.message)}`,
-          requestUrl.origin
-        )
+          requestUrl.origin,
+        ),
       );
     }
 
@@ -145,7 +145,7 @@ export async function GET(request: Request) {
       userId,
       requestUrl,
       selectedPlan,
-      billingInterval
+      billingInterval,
     );
 
     // Create final response with cookies
@@ -174,13 +174,13 @@ export async function GET(request: Request) {
 async function ensureBusinessExists(
   userId: string,
   userEmail: string | null,
-  userMetadata?: Record<string, unknown>
+  userMetadata?: Record<string, unknown>,
 ) {
   // Use service role to bypass RLS
   const { createClient } = await import('@supabase/supabase-js');
   const serviceSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
   try {
@@ -192,7 +192,6 @@ async function ensureBusinessExists(
       .maybeSingle();
 
     if (existingBusiness) {
-      console.log('Business already exists for user:', userId);
       return existingBusiness;
     }
 
@@ -200,8 +199,6 @@ async function ensureBusinessExists(
     const businessName =
       (userMetadata?.business_name as string) || 'My Business';
     const ownerEmail = userEmail || (userMetadata?.email as string) || '';
-
-    console.log('Creating business for user:', userId, businessName);
 
     // Create new business with all required fields
     const { data: newBusiness, error } = await serviceSupabase
@@ -226,7 +223,6 @@ async function ensureBusinessExists(
       return null;
     }
 
-    console.log('Business created:', newBusiness);
     return newBusiness;
   } catch (err) {
     console.error('Error in ensureBusinessExists:', err);
@@ -240,14 +236,14 @@ async function getRedirectUrl(
   userId: string,
   requestUrl: URL,
   selectedPlan?: string | null,
-  billingInterval?: string
+  billingInterval?: string,
 ): Promise<URL> {
   try {
     // Check if user is staff (use service role to avoid RLS issues during callback)
     const { createClient } = await import('@supabase/supabase-js');
     const serviceSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
 
     const { data: staffData } = await serviceSupabase
@@ -275,7 +271,7 @@ async function getRedirectUrl(
           `/dashboard/settings/billing?plan=${selectedPlan}&interval=${
             billingInterval || 'monthly'
           }`,
-          requestUrl.origin
+          requestUrl.origin,
         );
       }
 

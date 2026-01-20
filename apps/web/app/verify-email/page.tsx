@@ -51,15 +51,11 @@ function VerifyEmailContent() {
     try {
       const supabase = createClient();
 
-      console.log('Resending verification to:', email);
-
       // First check if user exists and is not confirmed
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email: email,
       });
-
-      console.log('Resend result:', { error: resendError });
 
       if (resendError) {
         const msg = resendError.message.toLowerCase();

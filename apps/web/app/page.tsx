@@ -28,7 +28,7 @@ const PLANS = [
       'Basic analytics',
       'Email support',
     ],
-    cta: 'Get Started',
+    cta: 'Contact Us',
     highlighted: false,
   },
   {
@@ -48,7 +48,7 @@ const PLANS = [
       'Priority support',
       'Dedicated account manager',
     ],
-    cta: 'Contact Sales',
+    cta: 'Contact Us',
     highlighted: true,
   },
 ];
@@ -65,6 +65,8 @@ function PricingSection({
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
     'annual',
   );
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('en-PH', {
@@ -78,6 +80,129 @@ function PricingSection({
   const getAnnualSavings = (monthly: number, annual: number): number => {
     const yearlyIfMonthly = monthly * 12;
     return Math.round(((yearlyIfMonthly - annual) / yearlyIfMonthly) * 100);
+  };
+
+  // Contact Us Modal
+  const ContactModal = () => {
+    if (!showContactModal) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowContactModal(false)}
+        />
+
+        {/* Modal */}
+        <div className="relative w-full max-w-md bg-background rounded-2xl shadow-2xl border border-border overflow-hidden">
+          {/* Header */}
+          <div className="bg-linear-to-r from-primary to-secondary p-6 text-white">
+            <h3 className="text-xl font-bold">
+              Get Started with {selectedPlan}
+            </h3>
+            <p className="text-white/80 text-sm mt-1">
+              We'll help you set up your account
+            </p>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            <p className="text-muted-foreground mb-6">
+              To get started with LoyaltyHub, please contact us via email with
+              your business details.
+            </p>
+
+            {/* Steps */}
+            <div className="space-y-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">1</span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Send us an email</p>
+                  <p className="text-xs text-muted-foreground">
+                    Include your business name and chosen plan
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">2</span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">
+                    We'll send payment details
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Bank transfer or GCash options available
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">3</span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Account activation</p>
+                  <p className="text-xs text-muted-foreground">
+                    We'll set up your account within 24 hours
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Box */}
+            <div className="bg-muted/50 rounded-xl p-4 mb-6">
+              <p className="text-xs text-muted-foreground mb-2">
+                Send your inquiry to:
+              </p>
+              <a
+                href={`mailto:noxa.company@gmail.com?subject=LoyaltyHub ${selectedPlan} Plan Inquiry&body=Hi LoyaltyHub Team,%0D%0A%0D%0AI'm interested in the ${selectedPlan} plan (${billingInterval}).%0D%0A%0D%0ABusiness Name: %0D%0AContact Number: %0D%0A%0D%0AThank you!`}
+                className="text-lg font-semibold text-primary hover:underline"
+              >
+                noxa.company@gmail.com
+              </a>
+            </div>
+
+            {/* What to Include */}
+            <div className="text-xs text-muted-foreground mb-6">
+              <p className="font-medium mb-2">Please include in your email:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Business name</li>
+                <li>Owner's full name</li>
+                <li>Contact number</li>
+                <li>
+                  Preferred plan:{' '}
+                  <span className="font-medium text-foreground">
+                    {selectedPlan} ({billingInterval})
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowContactModal(false)}
+              >
+                Close
+              </Button>
+              <Button
+                className="flex-1 gradient-primary text-primary-foreground"
+                onClick={() => {
+                  window.location.href = `mailto:support@loyaltyhub.ph?subject=LoyaltyHub ${selectedPlan} Plan Inquiry&body=Hi LoyaltyHub Team,%0D%0A%0D%0AI'm interested in the ${selectedPlan} plan (${billingInterval}).%0D%0A%0D%0ABusiness Name: %0D%0AContact Number: %0D%0A%0D%0AThank you!`;
+                }}
+              >
+                Send Email
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -187,19 +312,23 @@ function PricingSection({
                   </p>
                 )}
 
-                <Link href={`/checkout/${plan.id}?interval=${billingInterval}`}>
-                  <Button
-                    className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
-                      plan.highlighted
-                        ? 'gradient-primary text-primary-foreground hover:opacity-90'
-                        : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
-                    }`}
-                    variant={plan.highlighted ? 'default' : 'outline'}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
+                {/* <Link href={`/checkout/${plan.id}?interval=${billingInterval}`}> */}
+                <Button
+                  className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
+                    plan.highlighted
+                      ? 'gradient-primary text-primary-foreground hover:opacity-90'
+                      : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
+                  }`}
+                  variant={plan.highlighted ? 'default' : 'outline'}
+                  onClick={() => {
+                    setSelectedPlan(plan.name);
+                    setShowContactModal(true);
+                  }}
+                >
+                  {plan.cta}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+                {/* </Link> */}
 
                 <div className="space-y-3">
                   {plan.features.map((feature, i) => (
@@ -241,6 +370,7 @@ function PricingSection({
             ))}
           </div>
         </motion.div>
+        <ContactModal />
       </div>
     </section>
   );

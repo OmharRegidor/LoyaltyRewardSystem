@@ -27,9 +27,7 @@ export default function CustomersPage() {
   // Customers data with realtime
   const { customers, isLoading, error, totalCount } = useCustomers({
     businessId: business?.id ?? null,
-    onNewCustomer: useCallback((customer: Customer) => {
-      console.log('New customer added:', customer.fullName);
-    }, []),
+    onNewCustomer: useCallback((customer: Customer) => {}, []),
   });
 
   // UI State

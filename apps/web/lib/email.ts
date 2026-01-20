@@ -183,13 +183,8 @@ This email was sent by ${businessName}.
 // ============================================
 
 export async function sendWelcomeEmail(
-  params: SendWelcomeEmailParams
+  params: SendWelcomeEmailParams,
 ): Promise<EmailResult> {
-  console.log('=== SEND WELCOME EMAIL CALLED ===');
-  console.log('To:', params.to);
-  console.log('Business:', params.businessName);
-  console.log('QR Content:', params.qrCodeContent);
-
   try {
     const { to, businessName } = params;
 
@@ -201,15 +196,11 @@ export async function sendWelcomeEmail(
       text: generateWelcomeEmailText(params),
     });
 
-    console.log('Resend response - Data:', data);
-    console.log('Resend response - Error:', error);
-
     if (error) {
       console.error('Resend error:', error);
       return { success: false, error: error.message };
     }
 
-    console.log('Email sent successfully! ID:', data?.id);
     return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('Send email catch error:', error);

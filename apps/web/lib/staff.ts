@@ -241,10 +241,7 @@ export async function sendStaffInvite(
       return { success: false, error: 'This person is already a team member' };
     }
 
-    console.log('📤 Creating invite with data:', {
-      business_id: businessId,
-      email: normalizedEmail,
-      name: params.name.trim(),
+    ,
       role: 'cashier',
       branch_name: params.branchName?.trim() || null,
       invited_by: user.id,
@@ -264,8 +261,7 @@ export async function sendStaffInvite(
       .select()
       .maybeSingle();
 
-    console.log('📥 Insert response:', { invite, error });
-
+    
     if (error) {
       console.error('[sendStaffInvite] Insert error:', error);
       return {
@@ -293,12 +289,7 @@ export async function sendStaffInvite(
       };
     }
 
-    console.log('✅ Invite created successfully:', {
-      id: invite.id,
-      token: invite.token,
-      email: invite.email,
-    });
-
+    
     const typedInvite = invite as StaffInvite;
 
     return {

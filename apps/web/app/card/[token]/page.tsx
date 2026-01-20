@@ -38,7 +38,6 @@ async function getCustomerByToken(token: string): Promise<CustomerData | null> {
   // 1. Verify token signature
   const payload = verifyCardToken(token);
   if (!payload) {
-    console.log('Invalid token signature');
     return null;
   }
 
@@ -65,19 +64,17 @@ async function getCustomerByToken(token: string): Promise<CustomerData | null> {
         address,
         city
       )
-    `
+    `,
     )
     .eq('id', payload.customerId)
     .single();
 
   if (error || !customer) {
-    console.log('Customer not found:', error);
     return null;
   }
 
   // 3. Verify card token matches
   if (customer.card_token !== token) {
-    console.log('Token mismatch');
     return null;
   }
 

@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Users,
   AlertCircle,
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -183,6 +184,15 @@ export default function LoginPage() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 py-20 w-full">
+          <div className="absolute top-8 left-8 z-20">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back</span>
+            </Link>
+          </div>
           <div className="mb-12 transform hover:scale-105 transition-transform duration-300">
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Welcome back to

@@ -8,7 +8,7 @@ import { resumeRecurringSubscription } from '@/lib/xendit';
 
 const serviceSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST() {
@@ -25,12 +25,12 @@ export async function POST() {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
+                cookieStore.set(name, value, options),
               );
             } catch {}
           },
         },
-      }
+      },
     );
 
     const {
@@ -50,7 +50,7 @@ export async function POST() {
     if (!business) {
       return NextResponse.json(
         { error: 'Business not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -63,14 +63,14 @@ export async function POST() {
     if (!subscription?.xendit_subscription_id) {
       return NextResponse.json(
         { error: 'No subscription found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (!subscription.cancel_at_period_end) {
       return NextResponse.json(
         { error: 'Subscription is not scheduled for cancellation' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +79,6 @@ export async function POST() {
       await resumeRecurringSubscription(subscription.xendit_subscription_id);
     } catch (error) {
       // May fail if it's an invoice-based subscription, continue anyway
-      console.log('Xendit resume attempt:', error);
     }
 
     // Update database
