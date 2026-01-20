@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev:web": "npm run dev --workspace=apps/web",
-    "dev:mobile": "npm start --workspace=apps/mobile"
+    "dev:mobile": "npm start --workspace=apps/mobile",
+    "db:types": "supabase gen types typescript --linked > packages/shared/types/database.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
