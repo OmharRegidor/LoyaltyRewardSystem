@@ -33,6 +33,12 @@ export interface Reward {
     id: string;
     name: string;
     logo_url: string | null;
+    branches?: {
+      id: string;
+      name: string;
+      address: string | null;
+      city: string | null;
+    }[];
   };
 }
 
@@ -75,7 +81,7 @@ export interface Redemption {
  */
 export function canAccessReward(
   userTier: TierLevel,
-  requiredTier: TierLevel | null
+  requiredTier: TierLevel | null,
 ): boolean {
   if (!requiredTier) return true;
   return TIER_ORDER[userTier] >= TIER_ORDER[requiredTier];

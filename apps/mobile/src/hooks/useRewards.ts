@@ -10,10 +10,18 @@ import { canAccessReward, TIER_ORDER } from '../types/rewards.types';
 // TYPES
 // ============================================
 
+interface Branch {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+}
+
 interface BusinessInfo {
   id: string;
   name: string;
   logo_url: string | null;
+  branches?: Branch[];
 }
 
 interface RewardFromSupabase {
@@ -68,7 +76,7 @@ const VALID_TIERS: readonly TierLevel[] = [
 // ============================================
 
 function extractBusiness(
-  businesses: BusinessInfo | BusinessInfo[] | null
+  businesses: BusinessInfo | BusinessInfo[] | null,
 ): BusinessInfo | undefined {
   if (!businesses) return undefined;
   if (Array.isArray(businesses)) return businesses[0] ?? undefined;
@@ -88,7 +96,7 @@ function isValidTier(tier: unknown): tier is TierLevel {
 
 function isWithinValidDateRange(
   validFrom: string | null,
-  validUntil: string | null
+  validUntil: string | null,
 ): boolean {
   const now = Date.now();
   if (validFrom && new Date(validFrom).getTime() > now) return false;
@@ -124,6 +132,7 @@ function transformToReward(raw: RewardFromSupabase): Reward | null {
           id: business.id,
           name: business.name,
           logo_url: business.logo_url,
+          branches: business.branches || [],
         }
       : undefined,
   };
@@ -172,8 +181,8 @@ export function useRewards() {
           valid_from,
           valid_until,
           created_at,
-          businesses (id, name, logo_url)
-        `
+          businesses (id, name, logo_url, branches (id, name, address, city))
+        `,
         )
         .eq('is_active', true)
         .eq('is_visible', true)
@@ -209,7 +218,7 @@ export function useRewards() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'rewards' },
-        () => fetchRewards()
+        () => fetchRewards(),
       )
       .subscribe();
 
@@ -264,19 +273,19 @@ export function useRewards() {
       const hasTier = canAccessReward(userTier, reward.tier_required);
       return hasPoints && inStock && hasTier;
     },
-    [points, userTier]
+    [points, userTier],
   );
 
   const isLocked = useCallback(
     (reward: Reward): boolean => {
       return !canAccessReward(userTier, reward.tier_required);
     },
-    [userTier]
+    [userTier],
   );
 
   const pointsNeeded = useCallback(
     (reward: Reward): number => Math.max(0, reward.points_cost - points),
-    [points]
+    [points],
   );
 
   // ============================================
@@ -296,7 +305,7 @@ export function useRewards() {
           {
             p_customer_id: customer.id,
             p_reward_id: reward.id,
-          }
+          },
         );
 
         if (redeemError) throw new Error(redeemError.message);
@@ -323,7 +332,7 @@ export function useRewards() {
         setRedeemingId(null);
       }
     },
-    [customer, canRedeem, refreshCustomer, fetchRewards]
+    [customer, canRedeem, refreshCustomer, fetchRewards],
   );
 
   // ============================================

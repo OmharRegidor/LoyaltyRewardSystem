@@ -41,6 +41,48 @@ const initialState: AuthState = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Extract user profile from Supabase User object
+ * Works with Google OAuth and other providers
+ */
+function extractUserProfile(user: User): {
+  id: string;
+  email?: string;
+  fullName?: string;
+} {
+  const profile = {
+    id: user.id,
+    email: user.email,
+    fullName: undefined as string | undefined,
+  };
+
+  // Try to get full name from user metadata
+  // Google OAuth stores it in user_metadata.full_name or user_metadata.name
+  const metadata = user.user_metadata;
+  if (metadata) {
+    profile.fullName =
+      metadata.full_name || metadata.name || metadata.given_name
+        ? `${metadata.given_name || ''} ${metadata.family_name || ''}`.trim()
+        : undefined;
+  }
+
+  console.log('[AuthProvider] Extracted profile:', {
+    id: profile.id,
+    email: profile.email,
+    fullName: profile.fullName,
+  });
+
+  return profile;
+}
+
+// ============================================
+// PROVIDER
+// ============================================
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const redirectTo = Linking.createURL('auth/callback');
@@ -52,11 +94,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLoadingCustomer.current) return;
     isLoadingCustomer.current = true;
 
-    console.log('Loading customer for:', user.id);
+    console.log('[AuthProvider] Loading customer for:', user.id);
 
     try {
-      const customer = await customerService.findOrCreate(user.id);
-      console.log('Customer loaded:', customer?.id);
+      // Extract profile from OAuth user
+      const profile = extractUserProfile(user);
+
+      // Find or create customer with profile data
+      // This will:
+      // 1. Link to existing customer by email (if staff-added)
+      // 2. Or create new customer with name/email from OAuth
+      const customer = await customerService.findOrCreate(profile);
+
+      console.log('[AuthProvider] Customer loaded:', {
+        id: customer?.id,
+        total_points: customer?.total_points,
+        full_name: customer?.full_name,
+        email: customer?.email,
+      });
 
       setState({
         user,
@@ -71,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setupRealtimeSubscription(customer.id);
       }
     } catch (error) {
-      console.error('Customer error:', error);
+      console.error('[AuthProvider] Customer error:', error);
       setState({
         user,
         customer: null,
@@ -91,7 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       supabase.removeChannel(realtimeChannelRef.current);
     }
 
-    console.log('Setting up realtime subscription for customer:', customerId);
+    console.log(
+      '[AuthProvider] Setting up realtime subscription for customer:',
+      customerId
+    );
 
     const channel = supabase
       .channel(`customer-${customerId}`)
@@ -104,7 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           filter: `id=eq.${customerId}`,
         },
         (payload) => {
-          console.log('Customer updated via realtime:', payload.new);
+          console.log(
+            '[AuthProvider] Customer updated via realtime:',
+            payload.new
+          );
 
           // Update customer state with new data
           setState((prev) => ({
@@ -122,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        console.log('[AuthProvider] Realtime subscription status:', status);
       });
 
     realtimeChannelRef.current = channel;
@@ -131,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Cleanup realtime subscription
   const cleanupRealtimeSubscription = useCallback(() => {
     if (realtimeChannelRef.current) {
-      console.log('Cleaning up realtime subscription');
+      console.log('[AuthProvider] Cleaning up realtime subscription');
       supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
     }
@@ -150,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState((prev) => ({ ...prev, isInitialized: true }));
         }
       } catch (error) {
-        console.error('Auth init error:', error);
+        console.error('[AuthProvider] Auth init error:', error);
         setState((prev) => ({ ...prev, isInitialized: true }));
       }
     };
@@ -160,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
+      console.log('[AuthProvider] Auth state changed:', event);
 
       if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(() => {
@@ -186,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      console.log('1. Starting Google sign in');
+      console.log('[AuthProvider] 1. Starting Google sign in');
       setState((prev) => ({ ...prev, isLoading: true }));
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -200,12 +261,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (!data.url) throw new Error('No OAuth URL returned');
 
-      console.log('2. Opening browser');
+      console.log('[AuthProvider] 2. Opening browser');
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectTo
       );
-      console.log('3. Browser closed, type:', result.type);
+      console.log('[AuthProvider] 3. Browser closed, type:', result.type);
 
       if (result.type === 'success' && result.url) {
         const hashIndex = result.url.indexOf('#');
@@ -217,29 +278,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
 
-          console.log('4. Tokens found:', !!access_token && !!refresh_token);
+          console.log(
+            '[AuthProvider] 4. Tokens found:',
+            !!access_token && !!refresh_token
+          );
 
           if (access_token && refresh_token) {
-            console.log('5. Setting session...');
+            console.log('[AuthProvider] 5. Setting session...');
             const { error: sessionError } = await supabase.auth.setSession({
               access_token,
               refresh_token,
             });
 
             if (sessionError) {
-              console.log('6. Session error:', sessionError.message);
+              console.log(
+                '[AuthProvider] 6. Session error:',
+                sessionError.message
+              );
               throw sessionError;
             }
 
-            console.log('6. Session set successfully');
+            console.log('[AuthProvider] 6. Session set successfully');
           }
         }
       } else {
-        console.log('4. Browser cancelled or failed');
+        console.log('[AuthProvider] 4. Browser cancelled or failed');
         setState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('[AuthProvider] Sign in error:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
@@ -251,7 +318,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cleanupRealtimeSubscription();
       await supabase.auth.signOut();
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('[AuthProvider] Sign out error:', error);
       setState({
         user: null,
         customer: null,
@@ -269,7 +336,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const customer = await customerService.getByUserId(state.user.id);
       setState((prev) => ({ ...prev, customer }));
     } catch (error) {
-      console.error('Refresh customer error:', error);
+      console.error('[AuthProvider] Refresh customer error:', error);
     }
   }, [state.user]);
 

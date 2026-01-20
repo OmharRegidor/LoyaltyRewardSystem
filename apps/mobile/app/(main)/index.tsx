@@ -95,10 +95,10 @@ export default function HomeScreen() {
           <MemberQRCard qrCodeUrl={qrCodeUrl} isLoading={isLoading} />
 
           {/* Quick Actions */}
-          <QuickActions />
+          {/* <QuickActions /> */}
 
           {/* Nearby Businesses */}
-          <NearbyBusinesses onBusinessPress={handleBusinessPress} />
+          {/* <NearbyBusinesses onBusinessPress={handleBusinessPress} /> */}
 
           {/* Bottom spacing for tab bar */}
           <View style={{ height: SPACING['3xl'] }} />

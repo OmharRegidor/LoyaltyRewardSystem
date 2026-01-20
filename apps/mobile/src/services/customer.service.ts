@@ -10,11 +10,12 @@ import { nanoid } from 'nanoid/non-secure';
 
 /**
  * Explicit column selection to ensure all fields are fetched
- * This prevents issues where SELECT * might not return new columns
  */
 const CUSTOMER_COLUMNS = `
   id,
   user_id,
+  full_name,
+  email,
   phone,
   total_points,
   lifetime_points,
@@ -23,6 +24,16 @@ const CUSTOMER_COLUMNS = `
   last_visit,
   created_at
 ` as const;
+
+// ============================================
+// TYPES
+// ============================================
+
+interface UserProfile {
+  id: string;
+  email?: string;
+  fullName?: string;
+}
 
 // ============================================
 // SERVICE
@@ -57,15 +68,40 @@ export const customerService = {
   },
 
   /**
-   * Create new customer with default values
+   * Link OAuth user to existing customer by email
+   * Returns the linked customer ID or null if no match found
    */
-  async create(userId: string): Promise<Customer> {
-    console.log('[CustomerService] create:', userId);
+  async linkByEmail(userId: string, email: string): Promise<string | null> {
+    console.log('[CustomerService] linkByEmail:', { userId, email });
+
+    // Call the database function to link customer
+    const { data, error } = await supabase.rpc('link_oauth_to_customer', {
+      p_user_id: userId,
+      p_email: email,
+    });
+
+    if (error) {
+      console.error('[CustomerService] linkByEmail error:', error.message);
+      // Don't throw - this is not critical, we can create a new customer
+      return null;
+    }
+
+    console.log('[CustomerService] linkByEmail result:', data);
+    return data as string | null;
+  },
+
+  /**
+   * Create new customer with profile data
+   */
+  async create(profile: UserProfile): Promise<Customer> {
+    console.log('[CustomerService] create:', profile);
 
     const { data, error } = await supabase
       .from('customers')
       .insert({
-        user_id: userId,
+        user_id: profile.id,
+        full_name: profile.fullName || null,
+        email: profile.email || null,
         phone: null,
         total_points: 0,
         lifetime_points: 0,
@@ -85,12 +121,84 @@ export const customerService = {
   },
 
   /**
-   * Find existing customer or create new one
+   * Update customer profile (name, email)
    */
-  async findOrCreate(userId: string): Promise<Customer> {
-    const existing = await this.getByUserId(userId);
-    if (existing) return existing;
-    return this.create(userId);
+  async updateProfile(
+    customerId: string,
+    profile: { fullName?: string; email?: string }
+  ): Promise<void> {
+    console.log('[CustomerService] updateProfile:', { customerId, profile });
+
+    const updates: Record<string, string | null> = {};
+    if (profile.fullName) updates.full_name = profile.fullName;
+    if (profile.email) updates.email = profile.email;
+
+    if (Object.keys(updates).length === 0) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .update(updates)
+      .eq('id', customerId);
+
+    if (error) {
+      console.error('[CustomerService] updateProfile error:', error.message);
+      // Don't throw - profile update is not critical
+    }
+  },
+
+  /**
+   * Find existing customer or create new one
+   * 
+   * Flow:
+   * 1. Check if customer exists by user_id (already linked)
+   * 2. If not, try to link by email (staff-added customer)
+   * 3. If linked, update profile and return
+   * 4. If no match, create new customer
+   */
+  async findOrCreate(profile: UserProfile): Promise<Customer> {
+    console.log('[CustomerService] findOrCreate:', profile);
+
+    // Step 1: Check if already linked by user_id
+    const existingByUserId = await this.getByUserId(profile.id);
+    if (existingByUserId) {
+      console.log('[CustomerService] Found by user_id:', existingByUserId.id);
+      
+      // Update profile if missing
+      if (!existingByUserId.full_name || !existingByUserId.email) {
+        await this.updateProfile(existingByUserId.id, {
+          fullName: existingByUserId.full_name || profile.fullName,
+          email: existingByUserId.email || profile.email,
+        });
+      }
+      
+      return existingByUserId;
+    }
+
+    // Step 2: Try to link by email (for staff-added customers)
+    if (profile.email) {
+      const linkedCustomerId = await this.linkByEmail(profile.id, profile.email);
+      
+      if (linkedCustomerId) {
+        console.log('[CustomerService] Linked by email:', linkedCustomerId);
+        
+        // Fetch the linked customer
+        const linkedCustomer = await this.getByUserId(profile.id);
+        
+        if (linkedCustomer) {
+          // Update profile with OAuth data
+          await this.updateProfile(linkedCustomer.id, {
+            fullName: linkedCustomer.full_name || profile.fullName,
+            email: linkedCustomer.email || profile.email,
+          });
+          
+          return linkedCustomer;
+        }
+      }
+    }
+
+    // Step 3: No existing customer found, create new one
+    console.log('[CustomerService] Creating new customer');
+    return this.create(profile);
   },
 
   /**

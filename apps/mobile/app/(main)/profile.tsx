@@ -53,12 +53,12 @@ export default function ProfileScreen() {
       </Card>
 
       {/* Menu Items */}
-      <Card style={styles.menuCard}>
+      {/* <Card style={styles.menuCard}>
         <MenuItem icon="👤" label="Edit Profile" />
-        <MenuItem icon="🔔" label="Notifications" />
+        <MenuItem icon="🔔" label="Notifications" />  
         <MenuItem icon="🔒" label="Privacy" />
         <MenuItem icon="❓" label="Help & Support" />
-      </Card>
+      </Card> */}
 
       {/* Sign Out */}
       <Button

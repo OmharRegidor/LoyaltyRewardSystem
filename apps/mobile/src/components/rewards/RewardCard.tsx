@@ -136,11 +136,35 @@ function RewardCardComponent({
 
       {/* Content Section */}
       <View style={styles.content}>
-        {/* Business Name */}
+        {/* Business Name & Location */}
         {reward.business && (
-          <Text style={styles.businessName} numberOfLines={1}>
-            {reward.business.name}
-          </Text>
+          <View style={styles.businessInfo}>
+            <View style={styles.businessNameRow}>
+              <Ionicons
+                name="storefront-outline"
+                size={12}
+                color={COLORS.gray[500]}
+              />
+              <Text style={styles.businessName} numberOfLines={1}>
+                {reward.business.name}
+              </Text>
+            </View>
+            {reward.business.branches &&
+              reward.business.branches.length > 0 && (
+                <View style={styles.branchInfo}>
+                  <Ionicons
+                    name="location-outline"
+                    size={12}
+                    color={COLORS.gray[400]}
+                  />
+                  <Text style={styles.branchText} numberOfLines={1}>
+                    {reward.business.branches.length === 1
+                      ? `${reward.business.branches[0].address || reward.business.branches[0].name}${reward.business.branches[0].city ? `, ${reward.business.branches[0].city}` : ''}`
+                      : `${reward.business.branches.length} locations`}
+                  </Text>
+                </View>
+              )}
+          </View>
         )}
 
         {/* Reward Title */}
@@ -204,6 +228,31 @@ function RewardCardComponent({
 // ============================================
 
 const styles = StyleSheet.create({
+  businessInfo: {
+    marginBottom: SPACING.xs,
+  },
+  businessNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  businessName: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.gray[600],
+    fontWeight: '500',
+    flex: 1,
+  },
+  branchInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  branchText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.gray[400],
+    flex: 1,
+  },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
@@ -291,11 +340,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-  },
-  businessName: {
-    fontSize: FONT_SIZE.xs,
-    color: COLORS.gray[500],
-    marginBottom: 2,
   },
   title: {
     fontSize: FONT_SIZE.base,
