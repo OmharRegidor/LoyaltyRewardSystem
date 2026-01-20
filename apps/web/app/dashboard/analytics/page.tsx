@@ -412,29 +412,31 @@ export default function AnalyticsPage() {
 
           {/* Reward Performance */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
-            <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                Top Rewards
-              </h2>
-              <div className="space-y-4">
-                {rewardPerformance.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Gift className="w-5 h-5 text-cyan-500" />
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {item.reward}
+            <div className="max-w-2xl mx-auto">
+              <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                  Top Rewards
+                </h2>
+                <div className="space-y-4">
+                  {rewardPerformance.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Gift className="w-5 h-5 text-cyan-500" />
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {item.reward}
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {item.redemptions} redemptions
                       </span>
                     </div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {item.redemptions} redemptions
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>

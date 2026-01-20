@@ -60,7 +60,19 @@ type ScannerState =
   | 'customer-found'
   | 'awarding'
   | 'success'
-  | 'error';
+  | 'error'
+  | 'verify-redemption';
+
+interface RedemptionData {
+  id: string;
+  code: string;
+  rewardTitle: string;
+  pointsUsed: number;
+  customerName: string;
+  status: string;
+  expiresAt: string;
+  createdAt: string;
+}
 
 // ============================================
 // TIER CONFIGURATION
@@ -105,9 +117,14 @@ export default function StaffScannerPage() {
   });
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>(
-    'environment'
+    'environment',
   );
   const [error, setError] = useState('');
+  const [redemptionCode, setRedemptionCode] = useState('');
+  const [redemptionData, setRedemptionData] = useState<RedemptionData | null>(
+    null,
+  );
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -210,7 +227,7 @@ export default function StaffScannerPage() {
         scansToday: data.length,
         pointsAwardedToday: data.reduce(
           (sum, log) => sum + (log.points_awarded || 0),
-          0
+          0,
         ),
       });
     }
@@ -234,7 +251,7 @@ export default function StaffScannerPage() {
         { facingMode: cameraFacing },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
         onScanSuccess,
-        () => {}
+        () => {},
       );
     } catch (err: unknown) {
       const message =
@@ -271,7 +288,7 @@ export default function StaffScannerPage() {
         { facingMode: facing },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
         onScanSuccess,
-        () => {}
+        () => {},
       );
     } catch (err) {
       console.error('Scanner restart error:', err);
@@ -301,7 +318,7 @@ export default function StaffScannerPage() {
       const { data: exactMatch } = await supabase
         .from('customers')
         .select(
-          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
+          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
         )
         .eq('qr_code_url', fullUrl)
         .maybeSingle();
@@ -319,7 +336,7 @@ export default function StaffScannerPage() {
         const { data: partialMatch } = await supabase
           .from('customers')
           .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
+            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
           )
           .ilike('qr_code_url', `%${shortCode}%`)
           .maybeSingle();
@@ -332,7 +349,7 @@ export default function StaffScannerPage() {
         const { data: idMatch } = await supabase
           .from('customers')
           .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email'
+            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
           )
           .eq('id', scannedCode)
           .maybeSingle();
@@ -352,7 +369,7 @@ export default function StaffScannerPage() {
       if (!customerName && customerData.user_id) {
         try {
           const response = await fetch(
-            `/api/customer/${customerData.user_id}/profile`
+            `/api/customer/${customerData.user_id}/profile`,
           );
           if (response.ok) {
             const profile = await response.json();
@@ -501,6 +518,136 @@ export default function StaffScannerPage() {
     setScanResult(null);
     setError('');
     setScannerState('idle');
+    setRedemptionCode('');
+    setRedemptionData(null);
+  };
+
+  // ============================================
+  // VERIFY REDEMPTION
+  // ============================================
+
+  const verifyRedemptionCode = async () => {
+    if (!redemptionCode.trim() || !staffData) return;
+
+    setIsVerifying(true);
+    setError('');
+    const supabase = createClient();
+
+    try {
+      // Find redemption by code
+      const { data: redemption, error: fetchError } = await supabase
+        .from('redemptions')
+        .select(
+          `
+        id,
+        redemption_code,
+        points_used,
+        status,
+        expires_at,
+        created_at,
+        customer_id,
+        reward_id,
+        customers (full_name, email),
+        rewards (title)
+      `,
+        )
+        .eq('redemption_code', redemptionCode.toUpperCase().trim())
+        .eq('business_id', staffData.businessId)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (!redemption) {
+        setError('Redemption code not found');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Check if already completed
+      if (redemption.status === 'completed') {
+        setError('This code has already been used');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Check if expired
+      if (
+        redemption.expires_at &&
+        new Date(redemption.expires_at) < new Date()
+      ) {
+        setError('This code has expired');
+        setIsVerifying(false);
+        return;
+      }
+
+      // Check if cancelled
+      if (redemption.status === 'cancelled') {
+        setError('This redemption was cancelled');
+        setIsVerifying(false);
+        return;
+      }
+
+      const customer = redemption.customers as {
+        full_name: string | null;
+        email: string | null;
+      } | null;
+      const reward = redemption.rewards as { title: string } | null;
+
+      setRedemptionData({
+        id: redemption.id,
+        code: redemption.redemption_code,
+        rewardTitle: reward?.title || 'Unknown Reward',
+        pointsUsed: redemption.points_used,
+        customerName: customer?.full_name || customer?.email || 'Customer',
+        status: redemption.status || 'pending',
+        expiresAt: redemption.expires_at,
+        createdAt: redemption.created_at || new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Verify error:', err);
+      setError('Failed to verify code. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const completeRedemption = async () => {
+    if (!redemptionData || !staffData) return;
+
+    setIsVerifying(true);
+    const supabase = createClient();
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const { error: updateError } = await supabase
+        .from('redemptions')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          completed_by_user_id: user?.id,
+        })
+        .eq('id', redemptionData.id);
+
+      if (updateError) throw updateError;
+
+      // Show success
+      setScanResult({
+        success: true,
+        customerName: redemptionData.customerName,
+        totalPointsAwarded: redemptionData.pointsUsed,
+      });
+      setScannerState('success');
+      setRedemptionData(null);
+      setRedemptionCode('');
+    } catch (err) {
+      console.error('Complete redemption error:', err);
+      setError('Failed to complete redemption');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -565,17 +712,160 @@ export default function StaffScannerPage() {
               Tap to scan customer QR code
             </p>
 
-            {/* Add Customer Button */}
-            <button
-              onClick={() => setIsAddCustomerModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
-            >
-              <UserPlus className="w-5 h-5 text-cyan-400" />
-              <span className="text-gray-300">Add New Customer</span>
-            </button>
-            <p className="text-gray-600 text-xs mt-2">
-              For customers without the app
+            {/* Action Buttons Row */}
+            <div className="flex gap-3 mb-4">
+              <button
+                onClick={() => setIsAddCustomerModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+              >
+                <UserPlus className="w-5 h-5 text-cyan-400" />
+                <span className="text-gray-300 text-sm">Add Customer</span>
+              </button>
+              <button
+                onClick={() => setScannerState('verify-redemption')}
+                className="flex items-center gap-2 px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+              >
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <span className="text-gray-300 text-sm">Verify Code</span>
+              </button>
+            </div>
+            <p className="text-gray-600 text-xs">
+              Add customers or verify redemption codes
             </p>
+          </div>
+        )}
+
+        {/* VERIFY REDEMPTION STATE */}
+        {scannerState === 'verify-redemption' && (
+          <div className="max-w-sm mx-auto">
+            <h2 className="text-xl font-bold text-center mb-6">
+              Verify Redemption
+            </h2>
+
+            {/* Code Input */}
+            {!redemptionData && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Enter 6-digit code
+                  </label>
+                  <input
+                    type="text"
+                    value={redemptionCode}
+                    onChange={(e) =>
+                      setRedemptionCode(
+                        e.target.value.toUpperCase().slice(0, 6),
+                      )
+                    }
+                    placeholder="ABC123"
+                    className="w-full px-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-2xl font-mono text-center tracking-widest placeholder-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    maxLength={6}
+                    autoFocus
+                  />
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={resetScanner}
+                    className="flex-1 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={verifyRedemptionCode}
+                    disabled={redemptionCode.length < 6 || isVerifying}
+                    className="flex-1 py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Verify'
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Redemption Found */}
+            {redemptionData && (
+              <div className="space-y-4">
+                <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-6 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-green-400 mb-1">
+                    Valid Code
+                  </h3>
+                  <p className="text-gray-400 text-sm">Ready to complete</p>
+                </div>
+
+                <div className="bg-gray-800 rounded-2xl p-5 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Code</span>
+                    <span className="font-mono font-bold text-cyan-400">
+                      {redemptionData.code}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Reward</span>
+                    <span className="font-medium text-white">
+                      {redemptionData.rewardTitle}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Customer</span>
+                    <span className="text-white">
+                      {redemptionData.customerName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Points Used</span>
+                    <span className="text-white">
+                      {redemptionData.pointsUsed.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Expires</span>
+                    <span className="text-white">
+                      {new Date(redemptionData.expiresAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={resetScanner}
+                    className="flex-1 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={completeRedemption}
+                    disabled={isVerifying}
+                    className="flex-1 py-4 bg-linear-to-r from-green-600 to-emerald-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Complete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

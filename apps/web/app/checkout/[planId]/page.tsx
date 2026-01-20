@@ -3,76 +3,58 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
-import { motion } from 'framer-motion';
-import {
-  Check,
-  Loader2,
-  Mail,
-  Lock,
-  User,
-  Building2,
-  ArrowLeft,
-  Zap,
-  Crown,
-  Shield,
-} from 'lucide-react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import {
+  ArrowLeft,
+  CreditCard,
+  Lock,
+  Check,
+  Shield,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase';
 
 // ============================================
-// PLAN DATA
+// PLAN CONFIGURATION
 // ============================================
 
-const PLANS: Record<
-  string,
-  {
-    id: string;
-    name: string;
-    displayName: string;
-    priceMonthly: number;
-    priceAnnual: number;
-    features: string[];
-    icon: 'zap' | 'crown';
-  }
-> = {
+const PLANS = {
   core: {
     id: 'core',
-    name: 'core',
-    displayName: 'Core',
-    priceMonthly: 3499,
-    priceAnnual: 34990,
+    name: 'Core',
+    description: 'Perfect for growing businesses',
+    monthly: 3499,
+    yearly: 34990,
+    yearlySavings: 17,
     features: [
-      'Up to 3,000 customers',
+      'Up to 5,000 customers',
       'Up to 3 branches',
-      '3 staff per branch',
+      'Up to 10 staff members',
       'QR-based loyalty rewards',
-      'Points & stamps system',
       'Basic analytics',
-      'Email support',
     ],
-    icon: 'zap',
   },
   enterprise: {
     id: 'enterprise',
-    name: 'enterprise',
-    displayName: 'Enterprise',
-    priceMonthly: 9999,
-    priceAnnual: 99990,
+    name: 'Enterprise',
+    description: 'For large-scale operations',
+    monthly: 9999,
+    yearly: 99990,
+    yearlySavings: 17,
     features: [
       'Unlimited customers',
       'Unlimited branches',
       'Unlimited staff',
       'Advanced analytics',
-      'API access',
-      'Webhooks integration',
-      'Custom branding',
       'Priority support',
-      'Dedicated account manager',
     ],
-    icon: 'crown',
   },
 };
+
+type PlanId = keyof typeof PLANS;
+type BillingInterval = 'monthly' | 'yearly';
 
 // ============================================
 // MAIN COMPONENT
@@ -80,419 +62,569 @@ const PLANS: Record<
 
 export default function CheckoutPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const supabase = createClient();
+  const searchParams = useSearchParams();
 
   const planId = params.planId as string;
-  const interval =
-    (searchParams.get('interval') as 'monthly' | 'annual') || 'monthly';
-  const plan = PLANS[planId];
+  const initialInterval =
+    (searchParams.get('interval') as BillingInterval) || 'monthly';
 
-  const [step, setStep] = useState<'signup' | 'verify'>('signup');
+  // Validate plan
+  const plan = PLANS[planId as PlanId];
+
+  // State
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>(initialInterval);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [businessId, setBusinessId] = useState<string | null>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    businessName: '',
-  });
+  const [cardholderName, setCardholderName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // Check if user is already logged in
+  // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        // User already logged in, redirect to billing with plan
+
+      if (!user) {
         router.push(
-          `/dashboard/settings/billing?plan=${planId}&interval=${interval}`
+          `/login?redirect=/checkout/${planId}?interval=${billingInterval}`,
         );
+        return;
+      }
+
+      setIsAuthenticated(true);
+
+      // Get business ID
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single();
+
+      if (business) {
+        setBusinessId(business.id);
+      }
+
+      // Pre-fill cardholder name from user metadata
+      const metadata = user.user_metadata || {};
+      if (metadata.full_name) {
+        setCardholderName(metadata.full_name);
+      } else if (metadata.business_name) {
+        setCardholderName(metadata.business_name);
       }
     };
+
     checkAuth();
-  }, [supabase, router, planId, interval]);
+  }, [planId, billingInterval, router]);
 
   // Invalid plan
   if (!plan) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Plan not found</h1>
-          <Link href="/#pricing" className="text-blue-600 hover:underline">
-            View available plans
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Plan Not Found</h1>
+          <p className="text-gray-400 mb-6">The selected plan doesn't exist.</p>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Pricing
           </Link>
         </div>
       </div>
     );
   }
 
-  const price = interval === 'annual' ? plan.priceAnnual : plan.priceMonthly;
-  const formatPrice = (amount: number) =>
-    new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-    }).format(amount);
+  // Calculate pricing
+  const price = billingInterval === 'monthly' ? plan.monthly : plan.yearly;
+  const monthlyEquivalent =
+    billingInterval === 'yearly' ? Math.round(plan.yearly / 12) : plan.monthly;
+  const savings =
+    billingInterval === 'yearly' ? plan.monthly * 12 - plan.yearly : 0;
 
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || '';
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    return parts.length ? parts.join(' ') : value;
+  };
+
+  // Format expiry date
+  const formatExpiry = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    if (v.length >= 2) {
+      return v.substring(0, 2) + '/' + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  // Handle payment submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    // Validation
+    if (!cardholderName.trim()) {
+      setError('Please enter cardholder name');
+      return;
+    }
+    if (cardNumber.replace(/\s/g, '').length < 16) {
+      setError('Please enter a valid card number');
+      return;
+    }
+    if (expiry.length < 5) {
+      setError('Please enter a valid expiry date');
+      return;
+    }
+    if (cvv.length < 3) {
+      setError('Please enter a valid CVV');
+      return;
+    }
+    if (!agreedToTerms) {
+      setError('Please agree to the terms and conditions');
+      return;
+    }
+
     setIsLoading(true);
-    setError(null);
 
     try {
-      // Sign up with Supabase
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            business_name: formData.businessName,
-            selected_plan: planId,
-            billing_interval: interval,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback?plan=${planId}&interval=${interval}`,
-        },
-      });
+      // TODO: Integrate with Xendit API
+      // This is where you'll call your backend API that connects to Xendit
+      //
+      // Example API call:
+      // const response = await fetch('/api/billing/create-subscription', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     planId: plan.id,
+      //     billingInterval,
+      //     businessId,
+      //     cardDetails: {
+      //       cardholderName,
+      //       cardNumber: cardNumber.replace(/\s/g, ''),
+      //       expiry,
+      //       cvv,
+      //     },
+      //   }),
+      // });
+      //
+      // if (!response.ok) {
+      //   const data = await response.json();
+      //   throw new Error(data.error || 'Payment failed');
+      // }
+      //
+      // const { subscriptionId } = await response.json();
 
-      if (signUpError) {
-        throw signUpError;
-      }
+      // Simulate API call for now
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      if (data.user) {
-        setEmail(formData.email);
-        setStep('verify');
-      }
+      // For now, show success message
+      // In production, Xendit webhook will update subscription_status to 'active'
+      alert('Payment integration pending. Connect Xendit to process payments.');
+
+      // Redirect to dashboard after successful payment
+      // router.push('/dashboard?subscription=success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Payment failed. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResendEmail = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?plan=${planId}&interval=${interval}`,
-        },
-      });
-      if (error) throw error;
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend email');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-950">
       {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="w-5 h-5 text-gray-500" />
-            <span className="text-xl font-bold bg-linear-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              LoyaltyHub
-            </span>
+      <header className="border-b border-gray-800">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Back</span>
           </Link>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Shield className="w-4 h-4" />
-            <span>Secure checkout</span>
+          <div className="flex items-center gap-2 text-gray-400">
+            <Lock className="w-4 h-4" />
+            <span className="text-sm">Secure Checkout</span>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left: Form */}
-          <div>
-            {step === 'signup' ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <h1 className="text-3xl font-bold mb-2">Create your account</h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-8">
-                  Get started with {plan.displayName} plan
-                </p>
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Left Column - Payment Form */}
+          <div className="order-2 lg:order-1">
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 lg:p-8">
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Complete your subscription
+              </h1>
+              <p className="text-gray-400 mb-8">
+                {plan.name} plan •{' '}
+                {billingInterval === 'monthly' ? 'Monthly' : 'Annual'} billing
+              </p>
 
-                {error && (
-                  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300">
-                    {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={formData.fullName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, fullName: e.target.value })
-                        }
-                        required
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Juan Dela Cruz"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Business Name
-                    </label>
-                    <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={formData.businessName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            businessName: e.target.value,
-                          })
-                        }
-                        required
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="My Awesome Business"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        required
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="you@business.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                        required
-                        minLength={8}
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Min. 8 characters"
-                      />
-                    </div>
-                  </div>
-
+              {/* Billing Toggle */}
+              <div className="mb-8">
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Billing Period
+                </label>
+                <div className="grid grid-cols-2 gap-3">
                   <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-4 rounded-xl bg-linear-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      <>
-                        Continue to Payment
-                        <Zap className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-                  Already have an account?{' '}
-                  <Link
-                    href={`/login?redirect=/dashboard/settings/billing?plan=${planId}&interval=${interval}`}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Sign in
-                  </Link>
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-12"
-              >
-                <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Mail className="w-10 h-10 text-blue-600" />
-                </div>
-                <h2 className="text-2xl font-bold mb-3">Check your email</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  We sent a verification link to
-                </p>
-                <p className="font-semibold text-lg mb-6">{email}</p>
-                <p className="text-sm text-gray-500 mb-8">
-                  Click the link in the email to verify your account and
-                  continue to payment.
-                </p>
-
-                <button
-                  onClick={handleResendEmail}
-                  disabled={isLoading}
-                  className="text-blue-600 hover:underline font-medium disabled:opacity-50"
-                >
-                  {isLoading ? 'Sending...' : "Didn't receive it? Resend email"}
-                </button>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Right: Order Summary */}
-          <div className="lg:pl-12 lg:border-l lg:border-gray-200 dark:lg:border-gray-800">
-            <div className="sticky top-8">
-              <h2 className="text-lg font-semibold mb-6">Order Summary</h2>
-
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6">
-                {/* Plan Info */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                      plan.icon === 'crown'
-                        ? 'bg-linear-to-br from-purple-500 to-pink-500'
-                        : 'bg-linear-to-br from-blue-500 to-cyan-500'
+                    type="button"
+                    onClick={() => setBillingInterval('monthly')}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      billingInterval === 'monthly'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-gray-700 hover:border-gray-600'
                     }`}
                   >
-                    {plan.icon === 'crown' ? (
-                      <Crown className="w-7 h-7 text-white" />
-                    ) : (
-                      <Zap className="w-7 h-7 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-xl">{plan.displayName}</h3>
-                    <p className="text-gray-500">
-                      {interval === 'annual'
-                        ? 'Annual billing'
-                        : 'Monthly billing'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Features */}
-                <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
-                  {plan.features.slice(0, 5).map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <Check className="w-4 h-4 text-green-500 shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                  {plan.features.length > 5 && (
-                    <p className="text-sm text-gray-500 pl-7">
-                      +{plan.features.length - 5} more features
-                    </p>
-                  )}
-                </div>
-
-                {/* Pricing */}
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {plan.displayName} ({interval})
-                    </span>
-                    <span className="font-medium">{formatPrice(price)}</span>
-                  </div>
-                  {interval === 'annual' && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Annual savings</span>
-                      <span>
-                        -
-                        {formatPrice(plan.priceMonthly * 12 - plan.priceAnnual)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="pt-3 border-t border-gray-200 dark:border-gray-800 flex justify-between">
-                    <span className="font-semibold">Total due today</span>
-                    <span className="font-bold text-xl">
-                      {formatPrice(price)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Interval Switch */}
-                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Billing cycle</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          router.push(`/checkout/${planId}?interval=monthly`)
-                        }
-                        className={`px-3 py-1.5 text-sm rounded-lg ${
-                          interval === 'monthly'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700'
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-white">Monthly</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          billingInterval === 'monthly'
+                            ? 'border-cyan-500 bg-cyan-500'
+                            : 'border-gray-600'
                         }`}
                       >
-                        Monthly
-                      </button>
-                      <button
-                        onClick={() =>
-                          router.push(`/checkout/${planId}?interval=annual`)
-                        }
-                        className={`px-3 py-1.5 text-sm rounded-lg ${
-                          interval === 'annual'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700'
+                        {billingInterval === 'monthly' && (
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-gray-400 text-sm">
+                      ₱{plan.monthly.toLocaleString()}/month
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval('yearly')}
+                    className={`p-4 rounded-xl border-2 transition-all text-left relative ${
+                      billingInterval === 'yearly'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-gray-700 hover:border-gray-600'
+                    }`}
+                  >
+                    <span className="absolute -top-2 right-3 px-2 py-0.5 bg-green-500 text-white text-xs font-semibold rounded-full">
+                      Save {plan.yearlySavings}%
+                    </span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-white">Yearly</span>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          billingInterval === 'yearly'
+                            ? 'border-cyan-500 bg-cyan-500'
+                            : 'border-gray-600'
                         }`}
                       >
-                        Annual
-                      </button>
+                        {billingInterval === 'yearly' && (
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        )}
+                      </div>
                     </div>
-                  </div>
+                    <span className="text-gray-400 text-sm">
+                      ₱{plan.yearly.toLocaleString()}/year
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              {/* Trust Badges */}
-              <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500">
-                <div className="flex items-center gap-2">
+              {/* Error Message */}
+              {error && (
+                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Payment Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-3">
+                    Payment Method
+                  </label>
+                  <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-cyan-500 bg-cyan-500/10">
+                    <CreditCard className="w-6 h-6 text-cyan-400" />
+                    <span className="font-medium text-white">
+                      Credit / Debit Card
+                    </span>
+                    <div className="ml-auto flex items-center gap-2">
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg"
+                        alt="Visa"
+                        className="h-6"
+                      />
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                        alt="Mastercard"
+                        className="h-6"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cardholder Name */}
+                <div>
+                  <label
+                    htmlFor="cardholderName"
+                    className="block text-sm font-medium text-gray-300 mb-2"
+                  >
+                    Cardholder Name
+                  </label>
+                  <input
+                    id="cardholderName"
+                    type="text"
+                    value={cardholderName}
+                    onChange={(e) => setCardholderName(e.target.value)}
+                    placeholder="Juan Dela Cruz"
+                    className="w-full px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Card Number */}
+                <div>
+                  <label
+                    htmlFor="cardNumber"
+                    className="block text-sm font-medium text-gray-300 mb-2"
+                  >
+                    Card Number
+                  </label>
+                  <input
+                    id="cardNumber"
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) =>
+                      setCardNumber(formatCardNumber(e.target.value))
+                    }
+                    placeholder="4242 4242 4242 4242"
+                    maxLength={19}
+                    className="w-full px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all font-mono"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Expiry & CVV */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="expiry"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
+                      Expiry Date
+                    </label>
+                    <input
+                      id="expiry"
+                      type="text"
+                      value={expiry}
+                      onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className="w-full px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all font-mono"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="cvv"
+                      className="block text-sm font-medium text-gray-300 mb-2"
+                    >
+                      CVV
+                    </label>
+                    <input
+                      id="cvv"
+                      type="text"
+                      value={cvv}
+                      onChange={(e) =>
+                        setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))
+                      }
+                      placeholder="123"
+                      maxLength={4}
+                      className="w-full px-4 py-3.5 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all font-mono"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* Terms Agreement */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-gray-800 text-cyan-500 focus:ring-cyan-500/20"
+                    disabled={isLoading}
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-400">
+                    I agree that LoyaltyHub will charge my card in the amount
+                    above now and on a recurring {billingInterval} basis until I
+                    cancel. I can cancel anytime in my account settings.{' '}
+                    <Link
+                      href="/terms"
+                      className="text-cyan-400 hover:underline"
+                    >
+                      Terms of Service
+                    </Link>
+                  </label>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 px-6 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold text-lg shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Pay ₱{price.toLocaleString()}
+                      <Lock className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                {/* Security Note */}
+                <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
                   <Shield className="w-4 h-4" />
-                  <span>SSL Secured</span>
+                  <span>Secured by Xendit • 256-bit SSL encryption</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  <span>Cancel anytime</span>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Column - Order Summary */}
+          <div className="order-1 lg:order-2">
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 lg:p-8 lg:sticky lg:top-8">
+              <h2 className="text-lg font-semibold text-white mb-6">
+                Order Summary
+              </h2>
+
+              {/* Plan Info */}
+              <div className="flex items-start gap-4 pb-6 border-b border-gray-800">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-white" />
                 </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white">{plan.name}</h3>
+                  <p className="text-sm text-gray-400">
+                    {billingInterval === 'monthly' ? 'Monthly' : 'Annual'}{' '}
+                    subscription
+                  </p>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="py-6 border-b border-gray-800 space-y-3">
+                {plan.features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Check className="w-5 h-5 text-green-500 shrink-0" />
+                    <span className="text-sm text-gray-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pricing Breakdown */}
+              <div className="py-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Subtotal</span>
+                  <span className="text-white">₱{price.toLocaleString()}</span>
+                </div>
+
+                {billingInterval === 'yearly' && savings > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400">Savings</span>
+                    <span className="text-green-400">
+                      -₱{savings.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-gray-800 flex items-center justify-between">
+                  <span className="font-semibold text-white">Total</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-white">
+                      ₱{price.toLocaleString()}
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                      /{billingInterval === 'monthly' ? 'mo' : 'yr'}
+                    </span>
+                  </div>
+                </div>
+
+                {billingInterval === 'yearly' && (
+                  <p className="text-sm text-gray-500 text-center">
+                    That's only ₱{monthlyEquivalent.toLocaleString()}/month
+                  </p>
+                )}
+              </div>
+
+              {/* Renewal Notice */}
+              <div className="bg-gray-800/50 rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-400">
+                  Your subscription will auto-renew on{' '}
+                  <span className="text-white">
+                    {new Date(
+                      Date.now() +
+                        (billingInterval === 'monthly' ? 30 : 365) *
+                          24 *
+                          60 *
+                          60 *
+                          1000,
+                    ).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </span>
+                  . You will be charged ₱{price.toLocaleString()}/
+                  {billingInterval === 'monthly' ? 'month' : 'year'}.
+                </p>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

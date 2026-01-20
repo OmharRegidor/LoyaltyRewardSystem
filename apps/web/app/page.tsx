@@ -63,7 +63,7 @@ function PricingSection({
   containerVariants: Variants;
 }) {
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
-    'annual'
+    'annual',
   );
 
   const formatPrice = (price: number): string => {
@@ -137,7 +137,7 @@ function PricingSection({
             const period = billingInterval === 'annual' ? '/year' : '/month';
             const savings = getAnnualSavings(
               plan.priceMonthly,
-              plan.priceAnnual
+              plan.priceAnnual,
             );
 
             return (
@@ -408,13 +408,13 @@ export default function Home() {
                 icon: QrCode,
                 title: 'QR Code Points',
                 description:
-                  'Customers scan to earn points instantly. No app download required—simple and effective.',
+                  'Just scan and go, customers earn points with every purchase.',
               },
               {
                 icon: Gift,
                 title: 'Digital Rewards',
                 description:
-                  'Create custom rewards that drive repeat purchases and increase customer lifetime value.',
+                  'Create custom rewards that keep customers coming back for more.',
               },
               {
                 icon: BarChart3,
@@ -479,19 +479,19 @@ export default function Home() {
                 number: 1,
                 title: 'Customer Scans QR',
                 description:
-                  'Your customers scan the unique QR code at checkout using their phone.',
+                  'Customers makes a purchase and shows their QR code from the app or card.',
               },
               {
                 number: 2,
                 title: 'Earns Points',
                 description:
-                  'Points are automatically added to their loyalty account based on purchase amount.',
+                  'Your team scans the QR code, enter the amount, and points are added instantly.',
               },
               {
                 number: 3,
-                title: 'Redeems Rewards',
+                title: 'Redeems  & Enjoy',
                 description:
-                  'Customers redeem earned points for rewards you create and manage.',
+                  'Customer picks a reward, shows their redemptions code, and gets their prize!.',
               },
             ].map((step, index) => (
               <motion.div
