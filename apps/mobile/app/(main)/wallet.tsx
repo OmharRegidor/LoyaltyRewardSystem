@@ -39,12 +39,10 @@ export default function WalletScreen() {
   } = useWallet();
 
   const handleTransactionPress = (transaction: Transaction) => {
-    console.log('Transaction pressed:', transaction.id);
     // Could open detail modal
   };
 
   const handleRedemptionPress = (redemption: CustomerRedemption) => {
-    console.log('Redemption pressed:', redemption.id);
     // Could open detail modal with QR code
   };
 

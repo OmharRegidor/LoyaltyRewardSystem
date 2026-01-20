@@ -354,7 +354,6 @@ export function useWallet() {
           filter: `customer_id=eq.${customer.id}`,
         },
         () => {
-          console.log('New transaction detected, refreshing...');
           fetchAllData();
         }
       )

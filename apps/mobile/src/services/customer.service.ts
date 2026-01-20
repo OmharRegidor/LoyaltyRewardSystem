@@ -44,7 +44,6 @@ export const customerService = {
    * Get customer by user ID with all fields
    */
   async getByUserId(userId: string): Promise<Customer | null> {
-    console.log('[CustomerService] getByUserId:', userId);
 
     const { data, error } = await supabase
       .from('customers')
@@ -57,13 +56,6 @@ export const customerService = {
       throw error;
     }
 
-    console.log('[CustomerService] getByUserId result:', {
-      id: data?.id,
-      total_points: data?.total_points,
-      lifetime_points: data?.lifetime_points,
-      tier: data?.tier,
-    });
-
     return data;
   },
 
@@ -72,7 +64,6 @@ export const customerService = {
    * Returns the linked customer ID or null if no match found
    */
   async linkByEmail(userId: string, email: string): Promise<string | null> {
-    console.log('[CustomerService] linkByEmail:', { userId, email });
 
     // Call the database function to link customer
     const { data, error } = await supabase.rpc('link_oauth_to_customer', {
@@ -81,12 +72,10 @@ export const customerService = {
     });
 
     if (error) {
-      console.error('[CustomerService] linkByEmail error:', error.message);
       // Don't throw - this is not critical, we can create a new customer
       return null;
     }
 
-    console.log('[CustomerService] linkByEmail result:', data);
     return data as string | null;
   },
 
@@ -94,7 +83,6 @@ export const customerService = {
    * Create new customer with profile data
    */
   async create(profile: UserProfile): Promise<Customer> {
-    console.log('[CustomerService] create:', profile);
 
     const { data, error } = await supabase
       .from('customers')
@@ -116,7 +104,6 @@ export const customerService = {
       throw error;
     }
 
-    console.log('[CustomerService] created customer:', data?.id);
     return data;
   },
 
@@ -127,7 +114,6 @@ export const customerService = {
     customerId: string,
     profile: { fullName?: string; email?: string }
   ): Promise<void> {
-    console.log('[CustomerService] updateProfile:', { customerId, profile });
 
     const updates: Record<string, string | null> = {};
     if (profile.fullName) updates.full_name = profile.fullName;
@@ -156,12 +142,10 @@ export const customerService = {
    * 4. If no match, create new customer
    */
   async findOrCreate(profile: UserProfile): Promise<Customer> {
-    console.log('[CustomerService] findOrCreate:', profile);
 
     // Step 1: Check if already linked by user_id
     const existingByUserId = await this.getByUserId(profile.id);
     if (existingByUserId) {
-      console.log('[CustomerService] Found by user_id:', existingByUserId.id);
       
       // Update profile if missing
       if (!existingByUserId.full_name || !existingByUserId.email) {

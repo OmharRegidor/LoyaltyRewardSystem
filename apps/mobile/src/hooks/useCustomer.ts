@@ -33,7 +33,6 @@ export function useCustomer() {
           filter: `id=eq.${authCustomer.id}`,
         },
         (payload) => {
-          console.log('[useCustomer] Real-time update:', payload.new);
           setCustomer((prev) => {
             if (!prev) return payload.new as Customer;
 
@@ -60,16 +59,6 @@ export function useCustomer() {
   const currentTier = getTier(lifetimePoints);
   const nextTier = getNextTier(lifetimePoints);
   const tierProgress = getProgressToNextTier(lifetimePoints);
-
-  // Debug log
-  if (__DEV__) {
-    console.log('[useCustomer]', {
-      customerId: customer?.id,
-      points,
-      lifetimePoints,
-      tier,
-    });
-  }
 
   return {
     customer,

@@ -70,12 +70,6 @@ function extractUserProfile(user: User): {
         : undefined;
   }
 
-  console.log('[AuthProvider] Extracted profile:', {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.fullName,
-  });
-
   return profile;
 }
 
@@ -94,8 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isLoadingCustomer.current) return;
     isLoadingCustomer.current = true;
 
-    console.log('[AuthProvider] Loading customer for:', user.id);
-
     try {
       // Extract profile from OAuth user
       const profile = extractUserProfile(user);
@@ -105,13 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 1. Link to existing customer by email (if staff-added)
       // 2. Or create new customer with name/email from OAuth
       const customer = await customerService.findOrCreate(profile);
-
-      console.log('[AuthProvider] Customer loaded:', {
-        id: customer?.id,
-        total_points: customer?.total_points,
-        full_name: customer?.full_name,
-        email: customer?.email,
-      });
 
       setState({
         user,
@@ -126,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setupRealtimeSubscription(customer.id);
       }
     } catch (error) {
-      console.error('[AuthProvider] Customer error:', error);
       setState({
         user,
         customer: null,
@@ -146,45 +130,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       supabase.removeChannel(realtimeChannelRef.current);
     }
 
-    console.log(
-      '[AuthProvider] Setting up realtime subscription for customer:',
-      customerId
+    const channel = supabase.channel(`customer-${customerId}`).on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'customers',
+        filter: `id=eq.${customerId}`,
+      },
+      (payload) => {
+        // Update customer state with new data
+        setState((prev) => ({
+          ...prev,
+          customer: prev.customer
+            ? {
+                ...prev.customer,
+                total_points: (payload.new as Customer).total_points,
+                lifetime_points: (payload.new as Customer).lifetime_points,
+                tier: (payload.new as Customer).tier,
+                last_visit: (payload.new as Customer).last_visit,
+              }
+            : null,
+        }));
+      },
     );
-
-    const channel = supabase
-      .channel(`customer-${customerId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'customers',
-          filter: `id=eq.${customerId}`,
-        },
-        (payload) => {
-          console.log(
-            '[AuthProvider] Customer updated via realtime:',
-            payload.new
-          );
-
-          // Update customer state with new data
-          setState((prev) => ({
-            ...prev,
-            customer: prev.customer
-              ? {
-                  ...prev.customer,
-                  total_points: (payload.new as Customer).total_points,
-                  lifetime_points: (payload.new as Customer).lifetime_points,
-                  tier: (payload.new as Customer).tier,
-                  last_visit: (payload.new as Customer).last_visit,
-                }
-              : null,
-          }));
-        }
-      )
-      .subscribe((status) => {
-        console.log('[AuthProvider] Realtime subscription status:', status);
-      });
 
     realtimeChannelRef.current = channel;
   }, []);
@@ -192,7 +161,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Cleanup realtime subscription
   const cleanupRealtimeSubscription = useCallback(() => {
     if (realtimeChannelRef.current) {
-      console.log('[AuthProvider] Cleaning up realtime subscription');
       supabase.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
     }
@@ -221,7 +189,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[AuthProvider] Auth state changed:', event);
 
       if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(() => {
@@ -247,7 +214,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      console.log('[AuthProvider] 1. Starting Google sign in');
       setState((prev) => ({ ...prev, isLoading: true }));
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -261,12 +227,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (!data.url) throw new Error('No OAuth URL returned');
 
-      console.log('[AuthProvider] 2. Opening browser');
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
-        redirectTo
+        redirectTo,
       );
-      console.log('[AuthProvider] 3. Browser closed, type:', result.type);
 
       if (result.type === 'success' && result.url) {
         const hashIndex = result.url.indexOf('#');
@@ -278,31 +242,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
 
-          console.log(
-            '[AuthProvider] 4. Tokens found:',
-            !!access_token && !!refresh_token
-          );
 
           if (access_token && refresh_token) {
-            console.log('[AuthProvider] 5. Setting session...');
             const { error: sessionError } = await supabase.auth.setSession({
               access_token,
               refresh_token,
             });
 
             if (sessionError) {
-              console.log(
-                '[AuthProvider] 6. Session error:',
-                sessionError.message
-              );
               throw sessionError;
             }
 
-            console.log('[AuthProvider] 6. Session set successfully');
           }
         }
       } else {
-        console.log('[AuthProvider] 4. Browser cancelled or failed');
         setState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {

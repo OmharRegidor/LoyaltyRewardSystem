@@ -12,7 +12,6 @@ export default function AuthCallback() {
 
   useEffect(() => {
     if (!isInitialized) return;
-    console.log('Auth callback loaded, user:', user);
     // Wait a bit for auth state to settle, then redirect
     const timer = setTimeout(() => {
       if (user) {

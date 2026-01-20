@@ -45,10 +45,6 @@ export default function HomeScreen() {
     router.push('/(main)/profile');
   };
 
-  const handleBusinessPress = (business: any) => {
-    console.log('Business pressed:', business.name);
-    // router.push(`/business/${business.id}`);
-  };
 
   return (
     <View style={styles.container}>

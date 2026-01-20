@@ -68,11 +68,7 @@ export function WalletHeader({
 
         <Text style={styles.title}>My Wallet</Text>
 
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => console.log('History pressed')}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
           <HistoryIcon />
         </TouchableOpacity>
       </View>

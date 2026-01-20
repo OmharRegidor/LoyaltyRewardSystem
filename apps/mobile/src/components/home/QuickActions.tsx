@@ -3,7 +3,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  SHADOWS,
+} from '../../lib/constants';
 
 interface ActionItem {
   id: string;
@@ -51,7 +57,6 @@ export function QuickActions({ onViewAll }: QuickActionsProps) {
   const handleActionPress = (action: ActionItem) => {
     if (action.route) {
       // router.push(action.route as any);
-      console.log('Navigate to:', action.route);
     }
   };
 
@@ -72,7 +77,12 @@ export function QuickActions({ onViewAll }: QuickActionsProps) {
             onPress={() => handleActionPress(action)}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconContainer, { backgroundColor: action.color + '15' }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: action.color + '15' },
+              ]}
+            >
               <Text style={styles.icon}>{action.icon}</Text>
             </View>
             <Text style={styles.label}>{action.label}</Text>
