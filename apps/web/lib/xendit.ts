@@ -22,14 +22,23 @@ import type {
 // XENDIT CLIENT INITIALIZATION
 // ============================================
 
-const secretKey = process.env.XENDIT_SECRET_KEY;
+// Lazy initialization - only create client when needed
+let xenditClient: Xendit | null = null;
 
-if (!secretKey) {
-  console.warn('XENDIT_SECRET_KEY is not set - Xendit features will not work');
+function getXenditClient(): Xendit | null {
+  if (xenditClient) return xenditClient;
+
+  const secretKey = process.env.XENDIT_SECRET_KEY;
+  if (!secretKey) {
+    console.warn(
+      'XENDIT_SECRET_KEY is not set - Xendit features will not work',
+    );
+    return null;
+  }
+
+  xenditClient = new Xendit({ secretKey });
+  return xenditClient;
 }
-
-const xenditClient = secretKey ? new Xendit({ secretKey }) : null;
-
 // ============================================
 // TYPES
 // ============================================
@@ -90,10 +99,11 @@ export type Invoice = XenditInvoice;
 // ============================================
 
 function getClient(): Xendit {
-  if (!xenditClient) {
+  const client = getXenditClient();
+  if (!client) {
     throw new Error('Xendit client not initialized. Check XENDIT_SECRET_KEY.');
   }
-  return xenditClient;
+  return client;
 }
 
 // ============================================
@@ -101,7 +111,7 @@ function getClient(): Xendit {
 // ============================================
 
 export async function createCustomer(
-  params: CreateCustomerParams
+  params: CreateCustomerParams,
 ): Promise<Customer> {
   const client = getClient();
 
@@ -134,7 +144,7 @@ export async function getCustomer(customerId: string): Promise<Customer> {
 }
 
 export async function getCustomerByReferenceId(
-  referenceId: string
+  referenceId: string,
 ): Promise<Customer | null> {
   const client = getClient();
 
@@ -157,7 +167,7 @@ export async function getCustomerByReferenceId(
 // ============================================
 
 export async function createCardPaymentMethod(
-  params: TokenizeCardParams
+  params: TokenizeCardParams,
 ): Promise<PaymentMethod> {
   const client = getClient();
 
@@ -185,7 +195,7 @@ export async function createCardPaymentMethod(
 }
 
 export async function createEWalletPaymentMethod(
-  params: CreateEWalletPaymentMethodParams
+  params: CreateEWalletPaymentMethodParams,
 ): Promise<PaymentMethod> {
   const client = getClient();
 
@@ -211,7 +221,7 @@ export async function createEWalletPaymentMethod(
 }
 
 export async function getPaymentMethod(
-  paymentMethodId: string
+  paymentMethodId: string,
 ): Promise<PaymentMethod> {
   const client = getClient();
 
@@ -223,7 +233,7 @@ export async function getPaymentMethod(
 }
 
 export async function getPaymentMethods(
-  customerId: string
+  customerId: string,
 ): Promise<PaymentMethod[]> {
   const client = getClient();
 
@@ -239,7 +249,7 @@ export async function getPaymentMethods(
 // ============================================
 
 export async function createInvoice(
-  params: CreateInvoiceParams
+  params: CreateInvoiceParams,
 ): Promise<Invoice> {
   const client = getClient();
 
@@ -359,8 +369,9 @@ interface RecurringSubscription {
 
 async function xenditFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
+  const secretKey = process.env.XENDIT_SECRET_KEY;
   if (!secretKey) {
     throw new Error('XENDIT_SECRET_KEY is not set');
   }
@@ -385,7 +396,7 @@ async function xenditFetch<T>(
 }
 
 export async function createRecurringPlan(
-  params: RecurringPlanParams
+  params: RecurringPlanParams,
 ): Promise<RecurringPlan> {
   return xenditFetch<RecurringPlan>('/recurring/plans', {
     method: 'POST',
@@ -412,7 +423,7 @@ export async function getRecurringPlan(planId: string): Promise<RecurringPlan> {
 }
 
 export async function createRecurringSubscription(
-  params: RecurringSubscriptionParams
+  params: RecurringSubscriptionParams,
 ): Promise<RecurringSubscription> {
   return xenditFetch<RecurringSubscription>('/recurring/subscriptions', {
     method: 'POST',
@@ -426,43 +437,43 @@ export async function createRecurringSubscription(
 }
 
 export async function getRecurringSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<RecurringSubscription> {
   return xenditFetch<RecurringSubscription>(
-    `/recurring/subscriptions/${subscriptionId}`
+    `/recurring/subscriptions/${subscriptionId}`,
   );
 }
 
 export async function pauseRecurringSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<RecurringSubscription> {
   return xenditFetch<RecurringSubscription>(
     `/recurring/subscriptions/${subscriptionId}/pause`,
     {
       method: 'POST',
-    }
+    },
   );
 }
 
 export async function resumeRecurringSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<RecurringSubscription> {
   return xenditFetch<RecurringSubscription>(
     `/recurring/subscriptions/${subscriptionId}/resume`,
     {
       method: 'POST',
-    }
+    },
   );
 }
 
 export async function cancelRecurringSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<RecurringSubscription> {
   return xenditFetch<RecurringSubscription>(
     `/recurring/subscriptions/${subscriptionId}/cancel`,
     {
       method: 'POST',
-    }
+    },
   );
 }
 
@@ -473,7 +484,7 @@ export async function cancelRecurringSubscription(
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  webhookToken: string
+  webhookToken: string,
 ): boolean {
   const crypto = require('crypto');
   const expectedSignature = crypto
@@ -538,7 +549,7 @@ export function getPaymentMethodDisplay(paymentMethod: PaymentMethod): {
 
   if (pmType === 'EWALLET' && paymentMethod.ewallet) {
     const walletNames: Record<string, string> = {
-      GCASH: 'GCash', 
+      GCASH: 'GCash',
       PAYMAYA: 'Maya',
       GRABPAY: 'GrabPay',
       SHOPEEPAY: 'ShopeePay',
@@ -557,5 +568,5 @@ export function getPaymentMethodDisplay(paymentMethod: PaymentMethod): {
 }
 
 // Export the client for advanced usage
-export { xenditClient };
-export default xenditClient;
+export { getXenditClient as xenditClient };
+export default getXenditClient;

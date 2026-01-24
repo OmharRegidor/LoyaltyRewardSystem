@@ -6,7 +6,20 @@ import { Resend } from 'resend';
 // RESEND CLIENT
 // ============================================
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization - only create client when needed
+let resendClient: Resend | null = null;
+
+function getResend(): Resend {
+  if (resendClient) return resendClient;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not set');
+  }
+
+  resendClient = new Resend(apiKey);
+  return resendClient;
+}
 
 // ============================================
 // TYPES
@@ -168,7 +181,7 @@ ${cardViewUrl}
 How to earn points:
 - Show your QR code at checkout to earn points on every purchase
 - Earn rewards faster by reaching higher membership tiers
-- Download the LoyaltyHub app for real-time point tracking
+- Download the LoyaltyHub app for real-time point tracking (Soon available on iOS and Android)
 
 Download the LoyaltyHub app: https://loyaltyhub.app/download
 
@@ -187,9 +200,10 @@ export async function sendWelcomeEmail(
 ): Promise<EmailResult> {
   try {
     const { to, businessName } = params;
+    const resend = getResend();
 
     const { data, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@noxaloyalty.com',
       to: [to],
       subject: `Welcome to ${businessName} Loyalty Rewards! 🎉`,
       html: generateWelcomeEmailHtml(params),

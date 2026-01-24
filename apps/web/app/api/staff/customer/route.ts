@@ -1,100 +1,30 @@
 // apps/web/app/api/staff/customer/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import { z } from 'zod';
-import crypto from 'crypto';
-import QRCode from 'qrcode';
+import {
+  createServiceClient,
+  createServerSupabaseClient,
+} from '@/lib/supabase-server';
+import {
+  generateQRToken,
+  generateQRCodeUrl,
+  generateCardToken,
+  generateQRCodeDataUrl,
+} from '@/lib/qr-code';
 import { sendWelcomeEmail } from '@/lib/email';
+import { z } from 'zod';
+import type { Json } from '@/../../packages/shared/types/database';
 
 // ============================================
-// SUPABASE CLIENTS
-// ============================================
-
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}
-
-async function createServerSupabaseClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore in Server Components
-          }
-        },
-      },
-    }
-  );
-}
-
-// ============================================
-// QR CODE HELPERS
-// ============================================
-
-function generateQRToken(): string {
-  return crypto.randomBytes(12).toString('base64url');
-}
-
-function generateQRCodeUrl(token: string): string {
-  return `loyaltyhub://customer/${token}`;
-}
-
-function generateCardToken(customerId: string): string {
-  const secret = process.env.CARD_TOKEN_SECRET || 'default-secret-change-me';
-  const payload = { customerId, createdAt: Date.now() };
-  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString(
-    'base64url'
-  );
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(payloadBase64)
-    .digest('base64url');
-  return `${payloadBase64}.${signature}`;
-}
-
-async function generateQRCodeDataUrl(content: string): Promise<string> {
-  return QRCode.toDataURL(content, {
-    errorCorrectionLevel: 'H',
-    type: 'image/png',
-    margin: 2,
-    width: 300,
-    color: { dark: '#000000', light: '#FFFFFF' },
-  });
-}
-
-// ============================================
-// VALIDATION
+// VALIDATION SCHEMA
 // ============================================
 
 const AddCustomerSchema = z.object({
   fullName: z
     .string()
     .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name too long'),
+    .max(100, 'Name too long')
+    .regex(/^[a-zA-Z\s\-'.]+$/, 'Name contains invalid characters'),
   email: z
     .string()
     .email('Invalid email address')
@@ -103,7 +33,8 @@ const AddCustomerSchema = z.object({
   phone: z
     .string()
     .min(10, 'Phone must be at least 10 digits')
-    .max(20, 'Phone too long'),
+    .max(20, 'Phone too long')
+    .regex(/^[\d\s\-+()]+$/, 'Invalid phone format'),
   age: z
     .number()
     .int()
@@ -112,14 +43,27 @@ const AddCustomerSchema = z.object({
     .optional(),
 });
 
+type AddCustomerInput = z.infer<typeof AddCustomerSchema>;
+
+// ============================================
+// RATE LIMIT CONSTANTS
+// ============================================
+
+const RATE_LIMIT = {
+  maxRequests: 20,
+  windowSeconds: 3600, // 1 hour
+};
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-async function verifyStaffAndGetBusiness(userId: string) {
-  const supabase = createServiceClient();
-
-  const { data: staffRecord } = await supabase
+async function verifyStaffAndGetBusiness(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+) {
+  // Check if user is staff
+  const { data: staffRecord, error: staffError } = await supabase
     .from('staff')
     .select('id, business_id, role, name, is_active')
     .eq('user_id', userId)
@@ -141,6 +85,7 @@ async function verifyStaffAndGetBusiness(userId: string) {
     };
   }
 
+  // Check if user is business owner
   const { data: business } = await supabase
     .from('businesses')
     .select('id, name, logo_url, address, city')
@@ -159,11 +104,49 @@ async function verifyStaffAndGetBusiness(userId: string) {
   return null;
 }
 
+async function checkRateLimit(
+  supabase: ReturnType<typeof createServiceClient>,
+  staffId: string,
+): Promise<boolean> {
+  const { data } = await supabase.rpc('check_rate_limit', {
+    p_identifier: staffId,
+    p_identifier_type: 'staff_id',
+    p_action: 'add_customer',
+    p_max_requests: RATE_LIMIT.maxRequests,
+    p_window_seconds: RATE_LIMIT.windowSeconds,
+  });
+
+  return data === true;
+}
+
+async function logAuditEvent(
+  supabase: ReturnType<typeof createServiceClient>,
+  params: {
+    userId?: string;
+    action: string;
+    businessId: string;
+    details: Record<string, unknown>;
+  },
+) {
+  await supabase.from('audit_logs').insert({
+    event_type: params.action,
+    severity: 'info',
+    business_id: params.businessId,
+    user_id: params.userId ?? null,
+    details: params.details as Json,
+  });
+}
+
 // ============================================
 // POST: Add Customer
 // ============================================
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const ipAddress =
+    request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+
   try {
     // 1. Authenticate user
     const serverSupabase = await createServerSupabaseClient();
@@ -177,16 +160,38 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Verify staff/owner and get business
-    const staffInfo = await verifyStaffAndGetBusiness(user.id);
+    const serviceClient = createServiceClient();
+    const staffInfo = await verifyStaffAndGetBusiness(serviceClient, user.id);
 
     if (!staffInfo || !staffInfo.business) {
       return NextResponse.json(
         { error: 'Not authorized as staff or business owner' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    // 3. Parse and validate input
+    // 3. Check rate limit
+    const withinLimit = await checkRateLimit(serviceClient, staffInfo.staffId);
+    if (!withinLimit) {
+      await logAuditEvent(serviceClient, {
+        userId: user.id,
+        action: 'add_customer_rate_limited',
+        businessId: staffInfo.business.id,
+        details: {
+          staffId: staffInfo.staffId,
+          reason: 'rate_limit_exceeded',
+          ipAddress,
+          userAgent,
+        },
+      });
+
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
+    }
+
+    // 4. Parse and validate input
     const body = await request.json();
     const validation = AddCustomerSchema.safeParse(body);
 
@@ -196,14 +201,13 @@ export async function POST(request: NextRequest) {
           error: 'Validation failed',
           details: validation.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const input = validation.data;
-    const serviceClient = createServiceClient();
+    const input: AddCustomerInput = validation.data;
 
-    // 4. Check if customer exists or create new
+    // 5. Check if customer exists or create new
     let customerId: string;
     let isNewCustomer: boolean;
     let qrCodeUrl: string;
@@ -216,11 +220,13 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (existingCustomer) {
+      // Customer exists - use existing QR code
       customerId = existingCustomer.id;
       qrCodeUrl = existingCustomer.qr_code_url!;
       cardToken = existingCustomer.card_token || generateCardToken(customerId);
       isNewCustomer = false;
 
+      // Update card token if not exists
       if (!existingCustomer.card_token) {
         await serviceClient
           .from('customers')
@@ -231,6 +237,7 @@ export async function POST(request: NextRequest) {
           .eq('id', customerId);
       }
 
+      // Update name/phone if provided and currently empty
       await serviceClient
         .from('customers')
         .update({
@@ -239,6 +246,7 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', customerId);
     } else {
+      // Create new customer
       const qrToken = generateQRToken();
       qrCodeUrl = generateQRCodeUrl(qrToken);
 
@@ -263,7 +271,7 @@ export async function POST(request: NextRequest) {
         console.error('Create customer error:', createError);
         return NextResponse.json(
           { error: 'Failed to create customer' },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -271,6 +279,7 @@ export async function POST(request: NextRequest) {
       cardToken = generateCardToken(customerId);
       isNewCustomer = true;
 
+      // Update with card token
       await serviceClient
         .from('customers')
         .update({
@@ -280,33 +289,52 @@ export async function POST(request: NextRequest) {
         .eq('id', customerId);
     }
 
-    // 5. Generate QR code and send email
+    // 6. Generate QR code image
     const qrCodeDataUrl = await generateQRCodeDataUrl(qrCodeUrl);
-    const cardViewUrl = `${
-      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    }/card/${cardToken}`;
 
-    // Send welcome email using the email utility
+    // 7. Send welcome email
+    const cardViewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/card/${cardToken}`;
+
     const emailResult = await sendWelcomeEmail({
       to: input.email,
       customerName: input.fullName,
       businessName: staffInfo.business.name,
       businessLogo: staffInfo.business.logo_url,
-      qrCodeContent: qrCodeUrl, // Pass the QR content URL, not base64
+      qrCodeContent: qrCodeUrl,
       cardViewUrl,
     });
 
-    // Update email sent tracking
-    if (emailResult.success) {
-      await serviceClient
-        .from('customers')
-        .update({
-          email_sent_at: new Date().toISOString(),
-        })
-        .eq('id', customerId);
-    }
+    // 8. Update email sent tracking
+    await serviceClient
+      .from('customers')
+      .update({
+        email_sent_at: new Date().toISOString(),
+        email_sent_count: existingCustomer
+          ? (existingCustomer as { email_sent_count?: number })
+              .email_sent_count || 0 + 1
+          : 1,
+      })
+      .eq('id', customerId);
 
-    // 6. Return success
+    // 9. Log audit event
+    await logAuditEvent(serviceClient, {
+      userId: user.id,
+      action: isNewCustomer ? 'customer_created' : 'customer_email_resent',
+      businessId: staffInfo.business.id,
+      details: {
+        staffId: staffInfo.staffId,
+        customerId,
+        customerEmail: input.email,
+        customerName: input.fullName,
+        isNewCustomer,
+        emailSent: emailResult.success,
+        processingTimeMs: Date.now() - startTime,
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    // 10. Return success response
     return NextResponse.json({
       success: true,
       data: {
@@ -322,7 +350,7 @@ export async function POST(request: NextRequest) {
     console.error('Add customer error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
