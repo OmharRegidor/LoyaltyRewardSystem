@@ -7,6 +7,7 @@ import { motion, type Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { DarkModeToggle } from '@/components/dark-mode-toggle';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // ============================================
 // PRICING DATA
@@ -191,7 +192,7 @@ function PricingSection({
                 href="https://mail.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 gradient-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
+                className="flex-1 linear-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
               >
                 Send Email
               </a>
@@ -313,7 +314,7 @@ function PricingSection({
                 <Button
                   className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
                     plan.highlighted
-                      ? 'gradient-primary text-primary-foreground hover:opacity-90'
+                      ? 'linear-primary text-primary-foreground hover:opacity-90'
                       : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
                   }`}
                   variant={plan.highlighted ? 'default' : 'outline'}
@@ -397,54 +398,79 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <a href="#home">
-            <motion.h1
-              className="text-2xl font-bold gradient-primary bg-clip-text text-transparent cursor-pointer"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* LEFT: Bold, Standout Logo */}
+            <a
+              href="#home"
+              className="group relative flex items-center flex-shrink-0"
             >
-              NoxaLoyalty
-            </motion.h1>
-          </a>
+              <div className="relative flex items-center gap-3 py-1">
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-150" />
 
-          <nav className="hidden md:flex items-center gap-8">
-            <a
-              href="#features"
-              className="text-muted-foreground hover:text-foreground transition"
-            >
-              Features
+                <Image
+                  src="/noxa_favicon.png"
+                  alt="Noxa Tech Loyalty"
+                  width={240}
+                  height={80}
+                  className="h-16 w-auto object-contain filter brightness-[1.2] saturate-[1.15] drop-shadow-[0_4px_12px_rgba(99,102,241,0.3)] dark:drop-shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:brightness-[1.3] hover:scale-110 transition-all duration-300 relative z-10"
+                  priority
+                />
+
+                <div className="hidden lg:flex flex-col justify-center border-l border-border/50 pl-3">
+                  <span className="text-xs font-semibold text-foreground/90 leading-tight">
+                    NoxaLoyalty
+                  </span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">
+                    Rewards Platform
+                  </span>
+                </div>
+              </div>
             </a>
-            <a
-              href="#how-it-works"
-              className="text-muted-foreground hover:text-foreground transition"
-            >
-              How it Works
-            </a>
-            <a
-              href="#pricing"
-              className="text-muted-foreground hover:text-foreground transition"
-            >
-              Pricing
-            </a>
-          </nav>
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                className="text-foreground hover:bg-muted dark:hover:bg-muted/50 transition-colors"
+
+            {/* CENTER: Navigation Links */}
+            <nav className="hidden md:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <a
+                href="#features"
+                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
               >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="gradient-primary text-primary-foreground rounded-lg px-6 h-10 shadow-md hover:shadow-lg hover:scale-105 transition-all">
-                Sign Up - It's Free!
-              </Button>
-            </Link>
-            {/* <DarkModeToggle /> */}
+                Features
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
+              </a>
+              <a
+                href="#how-it-works"
+                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
+              >
+                How it Works
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
+              </a>
+              <a
+                href="#pricing"
+                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
+              >
+                Pricing
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
+              </a>
+            </nav>
+
+            {/* RIGHT: CTA Buttons */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all font-semibold text-base px-5"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="linear-primary text-primary-foreground rounded-lg px-7 h-11 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-bold text-base">
+                  Sign Up - It's Free!
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -457,7 +483,7 @@ export default function Home() {
         animate="visible"
         variants={containerVariants}
       >
-        {/* Gradient Background */}
+        {/* linear Background */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 dark:bg-primary/15 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
           <div className="absolute top-0 right-1/4 w-96 h-96 bg-secondary/20 dark:bg-secondary/15 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
@@ -470,7 +496,7 @@ export default function Home() {
             variants={containerVariants}
           >
             Turn First-Time Customers Into{' '}
-            <span className="gradient-primary bg-clip-text text-transparent">
+            <span className="linear-primary bg-clip-text text-transparent">
               Loyal Fans
             </span>
           </motion.h1>
@@ -491,7 +517,7 @@ export default function Home() {
             <Link href="#pricing">
               <Button
                 size="lg"
-                className="gradient-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                className="linear-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
                 View Pricing
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -637,7 +663,7 @@ export default function Home() {
                 }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mb-6 relative z-10 shadow-lg dark:shadow-secondary/20">
+                  <div className="w-20 h-20 rounded-full linear-primary flex items-center justify-center mb-6 relative z-10 shadow-lg dark:shadow-secondary/20">
                     <span className="text-2xl font-bold text-primary-foreground">
                       {step.number}
                     </span>
@@ -657,7 +683,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="max-w-4xl mx-auto text-center gradient-primary rounded-3xl p-12 sm:p-16 text-white"
+          className="max-w-4xl mx-auto text-center linear-primary rounded-3xl p-12 sm:p-16 text-white"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}

@@ -12,14 +12,17 @@ import {
 } from '@/lib/xendit';
 import { z } from 'zod';
 
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getServiceSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 // GET: Retrieve current payment method
 export async function GET() {
   try {
+    const serviceSupabase = getServiceSupabase();
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,12 +35,12 @@ export async function GET() {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
+                cookieStore.set(name, value, options),
               );
             } catch {}
           },
         },
-      }
+      },
     );
 
     const {
@@ -57,7 +60,7 @@ export async function GET() {
     if (!business) {
       return NextResponse.json(
         { error: 'Business not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -67,7 +70,7 @@ export async function GET() {
 
     try {
       const xenditPM = await getPaymentMethod(
-        business.xendit_payment_method_id
+        business.xendit_payment_method_id,
       );
       const display = getPaymentMethodDisplay(xenditPM);
 
@@ -119,12 +122,12 @@ export async function POST(request: Request) {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
+                cookieStore.set(name, value, options),
               );
             } catch {}
           },
         },
-      }
+      },
     );
 
     const {
@@ -152,7 +155,7 @@ export async function POST(request: Request) {
     if (!business || !business.xendit_customer_id) {
       return NextResponse.json(
         { error: 'Business not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -180,7 +183,7 @@ export async function POST(request: Request) {
       // E-wallet requires authorization
       if (newPaymentMethod.actions) {
         const authAction = newPaymentMethod.actions.find(
-          (a) => a.action === 'AUTH'
+          (a) => a.action === 'AUTH',
         );
         if (authAction?.url) {
           return NextResponse.json({
@@ -193,7 +196,7 @@ export async function POST(request: Request) {
     }
 
     if (newPaymentMethod) {
-      await serviceSupabase
+      await getServiceSupabase()
         .from('businesses')
         .update({
           xendit_payment_method_id: newPaymentMethod.id,
@@ -212,7 +215,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: 'Failed to create payment method' },
-      { status: 500 }
+      { status: 500 },
     );
   } catch (error: unknown) {
     console.error('Update payment method error:', error);

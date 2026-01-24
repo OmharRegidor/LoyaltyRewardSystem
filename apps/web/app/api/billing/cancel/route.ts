@@ -6,13 +6,18 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cancelRecurringSubscription } from '@/lib/xendit';
 
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+// ✅ Helper function - only runs when called
+function getServiceSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function POST(request: Request) {
   try {
+    const serviceSupabase = getServiceSupabase(); // ✅ Create inside function
+
     let reason: string | undefined;
     let feedback: string | undefined;
 

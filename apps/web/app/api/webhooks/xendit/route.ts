@@ -13,17 +13,19 @@ import {
 // SUPABASE SERVICE CLIENT
 // ============================================
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 // ============================================
 // WEBHOOK HANDLER
 // ============================================
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const payload = await request.text();
     const callbackToken = request.headers.get('x-callback-token') || '';
     const webhookToken = process.env.XENDIT_WEBHOOK_TOKEN;
@@ -122,7 +124,7 @@ async function handleInvoiceEvent(invoice: {
 
   if (status === 'PAID' || status === 'SETTLED') {
     // Payment successful - activate subscription
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('subscriptions')
       .update({
         status: 'active',
@@ -137,20 +139,22 @@ async function handleInvoiceEvent(invoice: {
 
     if (!error) {
       // Record payment
-      await supabase.from('payment_history').insert({
-        business_id: businessId,
-        xendit_cycle_id: invoice.id,
-        amount: formatAmountFromXendit(invoice.paid_amount || invoice.amount),
-        currency: 'PHP',
-        status: 'paid',
-        paid_at: invoice.paid_at || new Date().toISOString(),
-      });
+      await getSupabase()
+        .from('payment_history')
+        .insert({
+          business_id: businessId,
+          xendit_cycle_id: invoice.id,
+          amount: formatAmountFromXendit(invoice.paid_amount || invoice.amount),
+          currency: 'PHP',
+          status: 'paid',
+          paid_at: invoice.paid_at || new Date().toISOString(),
+        });
 
       await logAuditEvent('payment_succeeded', businessId, invoice);
     }
   } else if (status === 'EXPIRED') {
     // Invoice expired - keep subscription pending
-    await supabase
+    await getSupabase()
       .from('subscriptions')
       .update({
         status: 'expired',
@@ -181,7 +185,7 @@ async function handleSubscriptionCreated(data: {
     return;
   }
 
-  await supabase.from('subscriptions').upsert(
+  await getSupabase().from('subscriptions').upsert(
     {
       business_id: businessId,
       xendit_subscription_id: data.id,
@@ -203,7 +207,7 @@ async function handleSubscriptionActivated(data: {
   current_cycle?: { scheduled_timestamp?: string };
   schedule?: { interval?: string };
 }) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('subscriptions')
     .update({
       status: 'active',
@@ -229,7 +233,7 @@ async function handleSubscriptionActivated(data: {
 }
 
 async function handleSubscriptionPaused(data: { id: string }) {
-  await supabase
+  await getSupabase()
     .from('subscriptions')
     .update({
       status: 'paused',
@@ -244,7 +248,7 @@ async function handleSubscriptionPaused(data: { id: string }) {
 }
 
 async function handleSubscriptionResumed(data: { id: string }) {
-  await supabase
+  await getSupabase()
     .from('subscriptions')
     .update({
       status: 'active',
@@ -259,7 +263,7 @@ async function handleSubscriptionResumed(data: { id: string }) {
 }
 
 async function handleSubscriptionStopped(data: { id: string }) {
-  await supabase
+  await getSupabase()
     .from('subscriptions')
     .update({
       status: 'canceled',
@@ -284,7 +288,7 @@ async function handlePaymentSucceeded(data: {
 }) {
   const subscriptionId = data.subscription_id;
 
-  await supabase
+  await getSupabase()
     .from('subscriptions')
     .update({
       status: 'active',
@@ -299,15 +303,17 @@ async function handlePaymentSucceeded(data: {
 
   const businessId = await getBusinessIdFromSubscription(subscriptionId);
   if (businessId) {
-    await supabase.from('payment_history').insert({
-      business_id: businessId,
-      xendit_cycle_id: data.id,
-      xendit_subscription_id: subscriptionId,
-      amount: formatAmountFromXendit(data.amount),
-      currency: 'PHP',
-      status: 'paid',
-      paid_at: data.completed_timestamp || new Date().toISOString(),
-    });
+    await getSupabase()
+      .from('payment_history')
+      .insert({
+        business_id: businessId,
+        xendit_cycle_id: data.id,
+        xendit_subscription_id: subscriptionId,
+        amount: formatAmountFromXendit(data.amount),
+        currency: 'PHP',
+        status: 'paid',
+        paid_at: data.completed_timestamp || new Date().toISOString(),
+      });
 
     await logAuditEvent('payment_succeeded', businessId, data);
   }
@@ -321,7 +327,7 @@ async function handlePaymentFailed(data: {
 }) {
   const subscriptionId = data.subscription_id;
 
-  await supabase
+  await getSupabase()
     .from('subscriptions')
     .update({
       status: 'past_due',
@@ -331,15 +337,17 @@ async function handlePaymentFailed(data: {
 
   const businessId = await getBusinessIdFromSubscription(subscriptionId);
   if (businessId) {
-    await supabase.from('payment_history').insert({
-      business_id: businessId,
-      xendit_cycle_id: data.id,
-      xendit_subscription_id: subscriptionId,
-      amount: formatAmountFromXendit(data.amount),
-      currency: 'PHP',
-      status: 'failed',
-      failure_reason: data.failure_reason,
-    });
+    await getSupabase()
+      .from('payment_history')
+      .insert({
+        business_id: businessId,
+        xendit_cycle_id: data.id,
+        xendit_subscription_id: subscriptionId,
+        amount: formatAmountFromXendit(data.amount),
+        currency: 'PHP',
+        status: 'failed',
+        failure_reason: data.failure_reason,
+      });
 
     await logAuditEvent('payment_failed', businessId, data);
   }
@@ -351,14 +359,14 @@ async function handlePaymentMethodActivated(data: {
 }) {
   const customerId = data.customer_id;
 
-  const { data: subscription } = await supabase
+  const { data: subscription } = await getSupabase()
     .from('subscriptions')
     .select('business_id')
     .eq('xendit_customer_id', customerId)
     .single();
 
   if (subscription) {
-    await supabase
+    await getSupabase()
       .from('businesses')
       .update({
         xendit_payment_method_id: data.id,
@@ -375,7 +383,7 @@ async function handlePaymentMethodActivated(data: {
 async function getBusinessIdFromSubscription(
   xenditSubscriptionId: string,
 ): Promise<string | null> {
-  const { data } = await supabase
+  const { data } = await getSupabase()
     .from('subscriptions')
     .select('business_id')
     .eq('xendit_subscription_id', xenditSubscriptionId)
@@ -399,7 +407,7 @@ async function logAuditEvent(
   businessId: string,
   data: unknown,
 ) {
-  await supabase.from('audit_logs').insert({
+  await getSupabase().from('audit_logs').insert({
     event_type: eventType,
     severity: eventType.includes('failed') ? 'warning' : 'info',
     business_id: businessId,
