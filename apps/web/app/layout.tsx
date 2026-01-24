@@ -8,10 +8,9 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'LoyaltyHub - Turn Customers Into Loyal Fans',
+  title: 'NoxaLoyalty - Turn Customers Into Loyal Fans',
   description:
     'A modern loyalty rewards platform designed for small businesses in the Philippines. QR code points, digital rewards, and customer insights all in one place.',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

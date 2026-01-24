@@ -157,10 +157,7 @@ function PricingSection({
               <p className="text-xs text-muted-foreground mb-2">
                 Send your inquiry to:
               </p>
-              <a
-                href={`mailto:noxa.company@gmail.com?subject=LoyaltyHub ${selectedPlan} Plan Inquiry&body=Hi LoyaltyHub Team,%0D%0A%0D%0AI'm interested in the ${selectedPlan} plan (${billingInterval}).%0D%0A%0D%0ABusiness Name: %0D%0AContact Number: %0D%0A%0D%0AThank you!`}
-                className="text-lg font-semibold text-primary hover:underline"
-              >
+              <a className="text-lg font-semibold text-primary hover:underline">
                 noxa.company@gmail.com
               </a>
             </div>
@@ -190,14 +187,14 @@ function PricingSection({
               >
                 Close
               </Button>
-              <Button
-                className="flex-1 gradient-primary text-primary-foreground"
-                onClick={() => {
-                  window.location.href = `mailto:support@loyaltyhub.ph?subject=LoyaltyHub ${selectedPlan} Plan Inquiry&body=Hi LoyaltyHub Team,%0D%0A%0D%0AI'm interested in the ${selectedPlan} plan (${billingInterval}).%0D%0A%0D%0ABusiness Name: %0D%0AContact Number: %0D%0A%0D%0AThank you!`;
-                }}
+              <a
+                href="https://mail.google.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 gradient-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
               >
                 Send Email
-              </Button>
+              </a>
             </div>
           </div>
         </div>
@@ -409,7 +406,7 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              LoyaltyHub
+              NoxaLoyalty
             </motion.h1>
           </a>
 
@@ -447,7 +444,7 @@ export default function Home() {
                 Sign Up - It's Free!
               </Button>
             </Link>
-            <DarkModeToggle />
+            {/* <DarkModeToggle /> */}
           </div>
         </div>
       </header>
@@ -500,13 +497,13 @@ export default function Home() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="rounded-full px-8 h-12 border-2 hover:bg-muted transition-all bg-transparent"
             >
               See Demo
-            </Button>
+            </Button> */}
           </motion.div>
         </div>
       </motion.section>
@@ -671,7 +668,7 @@ export default function Home() {
           </h2>
           <p className="text-lg mb-8 opacity-90">
             Join hundreds of small businesses in the Philippines already using
-            LoyaltyHub
+            NoxaLoyalty
           </p>
           <Link href="#pricing">
             <Button
@@ -690,7 +687,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div>
-              <h4 className="font-bold text-lg mb-4">LoyaltyHub</h4>
+              <h4 className="font-bold text-lg mb-4">NoxaLoyalty</h4>
               <p className="text-muted-foreground text-sm">
                 Loyalty rewards platform for small businesses.
               </p>
@@ -700,7 +697,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a
-                    href="#features"
+                    href="#how-it-works"
                     className="hover:text-foreground transition"
                   >
                     Features
@@ -714,57 +711,67 @@ export default function Home() {
                     Pricing
                   </a>
                 </li>
-                <li>
+                {/* <li>
                   <a href="#" className="hover:text-foreground transition">
                     Roadmap
                   </a>
-                </li>
+                </li> */}
               </ul>
             </div>
             <div>
               <h5 className="font-semibold mb-4">Company</h5>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition">
+                  <a
+                    href="#features"
+                    className="hover:text-foreground transition"
+                  >
                     About
                   </a>
                 </li>
-                <li>
+                {/* <li>
                   <a href="#" className="hover:text-foreground transition">
                     Blog
                   </a>
-                </li>
+                </li> */}
                 <li>
-                  <a href="#" className="hover:text-foreground transition">
+                  <a
+                    href="#pricing"
+                    className="hover:text-foreground transition"
+                  >
                     Contact
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h5 className="font-semibold mb-4">Follow</h5>
+              {/* <h5 className="font-semibold mb-4">Follow</h5> */}
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
+                {/* <li>
                   <a href="#" className="hover:text-foreground transition">
                     Twitter
                   </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition">
+                </li> */}
+                {/* <li>
+                  <a
+                    target="_blank"
+                    href="https://www.facebook.com/noxa.tech.company"
+                    className="hover:text-foreground transition"
+                  >
                     Facebook
                   </a>
-                </li>
-                <li>
+                </li> */}
+                {/* <li>
                   <a href="#" className="hover:text-foreground transition">
                     Instagram
                   </a>
-                </li>
+                </li> */}
               </ul>
             </div>
           </div>
 
           <div className="border-t border-border pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>&copy; 2025 LoyaltyHub. All rights reserved.</p>
+            <p>&copy; 2026 NoxaLoyalty. All rights reserved.</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-foreground transition">
                 Privacy
