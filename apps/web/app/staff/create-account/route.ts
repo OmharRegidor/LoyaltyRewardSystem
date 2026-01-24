@@ -5,16 +5,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Database } from '../../../../../packages/shared/types/database';
 
 // Create Supabase Admin client with service role key
-const supabaseAdmin = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+function getSupabaseAdmin() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     },
-  }
-);
+  );
+}
 
 interface CreateStaffAccountRequest {
   email: string;
@@ -32,18 +34,19 @@ export async function POST(request: NextRequest) {
     if (!email || !password || !fullName) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, error: 'Password must be at least 6 characters' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Create user with Supabase Admin API (email auto-confirmed)
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: userData, error: createError } =
       await supabaseAdmin.auth.admin.createUser({
         email: email.toLowerCase().trim(),
@@ -65,21 +68,21 @@ export async function POST(request: NextRequest) {
               'This email is already registered. The cashier can use their existing password to login.',
             code: 'USER_EXISTS',
           },
-          { status: 409 }
+          { status: 409 },
         );
       }
 
       console.error('Create user error:', createError);
       return NextResponse.json(
         { success: false, error: createError.message },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!userData.user) {
       return NextResponse.json(
         { success: false, error: 'Failed to create user account' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
     console.error('API error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
