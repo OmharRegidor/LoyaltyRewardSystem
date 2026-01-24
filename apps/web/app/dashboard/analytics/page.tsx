@@ -295,11 +295,12 @@ export default function AnalyticsPage() {
                 Preview Mode
               </p>
               <p className="text-sm text-amber-700 dark:text-amber-300">
-                Viewing sample data.{' '}
-                <Link href="/checkout/core" className="underline font-semibold">
-                  Upgrade
+                You’re viewing demo data. Upgrade via{' '}
+                {/* Change this Link to /checkout/core to use xendit*/}
+                <Link href="/" className="underline font-semibold">
+                  Home Page → Pricing
                 </Link>{' '}
-                to see real metrics.
+                to see real-time performance.
               </p>
             </div>
           </motion.div>

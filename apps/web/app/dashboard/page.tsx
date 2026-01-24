@@ -461,11 +461,12 @@ export default function DashboardPage() {
                 Preview Mode
               </p>
               <p className="text-sm text-amber-700 dark:text-amber-300">
-                You're viewing sample data.{' '}
-                <Link href="/checkout/core" className="underline font-semibold">
-                  Upgrade
+                You’re viewing demo data. Upgrade via{' '}
+                {/* Change this Link to /checkout/core to use xendit*/}
+                <Link href="/" className="underline font-semibold">
+                  Home Page → Pricing
                 </Link>{' '}
-                to see real-time analytics.
+                to see real-time performance.
               </p>
             </div>
           </div>

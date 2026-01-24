@@ -110,10 +110,10 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3">
               <Link
-                href="/checkout/core?interval=monthly"
+                href="/"
                 className="w-full py-3 px-4 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold text-center hover:shadow-lg hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-2"
               >
-                Upgrade Now
+                View Pricing
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <button
