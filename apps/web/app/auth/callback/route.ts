@@ -32,26 +32,7 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
-  // Default redirect URL
-  let redirectPath = '/dashboard';
-
-  // If plan signup, redirect to billing page with plan info
-  if (plan) {
-    redirectPath = `/dashboard/settings/billing?plan=${plan}&interval=${interval}`;
-  }
-
-  // Create response with redirect
-  const response = NextResponse.redirect(
-    new URL(redirectPath, requestUrl.origin),
-  );
-
-  // Store cookies to apply to final response
-  const cookiesToApply: Array<{
-    name: string;
-    value: string;
-    options: Record<string, unknown>;
-  }> = [];
-
+  // Create supabase client
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -62,11 +43,14 @@ export async function GET(request: Request) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Store for final response
-            cookiesToApply.push({ name, value, options: options || {} });
-            // Also set on cookieStore so subsequent calls see the session
             try {
-              cookieStore.set(name, value, options);
+              cookieStore.set(name, value, {
+                ...options,
+                path: '/',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 60 * 60 * 24 * 365, // 1 year
+              });
             } catch {
               // Ignore errors in edge runtime
             }
@@ -76,12 +60,13 @@ export async function GET(request: Request) {
     },
   );
 
-  let userId: string | null = null;
-  let userEmail: string | null = null;
-  let userMetadata: Record<string, unknown> | undefined;
+  let session = null;
+  let user = null;
 
   // Handle email verification (signup, recovery, invite, email_change)
   if (token_hash && type) {
+    console.log('Verifying OTP with type:', type);
+
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
       token_hash,
       type: type as 'signup' | 'recovery' | 'invite' | 'email',
@@ -97,15 +82,15 @@ export async function GET(request: Request) {
       );
     }
 
-    if (data.user) {
-      userId = data.user.id;
-      userEmail = data.user.email || null;
-      userMetadata = data.user.user_metadata;
-    }
+    session = data.session;
+    user = data.user;
+    console.log('OTP verified, user:', user?.id, 'session:', !!session);
   }
 
   // Handle OAuth code exchange (Google, etc.)
-  if (code && !userId) {
+  if (code && !session) {
+    console.log('Exchanging code for session');
+
     const { data, error: exchangeError } =
       await supabase.auth.exchangeCodeForSession(code);
 
@@ -119,15 +104,17 @@ export async function GET(request: Request) {
       );
     }
 
-    if (data.user) {
-      userId = data.user.id;
-      userEmail = data.user.email || null;
-      userMetadata = data.user.user_metadata;
-    }
+    session = data.session;
+    user = data.user;
+    console.log('Code exchanged, user:', user?.id, 'session:', !!session);
   }
 
-  // If we have a user, set up their account
-  if (userId) {
+  // If we have a session and user, set up their account and redirect
+  if (session && user) {
+    const userId = user.id;
+    const userEmail = user.email || null;
+    const userMetadata = user.user_metadata;
+
     // Get plan info from metadata if not in URL
     const selectedPlan =
       plan || (userMetadata?.selected_plan as string | undefined);
@@ -136,37 +123,86 @@ export async function GET(request: Request) {
       (userMetadata?.billing_interval as string | undefined) ||
       'monthly';
 
-    // Create business for new user if not exists (using service role for bypassing RLS)
+    // Create business for new user if not exists
     await ensureBusinessExists(userId, userEmail, userMetadata);
 
-    // Determine final redirect
-    const finalRedirectUrl = await getRedirectUrl(
-      supabase,
+    // Determine final redirect URL
+    const finalRedirectPath = await getRedirectPath(
       userId,
-      requestUrl,
       selectedPlan,
       billingInterval,
     );
 
-    // Create final response with cookies
-    const finalResponse = NextResponse.redirect(finalRedirectUrl);
+    // Create response with redirect
+    const response = NextResponse.redirect(
+      new URL(finalRedirectPath, requestUrl.origin),
+    );
 
-    // Apply all auth cookies to the final redirect response
-    cookiesToApply.forEach(({ name, value, options }) => {
-      finalResponse.cookies.set(name, value, {
-        ...options,
+    // Manually set the session cookies on the response
+    // This ensures they're properly set even across devices
+    if (session.access_token && session.refresh_token) {
+      const cookieOptions = {
         path: '/',
-        // DO NOT override httpOnly - let Supabase set it correctly
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 365,
-      });
-    });
+        sameSite: 'lax' as const,
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+        httpOnly: true,
+      };
 
-    return finalResponse;
+      // Set auth cookies
+      response.cookies.set(
+        'sb-access-token',
+        session.access_token,
+        cookieOptions,
+      );
+      response.cookies.set('sb-refresh-token', session.refresh_token, {
+        ...cookieOptions,
+        maxAge: 60 * 60 * 24 * 365, // 1 year for refresh token
+      });
+
+      // Also set the Supabase auth cookie format
+      const projectRef =
+        process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)\./)?.[1];
+
+      if (projectRef) {
+        response.cookies.set(
+          `sb-${projectRef}-auth-token`,
+          JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: Math.floor(Date.now() / 1000) + session.expires_in,
+            expires_in: session.expires_in,
+            token_type: 'bearer',
+            user: user,
+          }),
+          {
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 365,
+            httpOnly: false, // This one needs to be accessible by JS
+          },
+        );
+      }
+    }
+
+    console.log('Redirecting to:', finalRedirectPath);
+    return response;
+  }
+
+  // No valid session - check if we at least have a user without session
+  // This can happen with email verification on different device
+  if (user && !session) {
+    console.log(
+      'User verified but no session - redirecting to login with success message',
+    );
+    return NextResponse.redirect(
+      new URL('/login?message=email_verified', requestUrl.origin),
+    );
   }
 
   // No valid auth, redirect to login
+  console.log('No valid auth found, redirecting to login');
   return NextResponse.redirect(new URL('/login', requestUrl.origin));
 }
 
@@ -176,7 +212,6 @@ async function ensureBusinessExists(
   userEmail: string | null,
   userMetadata?: Record<string, unknown>,
 ) {
-  // Use service role to bypass RLS
   const { createClient } = await import('@supabase/supabase-js');
   const serviceSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -207,10 +242,8 @@ async function ensureBusinessExists(
         owner_id: userId,
         name: businessName,
         owner_email: ownerEmail,
-        // Required NOT NULL fields
         is_free_forever: false,
-        subscription_status: 'preview', // Start in preview mode
-        // Default loyalty settings
+        subscription_status: 'preview',
         points_per_purchase: 1,
         pesos_per_point: 100,
         min_purchase_for_points: 0,
@@ -230,22 +263,20 @@ async function ensureBusinessExists(
   }
 }
 
-// Helper: Determine redirect URL based on user type and plan
-async function getRedirectUrl(
-  supabase: ReturnType<typeof createServerClient<Database>>,
+// Helper: Determine redirect path based on user type and plan
+async function getRedirectPath(
   userId: string,
-  requestUrl: URL,
   selectedPlan?: string | null,
   billingInterval?: string,
-): Promise<URL> {
-  try {
-    // Check if user is staff (use service role to avoid RLS issues during callback)
-    const { createClient } = await import('@supabase/supabase-js');
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+): Promise<string> {
+  const { createClient } = await import('@supabase/supabase-js');
+  const serviceSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
 
+  try {
+    // Check if user is staff
     const { data: staffData } = await serviceSupabase
       .from('staff')
       .select('id, role, is_active')
@@ -254,7 +285,7 @@ async function getRedirectUrl(
       .maybeSingle();
 
     if (staffData) {
-      return new URL('/staff', requestUrl.origin);
+      return '/staff';
     }
 
     // Check if user is business owner
@@ -267,21 +298,16 @@ async function getRedirectUrl(
     if (businessData) {
       // If plan was selected, redirect to billing to complete payment
       if (selectedPlan && selectedPlan !== 'free') {
-        return new URL(
-          `/dashboard/settings/billing?plan=${selectedPlan}&interval=${
-            billingInterval || 'monthly'
-          }`,
-          requestUrl.origin,
-        );
+        return `/dashboard/settings/billing?plan=${selectedPlan}&interval=${billingInterval || 'monthly'}`;
       }
 
       // Otherwise, redirect to dashboard (preview mode)
-      return new URL('/dashboard', requestUrl.origin);
+      return '/dashboard';
     }
   } catch (err) {
     console.error('Error determining redirect:', err);
   }
 
   // Default redirect to dashboard
-  return new URL('/dashboard', requestUrl.origin);
+  return '/dashboard';
 }
