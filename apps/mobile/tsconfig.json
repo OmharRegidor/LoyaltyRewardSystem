@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./*"],
-      "@loyaltyhub/shared/*": ["../../packages/shared/*"]
+      "@NoxaLoyalty/shared/*": ["../../packages/shared/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "expo-env.d.ts", ".expo/types/**/*.ts"],

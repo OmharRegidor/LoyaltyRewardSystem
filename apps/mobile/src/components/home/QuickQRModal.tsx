@@ -13,7 +13,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
-import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
+import {
+  COLORS,
+  SPACING,
+  FONT_SIZE,
+  BORDER_RADIUS,
+  SHADOWS,
+} from '../../lib/constants';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const QR_SIZE = SCREEN_WIDTH * 0.5; // Reduced from 0.6
@@ -58,7 +64,7 @@ export function QuickQRModal({
             <Text style={styles.closeIcon}>✕</Text>
           </TouchableOpacity>
 
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
@@ -74,7 +80,7 @@ export function QuickQRModal({
             <View style={styles.qrCard}>
               <View style={styles.qrContainer}>
                 <QRCode
-                  value={qrCodeUrl || 'loyaltyhub://customer/default'}
+                  value={qrCodeUrl || 'NoxaLoyalty://customer/default'}
                   size={QR_SIZE}
                   backgroundColor="white"
                   color="#1F2937"
@@ -88,7 +94,9 @@ export function QuickQRModal({
                   <Text style={styles.pointsLabel}>Current Balance</Text>
                   <View style={styles.pointsBadge}>
                     <Text style={styles.pointsIcon}>⭐</Text>
-                    <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
+                    <Text style={styles.pointsValue}>
+                      {points.toLocaleString()}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -124,7 +132,12 @@ export function QuickQRModal({
           </ScrollView>
 
           {/* Done Button - Fixed at bottom */}
-          <View style={[styles.doneButtonContainer, { paddingBottom: insets.bottom + 16 }]}>
+          <View
+            style={[
+              styles.doneButtonContainer,
+              { paddingBottom: insets.bottom + 16 },
+            ]}
+          >
             <TouchableOpacity
               onPress={onClose}
               style={styles.doneButton}

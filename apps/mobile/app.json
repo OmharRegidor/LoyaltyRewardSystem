@@ -1,33 +1,28 @@
 {
   "expo": {
-    "name": "LoyaltyHub",
-    "slug": "loyaltyhub",
+    "name": "NoxaLoyalty",
+    "slug": "NoxaLoyalty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "loyaltyhub",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "scheme": "NoxaLoyalty",
+    "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#6366F1"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.loyaltyhub.app",
+      "bundleIdentifier": "com.NoxaLoyalty.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.loyaltyhub.app",
+      "package": "com.NoxaLoyalty.app",
       "adaptiveIcon": {
         "backgroundColor": "#6366F1",
         "foregroundImage": "./assets/images/icon.png"
@@ -37,23 +32,16 @@
           "action": "VIEW",
           "data": [
             {
-              "scheme": "loyaltyhub",
+              "scheme": "NoxaLoyalty",
               "host": "auth",
               "pathPrefix": "/callback"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      "expo-font"
-    ],
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
     "experiments": {
       "typedRoutes": true
     },
