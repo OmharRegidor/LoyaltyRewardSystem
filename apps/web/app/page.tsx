@@ -192,7 +192,7 @@ function PricingSection({
                 href="https://mail.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 linear-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
+                className="flex-1 linear-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90 bg-[#0090a4] text-black"
               >
                 Send Email
               </a>
@@ -666,7 +666,7 @@ export default function Home() {
                   <div className="w-20 h-20 rounded-full bg-linear-to-r from-primary to-secondary flex items-center justify-center mb-6 relative z-10 shadow-lg dark:shadow-secondary/20">
                     <span className="text-2xl font-bold text-white drop-shadow-sm">
                       {step.number}
-                    </span> 
+                    </span>
                   </div>
                   <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
                   <p className="text-muted-foreground">{step.description}</p>
@@ -683,7 +683,7 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="max-w-4xl mx-auto text-center linear-primary rounded-3xl p-12 sm:p-16 text-white"
+          className="max-w-4xl mx-auto text-center linear-primary rounded-3xl p-12 sm:p-16 text-white bg-[#0090a4]"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
