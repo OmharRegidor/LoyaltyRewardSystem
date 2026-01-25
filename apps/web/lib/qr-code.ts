@@ -34,10 +34,10 @@ export function generateQRToken(): string {
 
 /**
  * Generate QR code URL for a customer
- * Format: loyaltyhub://customer/{token}
+ * Format: NoxaLoyalty://customer/{token}
  */
 export function generateQRCodeUrl(token: string): string {
-  return `loyaltyhub://customer/${token}`;
+  return `NoxaLoyalty://customer/${token}`;
 }
 
 /**
@@ -45,7 +45,7 @@ export function generateQRCodeUrl(token: string): string {
  */
 export async function generateQRCodeDataUrl(
   content: string,
-  highRes: boolean = false
+  highRes: boolean = false,
 ): Promise<string> {
   const options: QRCode.QRCodeToDataURLOptions = {
     ...QR_CODE_BASE_OPTIONS,
@@ -101,7 +101,7 @@ export function generateCardToken(customerId: string): string {
   };
 
   const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString(
-    'base64url'
+    'base64url',
   );
   const signature = crypto
     .createHmac('sha256', CARD_TOKEN_SECRET)
@@ -133,7 +133,7 @@ export function verifyCardToken(token: string): CardTokenPayload | null {
     if (
       !crypto.timingSafeEqual(
         Buffer.from(signature),
-        Buffer.from(expectedSignature)
+        Buffer.from(expectedSignature),
       )
     ) {
       return null;
@@ -141,7 +141,7 @@ export function verifyCardToken(token: string): CardTokenPayload | null {
 
     // Decode payload
     const payload = JSON.parse(
-      Buffer.from(payloadBase64, 'base64url').toString('utf-8')
+      Buffer.from(payloadBase64, 'base64url').toString('utf-8'),
     ) as CardTokenPayload;
 
     return payload;
@@ -152,11 +152,11 @@ export function verifyCardToken(token: string): CardTokenPayload | null {
 
 /**
  * Extract customer ID from QR code URL
- * Input: loyaltyhub://customer/{token}
+ * Input: NoxaLoyalty://customer/{token}
  * Output: {token}
  */
 export function extractQRToken(qrCodeUrl: string): string | null {
-  const prefix = 'loyaltyhub://customer/';
+  const prefix = 'NoxaLoyalty://customer/';
   if (!qrCodeUrl.startsWith(prefix)) {
     return null;
   }

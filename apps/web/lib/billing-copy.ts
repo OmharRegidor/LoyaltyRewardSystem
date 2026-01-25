@@ -13,7 +13,7 @@ export const SUBSCRIPTION_STATUS_COPY = {
   preview: {
     title: 'Preview Mode',
     description:
-      "You're exploring LoyaltyHub with sample data. Subscribe to unlock all features and start building your loyalty program.",
+      "You're exploring NoxaLoyalty with sample data. Subscribe to unlock all features and start building your loyalty program.",
     cta: 'View Plans',
   },
   trialing: {
@@ -25,13 +25,13 @@ export const SUBSCRIPTION_STATUS_COPY = {
   active: {
     title: 'Active Subscription',
     description:
-      'Your subscription is active. Thank you for being a LoyaltyHub customer!',
+      'Your subscription is active. Thank you for being a NoxaLoyalty customer!',
     cta: 'Manage Billing',
   },
   past_due: {
     title: 'Payment Issue',
     description:
-      "We couldn't process your last payment. Please update your payment method to continue using LoyaltyHub.",
+      "We couldn't process your last payment. Please update your payment method to continue using NoxaLoyalty.",
     cta: 'Update Payment',
   },
   canceled: {
@@ -48,7 +48,8 @@ export const SUBSCRIPTION_STATUS_COPY = {
   },
   free_forever: {
     title: 'Partner Access',
-    description: 'You have unlimited access to LoyaltyHub as a valued partner.',
+    description:
+      'You have unlimited access to NoxaLoyalty as a valued partner.',
     cta: null,
   },
 } as const;
@@ -75,13 +76,13 @@ export const UPGRADE_PROMPTS = {
   api_access: {
     title: 'API Access Available',
     description:
-      'Integrate LoyaltyHub with your existing systems using our powerful API. Available on the Enterprise plan.',
+      'Integrate NoxaLoyalty with your existing systems using our powerful API. Available on the Enterprise plan.',
     cta: 'Upgrade to Enterprise',
   },
   custom_branding: {
     title: 'Customize Your Brand',
     description:
-      'Remove LoyaltyHub branding and customize the look and feel to match your business. Available on Enterprise.',
+      'Remove NoxaLoyalty branding and customize the look and feel to match your business. Available on Enterprise.',
     cta: 'Upgrade to Enterprise',
   },
   webhook_notifications: {
@@ -118,7 +119,7 @@ export const UPGRADE_PROMPTS = {
 
 export const PAYMENT_MESSAGES = {
   checkout_success: {
-    title: 'Welcome to LoyaltyHub! 🎉',
+    title: 'Welcome to NoxaLoyalty! 🎉',
     description:
       "Your subscription is now active. You have full access to all features. Let's start building your loyalty program!",
   },
@@ -189,7 +190,7 @@ export const ERROR_MESSAGES = {
   limit_exceeded:
     "You've reached the limit for your current plan. Please upgrade to continue.",
   payment_required:
-    'Please update your payment method to continue using LoyaltyHub.',
+    'Please update your payment method to continue using NoxaLoyalty.',
   invalid_plan:
     'The selected plan is not available. Please choose a different plan.',
   checkout_failed: 'Unable to start checkout. Please try again.',
@@ -252,9 +253,9 @@ export const TOOLTIPS = {
       'View key metrics like total customers, points issued, and redemptions.',
     advanced_analytics:
       'Deep dive into customer segments, retention rates, and revenue impact.',
-    api_access: 'Integrate LoyaltyHub with your POS, CRM, or other systems.',
+    api_access: 'Integrate NoxaLoyalty with your POS, CRM, or other systems.',
     custom_branding:
-      'Remove LoyaltyHub branding and use your own logo and colors.',
+      'Remove NoxaLoyalty branding and use your own logo and colors.',
     webhook_notifications:
       'Get real-time notifications when loyalty events occur.',
     priority_support:
@@ -301,7 +302,7 @@ export function getLimitText(limit: number | null): string {
  */
 export function getUsageStatusText(
   current: number,
-  limit: number | null
+  limit: number | null,
 ): string {
   if (limit === null) return 'Unlimited';
   const percentage = Math.round((current / limit) * 100);

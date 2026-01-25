@@ -139,12 +139,12 @@ export function AddCustomerModal({
       setSubmitMessage(
         data.data.isNewCustomer
           ? `Customer added successfully! A welcome email has been sent to ${data.data.customerEmail}.`
-          : `Customer already exists. A reminder email has been sent to ${data.data.customerEmail}.`
+          : `Customer already exists. A reminder email has been sent to ${data.data.customerEmail}.`,
       );
       setSubmitState('success');
     } catch (error) {
       setSubmitMessage(
-        error instanceof Error ? error.message : 'Something went wrong'
+        error instanceof Error ? error.message : 'Something went wrong',
       );
       setSubmitState('error');
     }
@@ -347,7 +347,7 @@ export function AddCustomerModal({
                 <p className="text-xs text-cyan-300">
                   📧 Customer will receive an email with their QR code and
                   loyalty card. They can use the same email to log in to the
-                  LoyaltyHub app later.
+                  NoxaLoyalty app later.
                 </p>
               </div>
 

@@ -134,13 +134,13 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!customer) {
     return {
-      title: 'Card Not Found | LoyaltyHub',
+      title: 'Card Not Found | NoxaLoyalty',
     };
   }
 
   return {
     title: `${customer.fullName} - Loyalty Card | ${
-      customer.business?.name || 'LoyaltyHub'
+      customer.business?.name || 'NoxaLoyalty'
     }`,
     description: `Digital loyalty card for ${customer.fullName}`,
     robots: 'noindex, nofollow', // Don't index card pages

@@ -54,9 +54,24 @@ interface BillingFormData {
 // ============================================
 
 const PAYMENT_METHODS = [
-  { id: 'card' as const, name: 'Credit/Debit Card', icon: CreditCard, description: 'Visa, Mastercard, JCB' },
-  { id: 'gcash' as const, name: 'GCash', icon: Wallet, description: 'Pay with GCash' },
-  { id: 'maya' as const, name: 'Maya', icon: Smartphone, description: 'Pay with Maya' },
+  {
+    id: 'card' as const,
+    name: 'Credit/Debit Card',
+    icon: CreditCard,
+    description: 'Visa, Mastercard, JCB',
+  },
+  {
+    id: 'gcash' as const,
+    name: 'GCash',
+    icon: Wallet,
+    description: 'Pay with GCash',
+  },
+  {
+    id: 'maya' as const,
+    name: 'Maya',
+    icon: Smartphone,
+    description: 'Pay with Maya',
+  },
 ];
 
 // ============================================
@@ -103,16 +118,26 @@ function getNextRenewalDate(interval: 'monthly' | 'annual'): string {
   } else {
     date.setMonth(date.getMonth() + 1);
   }
-  return date.toLocaleDateString('en-PH', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-PH', {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 // ============================================
 // COMPONENT
 // ============================================
 
-export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckoutProps) {
+export function EmbeddedCheckout({
+  plan,
+  onSuccess,
+  onCancel,
+}: EmbeddedCheckoutProps) {
   const router = useRouter();
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('annual');
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
+    'annual',
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,18 +157,24 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
 
   const monthlyPrice = plan.priceMonthly;
   const annualPrice = plan.priceAnnual;
-  const selectedPrice = billingInterval === 'annual' ? annualPrice : monthlyPrice;
-  const annualSavings = Math.round(((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100);
+  const selectedPrice =
+    billingInterval === 'annual' ? annualPrice : monthlyPrice;
+  const annualSavings = Math.round(
+    ((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100,
+  );
 
   const cardType = detectCardType(formData.cardNumber);
 
-  const handleInputChange = (field: keyof BillingFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: keyof BillingFormData,
+    value: string | boolean,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const validateField = (field: string, value: string): string | null => {
@@ -151,19 +182,31 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
       case 'fullName':
         return !value.trim() ? 'Full name is required' : null;
       case 'email':
-        return !value.trim() ? 'Email is required' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? 'Invalid email' : null;
+        return !value.trim()
+          ? 'Email is required'
+          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+            ? 'Invalid email'
+            : null;
       case 'phone':
         return !value.trim() ? 'Phone is required' : null;
       case 'cardNumber':
         if (formData.paymentMethod !== 'card') return null;
         const clean = value.replace(/\s/g, '');
-        return !clean ? 'Card number is required' : clean.length < 13 ? 'Invalid card number' : null;
+        return !clean
+          ? 'Card number is required'
+          : clean.length < 13
+            ? 'Invalid card number'
+            : null;
       case 'expiryDate':
         if (formData.paymentMethod !== 'card') return null;
         return !value ? 'Expiry is required' : null;
       case 'cvc':
         if (formData.paymentMethod !== 'card') return null;
-        return !value ? 'CVC is required' : value.length < 3 ? 'Invalid CVC' : null;
+        return !value
+          ? 'CVC is required'
+          : value.length < 3
+            ? 'Invalid CVC'
+            : null;
       default:
         return null;
     }
@@ -171,21 +214,41 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
 
   const getFieldError = (field: string): string | null => {
     if (!touched[field]) return null;
-    return validateField(field, formData[field as keyof BillingFormData] as string);
+    return validateField(
+      field,
+      formData[field as keyof BillingFormData] as string,
+    );
   };
 
   const isFormValid = (): boolean => {
     const baseFields = ['fullName', 'email', 'phone'];
-    const cardFields = formData.paymentMethod === 'card' ? ['cardNumber', 'expiryDate', 'cvc'] : [];
+    const cardFields =
+      formData.paymentMethod === 'card'
+        ? ['cardNumber', 'expiryDate', 'cvc']
+        : [];
     const allFields = [...baseFields, ...cardFields];
-    return allFields.every(f => !validateField(f, formData[f as keyof BillingFormData] as string)) && formData.agreedToTerms;
+    return (
+      allFields.every(
+        (f) =>
+          !validateField(f, formData[f as keyof BillingFormData] as string),
+      ) && formData.agreedToTerms
+    );
   };
 
   const handleSubmit = async () => {
-    const allFields = ['fullName', 'email', 'phone', 'cardNumber', 'expiryDate', 'cvc'];
+    const allFields = [
+      'fullName',
+      'email',
+      'phone',
+      'cardNumber',
+      'expiryDate',
+      'cvc',
+    ];
     const newTouched: Record<string, boolean> = {};
-    allFields.forEach(f => { newTouched[f] = true; });
-    setTouched(prev => ({ ...prev, ...newTouched }));
+    allFields.forEach((f) => {
+      newTouched[f] = true;
+    });
+    setTouched((prev) => ({ ...prev, ...newTouched }));
 
     if (!isFormValid()) {
       setError('Please fill in all required fields correctly');
@@ -196,7 +259,9 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
     setError(null);
 
     try {
-      const [expiryMonth, expiryYear] = formData.expiryDate.replace(/\s/g, '').split('/');
+      const [expiryMonth, expiryYear] = formData.expiryDate
+        .replace(/\s/g, '')
+        .split('/');
 
       const response = await fetch('/api/billing/subscribe', {
         method: 'POST',
@@ -205,13 +270,16 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
           planId: plan.id,
           interval: billingInterval,
           paymentMethod: formData.paymentMethod,
-          card: formData.paymentMethod === 'card' ? {
-            number: formData.cardNumber,
-            expiryMonth,
-            expiryYear: '20' + expiryYear,
-            cvv: formData.cvc,
-            name: formData.fullName,
-          } : undefined,
+          card:
+            formData.paymentMethod === 'card'
+              ? {
+                  number: formData.cardNumber,
+                  expiryMonth,
+                  expiryYear: '20' + expiryYear,
+                  cvv: formData.cvc,
+                  name: formData.fullName,
+                }
+              : undefined,
           billingDetails: {
             fullName: formData.fullName,
             email: formData.email,
@@ -247,7 +315,9 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">{plan.displayName} plan</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {plan.displayName} plan
+          </h1>
         </div>
 
         {/* Billing Interval Toggle */}
@@ -255,56 +325,88 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
           <button
             onClick={() => setBillingInterval('monthly')}
             className={`relative p-4 rounded-xl border-2 transition-all text-left ${
-              billingInterval === 'monthly' ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-600'
+              billingInterval === 'monthly'
+                ? 'border-blue-500 bg-blue-500/10'
+                : 'border-gray-700 hover:border-gray-600'
             }`}
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                billingInterval === 'monthly' ? 'border-blue-500' : 'border-gray-500'
-              }`}>
-                {billingInterval === 'monthly' && <div className="w-3 h-3 rounded-full bg-blue-500" />}
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  billingInterval === 'monthly'
+                    ? 'border-blue-500'
+                    : 'border-gray-500'
+                }`}
+              >
+                {billingInterval === 'monthly' && (
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                )}
               </div>
               <span className="font-semibold text-white">Monthly</span>
             </div>
-            <p className="text-gray-400 text-sm ml-8">{formatPrice(monthlyPrice)}/month + tax</p>
+            <p className="text-gray-400 text-sm ml-8">
+              {formatPrice(monthlyPrice)}/month + tax
+            </p>
           </button>
 
           <button
             onClick={() => setBillingInterval('annual')}
             className={`relative p-4 rounded-xl border-2 transition-all text-left ${
-              billingInterval === 'annual' ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 hover:border-gray-600'
+              billingInterval === 'annual'
+                ? 'border-blue-500 bg-blue-500/10'
+                : 'border-gray-700 hover:border-gray-600'
             }`}
           >
             <div className="absolute -top-3 right-3">
-              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">Save {annualSavings}%</span>
+              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                Save {annualSavings}%
+              </span>
             </div>
             <div className="flex items-center gap-3 mb-2">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                billingInterval === 'annual' ? 'border-blue-500' : 'border-gray-500'
-              }`}>
-                {billingInterval === 'annual' && <div className="w-3 h-3 rounded-full bg-blue-500" />}
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  billingInterval === 'annual'
+                    ? 'border-blue-500'
+                    : 'border-gray-500'
+                }`}
+              >
+                {billingInterval === 'annual' && (
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                )}
               </div>
               <span className="font-semibold text-white">Yearly</span>
             </div>
-            <p className="text-gray-400 text-sm ml-8">{formatPrice(annualPrice)}/year + tax</p>
+            <p className="text-gray-400 text-sm ml-8">
+              {formatPrice(annualPrice)}/year + tax
+            </p>
           </button>
         </div>
 
         {/* Order Summary */}
         <div className="bg-[#16162a] rounded-xl p-6 mb-8 border border-gray-800">
-          <h2 className="text-lg font-semibold text-white mb-4">Order details</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">
+            Order details
+          </h2>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-medium text-white">{plan.displayName} plan</p>
-                <p className="text-sm text-gray-400">{billingInterval === 'annual' ? 'Annually' : 'Monthly'}</p>
+                <p className="font-medium text-white">
+                  {plan.displayName} plan
+                </p>
+                <p className="text-sm text-gray-400">
+                  {billingInterval === 'annual' ? 'Annually' : 'Monthly'}
+                </p>
               </div>
-              <p className="font-medium text-white">{formatPrice(selectedPrice)}</p>
+              <p className="font-medium text-white">
+                {formatPrice(selectedPrice)}
+              </p>
             </div>
             <div className="border-t border-gray-700 pt-4">
               <div className="flex justify-between items-center">
                 <p className="font-semibold text-white">Total due today</p>
-                <p className="font-semibold text-white">{formatPrice(selectedPrice)}</p>
+                <p className="font-semibold text-white">
+                  {formatPrice(selectedPrice)}
+                </p>
               </div>
             </div>
           </div>
@@ -314,14 +416,18 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
         <div className="flex items-start gap-3 p-4 bg-[#16162a] rounded-xl mb-8 border border-gray-800">
           <Info className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
           <p className="text-sm text-gray-400">
-            Your subscription will auto renew on {getNextRenewalDate(billingInterval)}. You will be
-            charged {formatPrice(selectedPrice)}/{billingInterval === 'annual' ? 'year' : 'month'} + tax.
+            Your subscription will auto renew on{' '}
+            {getNextRenewalDate(billingInterval)}. You will be charged{' '}
+            {formatPrice(selectedPrice)}/
+            {billingInterval === 'annual' ? 'year' : 'month'} + tax.
           </p>
         </div>
 
         {/* Payment Form */}
         <div className="bg-[#16162a] rounded-xl p-6 border border-gray-800">
-          <h2 className="text-lg font-semibold text-white mb-6">Payment method</h2>
+          <h2 className="text-lg font-semibold text-white mb-6">
+            Payment method
+          </h2>
 
           <AnimatePresence>
             {error && (
@@ -340,7 +446,9 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
           <div className="space-y-6">
             {/* Payment Method Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Select payment method</label>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Select payment method
+              </label>
               <div className="grid grid-cols-3 gap-3">
                 {PAYMENT_METHODS.map((pm) => (
                   <button
@@ -352,11 +460,17 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
                         : 'border-gray-700 hover:border-gray-600'
                     }`}
                   >
-                    <pm.icon className={`w-6 h-6 mx-auto mb-2 ${
-                      formData.paymentMethod === pm.id ? 'text-blue-400' : 'text-gray-400'
-                    }`} />
+                    <pm.icon
+                      className={`w-6 h-6 mx-auto mb-2 ${
+                        formData.paymentMethod === pm.id
+                          ? 'text-blue-400'
+                          : 'text-gray-400'
+                      }`}
+                    />
                     <p className="font-medium text-white text-sm">{pm.name}</p>
-                    <p className="text-xs text-gray-500 mt-1">{pm.description}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {pm.description}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -364,7 +478,9 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
 
             {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Full name</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Full name
+              </label>
               <input
                 type="text"
                 value={formData.fullName}
@@ -372,15 +488,23 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
                 onBlur={() => handleBlur('fullName')}
                 placeholder="Juan dela Cruz"
                 className={`w-full px-4 py-3 rounded-lg bg-[#0d0d1a] border ${
-                  getFieldError('fullName') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                  getFieldError('fullName')
+                    ? 'border-red-500'
+                    : 'border-gray-700 focus:border-blue-500'
                 } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               />
-              {getFieldError('fullName') && <p className="mt-1 text-sm text-red-400">{getFieldError('fullName')}</p>}
+              {getFieldError('fullName') && (
+                <p className="mt-1 text-sm text-red-400">
+                  {getFieldError('fullName')}
+                </p>
+              )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 value={formData.email}
@@ -388,15 +512,23 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
                 onBlur={() => handleBlur('email')}
                 placeholder="juan@business.com"
                 className={`w-full px-4 py-3 rounded-lg bg-[#0d0d1a] border ${
-                  getFieldError('email') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                  getFieldError('email')
+                    ? 'border-red-500'
+                    : 'border-gray-700 focus:border-blue-500'
                 } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               />
-              {getFieldError('email') && <p className="mt-1 text-sm text-red-400">{getFieldError('email')}</p>}
+              {getFieldError('email') && (
+                <p className="mt-1 text-sm text-red-400">
+                  {getFieldError('email')}
+                </p>
+              )}
             </div>
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Phone number</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Phone number
+              </label>
               <input
                 type="tel"
                 value={formData.phone}
@@ -404,97 +536,169 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
                 onBlur={() => handleBlur('phone')}
                 placeholder="+63 917 123 4567"
                 className={`w-full px-4 py-3 rounded-lg bg-[#0d0d1a] border ${
-                  getFieldError('phone') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                  getFieldError('phone')
+                    ? 'border-red-500'
+                    : 'border-gray-700 focus:border-blue-500'
                 } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all`}
               />
-              {getFieldError('phone') && <p className="mt-1 text-sm text-red-400">{getFieldError('phone')}</p>}
+              {getFieldError('phone') && (
+                <p className="mt-1 text-sm text-red-400">
+                  {getFieldError('phone')}
+                </p>
+              )}
             </div>
 
             {/* Card Details - Only show if card selected */}
             {formData.paymentMethod === 'card' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Card number</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Card number
+                  </label>
                   <div className="relative">
                     <input
                       type="text"
                       value={formData.cardNumber}
-                      onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
+                      onChange={(e) =>
+                        handleInputChange(
+                          'cardNumber',
+                          formatCardNumber(e.target.value),
+                        )
+                      }
                       onBlur={() => handleBlur('cardNumber')}
                       placeholder="1234 1234 1234 1234"
                       maxLength={19}
                       className={`w-full px-4 py-3 pr-24 rounded-lg bg-[#0d0d1a] border ${
-                        getFieldError('cardNumber') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                        getFieldError('cardNumber')
+                          ? 'border-red-500'
+                          : 'border-gray-700 focus:border-blue-500'
                       } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono`}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      <div className={`w-8 h-5 rounded ${cardType === 'visa' ? 'opacity-100' : 'opacity-40'}`}>
+                      <div
+                        className={`w-8 h-5 rounded ${cardType === 'visa' ? 'opacity-100' : 'opacity-40'}`}
+                      >
                         <svg viewBox="0 0 38 24" className="w-full h-full">
-                          <rect fill="#1A1F71" width="38" height="24" rx="3"/>
-                          <text x="19" y="15" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">VISA</text>
+                          <rect fill="#1A1F71" width="38" height="24" rx="3" />
+                          <text
+                            x="19"
+                            y="15"
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="8"
+                            fontWeight="bold"
+                          >
+                            VISA
+                          </text>
                         </svg>
                       </div>
-                      <div className={`w-8 h-5 rounded ${cardType === 'mastercard' ? 'opacity-100' : 'opacity-40'}`}>
+                      <div
+                        className={`w-8 h-5 rounded ${cardType === 'mastercard' ? 'opacity-100' : 'opacity-40'}`}
+                      >
                         <svg viewBox="0 0 38 24" className="w-full h-full">
-                          <circle cx="13" cy="12" r="9" fill="#EB001B"/>
-                          <circle cx="25" cy="12" r="9" fill="#F79E1B"/>
+                          <circle cx="13" cy="12" r="9" fill="#EB001B" />
+                          <circle cx="25" cy="12" r="9" fill="#F79E1B" />
                         </svg>
                       </div>
-                      <div className={`w-8 h-5 rounded ${cardType === 'jcb' ? 'opacity-100' : 'opacity-40'}`}>
+                      <div
+                        className={`w-8 h-5 rounded ${cardType === 'jcb' ? 'opacity-100' : 'opacity-40'}`}
+                      >
                         <svg viewBox="0 0 38 24" className="w-full h-full">
-                          <rect fill="#0B4EA2" width="38" height="24" rx="3"/>
-                          <text x="19" y="15" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">JCB</text>
+                          <rect fill="#0B4EA2" width="38" height="24" rx="3" />
+                          <text
+                            x="19"
+                            y="15"
+                            textAnchor="middle"
+                            fill="white"
+                            fontSize="8"
+                            fontWeight="bold"
+                          >
+                            JCB
+                          </text>
                         </svg>
                       </div>
                     </div>
                   </div>
-                  {getFieldError('cardNumber') && <p className="mt-1 text-sm text-red-400">{getFieldError('cardNumber')}</p>}
+                  {getFieldError('cardNumber') && (
+                    <p className="mt-1 text-sm text-red-400">
+                      {getFieldError('cardNumber')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Expiration date</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Expiration date
+                    </label>
                     <input
                       type="text"
                       value={formData.expiryDate}
-                      onChange={(e) => handleInputChange('expiryDate', formatExpiryDate(e.target.value))}
+                      onChange={(e) =>
+                        handleInputChange(
+                          'expiryDate',
+                          formatExpiryDate(e.target.value),
+                        )
+                      }
                       onBlur={() => handleBlur('expiryDate')}
                       placeholder="MM / YY"
                       maxLength={7}
                       className={`w-full px-4 py-3 rounded-lg bg-[#0d0d1a] border ${
-                        getFieldError('expiryDate') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                        getFieldError('expiryDate')
+                          ? 'border-red-500'
+                          : 'border-gray-700 focus:border-blue-500'
                       } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono`}
                     />
-                    {getFieldError('expiryDate') && <p className="mt-1 text-sm text-red-400">{getFieldError('expiryDate')}</p>}
+                    {getFieldError('expiryDate') && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldError('expiryDate')}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">CVC</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      CVC
+                    </label>
                     <div className="relative">
                       <input
                         type="text"
                         value={formData.cvc}
-                        onChange={(e) => handleInputChange('cvc', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        onChange={(e) =>
+                          handleInputChange(
+                            'cvc',
+                            e.target.value.replace(/\D/g, '').slice(0, 4),
+                          )
+                        }
                         onBlur={() => handleBlur('cvc')}
                         placeholder="123"
                         maxLength={4}
                         className={`w-full px-4 py-3 pr-12 rounded-lg bg-[#0d0d1a] border ${
-                          getFieldError('cvc') ? 'border-red-500' : 'border-gray-700 focus:border-blue-500'
+                          getFieldError('cvc')
+                            ? 'border-red-500'
+                            : 'border-gray-700 focus:border-blue-500'
                         } text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-mono`}
                       />
                       <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     </div>
-                    {getFieldError('cvc') && <p className="mt-1 text-sm text-red-400">{getFieldError('cvc')}</p>}
+                    {getFieldError('cvc') && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldError('cvc')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </>
             )}
 
             {/* E-wallet info */}
-            {(formData.paymentMethod === 'gcash' || formData.paymentMethod === 'maya') && (
+            {(formData.paymentMethod === 'gcash' ||
+              formData.paymentMethod === 'maya') && (
               <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
                 <p className="text-sm text-blue-300">
-                  You will be redirected to {formData.paymentMethod === 'gcash' ? 'GCash' : 'Maya'} to authorize the recurring payment.
-                  Make sure you have sufficient balance for auto-debit.
+                  You will be redirected to{' '}
+                  {formData.paymentMethod === 'gcash' ? 'GCash' : 'Maya'} to
+                  authorize the recurring payment. Make sure you have sufficient
+                  balance for auto-debit.
                 </p>
               </div>
             )}
@@ -505,16 +709,23 @@ export function EmbeddedCheckout({ plan, onSuccess, onCancel }: EmbeddedCheckout
                 <input
                   type="checkbox"
                   checked={formData.agreedToTerms}
-                  onChange={(e) => handleInputChange('agreedToTerms', e.target.checked)}
+                  onChange={(e) =>
+                    handleInputChange('agreedToTerms', e.target.checked)
+                  }
                   className="w-5 h-5 mt-0.5 rounded border-2 border-gray-600 bg-transparent text-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer shrink-0"
                 />
                 <span className="text-sm text-gray-400 leading-relaxed">
-                  You agree that LoyaltyHub will charge your{' '}
-                  {formData.paymentMethod === 'card' ? 'card' : 'e-wallet'} in the amount
-                  above now and on a recurring {billingInterval} basis until you cancel in
-                  accordance with our{' '}
-                  <a href="/terms" className="text-blue-400 hover:text-blue-300 underline">terms</a>.
-                  You can cancel at any time in your account settings.
+                  You agree that NoxaLoyalty will charge your{' '}
+                  {formData.paymentMethod === 'card' ? 'card' : 'e-wallet'} in
+                  the amount above now and on a recurring {billingInterval}{' '}
+                  basis until you cancel in accordance with our{' '}
+                  <a
+                    href="/terms"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    terms
+                  </a>
+                  . You can cancel at any time in your account settings.
                 </span>
               </label>
             </div>

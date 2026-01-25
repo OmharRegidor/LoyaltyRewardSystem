@@ -110,7 +110,7 @@ function PricingSection({
           {/* Content */}
           <div className="p-6">
             <p className="text-muted-foreground mb-6">
-              To get started with LoyaltyHub, please contact us via email with
+              To get started with NoxaLoyalty, please contact us via email with
               your business details.
             </p>
 

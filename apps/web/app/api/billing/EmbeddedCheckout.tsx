@@ -136,7 +136,7 @@ export function EmbeddedCheckout({
 }: EmbeddedCheckoutProps) {
   const router = useRouter();
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
-    'annual'
+    'annual',
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,14 +160,14 @@ export function EmbeddedCheckout({
   const selectedPrice =
     billingInterval === 'annual' ? annualPrice : monthlyPrice;
   const annualSavings = Math.round(
-    ((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100
+    ((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100,
   );
 
   const cardType = detectCardType(formData.cardNumber);
 
   const handleInputChange = (
     field: keyof BillingFormData,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
@@ -185,8 +185,8 @@ export function EmbeddedCheckout({
         return !value.trim()
           ? 'Email is required'
           : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-          ? 'Invalid email'
-          : null;
+            ? 'Invalid email'
+            : null;
       case 'phone':
         return !value.trim() ? 'Phone is required' : null;
       case 'cardNumber':
@@ -195,8 +195,8 @@ export function EmbeddedCheckout({
         return !clean
           ? 'Card number is required'
           : clean.length < 13
-          ? 'Invalid card number'
-          : null;
+            ? 'Invalid card number'
+            : null;
       case 'expiryDate':
         if (formData.paymentMethod !== 'card') return null;
         return !value ? 'Expiry is required' : null;
@@ -205,8 +205,8 @@ export function EmbeddedCheckout({
         return !value
           ? 'CVC is required'
           : value.length < 3
-          ? 'Invalid CVC'
-          : null;
+            ? 'Invalid CVC'
+            : null;
       default:
         return null;
     }
@@ -216,7 +216,7 @@ export function EmbeddedCheckout({
     if (!touched[field]) return null;
     return validateField(
       field,
-      formData[field as keyof BillingFormData] as string
+      formData[field as keyof BillingFormData] as string,
     );
   };
 
@@ -229,7 +229,8 @@ export function EmbeddedCheckout({
     const allFields = [...baseFields, ...cardFields];
     return (
       allFields.every(
-        (f) => !validateField(f, formData[f as keyof BillingFormData] as string)
+        (f) =>
+          !validateField(f, formData[f as keyof BillingFormData] as string),
       ) && formData.agreedToTerms
     );
   };
@@ -561,7 +562,7 @@ export function EmbeddedCheckout({
                       onChange={(e) =>
                         handleInputChange(
                           'cardNumber',
-                          formatCardNumber(e.target.value)
+                          formatCardNumber(e.target.value),
                         )
                       }
                       onBlur={() => handleBlur('cardNumber')}
@@ -644,7 +645,7 @@ export function EmbeddedCheckout({
                       onChange={(e) =>
                         handleInputChange(
                           'expiryDate',
-                          formatExpiryDate(e.target.value)
+                          formatExpiryDate(e.target.value),
                         )
                       }
                       onBlur={() => handleBlur('expiryDate')}
@@ -673,7 +674,7 @@ export function EmbeddedCheckout({
                         onChange={(e) =>
                           handleInputChange(
                             'cvc',
-                            e.target.value.replace(/\D/g, '').slice(0, 4)
+                            e.target.value.replace(/\D/g, '').slice(0, 4),
                           )
                         }
                         onBlur={() => handleBlur('cvc')}
@@ -722,7 +723,7 @@ export function EmbeddedCheckout({
                   className="w-5 h-5 mt-0.5 rounded border-2 border-gray-600 bg-transparent text-blue-500 focus:ring-2 focus:ring-blue-500/20 cursor-pointer shrink-0"
                 />
                 <span className="text-sm text-gray-400 leading-relaxed">
-                  You agree that LoyaltyHub will charge your{' '}
+                  You agree that NoxaLoyalty will charge your{' '}
                   {formData.paymentMethod === 'card' ? 'card' : 'e-wallet'} in
                   the amount above now and on a recurring {billingInterval}{' '}
                   basis until you cancel in accordance with our{' '}

@@ -492,7 +492,7 @@ export default function CheckoutPage() {
                     disabled={isLoading}
                   />
                   <label htmlFor="terms" className="text-sm text-gray-400">
-                    I agree that LoyaltyHub will charge my card in the amount
+                    I agree that NoxaLoyalty will charge my card in the amount
                     above now and on a recurring {billingInterval} basis until I
                     cancel. I can cancel anytime in my account settings.{' '}
                     <Link

@@ -55,7 +55,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        
 
         // If no session, try getUser as fallback
         let user: User | null = session?.user ?? null;
@@ -174,7 +173,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             href="/dashboard"
             className="text-2xl font-bold text-cyan-400 italic"
           >
-            LoyaltyHub
+            NoxaLoyalty
           </Link>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -255,7 +254,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <Menu className="w-6 h-6" />
         </button>
         <span className="text-lg font-bold text-cyan-400 italic">
-          LoyaltyHub
+          NoxaLoyalty
         </span>
         <div className="w-10" /> {/* Spacer for centering */}
       </header>

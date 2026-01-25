@@ -281,7 +281,7 @@ export function LoyaltyCardPDF({
           <View style={styles.footer}>
             <Text style={styles.footerText}>Digital Loyalty Card</Text>
             <Text style={styles.footerText}>
-              Powered by <Text style={styles.footerBrand}>LoyaltyHub</Text>
+              Powered by <Text style={styles.footerBrand}>NoxaLoyalty</Text>
             </Text>
           </View>
         </View>
@@ -313,7 +313,7 @@ export function LoyaltyCardPDF({
 
           <View style={styles.tipBox}>
             <Text style={styles.tipText}>
-              💡 Tip: Download the LoyaltyHub app for real-time point tracking
+              💡 Tip: Download the NoxaLoyalty app for real-time point tracking
               and exclusive mobile-only rewards!
             </Text>
           </View>

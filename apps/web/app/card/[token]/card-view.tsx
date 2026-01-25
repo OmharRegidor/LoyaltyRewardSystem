@@ -78,9 +78,9 @@ export function CardView({ customer, token }: CardViewProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `LoyaltyHub-Card-${customer.fullName.replace(
+      a.download = `NoxaLoyalty-Card-${customer.fullName.replace(
         /\s+/g,
-        '-'
+        '-',
       )}.pdf`;
       document.body.appendChild(a);
       a.click();
@@ -118,7 +118,7 @@ export function CardView({ customer, token }: CardViewProps) {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className={`text-2xl font-bold ${tierStyle.text}`}>
-                  {customer.business?.name || 'LoyaltyHub'}
+                  {customer.business?.name || 'NoxaLoyalty'}
                 </h1>
                 <p className={`text-sm ${tierStyle.text} opacity-80 mt-1`}>
                   Loyalty Rewards Program
@@ -196,7 +196,7 @@ export function CardView({ customer, token }: CardViewProps) {
             </div>
             <div className="text-xs text-white/70">
               Powered by{' '}
-              <span className="font-semibold text-white">LoyaltyHub</span>
+              <span className="font-semibold text-white">NoxaLoyalty</span>
             </div>
           </div>
         </div>
@@ -223,7 +223,7 @@ export function CardView({ customer, token }: CardViewProps) {
 
           <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
             <p className="text-sm text-indigo-700">
-              <strong>Tip:</strong> Download the LoyaltyHub app for real-time
+              <strong>Tip:</strong> Download the NoxaLoyalty app for real-time
               point tracking and exclusive mobile-only rewards!
             </p>
           </div>

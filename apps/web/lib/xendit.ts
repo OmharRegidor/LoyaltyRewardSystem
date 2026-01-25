@@ -1,5 +1,5 @@
 // apps/web/lib/xendit.ts
-// Xendit SDK wrapper for LoyaltyHub billing
+// Xendit SDK wrapper for NoxaLoyalty billing
 // Using xendit-node SDK v6+ with proper TypeScript types
 
 import Xendit from 'xendit-node';

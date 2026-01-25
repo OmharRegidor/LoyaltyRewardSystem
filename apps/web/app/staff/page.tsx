@@ -311,9 +311,9 @@ export default function StaffScannerPage() {
       let customerData = null;
 
       // Method 1: Try exact match on qr_code_url
-      const fullUrl = scannedCode.startsWith('loyaltyhub://')
+      const fullUrl = scannedCode.startsWith('NoxaLoyalty://')
         ? scannedCode
-        : `loyaltyhub://customer/${scannedCode}`;
+        : `NoxaLoyalty://customer/${scannedCode}`;
 
       const { data: exactMatch } = await supabase
         .from('customers')
@@ -329,8 +329,8 @@ export default function StaffScannerPage() {
 
       // Method 2: Partial match
       if (!customerData) {
-        const shortCode = scannedCode.startsWith('loyaltyhub://customer/')
-          ? scannedCode.replace('loyaltyhub://customer/', '')
+        const shortCode = scannedCode.startsWith('NoxaLoyalty://customer/')
+          ? scannedCode.replace('NoxaLoyalty://customer/', '')
           : scannedCode;
 
         const { data: partialMatch } = await supabase

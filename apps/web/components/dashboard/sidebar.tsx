@@ -31,7 +31,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   useEffect(() => {
     const stored = localStorage.getItem('theme');
     const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
+      '(prefers-color-scheme: dark)',
     ).matches;
 
     if (stored) {
@@ -76,7 +76,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       {/* Header */}
       <div className="p-6 flex items-center justify-between border-b border-border">
         <h1 className="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
-          LoyaltyHub
+          NoxaLoyalty
         </h1>
         <button
           onClick={onClose}
@@ -100,7 +100,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                 'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                 active
                   ? 'bg-primary text-primary-foreground shadow-lg'
-                  : 'text-foreground hover:bg-muted'
+                  : 'text-foreground hover:bg-muted',
               )}
             >
               <Icon className="w-5 h-5 shrink-0" />

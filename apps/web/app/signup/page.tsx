@@ -334,7 +334,7 @@ export default function SignupPage() {
               </span>
             </h1>
             <p className="text-xl text-blue-100 max-w-lg leading-relaxed mb-10">
-              Join thousands of businesses using LoyaltyHub to build customer
+              Join thousands of businesses using NoxaLoyalty to build customer
               loyalty and drive growth.
             </p>
 

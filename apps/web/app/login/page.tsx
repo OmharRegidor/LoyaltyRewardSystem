@@ -370,7 +370,7 @@ export default function LoginPage() {
               Welcome back to
               <br />
               <span className="bg-linear-to-r from-cyan-200 to-white bg-clip-text text-transparent">
-                LoyaltyHub
+                NoxaLoyalty
               </span>
             </h1>
             <p className="text-xl text-blue-100 max-w-lg leading-relaxed">

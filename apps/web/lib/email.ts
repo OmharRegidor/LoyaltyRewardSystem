@@ -30,7 +30,7 @@ interface SendWelcomeEmailParams {
   customerName: string;
   businessName: string;
   businessLogo?: string | null;
-  qrCodeContent: string; // The QR code content (loyaltyhub://customer/xxx)
+  qrCodeContent: string; // The QR code content (NoxaLoyalty://customer/xxx)
   cardViewUrl: string;
 }
 
@@ -117,7 +117,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
                 <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
                   <li><strong>Show your QR code</strong> at checkout to earn points on every purchase.</li>
                   <li><strong>Earn rewards faster</strong> by reaching higher membership tiers.</li>
-                  <li><strong>Download the LoyaltyHub app</strong> for the best experience.</li>
+                  <li><strong>Download the NoxaLoyalty app</strong> for the best experience.</li>
                 </ul>
               </div>
               
@@ -132,12 +132,12 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
             <td style="padding: 0 40px 40px 40px; text-align: center;">
               <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #86efac; border-radius: 12px; padding: 24px;">
                 <p style="margin: 0 0 8px 0; color: #166534; font-size: 14px; font-weight: 600;">
-                  📱 Get the LoyaltyHub App
+                  📱 Get the NoxaLoyalty App
                 </p>
                 <p style="margin: 0 0 16px 0; color: #15803d; font-size: 13px;">
                   Track points in real-time, browse rewards, and never miss a deal!
                 </p>
-                <a href="https://loyaltyhub.app/download" target="_blank" style="display: inline-block; padding: 10px 24px; background-color: #22c55e; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px;">
+                <a href="https://NoxaLoyalty.app/download" target="_blank" style="display: inline-block; padding: 10px 24px; background-color: #22c55e; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px;">
                   Download Now
                 </a>
               </div>
@@ -148,7 +148,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
           <tr>
             <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
               <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                Powered by <strong style="color: #6366f1;">LoyaltyHub</strong>
+                Powered by <strong style="color: #6366f1;">NoxaLoyalty</strong>
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                 This email was sent by ${businessName}. If you didn't sign up for this, please ignore this email.
@@ -181,12 +181,12 @@ ${cardViewUrl}
 How to earn points:
 - Show your QR code at checkout to earn points on every purchase
 - Earn rewards faster by reaching higher membership tiers
-- Download the LoyaltyHub app for real-time point tracking (Soon available on iOS and Android)
+- Download the NoxaLoyalty app for real-time point tracking (Soon available on iOS and Android)
 
-Download the LoyaltyHub app: https://loyaltyhub.app/download
+Download the NoxaLoyalty app: https://NoxaLoyalty.app/download
 
 ---
-Powered by LoyaltyHub
+Powered by NoxaLoyalty
 This email was sent by ${businessName}.
   `.trim();
 }

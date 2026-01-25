@@ -147,7 +147,7 @@ function VerifyEmailContent() {
                 <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
                   2
                 </span>
-                Find email from LoyaltyHub
+                Find email from NoxaLoyalty
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">

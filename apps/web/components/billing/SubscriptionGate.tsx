@@ -72,7 +72,7 @@ export function PastDueBanner() {
           <div>
             <span className="font-medium">Payment Failed</span>
             <span className="hidden sm:inline text-white/90 ml-2">
-              — Please update your payment method to continue using LoyaltyHub
+              — Please update your payment method to continue using NoxaLoyalty
             </span>
           </div>
         </div>
@@ -256,13 +256,13 @@ export function UsageIndicator({
   const { subscription, getUsagePercentage, isLoading } = useSubscription();
 
   const getUsageCount = (
-    limitType: 'customers' | 'branches' | 'staff'
+    limitType: 'customers' | 'branches' | 'staff',
   ): number => {
     return subscription?.usage[limitType] || 0;
   };
 
   const getLimit = (
-    limitType: 'customers' | 'branches' | 'staff'
+    limitType: 'customers' | 'branches' | 'staff',
   ): number | null => {
     const limit = subscription?.limits[limitType];
     return limit !== undefined && Number.isFinite(limit) ? limit : null;
@@ -300,8 +300,8 @@ export function UsageIndicator({
             isCritical
               ? 'text-red-600'
               : isWarning
-              ? 'text-amber-600'
-              : 'text-gray-900 dark:text-white'
+                ? 'text-amber-600'
+                : 'text-gray-900 dark:text-white'
           }`}
         >
           {getUsageText()}
@@ -313,8 +313,8 @@ export function UsageIndicator({
             isCritical
               ? 'bg-red-500'
               : isWarning
-              ? 'bg-amber-500'
-              : 'bg-blue-500'
+                ? 'bg-amber-500'
+                : 'bg-blue-500'
           }`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />

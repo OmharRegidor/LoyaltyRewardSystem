@@ -92,19 +92,19 @@ async function getServerSupabase() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options),
             );
           } catch {}
         },
       },
-    }
+    },
   );
 }
 
 const getServiceSupabase = () =>
   createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
 // ============================================
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Invalid request', details: validation.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     if (businessError || !business) {
       return NextResponse.json(
         { error: 'Business not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     if (existingSub) {
       return NextResponse.json(
         { error: 'Already has active subscription' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       if (createError || !newPlan) {
         return NextResponse.json(
           { error: 'Failed to create plan' },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
         },
         {
           onConflict: 'business_id',
-        }
+        },
       );
 
       // Update plan limits
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
         },
         {
           onConflict: 'business_id',
-        }
+        },
       );
 
       // Record test payment
@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
       const invoice = await createInvoice({
         externalId,
         amount: amount / 100, // Convert centavos to pesos for Xendit
-        description: `LoyaltyHub ${plan.displayName} Plan - ${
+        description: `NoxaLoyalty ${plan.displayName} Plan - ${
           interval === 'annual' ? 'Annual' : 'Monthly'
         } Subscription`,
         customerEmail: user.email || business.owner_email,
@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
         },
         {
           onConflict: 'business_id',
-        }
+        },
       );
 
       return NextResponse.json({
@@ -366,7 +366,7 @@ export async function POST(request: NextRequest) {
       console.error('Xendit error:', xenditError);
       return NextResponse.json(
         { error: 'Payment processing failed. Please try again.' },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error: unknown) {
