@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
@@ -17,9 +17,14 @@ import {
   Users,
   AlertCircle,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 
-export default function LoginPage() {
+// ============================================
+// LOGIN FORM COMPONENT (uses useSearchParams)
+// ============================================
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,16 +72,9 @@ export default function LoginPage() {
 
       // Handle "Remember Me" - set session persistence
       if (rememberMe) {
-        // Session will persist for 30 days (default Supabase behavior)
-        // Store preference in localStorage
         localStorage.setItem('rememberMe', 'true');
       } else {
-        // Session expires when browser closes
-        // We'll handle this by not storing the preference
         localStorage.removeItem('rememberMe');
-
-        // Set session to expire on browser close by updating session
-        // Note: Supabase handles this via cookie settings
       }
 
       // Check if user is business owner
@@ -87,7 +85,6 @@ export default function LoginPage() {
         .maybeSingle();
 
       if (business) {
-        // Is owner - redirect to dashboard or requested page
         const destination = redirectTo || '/dashboard';
         window.location.replace(destination);
         return;
@@ -102,7 +99,6 @@ export default function LoginPage() {
         .maybeSingle();
 
       if (staff) {
-        // Is staff - redirect to staff page
         window.location.replace('/staff');
         return;
       }
@@ -132,6 +128,182 @@ export default function LoginPage() {
 
   const displayError = getDisplayError();
 
+  return (
+    <div className="w-full max-w-md">
+      <div className="mb-10">
+        <h2 className="text-4xl font-bold mb-3 text-gray-900 dark:text-white">
+          Sign in to your account
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
+          Access your dashboard and manage your loyalty program
+        </p>
+      </div>
+
+      {/* Error Alert */}
+      {displayError && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+              {displayError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Email Input */}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+          >
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white placeholder-gray-400"
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        {/* Password Input */}
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+          >
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+              required
+              disabled={isLoading}
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              disabled={isLoading}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Remember Me & Forgot Password */}
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              disabled={isLoading}
+            />
+            <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
+              Remember me!
+            </span>
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        {/* Sign In Button */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Signing in...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              Sign In <ArrowRight className="w-5 h-5" />
+            </span>
+          )}
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div className="my-8 flex items-center gap-4">
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+          or
+        </span>
+        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      </div>
+
+      {/* Sign Up Link */}
+      <p className="text-center text-gray-600 dark:text-gray-400">
+        Don't have an account?{' '}
+        <Link
+          href="/signup"
+          className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+        >
+          Sign up
+        </Link>
+      </p>
+
+      {/* Staff Login Link */}
+      <p className="text-center text-gray-500 dark:text-gray-500 text-sm mt-4">
+        Are you a staff member?{' '}
+        <Link
+          href="/staff/login"
+          className="font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+        >
+          Staff Login
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+// ============================================
+// LOADING FALLBACK
+// ============================================
+
+function LoginFormSkeleton() {
+  return (
+    <div className="w-full max-w-md flex items-center justify-center py-20">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+    </div>
+  );
+}
+
+// ============================================
+// MAIN PAGE COMPONENT
+// ============================================
+
+export default function LoginPage() {
   const features = [
     {
       icon: <TrendingUp className="w-6 h-6" />,
@@ -251,161 +423,9 @@ export default function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-16 bg-gray-50 dark:bg-gray-900">
-        <div className="w-full max-w-md">
-          <div className="mb-10">
-            <h2 className="text-4xl font-bold mb-3 text-gray-900 dark:text-white">
-              Sign in to your account
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Access your dashboard and manage your loyalty program
-            </p>
-          </div>
-
-          {/* Error Alert */}
-          {displayError && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
-                  {displayError}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Input */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
-              >
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white placeholder-gray-400"
-                  required
-                  disabled={isLoading}
-                  autoComplete="email"
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
-                  required
-                  disabled={isLoading}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                  disabled={isLoading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                  disabled={isLoading}
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
-                  Remember me!
-                </span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Sign In Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  Sign In <ArrowRight className="w-5 h-5" />
-                </span>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="my-8 flex items-center gap-4">
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              or
-            </span>
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-          </div>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link
-              href="/signup"
-              className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-            >
-              Sign up
-            </Link>
-          </p>
-
-          {/* Staff Login Link */}
-          <p className="text-center text-gray-500 dark:text-gray-500 text-sm mt-4">
-            Are you a staff member?{' '}
-            <Link
-              href="/staff/login"
-              className="font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-            >
-              Staff Login
-            </Link>
-          </p>
-        </div>
+        <Suspense fallback={<LoginFormSkeleton />}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
