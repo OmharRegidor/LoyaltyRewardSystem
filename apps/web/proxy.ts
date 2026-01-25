@@ -97,30 +97,31 @@ export async function proxy(request: NextRequest) {
           });
         },
       },
-    }
+    },
   );
 
-  // Try getSession first (faster, reads from cookie)
-  // Then validate with getUser if session exists
+  // Get user - this validates the session properly
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  let user = session?.user ?? null;
-
-  // If session exists, validate it
-  if (session) {
-    const {
-      data: { user: validatedUser },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (!userError && validatedUser) {
-      user = validatedUser;
-    }
-  }
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
   // No user = redirect to login
-  if (!user) {
+  if (!user || userError) {
+    // Don't redirect if coming from auth callback (give cookies time to set)
+    const referer = request.headers.get('referer') || '';
+    const isFromAuthCallback = referer.includes('/auth/callback');
+
+    // Also check if this is immediately after auth (within 5 seconds)
+    const authTimestamp = request.cookies.get('auth_timestamp')?.value;
+    const isRecentAuth =
+      authTimestamp && Date.now() - parseInt(authTimestamp) < 5000;
+
+    if (isFromAuthCallback || isRecentAuth) {
+      // Allow the request to proceed - give cookies time to propagate
+      return response;
+    }
+
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
@@ -161,7 +162,7 @@ export async function proxy(request: NextRequest) {
       }
       // Not owner, not staff - redirect to login
       return NextResponse.redirect(
-        new URL('/login?error=unauthorized', request.url)
+        new URL('/login?error=unauthorized', request.url),
       );
     }
     // Owner - allow access
@@ -182,7 +183,7 @@ export async function proxy(request: NextRequest) {
 
     // Not authorized
     return NextResponse.redirect(
-      new URL('/login?error=unauthorized', request.url)
+      new URL('/login?error=unauthorized', request.url),
     );
   }
 

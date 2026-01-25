@@ -159,6 +159,14 @@ export async function GET(request: Request) {
         ...cookieOptions,
         maxAge: 60 * 60 * 24 * 365, // 1 year for refresh token
       });
+      // Add this right after setting the other cookies
+      response.cookies.set('auth_timestamp', Date.now().toString(), {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10, // Only needed for 10 seconds
+        httpOnly: false,
+      });
 
       // Also set the Supabase auth cookie format
       const projectRef =
