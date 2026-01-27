@@ -1,7 +1,15 @@
 // apps/web/app/page.tsx
 'use client';
 
-import { ArrowRight, BarChart3, Gift, QrCode, Check } from 'lucide-react';
+import {
+  ArrowRight,
+  BarChart3,
+  Gift,
+  QrCode,
+  Check,
+  Menu,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, type Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -380,6 +388,7 @@ function PricingSection({
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -456,22 +465,94 @@ export default function Home() {
             </nav>
 
             {/* RIGHT: CTA Buttons */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all font-semibold text-base px-5"
-                >
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="linear-primary text-primary-foreground rounded-lg px-7 h-11 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-bold text-base">
-                  Sign Up - It's Free!
-                </Button>
-              </Link>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3 sm:gap-4">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all font-semibold text-base px-5"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="linear-primary text-primary-foreground rounded-lg px-7 h-11 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-bold text-base">
+                    Sign Up - It's Free!
+                  </Button>
+                </Link>
+              </div>
+              {/* Mobile Hamburger Button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6" />
+                ) : (
+                  <Menu className="w-6 h-6" />
+                )}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu Panel - Add this NEW section */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-lg">
+              {/* Logo + CTA Row */}
+              <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+                <span className="text-sm font-semibold text-muted-foreground">
+                  Menu
+                </span>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="ghost" size="sm" className="text-sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button
+                      size="sm"
+                      className="linear-primary text-primary-foreground text-sm bg-[#0090a4]"
+                    >
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Navigation Links (Vertical) */}
+              <nav className="flex flex-col py-4">
+                <a
+                  href="#features"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
+                >
+                  Features
+                </a>
+                <a
+                  href="#how-it-works"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
+                >
+                  How it Works
+                </a>
+                <a
+                  href="#pricing"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
+                >
+                  Pricing
+                </a>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
