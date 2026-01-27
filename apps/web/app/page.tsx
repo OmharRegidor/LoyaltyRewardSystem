@@ -440,7 +440,7 @@ export default function Home() {
             </a>
 
             {/* CENTER: Navigation Links */}
-            <nav className="hidden md:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <nav className="hidden lg:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <a
                 href="#features"
                 className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
@@ -466,7 +466,7 @@ export default function Home() {
 
             {/* RIGHT: CTA Buttons */}
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-3 sm:gap-4">
+              <div className="hidden lg:flex items-center gap-3 sm:gap-4">
                 <Link href="/login">
                   <Button
                     variant="ghost"
@@ -484,7 +484,7 @@ export default function Home() {
               {/* Mobile Hamburger Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
+                className="lg:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
@@ -496,62 +496,84 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mobile Menu Panel - Add this NEW section */}
+          {/* Mobile Menu Panel */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-lg">
-              {/* Logo + CTA Row */}
-              <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-                <span className="text-sm font-semibold text-muted-foreground">
-                  Menu
-                </span>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button variant="ghost" size="sm" className="text-sm">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/signup"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button
-                      size="sm"
-                      className="linear-primary text-primary-foreground text-sm bg-[#0090a4]"
-                    >
-                      Sign Up
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+            <>
+              {/* Backdrop overlay with blur */}
+              <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
 
-              {/* Navigation Links (Vertical) */}
-              <nav className="flex flex-col py-4">
-                <a
-                  href="#features"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  Features
-                </a>
-                <a
-                  href="#how-it-works"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  How it Works
-                </a>
-                <a
-                  href="#pricing"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  Pricing
-                </a>
-              </nav>
-            </div>
+              {/* Mobile menu - positioned at bottom */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-border bg-background shadow-2xl rounded-t-3xl max-h-[80vh] overflow-y-auto"
+              >
+                <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-border bg-background shadow-2xl rounded-t-3xl max-h-[80vh] overflow-y-auto">
+                  {/* Handle bar for visual affordance */}
+                  <div className="flex justify-center pt-3 pb-2">
+                    <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+                  </div>
+
+                  {/* Logo + CTA Row */}
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      Menu
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Button variant="ghost" size="sm" className="text-sm">
+                          Sign In
+                        </Button>
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Button
+                          size="sm"
+                          className="linear-primary text-primary-foreground text-sm bg-[#0090a4]"
+                        >
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Navigation Links (Vertical) */}
+                  <nav className="flex flex-col py-4 pb-8">
+                    <a
+                      href="#features"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition-colors active:bg-muted/80"
+                    >
+                      Features
+                    </a>
+                    <a
+                      href="#how-it-works"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition-colors active:bg-muted/80"
+                    >
+                      How it Works
+                    </a>
+                    <a
+                      href="#pricing"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-6 py-4 text-base font-semibold text-foreground hover:bg-muted transition-colors active:bg-muted/80"
+                    >
+                      Pricing
+                    </a>
+                  </nav>
+                </div>
+              </motion.div>
+            </>
           )}
         </div>
       </header>
