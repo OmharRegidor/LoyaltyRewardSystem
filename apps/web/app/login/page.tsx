@@ -48,7 +48,6 @@ function LoginForm() {
     const supabase = createClient();
 
     try {
-      // Sign in with Supabase
       const { data, error: signInError } =
         await supabase.auth.signInWithPassword({
           email: email.toLowerCase().trim(),
@@ -71,7 +70,7 @@ function LoginForm() {
         return;
       }
 
-      // Handle "Remember Me" - set session persistence
+      // Handle "Remember Me"
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
       } else {
@@ -81,31 +80,35 @@ function LoginForm() {
       // Check if user is business owner
       const { data: business } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, subscription_status')
         .eq('owner_id', data.user.id)
         .maybeSingle();
 
       if (business) {
+        // Business owner - go to dashboard (or requested redirect)
         const destination = redirectTo || '/dashboard';
         window.location.replace(destination);
         return;
       }
 
-      // Check if user is staff
+      // Check if user is staff (NOT an owner)
       const { data: staff } = await supabase
         .from('staff')
-        .select('id, role, is_active')
+        .select('id, role, is_active, business_id')
         .eq('user_id', data.user.id)
         .eq('is_active', true)
         .maybeSingle();
 
       if (staff) {
+        // Staff member - go to staff page
         window.location.replace('/staff');
         return;
       }
 
-      // Not owner or staff - show error
-      setError('No account found. Please contact your administrator.');
+      // Not owner and not staff - this is a customer trying web login
+      setError(
+        'This login is for business accounts only. Please use the mobile app.',
+      );
       await supabase.auth.signOut();
       setIsLoading(false);
     } catch (err) {
@@ -292,17 +295,6 @@ function LoginForm() {
           className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
         >
           Sign up
-        </Link>
-      </p>
-
-      {/* Staff Login Link */}
-      <p className="text-center text-gray-500 dark:text-gray-500 text-sm mt-4">
-        Are you a staff member?{' '}
-        <Link
-          href="/staff/login"
-          className="font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
-        >
-          Staff Login
         </Link>
       </p>
     </div>
