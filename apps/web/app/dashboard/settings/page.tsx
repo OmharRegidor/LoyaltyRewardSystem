@@ -127,6 +127,12 @@ export default function SettingsPage() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [previewAmount, setPreviewAmount] = useState('500');
 
+  const [inputValues, setInputValues] = useState({
+    customRate: '10',
+    minPurchase: '0',
+    previewAmount: '500',
+  });
+
   // ============================================
   // LOAD SETTINGS
   // ============================================
@@ -174,17 +180,15 @@ export default function SettingsPage() {
           logoUrl: business.logo_url,
         });
 
-        setLoyalty({
-          pesosPerPoint: business.pesos_per_point || 10,
-          minPurchase: business.min_purchase_for_points || 0,
-          maxPointsPerTransaction:
-            business.max_points_per_transaction?.toString() || '',
-          pointsExpiryDays: business.points_expiry_days?.toString() || '',
+        setInputValues({
+          customRate: String(business.pesos_per_point || 10),
+          minPurchase: String(business.min_purchase_for_points || 0),
+          previewAmount: '500',
         });
 
         // Set preset selection
         const matchingPreset = POINTS_RATE_PRESETS.find(
-          (p) => p.value === business.pesos_per_point
+          (p) => p.value === business.pesos_per_point,
         );
         if (matchingPreset && matchingPreset.value !== 0) {
           setSelectedPreset(matchingPreset.value);
@@ -322,12 +326,79 @@ export default function SettingsPage() {
     } else {
       setShowCustomInput(false);
       setLoyalty((prev) => ({ ...prev, pesosPerPoint: value }));
+      setInputValues((prev) => ({
+        ...prev,
+        customRate: String(value),
+      }));
     }
   };
 
   const handleCustomRateChange = (value: string) => {
-    const numValue = parseInt(value) || 1;
-    setLoyalty((prev) => ({ ...prev, pesosPerPoint: Math.max(1, numValue) }));
+    // Allow empty string for deletion
+    setInputValues((prev) => ({
+      ...prev,
+      customRate: value,
+    }));
+
+    // Only update loyalty state if valid number > 0
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1) {
+      setLoyalty((prev) => ({ ...prev, pesosPerPoint: numValue }));
+    }
+  };
+
+  const handleCustomRateBlur = () => {
+    if (!inputValues.customRate || parseInt(inputValues.customRate) < 1) {
+      const defaultValue = '1';
+      setInputValues((prev) => ({
+        ...prev,
+        customRate: defaultValue,
+      }));
+      setLoyalty((prev) => ({
+        ...prev,
+        pesosPerPoint: 1,
+      }));
+    }
+  };
+
+  const handleMinPurchaseChange = (value: string) => {
+    // Allow empty string for deletion
+    setInputValues((prev) => ({
+      ...prev,
+      minPurchase: value,
+    }));
+
+    // Update loyalty state with parsed value or 0
+    const numValue = parseFloat(value);
+    setLoyalty((prev) => ({
+      ...prev,
+      minPurchase: !isNaN(numValue) && numValue >= 0 ? numValue : 0,
+    }));
+  };
+
+  const handleMinPurchaseBlur = () => {
+    if (!inputValues.minPurchase) {
+      setInputValues((prev) => ({
+        ...prev,
+        minPurchase: '0',
+      }));
+    }
+  };
+
+  const handlePreviewAmountChange = (value: string) => {
+    setInputValues((prev) => ({
+      ...prev,
+      previewAmount: value,
+    }));
+  };
+
+  const handlePreviewAmountBlur = () => {
+    if (!inputValues.previewAmount) {
+      setInputValues((prev) => ({
+        ...prev,
+        previewAmount: '0',
+      }));
+    }
   };
 
   const calculatePoints = (amount: number): number => {
@@ -634,9 +705,11 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         min="1"
-                        value={loyalty.pesosPerPoint}
+                        value={inputValues.customRate}
                         onChange={(e) => handleCustomRateChange(e.target.value)}
+                        onBlur={handleCustomRateBlur}
                         className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
+                        placeholder="1"
                       />
                       <span className="text-muted-foreground">= 1 point</span>
                     </div>
@@ -654,13 +727,18 @@ export default function SettingsPage() {
                   <span className="text-muted-foreground">₱</span>
                   <input
                     type="number"
-                    value={previewAmount}
-                    onChange={(e) => setPreviewAmount(e.target.value)}
+                    value={inputValues.previewAmount}
+                    onChange={(e) => handlePreviewAmountChange(e.target.value)}
+                    onBlur={handlePreviewAmountBlur}
                     className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
+                    placeholder="0"
                   />
                   <span className="text-muted-foreground">=</span>
                   <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
-                    {calculatePoints(parseFloat(previewAmount) || 0)} pts
+                    {calculatePoints(
+                      parseFloat(inputValues.previewAmount) || 0,
+                    )}{' '}
+                    pts
                   </span>
                 </div>
               </div>
@@ -685,13 +763,11 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         min="0"
-                        value={loyalty.minPurchase}
+                        value={inputValues.minPurchase}
                         onChange={(e) =>
-                          setLoyalty((prev) => ({
-                            ...prev,
-                            minPurchase: parseFloat(e.target.value) || 0,
-                          }))
+                          handleMinPurchaseChange(e.target.value)
                         }
+                        onBlur={handleMinPurchaseBlur}
                         className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
                         placeholder="0"
                       />
