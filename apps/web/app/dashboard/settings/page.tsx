@@ -708,6 +708,7 @@ export default function SettingsPage() {
                         value={inputValues.customRate}
                         onChange={(e) => handleCustomRateChange(e.target.value)}
                         onBlur={handleCustomRateBlur}
+                        onFocus={(e) => e.target.select()}
                         className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
                         placeholder="1"
                       />
@@ -730,6 +731,7 @@ export default function SettingsPage() {
                     value={inputValues.previewAmount}
                     onChange={(e) => handlePreviewAmountChange(e.target.value)}
                     onBlur={handlePreviewAmountBlur}
+                    onFocus={(e) => e.target.select()}
                     className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
                     placeholder="0"
                   />
@@ -768,6 +770,7 @@ export default function SettingsPage() {
                           handleMinPurchaseChange(e.target.value)
                         }
                         onBlur={handleMinPurchaseBlur}
+                        onFocus={(e) => e.target.select()}
                         className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
                         placeholder="0"
                       />
