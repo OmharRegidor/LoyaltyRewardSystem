@@ -967,7 +967,7 @@ export default function Home() {
 
           <div className="border-t border-border pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <p>&copy; 2026 NoxaLoyalty. All rights reserved.</p>
-            <div className="flex gap-6">
+            {/* <div className="flex gap-6">
               <Link
                 href="/privacy"
                 className="hover:text-foreground transition"
@@ -977,7 +977,7 @@ export default function Home() {
               <Link href="/terms" className="hover:text-foreground transition">
                 Terms
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </footer>

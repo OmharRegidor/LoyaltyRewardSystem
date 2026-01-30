@@ -13,6 +13,8 @@ const PUBLIC_ROUTES = [
   '/verify-email',
   '/auth/callback',
   '/staff/login', // Will redirect to /login anyway
+  '/terms',
+  '/privacy',
 ];
 
 const PUBLIC_PREFIXES = ['/invite/', '/checkout/', '/card/', '/api/', '/qr/'];
