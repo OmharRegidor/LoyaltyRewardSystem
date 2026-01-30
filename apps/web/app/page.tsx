@@ -9,11 +9,11 @@ import {
   Check,
   Menu,
   X,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { DarkModeToggle } from '@/components/dark-mode-toggle';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -61,6 +61,271 @@ const PLANS = [
     highlighted: true,
   },
 ];
+
+// ============================================
+// NAV LINKS DATA
+// ============================================
+
+const NAV_LINKS = [
+  { label: 'Features', href: '#features' },
+  { label: 'How it Works', href: '#how-it-works' },
+  { label: 'Pricing', href: '#pricing' },
+];
+
+// ============================================
+// MOBILE BOTTOM SHEET MENU COMPONENT
+// ============================================
+
+interface MobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const handleNavClick = (href: string) => {
+    onClose();
+    // Small delay to allow menu to close before scrolling
+    setTimeout(() => {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop with blur */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={onClose}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            aria-hidden="true"
+          />
+
+          {/* Bottom Sheet */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 dark:bg-gray-900/98 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+          >
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+            </div>
+
+            {/* Menu Header with Centered Logo */}
+            <div className="px-6 pb-4 border-b border-border relative">
+              {/* Close Button - Absolute positioned right */}
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-0 p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5 text-foreground" />
+              </button>
+
+              {/* Centered Logo */}
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Image
+                  src="/noxa_favicon.png"
+                  alt="NoxaLoyalty"
+                  width={48}
+                  height={48}
+                  className="h-12 w-auto object-contain"
+                />
+                <div className="flex flex-col items-center">
+                  <span className="text-base font-bold text-foreground">
+                    NoxaLoyalty
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Rewards Platform
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="px-4 py-4">
+              {NAV_LINKS.map((link, index) => (
+                <motion.button
+                  key={link.href}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleNavClick(link.href)}
+                  className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
+                >
+                  <span>{link.label}</span>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                </motion.button>
+              ))}
+            </nav>
+
+            {/* Auth Buttons */}
+            <div className="px-6 pb-8 pt-4 border-t border-border space-y-3">
+              <Link href="/signup" onClick={onClose} className="block">
+                <Button className="w-full h-14 text-base font-bold bg-linear-to-r from-primary to-secondary hover:opacity-90 rounded-xl shadow-lg">
+                  Sign Up - It's Free!
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/login" onClick={onClose} className="block">
+                <Button
+                  variant="outline"
+                  className="w-full h-12 text-base font-semibold rounded-xl border-2"
+                >
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ============================================
+// HEADER/NAVBAR COMPONENT
+// ============================================
+
+function Header() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    e.preventDefault();
+    const element = document.querySelector(href);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
+          scrolled
+            ? 'bg-background/95 backdrop-blur-lg border-b border-border shadow-sm'
+            : 'bg-transparent'
+        } ${isMobileMenuOpen ? 'blur-sm pointer-events-none' : ''}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            {/* LEFT: Logo - Always Visible */}
+            <a
+              href="#home"
+              className="group relative flex items-center shrink-0"
+            >
+              <div className="relative flex items-center gap-2 sm:gap-3 py-1">
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-150" />
+
+                <Image
+                  src="/noxa_favicon.png"
+                  alt="Noxa Tech Loyalty"
+                  width={200}
+                  height={64}
+                  className="h-10 sm:h-14 lg:h-16 w-auto object-contain filter brightness-[1.2] saturate-[1.15] drop-shadow-[0_4px_12px_rgba(99,102,241,0.3)] dark:drop-shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:brightness-[1.3] hover:scale-105 transition-all duration-300 relative z-10"
+                  priority
+                />
+
+                {/* Brand Text - Always Visible */}
+                <div className="flex flex-col justify-center border-l border-border/50 pl-2 sm:pl-3">
+                  <span className="text-xs sm:text-sm font-bold text-foreground/90 leading-tight">
+                    NoxaLoyalty
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
+                    Rewards Platform
+                  </span>
+                </div>
+              </div>
+            </a>
+
+            {/* CENTER: Navigation Links - Hidden on mobile/tablet, shown on lg+ */}
+            <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              {NAV_LINKS.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
+                  className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
+                >
+                  {link.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
+                </a>
+              ))}
+            </nav>
+
+            {/* RIGHT: CTA Buttons (Desktop) + Hamburger (Mobile/Tablet) */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Desktop Auth Buttons - Hidden on mobile/tablet */}
+              <div className="hidden lg:flex items-center gap-3">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all font-semibold text-sm px-4"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-lg px-6 h-10 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-bold text-sm">
+                    Sign Up - It's Free!
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Mobile/Tablet Hamburger Button - Shown below lg */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl bg-muted/50 border border-border hover:bg-muted transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu className="w-5 h-5 text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Bottom Sheet Menu */}
+      <MobileBottomSheet
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
+    </>
+  );
+}
 
 // ============================================
 // PRICING SECTION COMPONENT
@@ -200,7 +465,7 @@ function PricingSection({
                 href="https://mail.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 linear-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90 bg-[#0090a4] text-black"
+                className="flex-1 bg-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
               >
                 Send Email
               </a>
@@ -274,7 +539,7 @@ function PricingSection({
             return (
               <motion.div
                 key={plan.id}
-                className={`relative rounded-2xl p-8 border transition-all duration-300 ${
+                className={`relative rounded-2xl p-8 border transition-all duration-300 bg-card ${
                   plan.highlighted
                     ? 'border-secondary shadow-2xl dark:shadow-secondary/20 md:scale-105'
                     : 'border-border dark:border-border hover:border-secondary/50 dark:hover:border-secondary/40'
@@ -318,11 +583,10 @@ function PricingSection({
                   </p>
                 )}
 
-                {/* <Link href={`/checkout/${plan.id}?interval=${billingInterval}`}> */}
                 <Button
                   className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
                     plan.highlighted
-                      ? 'linear-primary text-primary-foreground hover:opacity-90'
+                      ? 'bg-linear-to-r from-primary to-secondary text-primary-foreground hover:opacity-90'
                       : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
                   }`}
                   variant={plan.highlighted ? 'default' : 'outline'}
@@ -334,7 +598,6 @@ function PricingSection({
                   {plan.cta}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
-                {/* </Link> */}
 
                 <div className="space-y-3">
                   {plan.features.map((feature, i) => (
@@ -387,15 +650,6 @@ function PricingSection({
 // ============================================
 
 export default function Home() {
-  const [scrollY, setScrollY] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -407,154 +661,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* LEFT: Bold, Standout Logo */}
-            <a
-              href="#home"
-              className="group relative flex items-center shrink-0"
-            >
-              <div className="relative flex items-center gap-3 py-1">
-                {/* Glow effect on hover */}
-                <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-150" />
-
-                <Image
-                  src="/noxa_favicon.png"
-                  alt="Noxa Tech Loyalty"
-                  width={240}
-                  height={80}
-                  className="h-16 w-auto object-contain filter brightness-[1.2] saturate-[1.15] drop-shadow-[0_4px_12px_rgba(99,102,241,0.3)] dark:drop-shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:brightness-[1.3] hover:scale-110 transition-all duration-300 relative z-10"
-                  priority
-                />
-
-                <div className="hidden lg:flex flex-col justify-center border-l border-border/50 pl-3">
-                  <span className="text-xs font-semibold text-foreground/90 leading-tight">
-                    NoxaLoyalty
-                  </span>
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    Rewards Platform
-                  </span>
-                </div>
-              </div>
-            </a>
-
-            {/* CENTER: Navigation Links */}
-            <nav className="hidden md:flex items-center gap-10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <a
-                href="#features"
-                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
-              >
-                Features
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
-              >
-                How it Works
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
-              </a>
-              <a
-                href="#pricing"
-                className="text-base font-semibold text-muted-foreground hover:text-foreground transition-colors relative group px-2 py-1"
-              >
-                Pricing
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-linear-to-r from-primary to-secondary group-hover:w-full transition-all duration-300" />
-              </a>
-            </nav>
-
-            {/* RIGHT: CTA Buttons */}
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-3 sm:gap-4">
-                <Link href="/login">
-                  <Button
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-foreground hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/30 transition-all font-semibold text-base px-5"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button className="linear-primary text-primary-foreground rounded-lg px-7 h-11 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-bold text-base">
-                    Sign Up - It's Free!
-                  </Button>
-                </Link>
-              </div>
-              {/* Mobile Hamburger Button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <Menu className="w-6 h-6" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Menu Panel - Add this NEW section */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-lg">
-              {/* Logo + CTA Row */}
-              <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-                <span className="text-sm font-semibold text-muted-foreground">
-                  Menu
-                </span>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button variant="ghost" size="sm" className="text-sm">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link
-                    href="/signup"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Button
-                      size="sm"
-                      className="linear-primary text-primary-foreground text-sm bg-[#0090a4]"
-                    >
-                      Sign Up
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Navigation Links (Vertical) */}
-              <nav className="flex flex-col py-4">
-                <a
-                  href="#features"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  Features
-                </a>
-                <a
-                  href="#how-it-works"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  How it Works
-                </a>
-                <a
-                  href="#pricing"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-base font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  Pricing
-                </a>
-              </nav>
-            </div>
-          )}
-        </div>
-      </header>
+      {/* Header/Navbar */}
+      <Header />
 
       {/* Hero Section */}
       <motion.section
@@ -573,7 +681,7 @@ export default function Home() {
 
         <div className="max-w-5xl mx-auto text-center z-10">
           <motion.h1
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-balance mb-6"
+            className="text-4xl sm:text-5xl lg:text-7xl font-bold text-balance mb-6"
             variants={containerVariants}
           >
             Turn First-Time Customers Into{' '}
@@ -583,7 +691,7 @@ export default function Home() {
           </motion.h1>
 
           <motion.p
-            className="text-xl sm:text-2xl text-muted-foreground mb-8 text-balance max-w-3xl mx-auto leading-relaxed"
+            className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-8 text-balance max-w-3xl mx-auto leading-relaxed"
             variants={containerVariants}
           >
             Help your small business in the Philippines grow with a modern
@@ -598,19 +706,12 @@ export default function Home() {
             <Link href="#pricing">
               <Button
                 size="lg"
-                className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all animate-bounce-gentle"
+                className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
                 View Pricing
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            {/* <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full px-8 h-12 border-2 hover:bg-muted transition-all bg-transparent"
-            >
-              See Demo
-            </Button> */}
           </motion.div>
         </div>
       </motion.section>
@@ -628,7 +729,7 @@ export default function Home() {
             viewport={{ once: true }}
             variants={containerVariants}
           >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Everything You Need to Succeed
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -696,7 +797,7 @@ export default function Home() {
             viewport={{ once: true }}
             variants={containerVariants}
           >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               How It Works
             </h2>
             <p className="text-lg text-muted-foreground">
@@ -723,7 +824,7 @@ export default function Home() {
               },
               {
                 number: 3,
-                title: 'Redeems  & Enjoy',
+                title: 'Redeems & Enjoy',
                 description:
                   'Customer picks a reward, shows their redemptions code, and gets their prize!.',
               },
@@ -764,13 +865,13 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="max-w-4xl mx-auto text-center linear-primary rounded-3xl p-12 sm:p-16 text-white bg-[#0090a4]"
+          className="max-w-4xl mx-auto text-center bg-linear-to-r from-primary to-secondary rounded-3xl p-12 sm:p-16 text-white"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <h2 className="text-4xl sm:text-5xl font-bold mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
             Ready to Transform Your Customer Relationships?
           </h2>
           <p className="text-lg mb-8 opacity-90">
@@ -780,7 +881,7 @@ export default function Home() {
           <Link href="#pricing">
             <Button
               size="lg"
-              className="bg-white text-primary hover:bg-muted rounded-full px-8 h-12 font-semibold"
+              className="bg-white text-primary hover:bg-gray-100 rounded-full px-8 h-12 font-semibold"
             >
               Get Started Today
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -804,7 +905,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a
-                    href="#how-it-works"
+                    href="#features"
                     className="hover:text-foreground transition"
                   >
                     Features
@@ -818,11 +919,6 @@ export default function Home() {
                     Pricing
                   </a>
                 </li>
-                {/* <li>
-                  <a href="#" className="hover:text-foreground transition">
-                    Roadmap
-                  </a>
-                </li> */}
               </ul>
             </div>
             <div>
@@ -836,11 +932,6 @@ export default function Home() {
                     About
                   </a>
                 </li>
-                {/* <li>
-                  <a href="#" className="hover:text-foreground transition">
-                    Blog
-                  </a>
-                </li> */}
                 <li>
                   <a
                     href="#pricing"
@@ -852,27 +943,24 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              {/* <h5 className="font-semibold mb-4">Follow</h5> */}
+              <h5 className="font-semibold mb-4">Legal</h5>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {/* <li>
-                  <a href="#" className="hover:text-foreground transition">
-                    Twitter
-                  </a>
-                </li> */}
-                {/* <li>
-                  <a
-                    target="_blank"
-                    href="https://www.facebook.com/noxa.tech.company"
+                <li>
+                  <Link
+                    href="/privacy"
                     className="hover:text-foreground transition"
                   >
-                    Facebook
-                  </a>
-                </li> */}
-                {/* <li>
-                  <a href="#" className="hover:text-foreground transition">
-                    Instagram
-                  </a>
-                </li> */}
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="hover:text-foreground transition"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -880,12 +968,15 @@ export default function Home() {
           <div className="border-t border-border pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
             <p>&copy; 2026 NoxaLoyalty. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-foreground transition">
+              <Link
+                href="/privacy"
+                className="hover:text-foreground transition"
+              >
                 Privacy
-              </a>
-              <a href="#" className="hover:text-foreground transition">
+              </Link>
+              <Link href="/terms" className="hover:text-foreground transition">
                 Terms
-              </a>
+              </Link>
             </div>
           </div>
         </div>
