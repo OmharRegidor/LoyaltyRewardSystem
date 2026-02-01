@@ -1,10 +1,12 @@
 {
   "expo": {
     "name": "NoxaLoyalty",
-    "slug": "NoxaLoyalty",
+    "slug": "loyaltyhub",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "newArchEnabled": false,
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/noxa_favicon.png",
     "scheme": "NoxaLoyalty",
     "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
@@ -25,7 +27,7 @@
       "package": "com.NoxaLoyalty.app",
       "adaptiveIcon": {
         "backgroundColor": "#6366F1",
-        "foregroundImage": "./assets/images/icon.png"
+        "foregroundImage": "./assets/images/noxa_favicon.png"
       },
       "intentFilters": [
         {

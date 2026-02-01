@@ -14,6 +14,7 @@ import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 import { customerService } from '../services/customer.service';
 import type { Customer } from '../types/database.types';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -79,7 +80,14 @@ function extractUserProfile(user: User): {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
-  const redirectTo = Linking.createURL('auth/callback');
+  const redirectTo = makeRedirectUri({
+    scheme: 'noxaloyalty',
+    path: 'auth/callback',
+  });
+  // Log for debugging (remove after testing)
+  useEffect(() => {
+    console.log('[AuthProvider] OAuth Redirect URL:', redirectTo);
+  }, [redirectTo]);
   const isLoadingCustomer = useRef(false);
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
@@ -111,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setupRealtimeSubscription(customer.id);
       }
     } catch (error) {
+      console.error('[AuthProvider] Load customer error:', error);
       setState({
         user,
         customer: null,
@@ -189,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-
+      console.log('[AuthProvider] Auth state changed:', event);
       if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(() => {
           loadCustomer(session.user, session);
@@ -216,6 +225,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
+      console.log('[AuthProvider] Starting Google sign in...');
+      console.log('[AuthProvider] Redirect URL:', redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -227,12 +239,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (!data.url) throw new Error('No OAuth URL returned');
 
+      console.log('[AuthProvider] Opening browser for OAuth...');
+
       const result = await WebBrowser.openAuthSessionAsync(
         data.url,
         redirectTo,
       );
 
+      console.log('[AuthProvider] Browser result:', result.type);
+
       if (result.type === 'success' && result.url) {
+        console.log('[AuthProvider] Success URL:', result.url);
+
         const hashIndex = result.url.indexOf('#');
 
         if (hashIndex !== -1) {
@@ -242,6 +260,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const access_token = params.get('access_token');
           const refresh_token = params.get('refresh_token');
 
+          console.log(
+            '[AuthProvider] Tokens found:',
+            !!access_token,
+            !!refresh_token,
+          );
 
           if (access_token && refresh_token) {
             const { error: sessionError } = await supabase.auth.setSession({
@@ -250,9 +273,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             });
 
             if (sessionError) {
+              console.error('[AuthProvider] Session error:', sessionError);
               throw sessionError;
             }
 
+            console.error('[AuthProvider] Session error:', sessionError);
           }
         }
       } else {
