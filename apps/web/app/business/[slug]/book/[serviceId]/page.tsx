@@ -5,7 +5,14 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Clock, User, Phone, Mail, ChevronLeft, Check } from 'lucide-react';
-import { createClient } from '@/lib/supabase';
+import {
+  getBusinessBySlug,
+  getServiceDetails,
+  getAvailabilityForDate,
+  getBookedSlots,
+  generateAvailableSlots,
+  createPublicBooking,
+} from '@/lib/services/public-business.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,11 +40,7 @@ interface Service {
   price_centavos: number | null;
 }
 
-interface TimeSlot {
-  value: string;
-  label: string;
-  available: boolean;
-}
+import type { TimeSlot } from '@/types/booking.types';
 
 interface BookingFormData {
   booking_date: string;
@@ -84,7 +87,6 @@ function formatTimeForDisplay(time: string): string {
 export default function DirectBookingPage({ params }: DirectBookingPageProps) {
   const { slug, serviceId } = use(params);
   const router = useRouter();
-  const supabase = createClient();
 
   const [step, setStep] = useState<Step>('datetime');
   const [loading, setLoading] = useState(true);
@@ -110,33 +112,29 @@ export default function DirectBookingPage({ params }: DirectBookingPageProps) {
     async function fetchData() {
       setLoading(true);
       try {
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
-          .select('id, name')
-          .eq('slug', slug)
-          .maybeSingle();
+        const businessData = await getBusinessBySlug(slug);
 
-        if (businessError || !businessData) {
+        if (!businessData) {
           setError('Business not found');
           return;
         }
 
-        setBusiness(businessData);
+        setBusiness({ id: businessData.id, name: businessData.name });
 
-        const { data: serviceData, error: serviceError } = await supabase
-          .from('services')
-          .select('id, name, description, duration_minutes, price_centavos')
-          .eq('id', serviceId)
-          .eq('business_id', businessData.id)
-          .eq('is_active', true)
-          .maybeSingle();
+        const serviceData = await getServiceDetails(serviceId);
 
-        if (serviceError || !serviceData) {
+        if (!serviceData || serviceData.business.id !== businessData.id) {
           setError('Service not found');
           return;
         }
 
-        setService(serviceData);
+        setService({
+          id: serviceData.id,
+          name: serviceData.name,
+          description: serviceData.description,
+          duration_minutes: serviceData.duration_minutes,
+          price_centavos: serviceData.price_centavos,
+        });
       } catch {
         setError('Something went wrong');
       } finally {
@@ -145,7 +143,7 @@ export default function DirectBookingPage({ params }: DirectBookingPageProps) {
     }
 
     fetchData();
-  }, [slug, serviceId, supabase]);
+  }, [slug, serviceId]);
 
   // Fetch time slots when date changes
   useEffect(() => {
@@ -157,54 +155,13 @@ export default function DirectBookingPage({ params }: DirectBookingPageProps) {
 
       setLoadingSlots(true);
       try {
-        const dayOfWeek = new Date(formData.booking_date).getDay();
-
-        const { data: availability } = await supabase
-          .from('availability')
-          .select('*')
-          .eq('business_id', business.id)
-          .eq('day_of_week', dayOfWeek)
-          .is('branch_id', null)
-          .is('staff_id', null)
-          .maybeSingle();
-
-        if (!availability || !availability.is_available) {
-          setTimeSlots([]);
-          return;
-        }
-
-        const slots: TimeSlot[] = [];
-        const startMinutes = timeToMinutes(availability.start_time);
-        const endMinutes = timeToMinutes(availability.end_time);
-        const duration = service.duration_minutes;
-
-        for (let minutes = startMinutes; minutes + duration <= endMinutes; minutes += 30) {
-          const timeValue = minutesToTime(minutes);
-          slots.push({
-            value: timeValue,
-            label: formatTimeForDisplay(timeValue),
-            available: true,
-          });
-        }
-
-        const { data: bookings } = await supabase
-          .from('bookings')
-          .select('start_time, end_time')
-          .eq('business_id', business.id)
-          .eq('booking_date', formData.booking_date)
-          .neq('status', 'cancelled');
-
-        const availableSlots = slots.map((slot) => {
-          const slotEnd = minutesToTime(timeToMinutes(slot.value) + duration);
-          const hasConflict = (bookings || []).some((booking) => {
-            const slotStart = timeToMinutes(slot.value);
-            const slotEndMin = timeToMinutes(slotEnd);
-            const bookingStart = timeToMinutes(booking.start_time);
-            const bookingEnd = timeToMinutes(booking.end_time);
-            return slotStart < bookingEnd && slotEndMin > bookingStart;
-          });
-          return { ...slot, available: !hasConflict };
-        });
+        const availability = await getAvailabilityForDate(business.id, formData.booking_date);
+        const bookedSlots = await getBookedSlots(business.id, formData.booking_date);
+        const availableSlots = generateAvailableSlots(
+          availability,
+          bookedSlots,
+          service.duration_minutes
+        );
 
         setTimeSlots(availableSlots);
       } catch {
@@ -215,7 +172,7 @@ export default function DirectBookingPage({ params }: DirectBookingPageProps) {
     }
 
     fetchTimeSlots();
-  }, [business, formData.booking_date, service, supabase]);
+  }, [business, formData.booking_date, service]);
 
   async function handleSubmit() {
     if (!business || !service) return;
@@ -228,29 +185,21 @@ export default function DirectBookingPage({ params }: DirectBookingPageProps) {
         timeToMinutes(formData.start_time) + service.duration_minutes
       );
 
-      const { error: insertError } = await supabase.from('bookings').insert({
+      await createPublicBooking({
         business_id: business.id,
         service_id: service.id,
-        customer_id: null,
         customer_name: formData.customer_name,
         customer_phone: formData.customer_phone || null,
         customer_email: formData.customer_email || null,
         booking_date: formData.booking_date,
         start_time: formData.start_time,
         end_time: endTime,
-        staff_id: null,
         notes: formData.notes || null,
-        status: 'pending',
       });
-
-      if (insertError) {
-        setError('Failed to create booking. Please try again.');
-        return;
-      }
 
       setStep('confirmation');
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError('Failed to create booking. Please try again.');
     } finally {
       setSubmitting(false);
     }

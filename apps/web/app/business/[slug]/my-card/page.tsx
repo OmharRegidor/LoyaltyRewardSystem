@@ -6,6 +6,12 @@ import Image from 'next/image';
 import { Gift, Star, CreditCard } from 'lucide-react';
 import { createServiceClient } from '@/lib/supabase-server';
 import {
+  getBusinessBySlug,
+  getCustomerByCardToken,
+  isCustomerLinkedToBusiness,
+  type PublicCustomer,
+} from '@/lib/services/public-business.service';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -18,16 +24,6 @@ import { Badge } from '@/components/ui/badge';
 interface MyCardPageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ code?: string }>;
-}
-
-interface Customer {
-  id: string;
-  full_name: string | null;
-  total_points: number | null;
-  lifetime_points: number | null;
-  tier: string | null;
-  card_token: string | null;
-  qr_code_url: string | null;
 }
 
 interface Reward {
@@ -58,41 +54,27 @@ function getTierLabel(tier: string | null): string {
 }
 
 async function getCardData(slug: string, cardToken: string) {
-  const supabase = createServiceClient();
+  const business = await getBusinessBySlug(slug);
 
-  const { data: business, error: businessError } = await supabase
-    .from('businesses')
-    .select('id, name, logo_url')
-    .eq('slug', slug)
-    .maybeSingle();
-
-  if (businessError || !business) {
+  if (!business) {
     return null;
   }
 
-  const { data: customer, error: customerError } = await supabase
-    .from('customers')
-    .select('id, full_name, total_points, lifetime_points, tier, card_token, qr_code_url')
-    .eq('card_token', cardToken)
-    .maybeSingle();
+  const customer = await getCustomerByCardToken(cardToken);
 
-  if (customerError || !customer) {
+  if (!customer) {
     return { business, customer: null, rewards: [], isLinked: false };
   }
 
   // Check if customer is linked to this business
-  const { data: link } = await supabase
-    .from('customer_businesses')
-    .select('id')
-    .eq('customer_id', customer.id)
-    .eq('business_id', business.id)
-    .maybeSingle();
+  const isLinked = await isCustomerLinkedToBusiness(customer.id, business.id);
 
-  if (!link) {
+  if (!isLinked) {
     return { business, customer: null, rewards: [], isLinked: false };
   }
 
-  // Fetch available rewards for this business
+  // Fetch available rewards for this business (still using supabase directly)
+  const supabase = createServiceClient();
   const { data: rewards } = await supabase
     .from('rewards')
     .select('id, title, description, points_cost, image_url, category')
@@ -103,7 +85,7 @@ async function getCardData(slug: string, cardToken: string) {
 
   return {
     business,
-    customer: customer as Customer,
+    customer: customer as PublicCustomer,
     rewards: (rewards || []) as Reward[],
     isLinked: true,
   };

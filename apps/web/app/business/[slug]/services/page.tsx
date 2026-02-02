@@ -3,7 +3,10 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Clock, Calendar } from 'lucide-react';
-import { createServiceClient } from '@/lib/supabase-server';
+import {
+  getBusinessBySlug,
+  getPublicServices,
+} from '@/lib/services/public-business.service';
 import {
   Card,
   CardContent,
@@ -16,14 +19,6 @@ import { Badge } from '@/components/ui/badge';
 
 interface ServicesPageProps {
   params: Promise<{ slug: string }>;
-}
-
-interface Service {
-  id: string;
-  name: string;
-  description: string | null;
-  duration_minutes: number;
-  price_centavos: number | null;
 }
 
 function formatPrice(centavos: number | null): string {
@@ -39,28 +34,17 @@ function formatDuration(minutes: number): string {
 }
 
 async function getServicesData(slug: string) {
-  const supabase = createServiceClient();
+  const business = await getBusinessBySlug(slug);
 
-  const { data: business, error: businessError } = await supabase
-    .from('businesses')
-    .select('id, name')
-    .eq('slug', slug)
-    .maybeSingle();
-
-  if (businessError || !business) {
+  if (!business) {
     return null;
   }
 
-  const { data: services } = await supabase
-    .from('services')
-    .select('id, name, description, duration_minutes, price_centavos')
-    .eq('business_id', business.id)
-    .eq('is_active', true)
-    .order('name');
+  const services = await getPublicServices(business.id);
 
   return {
     business,
-    services: (services || []) as Service[],
+    services,
   };
 }
 

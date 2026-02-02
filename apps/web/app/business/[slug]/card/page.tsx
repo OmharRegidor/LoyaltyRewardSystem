@@ -5,7 +5,11 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Phone, Mail, CreditCard, Check } from 'lucide-react';
-import { createClient } from '@/lib/supabase';
+import {
+  getBusinessBySlug,
+  signUpForLoyaltyCard,
+  type PublicCustomer,
+} from '@/lib/services/public-business.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,25 +32,9 @@ interface SignupFormData {
   email: string;
 }
 
-interface CreatedCustomer {
-  id: string;
-  card_token: string | null;
-  qr_code_url: string | null;
-}
-
-function generateCardToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let token = '';
-  for (let i = 0; i < 8; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
-
 export default function CardSignupPage({ params }: CardSignupPageProps) {
   const { slug } = use(params);
   const router = useRouter();
-  const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +42,7 @@ export default function CardSignupPage({ params }: CardSignupPageProps) {
   const [success, setSuccess] = useState(false);
 
   const [business, setBusiness] = useState<{ id: string; name: string } | null>(null);
-  const [createdCustomer, setCreatedCustomer] = useState<CreatedCustomer | null>(null);
+  const [createdCustomer, setCreatedCustomer] = useState<PublicCustomer | null>(null);
 
   const [formData, setFormData] = useState<SignupFormData>({
     full_name: '',
@@ -66,18 +54,14 @@ export default function CardSignupPage({ params }: CardSignupPageProps) {
     async function fetchBusiness() {
       setLoading(true);
       try {
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
-          .select('id, name')
-          .eq('slug', slug)
-          .maybeSingle();
+        const businessData = await getBusinessBySlug(slug);
 
-        if (businessError || !businessData) {
+        if (!businessData) {
           setError('Business not found');
           return;
         }
 
-        setBusiness(businessData);
+        setBusiness({ id: businessData.id, name: businessData.name });
       } catch {
         setError('Something went wrong');
       } finally {
@@ -86,7 +70,7 @@ export default function CardSignupPage({ params }: CardSignupPageProps) {
     }
 
     fetchBusiness();
-  }, [slug, supabase]);
+  }, [slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,95 +80,17 @@ export default function CardSignupPage({ params }: CardSignupPageProps) {
     setError(null);
 
     try {
-      // Check if customer already exists with this email or phone
-      let existingCustomer = null;
-
-      if (formData.email) {
-        const { data: byEmail } = await supabase
-          .from('customers')
-          .select('id, card_token, qr_code_url')
-          .eq('email', formData.email)
-          .maybeSingle();
-        existingCustomer = byEmail;
-      }
-
-      if (!existingCustomer && formData.phone) {
-        const { data: byPhone } = await supabase
-          .from('customers')
-          .select('id, card_token, qr_code_url')
-          .eq('phone', formData.phone)
-          .maybeSingle();
-        existingCustomer = byPhone;
-      }
-
-      let customerId: string;
-      let cardToken: string | null = null;
-      let qrCodeUrl: string | null = null;
-
-      if (existingCustomer) {
-        customerId = existingCustomer.id;
-        cardToken = existingCustomer.card_token;
-        qrCodeUrl = existingCustomer.qr_code_url;
-
-        // Check if already linked to this business
-        const { data: existingLink } = await supabase
-          .from('customer_businesses')
-          .select('id')
-          .eq('customer_id', customerId)
-          .eq('business_id', business.id)
-          .maybeSingle();
-
-        if (existingLink) {
-          // Already a member
-          setCreatedCustomer({ id: customerId, card_token: cardToken, qr_code_url: qrCodeUrl });
-          setSuccess(true);
-          return;
-        }
-      } else {
-        // Create new customer
-        cardToken = generateCardToken();
-        const { data: newCustomer, error: createError } = await supabase
-          .from('customers')
-          .insert({
-            full_name: formData.full_name,
-            phone: formData.phone || null,
-            email: formData.email || null,
-            card_token: cardToken,
-            card_token_created_at: new Date().toISOString(),
-            total_points: 0,
-            lifetime_points: 0,
-            tier: 'bronze',
-            created_by_business_id: business.id,
-          })
-          .select('id, card_token, qr_code_url')
-          .single();
-
-        if (createError || !newCustomer) {
-          setError('Failed to create loyalty card. Please try again.');
-          return;
-        }
-
-        customerId = newCustomer.id;
-        cardToken = newCustomer.card_token;
-        qrCodeUrl = newCustomer.qr_code_url;
-      }
-
-      // Link customer to business
-      const { error: linkError } = await supabase.from('customer_businesses').insert({
-        customer_id: customerId,
+      const result = await signUpForLoyaltyCard({
         business_id: business.id,
-        followed_at: new Date().toISOString(),
+        full_name: formData.full_name,
+        phone: formData.phone,
+        email: formData.email || null,
       });
 
-      if (linkError) {
-        setError('Failed to join loyalty program. Please try again.');
-        return;
-      }
-
-      setCreatedCustomer({ id: customerId, card_token: cardToken, qr_code_url: qrCodeUrl });
+      setCreatedCustomer(result.customer);
       setSuccess(true);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError('Failed to join loyalty program. Please try again.');
     } finally {
       setSubmitting(false);
     }
