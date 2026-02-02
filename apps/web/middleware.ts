@@ -3,6 +3,75 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+// ============================================
+// SUBDOMAIN ROUTING CONFIGURATION
+// ============================================
+
+const MAIN_DOMAINS = [
+  'noxaloyalty.com',
+  'www.noxaloyalty.com',
+  'localhost:3000',
+  'localhost',
+];
+
+const RESERVED_SUBDOMAINS = [
+  'www',
+  'api',
+  'app',
+  'dashboard',
+  'admin',
+  'mail',
+  'email',
+  'support',
+  'help',
+  'docs',
+  'blog',
+  'staging',
+  'dev',
+  'test',
+];
+
+/**
+ * Extract subdomain from hostname
+ * Returns null if no subdomain or if it's a reserved subdomain
+ */
+function getSubdomain(hostname: string): string | null {
+  // Skip Vercel preview deployments
+  if (hostname.endsWith('.vercel.app')) {
+    return null;
+  }
+
+  // Skip main domains
+  if (MAIN_DOMAINS.some((d) => hostname === d)) {
+    return null;
+  }
+
+  const parts = hostname.split('.');
+
+  // Local development: binukbok.localhost:3000
+  if (hostname.includes('localhost')) {
+    const subdomain = parts[0];
+    if (subdomain === 'localhost') return null;
+    return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
+      ? null
+      : subdomain;
+  }
+
+  // Production: binukbok.noxaloyalty.com (3+ parts)
+  if (parts.length >= 3) {
+    const subdomain = parts[0];
+    return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
+      ? null
+      : subdomain;
+  }
+
+  return null;
+}
+
+// ============================================
+// PUBLIC ROUTES CONFIGURATION
+// ============================================
+
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
   '/',
@@ -18,7 +87,14 @@ const PUBLIC_ROUTES = [
   '/book-call',
 ];
 
-const PUBLIC_PREFIXES = ['/invite/', '/checkout/', '/card/', '/api/', '/qr/'];
+const PUBLIC_PREFIXES = [
+  '/invite/',
+  '/checkout/',
+  '/card/',
+  '/api/',
+  '/qr/',
+  '/business/', // Public business storefront pages
+];
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.includes(pathname)) return true;
@@ -37,6 +113,20 @@ function isStaticAsset(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
+
+  // ============================================
+  // SUBDOMAIN ROUTING (check first)
+  // ============================================
+
+  const subdomain = getSubdomain(hostname);
+
+  if (subdomain) {
+    // Rewrite to /business/[slug]/... path
+    const url = request.nextUrl.clone();
+    url.pathname = `/business/${subdomain}${pathname === '/' ? '' : pathname}`;
+    return NextResponse.rewrite(url);
+  }
 
   // Allow static assets and public routes
   if (isStaticAsset(pathname) || isPublicRoute(pathname)) {
