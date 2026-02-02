@@ -10,6 +10,7 @@ import { createServerClient } from '@supabase/ssr';
 const MAIN_DOMAINS = [
   'noxaloyalty.com',
   'www.noxaloyalty.com',
+  'noxaloyalty.local',
   'localhost:3000',
   'localhost',
 ];
@@ -52,6 +53,15 @@ function getSubdomain(hostname: string): string | null {
   if (hostname.includes('localhost')) {
     const subdomain = parts[0];
     if (subdomain === 'localhost') return null;
+    return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
+      ? null
+      : subdomain;
+  }
+
+  // Local development: binukbok.noxaloyalty.local
+  if (hostname.endsWith('.local')) {
+    const subdomain = parts[0];
+    if (subdomain === 'noxaloyalty') return null;
     return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
       ? null
       : subdomain;
