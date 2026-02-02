@@ -10,7 +10,11 @@
       "WebFetch(domain:github.com)",
       "Bash(claude mcp:*)",
       "Bash(npm run db:types:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(npx tsc:*)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(timeout 15 npm run dev:web:*)",
+      "Bash(timeout 20 npm run dev)"
     ]
   }
 }
