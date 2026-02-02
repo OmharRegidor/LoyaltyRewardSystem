@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   '/staff/login', // Will redirect to /login anyway
   '/terms',
   '/privacy',
+  '/book-call',
 ];
 
 const PUBLIC_PREFIXES = ['/invite/', '/checkout/', '/card/', '/api/', '/qr/'];
