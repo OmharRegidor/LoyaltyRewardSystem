@@ -12,6 +12,9 @@ import {
   Moon,
   Sun,
   UserRound,
+  CalendarDays,
+  Briefcase,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -60,6 +63,10 @@ export function Sidebar({ onClose }: SidebarProps) {
     { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
     { icon: UserRound, label: 'Team', href: '/dashboard/team' },
     { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
+    // TODO: Only show booking items if business.plan has booking feature enabled
+    { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking' },
+    { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services' },
+    { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability' },
     { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
   ];
 
