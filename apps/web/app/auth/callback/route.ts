@@ -243,15 +243,15 @@ async function ensureBusinessExists(
       (userMetadata?.business_name as string) || 'My Business';
     const ownerEmail = userEmail || (userMetadata?.email as string) || '';
 
-    // Create new business with all required fields
+    // Create new business with all required fields (Free plan by default)
     const { data: newBusiness, error } = await serviceSupabase
       .from('businesses')
       .insert({
         owner_id: userId,
         name: businessName,
         owner_email: ownerEmail,
-        is_free_forever: false,
-        subscription_status: 'preview',
+        is_free_forever: true,
+        subscription_status: 'active',
         points_per_purchase: 1,
         pesos_per_point: 100,
         min_purchase_for_points: 0,
@@ -309,8 +309,8 @@ async function getRedirectPath(
         return `/dashboard/settings/billing?plan=${selectedPlan}&interval=${billingInterval || 'monthly'}`;
       }
 
-      // Otherwise, redirect to dashboard (preview mode)
-      return '/dashboard';
+      // Otherwise, redirect to dashboard with welcome flag for new signups
+      return '/dashboard?welcome=true';
     }
   } catch (err) {
     console.error('Error determining redirect:', err);

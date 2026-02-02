@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import {
@@ -16,6 +16,8 @@ import {
   Star,
   ChevronRight,
   AlertCircle,
+  X,
+  Calendar,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
@@ -158,6 +160,84 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
       </p>
     </div>
   );
+}
+
+// ============================================
+// WELCOME MODAL COMPONENT
+// ============================================
+
+function WelcomeModalContent({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Content */}
+        <div className="text-center">
+          <div className="text-5xl mb-4">🎉</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Welcome to NoxaLoyalty!
+          </h2>
+          <p className="text-green-600 dark:text-green-400 font-semibold mb-2">
+            Your Free plan is now active.
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            You have access to our full loyalty and rewards system.
+          </p>
+
+          {/* Upsell */}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Want Booking System & POS?
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Upgrade to Enterprise anytime.
+            </p>
+            <Link
+              href="/book-call"
+              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+            >
+              Book a Call <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Component that handles welcome param detection (uses useSearchParams)
+function WelcomeModalHandler() {
+  const searchParams = useSearchParams();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('welcome') === 'true') {
+      setShowWelcome(true);
+      // Remove query param from URL without page reload
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [searchParams]);
+
+  if (!showWelcome) return null;
+
+  return <WelcomeModalContent onClose={() => setShowWelcome(false)} />;
 }
 
 // ============================================
@@ -451,6 +531,11 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Welcome Modal for new signups (wrapped in Suspense for useSearchParams) */}
+      <Suspense fallback={null}>
+        <WelcomeModalHandler />
+      </Suspense>
+
       <div className="space-y-8">
         {/* Preview Mode Banner */}
         {isPreview && (
