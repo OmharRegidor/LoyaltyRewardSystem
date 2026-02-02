@@ -81,7 +81,7 @@ function extractUserProfile(user: User): {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const redirectTo = makeRedirectUri({
-    scheme: 'noxaloyalty',
+    scheme: 'NoxaLoyalty',
     path: 'auth/callback',
   });
   // Log for debugging (remove after testing)

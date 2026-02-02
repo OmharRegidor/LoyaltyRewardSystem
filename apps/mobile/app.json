@@ -4,30 +4,32 @@
     "slug": "loyaltyhub",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "orientation": "portrait",
     "icon": "./assets/images/noxa_favicon.png",
     "scheme": "NoxaLoyalty",
     "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/noxa_favicon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6366F1"
+      "backgroundColor": "#edeef0"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.NoxaLoyalty.app",
+      "newArchEnabled": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.NoxaLoyalty.app",
+      "newArchEnabled": true,
       "adaptiveIcon": {
-        "backgroundColor": "#6366F1",
-        "foregroundImage": "./assets/images/noxa_favicon.png"
+        "backgroundColor": "#edeef0",
+        "foregroundImage": "./assets/images/adaptive-icon-preview.png"
       },
       "intentFilters": [
         {

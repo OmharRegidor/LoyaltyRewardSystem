@@ -18,6 +18,13 @@ export type FeatureName =
   | 'webhook_notifications'
   | 'dedicated_account_manager';
 
+export type ModuleName = 'loyalty' | 'booking' | 'pos';
+
+export interface ModuleCheckResult {
+  allowed: boolean;
+  reason?: string;
+}
+
 export type LimitType = 'customers' | 'branches' | 'staff';
 
 export interface FeatureCheckResult {
@@ -51,6 +58,80 @@ function getServiceClient() {
       },
     }
   );
+}
+
+/**
+ * Check if a business has access to a specific module (loyalty, booking, pos)
+ * This is the SERVER-SIDE check that cannot be bypassed
+ */
+export async function checkModuleAccess(
+  businessId: string,
+  module: ModuleName
+): Promise<ModuleCheckResult> {
+  const supabase = getServiceClient();
+
+  // Check if business is free forever (has all modules)
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('is_free_forever')
+    .eq('id', businessId)
+    .single();
+
+  if (business?.is_free_forever) {
+    return { allowed: true };
+  }
+
+  // Get subscription and plan module flags
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select(
+      `
+      status,
+      plans (
+        has_loyalty,
+        has_booking,
+        has_pos
+      )
+    `
+    )
+    .eq('business_id', businessId)
+    .single();
+
+  // No subscription or not active
+  if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
+    return {
+      allowed: false,
+      reason: 'No active subscription',
+    };
+  }
+
+  // Check module access in plan
+  const plan = Array.isArray(subscription.plans)
+    ? subscription.plans[0]
+    : subscription.plans;
+
+  if (!plan) {
+    return {
+      allowed: false,
+      reason: 'No plan associated with subscription',
+    };
+  }
+
+  const moduleColumnMap: Record<ModuleName, keyof typeof plan> = {
+    loyalty: 'has_loyalty',
+    booking: 'has_booking',
+    pos: 'has_pos',
+  };
+
+  const columnName = moduleColumnMap[module];
+  const hasAccess = plan[columnName] === true;
+
+  return {
+    allowed: hasAccess,
+    reason: hasAccess
+      ? undefined
+      : `Module "${module}" not available in your plan. Upgrade to Enterprise for access.`,
+  };
 }
 
 /**
@@ -384,6 +465,22 @@ export async function requireWithinLimit(
   if (!result.allowed) {
     const error = new Error(result.reason || 'Limit exceeded');
     (error as Error & { code: string }).code = 'LIMIT_EXCEEDED';
+    throw error;
+  }
+}
+
+/**
+ * Middleware helper to require module access (loyalty, booking, pos)
+ */
+export async function requireModule(
+  businessId: string,
+  module: ModuleName
+): Promise<void> {
+  const result = await checkModuleAccess(businessId, module);
+
+  if (!result.allowed) {
+    const error = new Error(result.reason || 'Module not available');
+    (error as Error & { code: string }).code = 'MODULE_NOT_AVAILABLE';
     throw error;
   }
 }

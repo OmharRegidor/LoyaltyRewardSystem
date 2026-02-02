@@ -1,0 +1,1 @@
+npx supabase gen types typescript --linked > packages/shared/types/database.ts

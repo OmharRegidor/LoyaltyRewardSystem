@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -1268,6 +1269,10 @@ export type Database = {
           p_points: number
           p_staff_id: string
         }
+        Returns: Json
+      }
+      redeem_reward: {
+        Args: { p_customer_id: string; p_reward_id: string }
         Returns: Json
       }
       update_staff_last_login: {
