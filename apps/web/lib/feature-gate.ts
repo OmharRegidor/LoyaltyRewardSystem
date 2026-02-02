@@ -25,6 +25,12 @@ export interface ModuleCheckResult {
   reason?: string;
 }
 
+export interface PlanModuleFlags {
+  has_loyalty: boolean | null;
+  has_booking: boolean | null;
+  has_pos: boolean | null;
+}
+
 export type LimitType = 'customers' | 'branches' | 'staff';
 
 export interface FeatureCheckResult {
@@ -106,18 +112,24 @@ export async function checkModuleAccess(
   }
 
   // Check module access in plan
-  const plan = Array.isArray(subscription.plans)
+  const planData = Array.isArray(subscription.plans)
     ? subscription.plans[0]
     : subscription.plans;
 
-  if (!plan) {
+  if (!planData) {
     return {
       allowed: false,
       reason: 'No plan associated with subscription',
     };
   }
 
-  const moduleColumnMap: Record<ModuleName, keyof typeof plan> = {
+  const plan: PlanModuleFlags = {
+    has_loyalty: 'has_loyalty' in planData ? (planData.has_loyalty as boolean | null) : null,
+    has_booking: 'has_booking' in planData ? (planData.has_booking as boolean | null) : null,
+    has_pos: 'has_pos' in planData ? (planData.has_pos as boolean | null) : null,
+  };
+
+  const moduleColumnMap: Record<ModuleName, keyof PlanModuleFlags> = {
     loyalty: 'has_loyalty',
     booking: 'has_booking',
     pos: 'has_pos',

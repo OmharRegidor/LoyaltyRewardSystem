@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Coding Rules
+
+- Never use `any` type for type declarations. Create type interfaces instead.
+- Build only the minimum viable version of every feature.
+- Follow the anti-overengineering rules.
+
 ## Build & Development Commands
 
 ```bash
@@ -76,7 +82,8 @@ supabase/
 
 **Feature Gating:**
 - Server-side checks in `apps/web/lib/feature-gate.ts`
-- Plans: Core ($34.99/mo), Enterprise ($99.99/mo), Free Forever (special flag)
+- Plans: Free (unlimited loyalty features), Enterprise (contact pricing, includes booking/POS)
+- Module flags: `has_loyalty`, `has_booking`, `has_pos`
 - Gates: customer limits, branch limits, staff limits, API access, custom branding
 
 **Payment Processing:**

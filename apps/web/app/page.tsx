@@ -21,44 +21,60 @@ import Image from 'next/image';
 // PRICING DATA
 // ============================================
 
-const PLANS = [
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  priceLabel: string;
+  period: string;
+  features: string[];
+  cta: string;
+  href: string;
+  highlighted: boolean;
+  primaryButton: boolean;
+}
+
+const PLANS: Plan[] = [
   {
-    id: 'core',
-    name: 'Core',
-    description: 'Perfect for small to medium businesses',
-    priceMonthly: 3499,
-    priceAnnual: 34990,
+    id: 'free',
+    name: 'Free',
+    description: 'Perfect for small businesses getting started',
+    priceLabel: '₱0',
+    period: 'forever',
     features: [
-      'Up to 3,000 customers',
-      'Up to 3 branches',
-      '3 staff per branch',
-      'QR-based loyalty rewards',
-      'Points & stamps system',
-      'Basic analytics',
-      'Email support',
+      'Loyalty & Rewards System',
+      'Unlimited Customers',
+      'Staff Management (up to 5 per branch)',
+      'Up to 3 Branches',
+      'Analytics Dashboard',
+      'QR Code System',
+      'Email Support',
     ],
-    cta: 'Contact Us',
+    cta: 'Sign Up Free',
+    href: '/signup',
     highlighted: false,
+    primaryButton: true,
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    description: 'For growing businesses with multiple locations',
-    priceMonthly: 9999,
-    priceAnnual: 99990,
+    description: 'For growing businesses',
+    priceLabel: 'Contact for Pricing',
+    period: '',
     features: [
-      'Unlimited customers',
-      'Unlimited branches',
-      'Unlimited staff',
-      'Advanced analytics',
-      'API access',
-      'Webhooks integration',
-      'Custom branding',
-      'Priority support',
-      'Dedicated account manager',
+      'Everything in Free, plus:',
+      'Booking System',
+      'POS System',
+      'Unlimited Branches',
+      'Unlimited Staff',
+      'Priority Support',
+      'Custom Integrations',
+      'Dedicated Account Manager',
     ],
-    cta: 'Contact Us',
+    cta: 'Book a Call',
+    href: '/book-call',
     highlighted: true,
+    primaryButton: false,
   },
 ];
 
@@ -336,146 +352,6 @@ function PricingSection({
 }: {
   containerVariants: Variants;
 }) {
-  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>(
-    'annual',
-  );
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const getAnnualSavings = (monthly: number, annual: number): number => {
-    const yearlyIfMonthly = monthly * 12;
-    return Math.round(((yearlyIfMonthly - annual) / yearlyIfMonthly) * 100);
-  };
-
-  // Contact Us Modal
-  const ContactModal = () => {
-    if (!showContactModal) return null;
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowContactModal(false)}
-        />
-
-        {/* Modal */}
-        <div className="relative w-full max-w-md bg-background rounded-2xl shadow-2xl border border-border overflow-hidden">
-          {/* Header */}
-          <div className="bg-linear-to-r from-primary to-secondary p-6 text-white">
-            <h3 className="text-xl font-bold">
-              Get Started with {selectedPlan}
-            </h3>
-            <p className="text-white/80 text-sm mt-1">
-              We'll help you set up your account
-            </p>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            <p className="text-muted-foreground mb-6">
-              To get started with NoxaLoyalty, please contact us via email with
-              your business details.
-            </p>
-
-            {/* Steps */}
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">1</span>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Send us an email</p>
-                  <p className="text-xs text-muted-foreground">
-                    Include your business name and chosen plan
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">2</span>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">
-                    We'll send payment details
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Bank transfer or GCash options available
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">3</span>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Account activation</p>
-                  <p className="text-xs text-muted-foreground">
-                    We'll set up your account within 24 hours
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Box */}
-            <div className="bg-muted/50 rounded-xl p-4 mb-6">
-              <p className="text-xs text-muted-foreground mb-2">
-                Send your inquiry to:
-              </p>
-              <a className="text-lg font-semibold text-primary hover:underline">
-                noxa.company@gmail.com
-              </a>
-            </div>
-
-            {/* What to Include */}
-            <div className="text-xs text-muted-foreground mb-6">
-              <p className="font-medium mb-2">Please include in your email:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Business name</li>
-                <li>Owner's full name</li>
-                <li>Contact number</li>
-                <li>
-                  Preferred plan:{' '}
-                  <span className="font-medium text-foreground">
-                    {selectedPlan} ({billingInterval})
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowContactModal(false)}
-              >
-                Close
-              </Button>
-              <a
-                href="https://mail.google.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-primary text-primary-foreground inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 hover:opacity-90"
-              >
-                Send Email
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <section
       id="pricing"
@@ -492,124 +368,72 @@ function PricingSection({
           <h2 className="text-4xl sm:text-5xl font-bold mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-lg text-muted-foreground">
             Choose the plan that fits your business
           </p>
-
-          {/* Billing Interval Toggle */}
-          <div className="inline-flex items-center gap-3 p-1.5 bg-muted dark:bg-muted/50 rounded-full">
-            <button
-              onClick={() => setBillingInterval('monthly')}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
-                billingInterval === 'monthly'
-                  ? 'bg-background dark:bg-background shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingInterval('annual')}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                billingInterval === 'annual'
-                  ? 'bg-background dark:bg-background shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Annual
-              <span className="bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full">
-                Save 17%
-              </span>
-            </button>
-          </div>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {PLANS.map((plan, index) => {
-            const price =
-              billingInterval === 'annual'
-                ? plan.priceAnnual
-                : plan.priceMonthly;
-            const period = billingInterval === 'annual' ? '/year' : '/month';
-            const savings = getAnnualSavings(
-              plan.priceMonthly,
-              plan.priceAnnual,
-            );
-
-            return (
-              <motion.div
-                key={plan.id}
-                className={`relative rounded-2xl p-8 border transition-all duration-300 bg-card ${
-                  plan.highlighted
-                    ? 'border-secondary shadow-2xl dark:shadow-secondary/20 md:scale-105'
-                    : 'border-border dark:border-border hover:border-secondary/50 dark:hover:border-secondary/40'
-                }`}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, scale: 0.95 },
-                  visible: {
-                    opacity: 1,
-                    scale: plan.highlighted ? 1.05 : 1,
-                    transition: { duration: 0.5, delay: index * 0.1 },
-                  },
-                }}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-secondary text-secondary-foreground text-sm font-semibold rounded-full">
-                    Most Popular
-                  </div>
-                )}
-
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <p className="text-muted-foreground mb-6">{plan.description}</p>
-
-                <div className="mb-2">
-                  <span className="text-5xl font-bold">
-                    {formatPrice(price)}
-                  </span>
-                  <span className="text-muted-foreground ml-2">{period}</span>
+          {PLANS.map((plan, index) => (
+            <motion.div
+              key={plan.id}
+              className={`relative rounded-2xl p-8 border transition-all duration-300 bg-card ${
+                plan.highlighted
+                  ? 'border-secondary shadow-2xl dark:shadow-secondary/20 md:scale-105'
+                  : 'border-border dark:border-border hover:border-secondary/50 dark:hover:border-secondary/40'
+              }`}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{
+                hidden: { opacity: 0, scale: 0.95 },
+                visible: {
+                  opacity: 1,
+                  scale: plan.highlighted ? 1.05 : 1,
+                  transition: { duration: 0.5, delay: index * 0.1 },
+                },
+              }}
+            >
+              {plan.highlighted && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-secondary text-secondary-foreground text-sm font-semibold rounded-full">
+                  Most Popular
                 </div>
+              )}
 
-                {billingInterval === 'annual' && (
-                  <p className="text-sm text-green-600 dark:text-green-400 mb-6">
-                    Save {savings}% compared to monthly
-                  </p>
-                )}
-                {billingInterval === 'monthly' && (
-                  <p className="text-sm text-muted-foreground mb-6">
-                    or {formatPrice(plan.priceAnnual)}/year (save {savings}%)
-                  </p>
-                )}
+              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+              <p className="text-muted-foreground mb-6">{plan.description}</p>
 
+              <div className="mb-6">
+                <span className="text-5xl font-bold">{plan.priceLabel}</span>
+                {plan.period && (
+                  <span className="text-muted-foreground ml-2">/{plan.period}</span>
+                )}
+              </div>
+
+              <Link href={plan.href}>
                 <Button
                   className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
-                    plan.highlighted
+                    plan.primaryButton
                       ? 'bg-linear-to-r from-primary to-secondary text-primary-foreground hover:opacity-90'
-                      : 'border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/5'
+                      : 'border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground'
                   }`}
-                  variant={plan.highlighted ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSelectedPlan(plan.name);
-                    setShowContactModal(true);
-                  }}
+                  variant={plan.primaryButton ? 'default' : 'ghost'}
                 >
                   {plan.cta}
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
+              </Link>
 
-                <div className="space-y-3">
-                  {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-green-500 shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            );
-          })}
+              <div className="space-y-3">
+                {plan.features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Check className="w-5 h-5 text-green-500 shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Target Markets */}
@@ -639,7 +463,6 @@ function PricingSection({
             ))}
           </div>
         </motion.div>
-        <ContactModal />
       </div>
     </section>
   );
