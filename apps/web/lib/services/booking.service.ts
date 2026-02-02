@@ -1,7 +1,7 @@
 // apps/web/lib/services/booking.service.ts
 
 import { createClient } from '@/lib/supabase';
-import type { Service, ServiceFormData, Branch } from '@/types/booking.types';
+import type { Service, ServiceFormData, Branch, Availability, AvailabilityFormData } from '@/types/booking.types';
 
 // ============================================
 // GET SERVICES
@@ -148,4 +148,71 @@ export async function getBranches(businessId: string): Promise<Branch[]> {
   }
 
   return data || [];
+}
+
+// ============================================
+// GET AVAILABILITY
+// ============================================
+
+export async function getAvailability(businessId: string): Promise<Availability[]> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('availability')
+    .select('*')
+    .eq('business_id', businessId)
+    .is('branch_id', null)
+    .is('staff_id', null)
+    .order('day_of_week');
+
+  if (error) {
+    console.error('Error fetching availability:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+// ============================================
+// SAVE AVAILABILITY
+// ============================================
+
+export async function saveAvailability(
+  businessId: string,
+  data: AvailabilityFormData[]
+): Promise<void> {
+  const supabase = createClient();
+
+  // Delete existing business-level availability
+  const { error: deleteError } = await supabase
+    .from('availability')
+    .delete()
+    .eq('business_id', businessId)
+    .is('branch_id', null)
+    .is('staff_id', null);
+
+  if (deleteError) {
+    console.error('Error deleting availability:', deleteError);
+    throw deleteError;
+  }
+
+  // Insert new records
+  const records = data.map((item) => ({
+    business_id: businessId,
+    branch_id: null,
+    staff_id: null,
+    day_of_week: item.day_of_week,
+    start_time: item.start_time,
+    end_time: item.end_time,
+    is_available: item.is_available,
+  }));
+
+  const { error: insertError } = await supabase
+    .from('availability')
+    .insert(records);
+
+  if (insertError) {
+    console.error('Error saving availability:', insertError);
+    throw insertError;
+  }
 }
