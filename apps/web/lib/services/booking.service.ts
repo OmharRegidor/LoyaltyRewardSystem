@@ -1,7 +1,15 @@
 // apps/web/lib/services/booking.service.ts
 
 import { createClient } from '@/lib/supabase';
-import type { Service, ServiceFormData, Branch, Availability, AvailabilityFormData } from '@/types/booking.types';
+import type {
+  Service,
+  ServiceFormData,
+  Branch,
+  Availability,
+  AvailabilityFormData,
+  BookingWithDetails,
+  BookingStatus,
+} from '@/types/booking.types';
 
 // ============================================
 // GET SERVICES
@@ -214,5 +222,64 @@ export async function saveAvailability(
   if (insertError) {
     console.error('Error saving availability:', insertError);
     throw insertError;
+  }
+}
+
+// ============================================
+// GET BOOKINGS
+// ============================================
+
+export async function getBookings(
+  businessId: string,
+  date: string
+): Promise<BookingWithDetails[]> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .select(`
+      *,
+      service:services(*)
+    `)
+    .eq('business_id', businessId)
+    .eq('booking_date', date)
+    .order('start_time', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching bookings:', error);
+    throw error;
+  }
+
+  return (data || []) as BookingWithDetails[];
+}
+
+// ============================================
+// UPDATE BOOKING STATUS
+// ============================================
+
+export async function updateBookingStatus(
+  id: string,
+  status: BookingStatus,
+  cancellationReason?: string
+): Promise<void> {
+  const supabase = createClient();
+
+  const updateData: Record<string, unknown> = { status };
+
+  if (status === 'cancelled') {
+    updateData.cancelled_at = new Date().toISOString();
+    if (cancellationReason) {
+      updateData.cancellation_reason = cancellationReason;
+    }
+  }
+
+  const { error } = await supabase
+    .from('bookings')
+    .update(updateData)
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating booking status:', error);
+    throw error;
   }
 }

@@ -131,3 +131,7 @@ npm run db:types
 - No test framework is currently configured
 - Mobile deep linking scheme: `NoxaLoyalty://`
 - Staff invite system uses token-based email verification
+
+## MCP Tools
+
+- Always use Context7 MCP when library/API documentation, code generation, setup or configuration steps are needed - without requiring explicit user request.

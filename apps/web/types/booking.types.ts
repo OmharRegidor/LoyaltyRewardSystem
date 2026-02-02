@@ -47,3 +47,36 @@ export interface AvailabilityFormData {
   start_time: string;
   end_time: string;
 }
+
+// ============================================
+// BOOKING TYPES
+// ============================================
+
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+
+export interface Booking {
+  id: string;
+  business_id: string;
+  branch_id: string | null;
+  service_id: string;
+  staff_id: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  status: BookingStatus;
+  notes: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  service?: Service;
+}
+
+export interface BookingWithDetails extends Booking {
+  service: Service;
+}
