@@ -15,7 +15,8 @@
       "Bash(./node_modules/.bin/tsc:*)",
       "Bash(timeout 15 npm run dev:web:*)",
       "Bash(timeout 20 npm run dev)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

@@ -13,7 +13,7 @@ import {
 } from '@/lib/qr-code';
 import { sendWelcomeEmail } from '@/lib/email';
 import { z } from 'zod';
-import type { Json } from '@/../../packages/shared/types/database';
+import type { Json } from '../../../../../../packages/shared/types/database';
 
 // ============================================
 // VALIDATION SCHEMA
