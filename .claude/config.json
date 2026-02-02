@@ -1,0 +1,10 @@
+{
+  "model": {
+    "thinking": "claude-opus-4-5-20250514",
+    "coding": "claude-sonnet-4-5-20250514"
+  },
+  "preferences": {
+    "autoApprove": false,
+    "showDiff": true
+  }
+}
