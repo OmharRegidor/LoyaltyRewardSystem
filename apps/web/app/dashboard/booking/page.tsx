@@ -5,6 +5,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { BookingDetailDialog } from '@/components/booking/booking-detail-dialog';
+import { CreateBookingModal } from '@/components/booking/create-booking-modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -354,6 +355,7 @@ export default function BookingsPage() {
   const [viewMode, setViewMode] = useState<'day' | 'list'>('day');
   const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // ============================================
   // LOAD DATA
@@ -485,7 +487,7 @@ export default function BookingsPage() {
               Manage customer appointments
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             New Booking
           </Button>
@@ -566,6 +568,18 @@ export default function BookingsPage() {
           }}
           onStatusChange={handleStatusChange}
         />
+
+        {/* Create Booking Modal */}
+        {businessId && (
+          <CreateBookingModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSuccess={() => {
+              loadBookings();
+            }}
+            businessId={businessId}
+          />
+        )}
       </motion.div>
     </DashboardLayout>
   );

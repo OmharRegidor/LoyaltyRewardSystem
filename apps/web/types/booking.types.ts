@@ -80,3 +80,32 @@ export interface Booking {
 export interface BookingWithDetails extends Booking {
   service: Service;
 }
+
+// ============================================
+// CREATE BOOKING TYPES
+// ============================================
+
+export interface CreateBookingFormData {
+  service_id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
+  booking_date: string;
+  start_time: string;
+  staff_id: string | null;
+  notes: string | null;
+}
+
+export interface TimeSlot {
+  value: string; // "09:00"
+  label: string; // "9:00 AM"
+  available: boolean;
+}
+
+export interface CustomerSearchResult {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
