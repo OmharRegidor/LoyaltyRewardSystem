@@ -5,6 +5,20 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { Database } from '../../../../../packages/shared/types/database';
 
+// Cookie storage that collects cookies to be set on the response
+interface PendingCookie {
+  name: string;
+  value: string;
+  options?: {
+    domain?: string;
+    path?: string;
+    maxAge?: number;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: 'lax' | 'strict' | 'none';
+  };
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
@@ -32,7 +46,10 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
-  // Create supabase client
+  // Collect cookies that need to be set on the response
+  const pendingCookies: PendingCookie[] = [];
+
+  // Create supabase client that collects cookies instead of setting them directly
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,18 +59,19 @@ export async function GET(request: Request) {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
+          // Collect cookies to set on response later
           cookiesToSet.forEach(({ name, value, options }) => {
-            try {
-              cookieStore.set(name, value, {
+            pendingCookies.push({
+              name,
+              value,
+              options: {
                 ...options,
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax',
                 maxAge: 60 * 60 * 24 * 365, // 1 year
-              });
-            } catch {
-              // Ignore errors in edge runtime
-            }
+              },
+            });
           });
         },
       },
@@ -85,6 +103,15 @@ export async function GET(request: Request) {
     session = data.session;
     user = data.user;
     console.log('OTP verified, user:', user?.id, 'session:', !!session);
+
+    // Explicitly set the session to trigger setAll callback
+    // verifyOtp doesn't automatically trigger cookie storage updates
+    if (session) {
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+    }
   }
 
   // Handle OAuth code exchange (Google, etc.)
@@ -107,6 +134,15 @@ export async function GET(request: Request) {
     session = data.session;
     user = data.user;
     console.log('Code exchanged, user:', user?.id, 'session:', !!session);
+
+    // Explicitly set the session to trigger setAll callback
+    // exchangeCodeForSession doesn't automatically trigger cookie storage updates
+    if (session) {
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+    }
   }
 
   // If we have a session and user, set up their account and redirect
@@ -138,63 +174,20 @@ export async function GET(request: Request) {
       new URL(finalRedirectPath, requestUrl.origin),
     );
 
-    // Manually set the session cookies on the response
-    // This ensures they're properly set even across devices
-    if (session.access_token && session.refresh_token) {
-      const cookieOptions = {
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        httpOnly: true,
-      };
-
-      // Set auth cookies
-      response.cookies.set(
-        'sb-access-token',
-        session.access_token,
-        cookieOptions,
-      );
-      response.cookies.set('sb-refresh-token', session.refresh_token, {
-        ...cookieOptions,
-        maxAge: 60 * 60 * 24 * 365, // 1 year for refresh token
-      });
-      // Add this right after setting the other cookies
-      response.cookies.set('auth_timestamp', Date.now().toString(), {
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 10, // Only needed for 10 seconds
-        httpOnly: false,
-      });
-
-      // Also set the Supabase auth cookie format
-      const projectRef =
-        process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)\./)?.[1];
-
-      if (projectRef) {
-        response.cookies.set(
-          `sb-${projectRef}-auth-token`,
-          JSON.stringify({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token,
-            expires_at: Math.floor(Date.now() / 1000) + session.expires_in,
-            expires_in: session.expires_in,
-            token_type: 'bearer',
-            user: user,
-          }),
-          {
-            path: '/',
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 365,
-            httpOnly: false, // This one needs to be accessible by JS
-          },
-        );
-      }
+    // Apply all pending cookies from Supabase auth operations to the response
+    // This is critical: cookies collected during verifyOtp/exchangeCodeForSession
+    // must be set on the response object, not just the cookieStore
+    for (const cookie of pendingCookies) {
+      response.cookies.set(cookie.name, cookie.value, cookie.options);
     }
 
-    console.log('Redirecting to:', finalRedirectPath);
+    console.log(
+      'Redirecting to:',
+      finalRedirectPath,
+      'with',
+      pendingCookies.length,
+      'auth cookies',
+    );
     return response;
   }
 

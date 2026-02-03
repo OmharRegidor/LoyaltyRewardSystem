@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Briefcase,
   Clock,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -22,6 +23,8 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase';
+import { UpgradeModal } from '@/components/upgrade-modal';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -30,6 +33,9 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
+  const [hasBookingAccess, setHasBookingAccess] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [blockedFeature, setBlockedFeature] = useState<string | undefined>();
 
   useEffect(() => {
     const stored = localStorage.getItem('theme');
@@ -42,6 +48,31 @@ export function Sidebar({ onClose }: SidebarProps) {
     } else if (prefersDark) {
       setIsDark(true);
     }
+  }, []);
+
+  // Check if business has booking access
+  useEffect(() => {
+    const checkBookingAccess = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('has_booking, plan')
+        .eq('owner_id', user.id)
+        .single();
+
+      // Enterprise plan or has_booking flag grants access
+      if (business) {
+        setHasBookingAccess(
+          business.has_booking === true ||
+          business.plan === 'enterprise'
+        );
+      }
+    };
+
+    checkBookingAccess();
   }, []);
 
   const toggleDarkMode = () => {
@@ -58,17 +89,22 @@ export function Sidebar({ onClose }: SidebarProps) {
   };
 
   const navItems = [
-    { icon: Home, label: 'Dashboard', href: '/dashboard' },
-    { icon: Users, label: 'Customers', href: '/dashboard/customers' },
-    { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
-    { icon: UserRound, label: 'Team', href: '/dashboard/team' },
-    { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
-    // TODO: Only show booking items if business.plan has booking feature enabled
-    { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking' },
-    { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services' },
-    { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability' },
-    { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+    { icon: Home, label: 'Dashboard', href: '/dashboard', requiresBooking: false },
+    { icon: Users, label: 'Customers', href: '/dashboard/customers', requiresBooking: false },
+    { icon: Gift, label: 'Rewards', href: '/dashboard/rewards', requiresBooking: false },
+    { icon: UserRound, label: 'Team', href: '/dashboard/team', requiresBooking: false },
+    { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics', requiresBooking: false },
+    { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking', requiresBooking: true },
+    { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services', requiresBooking: true },
+    { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability', requiresBooking: true },
+    { icon: Settings, label: 'Settings', href: '/dashboard/settings', requiresBooking: false },
   ];
+
+  const handleLockedClick = (e: React.MouseEvent, label: string) => {
+    e.preventDefault();
+    setBlockedFeature(label);
+    setShowUpgradeModal(true);
+  };
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
@@ -98,6 +134,24 @@ export function Sidebar({ onClose }: SidebarProps) {
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const isLocked = item.requiresBooking && !hasBookingAccess;
+
+          if (isLocked) {
+            return (
+              <button
+                key={item.href}
+                onClick={(e) => handleLockedClick(e, item.label)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                  'text-muted-foreground hover:bg-muted/50 cursor-pointer',
+                )}
+              >
+                <Icon className="w-5 h-5 shrink-0 opacity-50" />
+                <span className="font-medium flex-1 text-left opacity-70">{item.label}</span>
+                <Lock className="w-4 h-4 opacity-50" />
+              </button>
+            );
+          }
 
           return (
             <Link
@@ -162,6 +216,13 @@ export function Sidebar({ onClose }: SidebarProps) {
           Logout
         </button>
       </motion.div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={blockedFeature}
+      />
     </motion.div>
   );
 }

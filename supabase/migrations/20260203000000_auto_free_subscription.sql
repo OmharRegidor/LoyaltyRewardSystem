@@ -82,7 +82,8 @@ BEGIN
       true,
       now()
     )
-    ON CONFLICT DO NOTHING; -- Prevent duplicates if trigger fires twice
+    ON CONFLICT (business_id) DO UPDATE SET
+      updated_at = now(); -- No-op update if subscription already exists
   END IF;
 
   RETURN NEW;

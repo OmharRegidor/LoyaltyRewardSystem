@@ -546,12 +546,11 @@ export default function DashboardPage() {
                 Preview Mode
               </p>
               <p className="text-sm text-amber-700 dark:text-amber-300">
-                You’re viewing demo data. Upgrade via{' '}
-                {/* Change this Link to /checkout/core to use xendit*/}
-                <Link href="/" className="underline font-semibold">
-                  Home Page → Pricing
+                You're viewing demo data. Want Booking & POS?{' '}
+                <Link href="/book-call" className="underline font-semibold">
+                  Book a Call
                 </Link>{' '}
-                to see real-time performance.
+                to upgrade to Enterprise.
               </p>
             </div>
           </div>

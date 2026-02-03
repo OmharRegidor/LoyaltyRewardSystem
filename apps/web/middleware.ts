@@ -173,30 +173,58 @@ export async function middleware(request: NextRequest) {
 
     // No user - redirect to login
     if (!user || error) {
+      console.log('[Middleware] No user found, redirecting to login', {
+        pathname,
+        error: error?.message,
+      });
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
     const userId = user.id;
+    console.log('[Middleware] User authenticated:', {
+      userId,
+      email: user.email,
+      pathname,
+    });
 
     // Check if user is business owner
-    const { data: business } = await supabase
+    const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('id, subscription_status')
       .eq('owner_id', userId)
       .maybeSingle();
 
+    console.log('[Middleware] Business query result:', {
+      userId,
+      business: business ? { id: business.id, status: business.subscription_status } : null,
+      error: businessError?.message,
+    });
+
     // Check if user is staff
-    const { data: staff } = await supabase
+    const { data: staff, error: staffError } = await supabase
       .from('staff')
       .select('id, role, is_active, business_id')
       .eq('user_id', userId)
       .eq('is_active', true)
       .maybeSingle();
 
+    console.log('[Middleware] Staff query result:', {
+      userId,
+      staff: staff ? { id: staff.id, role: staff.role } : null,
+      error: staffError?.message,
+    });
+
     const isOwner = !!business;
     const isStaff = !!staff;
+
+    console.log('[Middleware] Role determination:', {
+      userId,
+      isOwner,
+      isStaff,
+      pathname,
+    });
 
     // ========================================
     // ROUTE PROTECTION LOGIC

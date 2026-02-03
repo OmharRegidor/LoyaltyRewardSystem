@@ -3,7 +3,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Crown, Check, ArrowRight } from 'lucide-react';
+import { X, Zap, Check, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface UpgradeModalProps {
@@ -13,12 +13,12 @@ interface UpgradeModalProps {
 }
 
 const FEATURES = [
-  'Add unlimited customers',
-  'Create custom rewards',
-  'Invite team members',
-  'Access real-time analytics',
-  'QR-based loyalty rewards',
-  'Priority support',
+  'Booking System - Online appointments & scheduling',
+  'POS Integration - Seamless point of sale',
+  'Unlimited customers & branches',
+  'Advanced analytics & reporting',
+  'API access & webhooks',
+  'Priority support & dedicated account manager',
 ];
 
 export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
@@ -57,11 +57,11 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Zap className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Upgrade to Unlock</h2>
+            <h2 className="text-2xl font-bold mb-2">Upgrade to Enterprise</h2>
             <p className="text-blue-100 text-sm">
               {feature
-                ? `"${feature}" requires a paid subscription`
-                : 'Get full access to all features'}
+                ? `"${feature}" requires the Enterprise plan`
+                : 'Unlock Booking, POS, and more'}
             </p>
           </div>
 
@@ -70,9 +70,9 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
               You're currently on the{' '}
               <span className="font-semibold text-gray-900 dark:text-white">
-                Preview
+                Free
               </span>{' '}
-              mode. Upgrade to unlock all features:
+              plan. Upgrade to Enterprise to unlock:
             </p>
 
             {/* Features list */}
@@ -89,31 +89,13 @@ export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
               ))}
             </div>
 
-            {/* Pricing hint */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Starting at
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ₱3,499
-                    <span className="text-sm font-normal text-gray-500">
-                      /month
-                    </span>
-                  </p>
-                </div>
-                <Crown className="w-8 h-8 text-amber-500" />
-              </div>
-            </div>
-
             {/* CTA Buttons */}
             <div className="flex flex-col gap-3">
               <Link
-                href="/"
+                href="/book-call"
                 className="w-full py-3 px-4 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold text-center hover:shadow-lg hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-2"
               >
-                View Pricing
+                Book a Call
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <button

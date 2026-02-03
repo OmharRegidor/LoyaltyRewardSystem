@@ -60,56 +60,68 @@ export const SUBSCRIPTION_STATUS_COPY = {
 
 export const UPGRADE_PROMPTS = {
   generic: {
-    title: 'Upgrade to Unlock',
+    title: 'Upgrade to Enterprise',
     description:
-      'This feature is available on paid plans. Upgrade to access all features and grow your business.',
-    cta: 'View Plans',
+      'This feature requires the Enterprise plan. Book a call to learn more about upgrading.',
+    cta: 'Book a Call',
   },
 
   // Feature-specific prompts
+  booking: {
+    title: 'Unlock Booking System',
+    description:
+      'Online appointment scheduling with automated reminders and calendar sync. Available on the Enterprise plan.',
+    cta: 'Book a Call',
+  },
+  pos: {
+    title: 'Unlock POS Integration',
+    description:
+      'Integrated point of sale system that connects with your loyalty program seamlessly. Available on the Enterprise plan.',
+    cta: 'Book a Call',
+  },
   advanced_analytics: {
     title: 'Unlock Advanced Analytics',
     description:
       'Get deeper insights into your customer behavior, revenue trends, and loyalty program performance with our Enterprise plan.',
-    cta: 'Upgrade to Enterprise',
+    cta: 'Book a Call',
   },
   api_access: {
     title: 'API Access Available',
     description:
       'Integrate NoxaLoyalty with your existing systems using our powerful API. Available on the Enterprise plan.',
-    cta: 'Upgrade to Enterprise',
+    cta: 'Book a Call',
   },
   custom_branding: {
     title: 'Customize Your Brand',
     description:
       'Remove NoxaLoyalty branding and customize the look and feel to match your business. Available on Enterprise.',
-    cta: 'Upgrade to Enterprise',
+    cta: 'Book a Call',
   },
   webhook_notifications: {
     title: 'Real-time Webhooks',
     description:
       'Get instant notifications when customers earn or redeem points. Perfect for integrations.',
-    cta: 'Upgrade to Enterprise',
+    cta: 'Book a Call',
   },
 
   // Limit-specific prompts
   customers_limit: {
     title: 'Customer Limit Reached',
     description:
-      "You've reached the maximum number of customers on your current plan. Upgrade to add more customers to your loyalty program.",
-    cta: 'Upgrade for More Customers',
+      "You've reached the maximum number of customers on your current plan. Book a call to discuss upgrading to Enterprise.",
+    cta: 'Book a Call',
   },
   branches_limit: {
     title: 'Branch Limit Reached',
     description:
-      "You've reached the maximum number of branch locations. Upgrade to Enterprise for unlimited branches.",
-    cta: 'Upgrade for More Branches',
+      "You've reached the maximum number of branch locations. Book a call to upgrade to Enterprise for unlimited branches.",
+    cta: 'Book a Call',
   },
   staff_limit: {
     title: 'Staff Limit Reached',
     description:
-      "You've reached the maximum number of staff accounts. Upgrade to add more team members.",
-    cta: 'Upgrade for More Staff',
+      "You've reached the maximum number of staff accounts. Book a call to discuss upgrading.",
+    cta: 'Book a Call',
   },
 } as const;
 
@@ -202,13 +214,13 @@ export const ERROR_MESSAGES = {
 // ============================================
 
 export const PLAN_COMPARISON = {
-  core: {
-    name: 'Core',
-    tagline: 'Perfect for small to medium businesses',
+  free: {
+    name: 'Free',
+    tagline: 'Everything you need for loyalty rewards',
     highlights: [
-      'Up to 3,000 customers',
-      '3 branch locations',
-      '3 staff accounts',
+      'Unlimited customers',
+      'Unlimited rewards',
+      'Team member accounts',
       'QR-based loyalty system',
       'Basic analytics',
       'Email support',
@@ -216,11 +228,11 @@ export const PLAN_COMPARISON = {
   },
   enterprise: {
     name: 'Enterprise',
-    tagline: 'For growing businesses with multiple locations',
+    tagline: 'For businesses that need booking & POS',
     highlights: [
-      'Unlimited customers',
-      'Unlimited branches',
-      'Unlimited staff',
+      'Everything in Free',
+      'Booking System',
+      'POS Integration',
       'Advanced analytics',
       'API access & webhooks',
       'Priority support',
