@@ -3,7 +3,13 @@
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, EyeOff, Coins } from 'lucide-react';
+import { Edit, Trash2, Eye, EyeOff, Coins, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Reward {
   id: string;
@@ -165,35 +171,72 @@ function RewardCard({
 
         {/* Actions */}
         <div className="flex gap-2 pt-2 border-t border-border">
-          <button
-            onClick={() => onToggleStatus(reward.id)}
-            className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
-          >
-            {reward.isVisible !== false ? (
-              <>
-                <EyeOff className="w-4 h-4" />
-                Hide
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4" />
-                Show
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => onEdit?.(reward.id)}
-            className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
-          >
-            <Edit className="w-4 h-4" />
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(reward.id)}
-            className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {/* Desktop: Inline buttons */}
+          <div className="hidden md:flex gap-2 flex-1">
+            <button
+              onClick={() => onToggleStatus(reward.id)}
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
+            >
+              {reward.isVisible !== false ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  Show
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => onEdit?.(reward.id)}
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+            <button
+              onClick={() => onDelete(reward.id)}
+              className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Mobile: Dropdown menu */}
+          <div className="md:hidden flex-1 flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-2 hover:bg-muted rounded-lg transition">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onToggleStatus(reward.id)}>
+                  {reward.isVisible !== false ? (
+                    <>
+                      <EyeOff className="w-4 h-4" />
+                      Hide
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      Show
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit?.(reward.id)}>
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={() => onDelete(reward.id)}>
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </Card>
@@ -273,28 +316,65 @@ function RewardListItem({
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={() => onToggleStatus(reward.id)}
-                className="p-2 hover:bg-muted rounded-lg transition"
-              >
-                {reward.isVisible !== false ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-              <button
-                onClick={() => onEdit?.(reward.id)}
-                className="p-2 hover:bg-muted rounded-lg transition"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(reward.id)}
-                className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {/* Desktop: Inline buttons */}
+              <div className="hidden md:flex gap-2">
+                <button
+                  onClick={() => onToggleStatus(reward.id)}
+                  className="p-2 hover:bg-muted rounded-lg transition"
+                >
+                  {reward.isVisible !== false ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+                <button
+                  onClick={() => onEdit?.(reward.id)}
+                  className="p-2 hover:bg-muted rounded-lg transition"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(reward.id)}
+                  className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Mobile: Dropdown menu */}
+              <div className="md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 hover:bg-muted rounded-lg transition">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onToggleStatus(reward.id)}>
+                      {reward.isVisible !== false ? (
+                        <>
+                          <EyeOff className="w-4 h-4" />
+                          Hide
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4" />
+                          Show
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit?.(reward.id)}>
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(reward.id)}>
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>

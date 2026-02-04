@@ -165,8 +165,8 @@
     @apply bg-gradient-to-r from-primary via-primary to-pink-400;
   }
 
-  /* Dark mode specific animations for blob elements */
-  @keyframes dark-blob {
+  /* Blob animation for background effects */
+  @keyframes blob {
     0%,
     100% {
       transform: translate(0, 0) scale(1);
@@ -179,8 +179,21 @@
     }
   }
 
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Dark mode specific animations for blob elements */
   .dark .animate-blob {
-    animation: dark-blob 7s infinite;
+    animation: blob 7s infinite;
     opacity: 0.15;
   }
 

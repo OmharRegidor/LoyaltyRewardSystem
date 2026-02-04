@@ -3,6 +3,12 @@
 import { notFound } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase-server';
 import { verifyCardToken } from '@/lib/qr-code';
+import {
+  getPublicRewards,
+  getCustomerTransactions,
+  type PublicReward,
+  type PublicTransaction,
+} from '@/lib/services/public-business.service';
 import { CardView } from './card-view';
 
 // ============================================
@@ -28,6 +34,12 @@ interface CustomerData {
     address: string | null;
     city: string | null;
   } | null;
+}
+
+interface CardPageData {
+  customer: CustomerData;
+  rewards: PublicReward[];
+  transactions: PublicTransaction[];
 }
 
 // ============================================
@@ -103,6 +115,28 @@ async function getCustomerByToken(token: string): Promise<CustomerData | null> {
   };
 }
 
+async function getCardPageData(token: string): Promise<CardPageData | null> {
+  const customer = await getCustomerByToken(token);
+  if (!customer) {
+    return null;
+  }
+
+  // Fetch rewards and transactions in parallel if business exists
+  let rewards: PublicReward[] = [];
+  let transactions: PublicTransaction[] = [];
+
+  if (customer.business) {
+    const [rewardsResult, transactionsResult] = await Promise.all([
+      getPublicRewards(customer.business.id),
+      getCustomerTransactions(customer.id, customer.business.id),
+    ]);
+    rewards = rewardsResult;
+    transactions = transactionsResult;
+  }
+
+  return { customer, rewards, transactions };
+}
+
 // ============================================
 // PAGE COMPONENT
 // ============================================
@@ -115,13 +149,20 @@ export default async function CardPage({ params }: PageProps) {
     notFound();
   }
 
-  const customer = await getCustomerByToken(token);
+  const data = await getCardPageData(token);
 
-  if (!customer) {
+  if (!data) {
     notFound();
   }
 
-  return <CardView customer={customer} token={token} />;
+  return (
+    <CardView
+      customer={data.customer}
+      token={token}
+      rewards={data.rewards}
+      transactions={data.transactions}
+    />
+  );
 }
 
 // ============================================
@@ -130,19 +171,19 @@ export default async function CardPage({ params }: PageProps) {
 
 export async function generateMetadata({ params }: PageProps) {
   const { token } = await params;
-  const customer = await getCustomerByToken(token);
+  const data = await getCardPageData(token);
 
-  if (!customer) {
+  if (!data) {
     return {
       title: 'Card Not Found | NoxaLoyalty',
     };
   }
 
   return {
-    title: `${customer.fullName} - Loyalty Card | ${
-      customer.business?.name || 'NoxaLoyalty'
+    title: `${data.customer.fullName} - Loyalty Card | ${
+      data.customer.business?.name || 'NoxaLoyalty'
     }`,
-    description: `Digital loyalty card for ${customer.fullName}`,
+    description: `Digital loyalty card for ${data.customer.fullName}`,
     robots: 'noindex, nofollow', // Don't index card pages
   };
 }

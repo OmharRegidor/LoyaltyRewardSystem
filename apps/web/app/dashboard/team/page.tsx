@@ -223,7 +223,7 @@ export default function TeamManagementPage() {
           </div>
           <button
             onClick={handleInviteClick}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Invite Team Member

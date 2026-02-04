@@ -4,7 +4,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Download, CreditCard, Star, MapPin, Phone, Mail } from 'lucide-react';
+import { Download, CreditCard, Star, MapPin, Phone, Mail, Gift, Clock } from 'lucide-react';
+import { RewardsTab } from './rewards-tab';
+import { TransactionsTab } from './transactions-tab';
 
 // ============================================
 // TYPES
@@ -27,10 +29,33 @@ interface CustomerData {
   } | null;
 }
 
+interface Reward {
+  id: string;
+  title: string;
+  description: string | null;
+  points_cost: number;
+  category: string | null;
+  image_url: string | null;
+  stock: number | null;
+}
+
+interface Transaction {
+  id: string;
+  type: 'earn' | 'redeem' | 'adjust' | 'expire';
+  points: number;
+  description: string | null;
+  created_at: string;
+  reward_title: string | null;
+}
+
 interface CardViewProps {
   customer: CustomerData;
   token: string;
+  rewards: Reward[];
+  transactions: Transaction[];
 }
+
+type TabType = 'card' | 'rewards' | 'history';
 
 // ============================================
 // TIER STYLES
@@ -64,8 +89,9 @@ const TIER_STYLES: Record<string, { bg: string; text: string; badge: string }> =
 // COMPONENT
 // ============================================
 
-export function CardView({ customer, token }: CardViewProps) {
+export function CardView({ customer, token, rewards, transactions }: CardViewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('card');
   const tierStyle = TIER_STYLES[customer.tier] || TIER_STYLES.bronze;
 
   const handleDownloadPDF = async () => {
@@ -201,31 +227,93 @@ export function CardView({ customer, token }: CardViewProps) {
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
-          <h3 className="font-semibold text-gray-900 mb-3">
-            How to use your card
-          </h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-500 font-bold">1.</span>
-              Show the QR code to the cashier at checkout
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-500 font-bold">2.</span>
-              Earn points on every purchase
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-indigo-500 font-bold">3.</span>
-              Redeem points for exclusive rewards
-            </li>
-          </ul>
+        {/* Tabs Navigation */}
+        <div className="mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="border-b border-gray-200">
+            <nav className="flex">
+              <button
+                onClick={() => setActiveTab('card')}
+                className={`flex-1 px-4 py-3 text-sm font-medium text-center transition-colors ${
+                  activeTab === 'card'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <CreditCard className="w-4 h-4 mx-auto mb-1" />
+                Card
+              </button>
+              <button
+                onClick={() => setActiveTab('rewards')}
+                className={`flex-1 px-4 py-3 text-sm font-medium text-center transition-colors ${
+                  activeTab === 'rewards'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Gift className="w-4 h-4 mx-auto mb-1" />
+                Rewards
+                {rewards.length > 0 && (
+                  <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                    {rewards.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`flex-1 px-4 py-3 text-sm font-medium text-center transition-colors ${
+                  activeTab === 'history'
+                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Clock className="w-4 h-4 mx-auto mb-1" />
+                History
+              </button>
+            </nav>
+          </div>
 
-          <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
-            <p className="text-sm text-indigo-700">
-              <strong>Tip:</strong> Download the NoxaLoyalty app for real-time
-              point tracking and exclusive mobile-only rewards!
-            </p>
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'card' && (
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  How to use your card
+                </h3>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-bold">1.</span>
+                    Show the QR code to the cashier at checkout
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-bold">2.</span>
+                    Earn points on every purchase
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-indigo-500 font-bold">3.</span>
+                    Redeem points for exclusive rewards
+                  </li>
+                </ul>
+
+                <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
+                  <p className="text-sm text-indigo-700">
+                    <strong>Tip:</strong> Download the NoxaLoyalty app for real-time
+                    point tracking and exclusive mobile-only rewards!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'rewards' && (
+              <RewardsTab
+                rewards={rewards}
+                customerPoints={customer.totalPoints}
+                customerTier={customer.tier}
+              />
+            )}
+
+            {activeTab === 'history' && (
+              <TransactionsTab transactions={transactions} />
+            )}
           </div>
         </div>
       </div>
