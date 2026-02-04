@@ -120,6 +120,9 @@ export async function GET(request: Request) {
             id: subscription.plan.id,
             name: subscription.plan.name,
             displayName: subscription.plan.display_name,
+            hasLoyalty: subscription.plan.has_loyalty,
+            hasBooking: subscription.plan.has_booking,
+            hasPOS: subscription.plan.has_pos,
           }
         : null,
       billingInterval: subscription.billing_interval,

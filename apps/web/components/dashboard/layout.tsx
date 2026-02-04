@@ -17,7 +17,11 @@ import {
   UsersRound,
   Menu,
   X,
+  CalendarDays,
+  Briefcase,
+  Clock,
 } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
 import { User } from '@supabase/supabase-js';
@@ -36,6 +40,8 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { subscription } = useSubscription();
+  const hasBooking = subscription?.plan?.hasBooking ?? false;
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -132,6 +138,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
     { name: 'Team', href: '/dashboard/team', icon: UsersRound },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    // Booking items - only show if plan has booking feature
+    ...(hasBooking
+      ? [
+          { name: 'Bookings', href: '/dashboard/booking', icon: CalendarDays },
+          {
+            name: 'Services',
+            href: '/dashboard/booking/services',
+            icon: Briefcase,
+          },
+          {
+            name: 'Availability',
+            href: '/dashboard/booking/availability',
+            icon: Clock,
+          },
+        ]
+      : []),
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 

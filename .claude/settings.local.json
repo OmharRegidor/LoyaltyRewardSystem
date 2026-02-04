@@ -18,7 +18,8 @@
       "Bash(npm run build:*)",
       "Bash(git restore:*)",
       "Bash(npm run dev:web:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(find:*)"
     ]
   }
 }

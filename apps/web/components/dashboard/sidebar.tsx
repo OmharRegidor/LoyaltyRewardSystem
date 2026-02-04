@@ -21,7 +21,8 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -30,6 +31,7 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
+  const { subscription } = useSubscription();
 
   useEffect(() => {
     const stored = localStorage.getItem('theme');
@@ -57,18 +59,29 @@ export function Sidebar({ onClose }: SidebarProps) {
     }
   };
 
-  const navItems = [
-    { icon: Home, label: 'Dashboard', href: '/dashboard' },
-    { icon: Users, label: 'Customers', href: '/dashboard/customers' },
-    { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
-    { icon: UserRound, label: 'Team', href: '/dashboard/team' },
-    { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
-    // TODO: Only show booking items if business.plan has booking feature enabled
-    { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking' },
-    { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services' },
-    { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability' },
-    { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
-  ];
+  const hasBooking = subscription?.plan?.hasBooking ?? false;
+
+  const navItems = useMemo(() => {
+    const items = [
+      { icon: Home, label: 'Dashboard', href: '/dashboard' },
+      { icon: Users, label: 'Customers', href: '/dashboard/customers' },
+      { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
+      { icon: UserRound, label: 'Team', href: '/dashboard/team' },
+      { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
+    ];
+
+    if (hasBooking) {
+      items.push(
+        { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking' },
+        { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services' },
+        { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability' },
+      );
+    }
+
+    items.push({ icon: Settings, label: 'Settings', href: '/dashboard/settings' });
+
+    return items;
+  }, [hasBooking]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');

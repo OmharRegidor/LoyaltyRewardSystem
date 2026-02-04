@@ -8,6 +8,9 @@ interface Plan {
   id: string;
   name: string;
   displayName: string;
+  hasLoyalty: boolean;
+  hasBooking: boolean;
+  hasPOS: boolean;
 }
 
 interface SubscriptionData {
