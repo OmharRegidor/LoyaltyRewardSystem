@@ -8,18 +8,14 @@ import type { Database } from '../../../../../packages/shared/types/database';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
-  // Get all possible auth parameters
   const code = requestUrl.searchParams.get('code');
   const token_hash = requestUrl.searchParams.get('token_hash');
   const type = requestUrl.searchParams.get('type');
   const error = requestUrl.searchParams.get('error');
   const error_description = requestUrl.searchParams.get('error_description');
-
-  // Plan parameters (for plan-based signup flow)
   const plan = requestUrl.searchParams.get('plan');
   const interval = requestUrl.searchParams.get('interval') || 'monthly';
 
-  // Handle error from Supabase
   if (error) {
     console.error('Auth callback error:', error, error_description);
     return NextResponse.redirect(
@@ -32,7 +28,6 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
-  // Create supabase client
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -49,7 +44,7 @@ export async function GET(request: Request) {
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax',
-                maxAge: 60 * 60 * 24 * 365, // 1 year
+                maxAge: 60 * 60 * 24 * 365,
               });
             } catch {
               // Ignore errors in edge runtime
@@ -63,9 +58,9 @@ export async function GET(request: Request) {
   let session = null;
   let user = null;
 
-  // Handle email verification (signup, recovery, invite, email_change)
+  // Handle email verification
   if (token_hash && type) {
-    console.log('Verifying OTP with type:', type);
+    console.log('[Auth Callback] Verifying OTP with type:', type);
 
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
       token_hash,
@@ -73,7 +68,7 @@ export async function GET(request: Request) {
     });
 
     if (verifyError) {
-      console.error('OTP verification error:', verifyError);
+      console.error('[Auth Callback] OTP verification error:', verifyError);
       return NextResponse.redirect(
         new URL(
           `/login?error=${encodeURIComponent(verifyError.message)}`,
@@ -84,18 +79,23 @@ export async function GET(request: Request) {
 
     session = data.session;
     user = data.user;
-    console.log('OTP verified, user:', user?.id, 'session:', !!session);
+    console.log(
+      '[Auth Callback] OTP verified, user:',
+      user?.id,
+      'session:',
+      !!session,
+    );
   }
 
-  // Handle OAuth code exchange (Google, etc.)
+  // Handle OAuth code exchange
   if (code && !session) {
-    console.log('Exchanging code for session');
+    console.log('[Auth Callback] Exchanging code for session');
 
     const { data, error: exchangeError } =
       await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      console.error('Code exchange error:', exchangeError);
+      console.error('[Auth Callback] Code exchange error:', exchangeError);
       return NextResponse.redirect(
         new URL(
           `/login?error=${encodeURIComponent(exchangeError.message)}`,
@@ -106,16 +106,20 @@ export async function GET(request: Request) {
 
     session = data.session;
     user = data.user;
-    console.log('Code exchanged, user:', user?.id, 'session:', !!session);
+    console.log(
+      '[Auth Callback] Code exchanged, user:',
+      user?.id,
+      'session:',
+      !!session,
+    );
   }
 
-  // If we have a session and user, set up their account and redirect
+  // If we have a session and user, set up their account
   if (session && user) {
     const userId = user.id;
     const userEmail = user.email || null;
     const userMetadata = user.user_metadata;
 
-    // Get plan info from metadata if not in URL
     const selectedPlan =
       plan || (userMetadata?.selected_plan as string | undefined);
     const billingInterval =
@@ -123,10 +127,20 @@ export async function GET(request: Request) {
       (userMetadata?.billing_interval as string | undefined) ||
       'monthly';
 
-    // Create business for new user if not exists
-    await ensureBusinessExists(userId, userEmail, userMetadata);
+    // Ensure business exists (handles trigger errors gracefully)
+    const business = await ensureBusinessExists(
+      userId,
+      userEmail,
+      userMetadata,
+    );
 
-    // Determine final redirect URL
+    if (!business) {
+      console.error(
+        '[Auth Callback] Failed to create/find business, but continuing...',
+      );
+    }
+
+    // Get redirect path
     const finalRedirectPath = await getRedirectPath(
       userId,
       selectedPlan,
@@ -138,37 +152,8 @@ export async function GET(request: Request) {
       new URL(finalRedirectPath, requestUrl.origin),
     );
 
-    // Manually set the session cookies on the response
-    // This ensures they're properly set even across devices
+    // Set session cookies
     if (session.access_token && session.refresh_token) {
-      const cookieOptions = {
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        httpOnly: true,
-      };
-
-      // Set auth cookies
-      response.cookies.set(
-        'sb-access-token',
-        session.access_token,
-        cookieOptions,
-      );
-      response.cookies.set('sb-refresh-token', session.refresh_token, {
-        ...cookieOptions,
-        maxAge: 60 * 60 * 24 * 365, // 1 year for refresh token
-      });
-      // Add this right after setting the other cookies
-      response.cookies.set('auth_timestamp', Date.now().toString(), {
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 10, // Only needed for 10 seconds
-        httpOnly: false,
-      });
-
-      // Also set the Supabase auth cookie format
       const projectRef =
         process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)\./)?.[1];
 
@@ -188,33 +173,31 @@ export async function GET(request: Request) {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 365,
-            httpOnly: false, // This one needs to be accessible by JS
+            httpOnly: false,
           },
         );
       }
     }
 
-    console.log('Redirecting to:', finalRedirectPath);
+    console.log('[Auth Callback] Redirecting to:', finalRedirectPath);
     return response;
   }
 
-  // No valid session - check if we at least have a user without session
-  // This can happen with email verification on different device
+  // User verified but no session (different device)
   if (user && !session) {
-    console.log(
-      'User verified but no session - redirecting to login with success message',
-    );
+    console.log('[Auth Callback] User verified but no session');
     return NextResponse.redirect(
       new URL('/login?message=email_verified', requestUrl.origin),
     );
   }
 
-  // No valid auth, redirect to login
-  console.log('No valid auth found, redirecting to login');
+  console.log('[Auth Callback] No valid auth found');
   return NextResponse.redirect(new URL('/login', requestUrl.origin));
 }
 
-// Helper: Ensure business exists for user (using service role client)
+// ============================================
+// FIXED: Handle subscription trigger errors
+// ============================================
 async function ensureBusinessExists(
   userId: string,
   userEmail: string | null,
@@ -235,15 +218,19 @@ async function ensureBusinessExists(
       .maybeSingle();
 
     if (existingBusiness) {
+      console.log(
+        '[Auth Callback] Business already exists:',
+        existingBusiness.id,
+      );
       return existingBusiness;
     }
 
-    // Get business name from metadata
     const businessName =
       (userMetadata?.business_name as string) || 'My Business';
     const ownerEmail = userEmail || (userMetadata?.email as string) || '';
 
-    // Create new business with all required fields (Free plan by default)
+    console.log('[Auth Callback] Creating new business for user:', userId);
+
     const { data: newBusiness, error } = await serviceSupabase
       .from('businesses')
       .insert({
@@ -260,18 +247,40 @@ async function ensureBusinessExists(
       .single();
 
     if (error) {
-      console.error('Error creating business:', error);
+      console.error('[Auth Callback] Error creating business:', error);
+
+      // FIXED: If error is from subscription trigger duplicate, business was still created
+      if (error.code === '23505' && error.message?.includes('subscriptions')) {
+        console.log(
+          '[Auth Callback] Subscription trigger error, fetching created business...',
+        );
+
+        const { data: createdBusiness } = await serviceSupabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', userId)
+          .maybeSingle();
+
+        if (createdBusiness) {
+          console.log(
+            '[Auth Callback] Found business after trigger error:',
+            createdBusiness.id,
+          );
+          return createdBusiness;
+        }
+      }
+
       return null;
     }
 
+    console.log('[Auth Callback] Business created:', newBusiness.id);
     return newBusiness;
   } catch (err) {
-    console.error('Error in ensureBusinessExists:', err);
+    console.error('[Auth Callback] Error in ensureBusinessExists:', err);
     return null;
   }
 }
 
-// Helper: Determine redirect path based on user type and plan
 async function getRedirectPath(
   userId: string,
   selectedPlan?: string | null,
@@ -304,18 +313,14 @@ async function getRedirectPath(
       .maybeSingle();
 
     if (businessData) {
-      // If plan was selected, redirect to billing to complete payment
       if (selectedPlan && selectedPlan !== 'free') {
         return `/dashboard/settings/billing?plan=${selectedPlan}&interval=${billingInterval || 'monthly'}`;
       }
-
-      // Otherwise, redirect to dashboard with welcome flag for new signups
       return '/dashboard?welcome=true';
     }
   } catch (err) {
-    console.error('Error determining redirect:', err);
+    console.error('[Auth Callback] Error determining redirect:', err);
   }
 
-  // Default redirect to dashboard
   return '/dashboard';
 }
