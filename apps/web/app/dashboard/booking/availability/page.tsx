@@ -101,29 +101,39 @@ interface DayRowProps {
 }
 
 function DayRow({ day, data, onChange }: DayRowProps) {
+  // Abbreviated day name for mobile
+  const shortDayName = day.label.slice(0, 3);
+
   return (
-    <div className="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-      <div className="w-28 shrink-0">
-        <Label className="text-sm font-medium">{day.label}</Label>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+      {/* Row 1 on mobile: Day name + Toggle */}
+      <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
+        <div className="w-20 sm:w-28 shrink-0">
+          <Label className="text-sm font-medium">
+            <span className="sm:hidden">{shortDayName}</span>
+            <span className="hidden sm:inline">{day.label}</span>
+          </Label>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Switch
+            checked={data.is_available}
+            onCheckedChange={(checked) => onChange(day.value, { is_available: checked })}
+          />
+          <span className="text-sm text-gray-500 dark:text-gray-400 w-12 sm:w-auto">
+            {data.is_available ? 'Open' : 'Closed'}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 w-24 shrink-0">
-        <Switch
-          checked={data.is_available}
-          onCheckedChange={(checked) => onChange(day.value, { is_available: checked })}
-        />
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {data.is_available ? 'Open' : 'Closed'}
-        </span>
-      </div>
-
+      {/* Row 2 on mobile: Time pickers */}
       {data.is_available ? (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-0 sm:pl-0">
           <Select
             value={data.start_time}
             onValueChange={(value) => onChange(day.value, { start_time: value })}
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[100px] sm:w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -141,7 +151,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
             value={data.end_time}
             onValueChange={(value) => onChange(day.value, { end_time: value })}
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[100px] sm:w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -154,7 +164,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
           </Select>
         </div>
       ) : (
-        <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+        <span className="text-sm text-gray-400 dark:text-gray-500 italic sm:block hidden">
           Closed
         </span>
       )}
@@ -297,7 +307,7 @@ export default function AvailabilityPage() {
         </div>
 
         {/* Weekly Schedule Card */}
-        <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-6">
+        <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
