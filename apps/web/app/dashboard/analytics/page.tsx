@@ -23,62 +23,48 @@ import {
 import { motion } from 'framer-motion';
 import {
   TrendingUp,
-  Users,
   Gift,
-  Target,
   Download,
-  AlertCircle,
   Loader2,
+  BarChart3,
+  PieChartIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 
 // ============================================
-// MOCK DATA (for preview mode)
+// DEFAULT EMPTY STATE VALUES
 // ============================================
 
-const MOCK_MONTHLY_DATA = [
-  { month: 'Jan', points: 12000 },
-  { month: 'Feb', points: 14500 },
-  { month: 'Mar', points: 13000 },
-  { month: 'Apr', points: 16200 },
-  { month: 'May', points: 15100 },
-  { month: 'Jun', points: 18500 },
-];
-
-const MOCK_CUSTOMER_SEGMENTS = [
-  { name: 'High Value', value: 35, color: '#6366f1' },
-  { name: 'Regular', value: 45, color: '#06b6d4' },
-  { name: 'At Risk', value: 15, color: '#f59e0b' },
-  { name: 'Inactive', value: 5, color: '#ef4444' },
-];
-
-const MOCK_REWARD_PERFORMANCE = [
-  { reward: 'Free Coffee', redemptions: 234 },
-  { reward: 'Discount 20%', redemptions: 189 },
-  { reward: 'Free Pastry', redemptions: 156 },
-  { reward: 'Double Points', redemptions: 142 },
-  { reward: 'Free Lunch', redemptions: 98 },
-];
-
-const MOCK_KPI = {
-  totalPoints: 89300,
-  avgPointsPerTx: 125,
-  customerLTV: 5890,
-  repeatRate: 68,
+const DEFAULT_KPI = {
+  totalPoints: 0,
+  avgPointsPerTx: 0,
+  customerLTV: 0,
+  repeatRate: 0,
 };
 
+interface MonthlyDataPoint {
+  month: string;
+  points: number;
+}
+
+interface CustomerSegment {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface RewardPerformanceItem {
+  reward: string;
+  redemptions: number;
+}
+
 export default function AnalyticsPage() {
-  const { isPreview, isLoading: isLoadingSubscription } = useSubscriptionGate();
+  const { isLoading: isLoadingSubscription } = useSubscriptionGate();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [monthlyData, setMonthlyData] = useState(MOCK_MONTHLY_DATA);
-  const [customerSegments, setCustomerSegments] = useState(
-    MOCK_CUSTOMER_SEGMENTS,
-  );
-  const [rewardPerformance, setRewardPerformance] = useState(
-    MOCK_REWARD_PERFORMANCE,
-  );
-  const [kpi, setKpi] = useState(MOCK_KPI);
+  const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
+  const [customerSegments, setCustomerSegments] = useState<CustomerSegment[]>([]);
+  const [rewardPerformance, setRewardPerformance] = useState<RewardPerformanceItem[]>([]);
+  const [kpi, setKpi] = useState(DEFAULT_KPI);
 
   useEffect(() => {
     const loadData = async () => {
@@ -92,21 +78,14 @@ export default function AnalyticsPage() {
 
         const { data: business } = await supabase
           .from('businesses')
-          .select('id, subscription_status, is_free_forever')
+          .select('id')
           .eq('owner_id', user.id)
           .single();
 
         if (!business) return;
 
-        const hasActiveSubscription =
-          business.is_free_forever ||
-          ['active', 'trialing', 'free_forever'].includes(
-            business.subscription_status,
-          );
-
-        if (hasActiveSubscription) {
-          await loadRealTimeAnalytics(supabase, business.id);
-        }
+        // Load real-time analytics for all users
+        await loadRealTimeAnalytics(supabase, business.id);
       } catch (error) {
         console.error('Error loading analytics:', error);
       } finally {
@@ -155,7 +134,7 @@ export default function AnalyticsPage() {
         month,
         points,
       }));
-      if (data.length > 0) setMonthlyData(data);
+      setMonthlyData(data);
 
       // KPIs
       const totalPoints = transactions.reduce(
@@ -247,11 +226,9 @@ export default function AnalyticsPage() {
       const sorted = Object.values(counts)
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
-      if (sorted.length > 0) {
-        setRewardPerformance(
-          sorted.map((r) => ({ reward: r.name, redemptions: r.count })),
-        );
-      }
+      setRewardPerformance(
+        sorted.map((r) => ({ reward: r.name, redemptions: r.count })),
+      );
     }
   };
 
@@ -283,29 +260,6 @@ export default function AnalyticsPage() {
         animate="visible"
         variants={containerVariants}
       >
-        {/* Preview Banner */}
-        {isPreview && (
-          <motion.div
-            variants={itemVariants}
-            className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3"
-          >
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-amber-800 dark:text-amber-200">
-                Preview Mode
-              </p>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                You’re viewing demo data. Upgrade via{' '}
-                {/* Change this Link to /checkout/core to use xendit*/}
-                <Link href="/" className="underline font-semibold">
-                  Home Page → Pricing
-                </Link>{' '}
-                to see real-time performance.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
         {/* Header */}
         <motion.div
           className="flex justify-between items-center"
@@ -372,15 +326,27 @@ export default function AnalyticsPage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 Monthly Points
               </h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip />
-                  <Bar dataKey="points" fill="#06b6d4" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {monthlyData.length === 0 ? (
+                <div className="h-[300px] flex flex-col items-center justify-center">
+                  <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    No points data yet
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Issue points to customers to see trends.
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip />
+                    <Bar dataKey="points" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </Card>
           </motion.div>
 
@@ -390,24 +356,36 @@ export default function AnalyticsPage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 Customer Segments
               </h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={customerSegments}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={120}
-                    dataKey="value"
-                  >
-                    {customerSegments.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {customerSegments.length === 0 ? (
+                <div className="h-[300px] flex flex-col items-center justify-center">
+                  <PieChartIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    No customer data yet
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Add customers to see segment breakdown.
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={customerSegments}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={120}
+                      dataKey="value"
+                    >
+                      {customerSegments.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </Card>
           </motion.div>
 
@@ -418,24 +396,36 @@ export default function AnalyticsPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Top Rewards
                 </h2>
-                <div className="space-y-4">
-                  {rewardPerformance.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Gift className="w-5 h-5 text-cyan-500" />
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {item.reward}
+                {rewardPerformance.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center">
+                    <Gift className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">
+                      No rewards redeemed yet
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                      Create rewards and customers will start redeeming them.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {rewardPerformance.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Gift className="w-5 h-5 text-cyan-500" />
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {item.reward}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {item.redemptions} redemptions
                         </span>
                       </div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {item.redemptions} redemptions
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           </motion.div>

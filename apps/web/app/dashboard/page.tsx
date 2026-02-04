@@ -3,7 +3,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import {
@@ -15,77 +15,11 @@ import {
   ArrowDownRight,
   Star,
   ChevronRight,
-  AlertCircle,
   X,
   Calendar,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
-
-// ============================================
-// MOCK DATA (for preview mode)
-// ============================================
-
-const MOCK_STATS = {
-  totalCustomers: 2847,
-  customersGrowth: 12,
-  pointsIssuedToday: 18540,
-  pointsGrowth: 8,
-  activeRewards: 24,
-  rewardsGrowth: 3,
-  revenueThisMonth: 485200,
-  revenueGrowth: -2,
-};
-
-const MOCK_RECENT_TRANSACTIONS = [
-  {
-    id: '1',
-    customer: 'Maria Santos',
-    action: 'Points Earned',
-    points: 250,
-    time: '2 hours ago',
-    type: 'earn',
-  },
-  {
-    id: '2',
-    customer: 'Juan Dela Cruz',
-    action: 'Reward Redeemed',
-    points: -500,
-    time: '4 hours ago',
-    type: 'redeem',
-  },
-  {
-    id: '3',
-    customer: 'Ana Garcia',
-    action: 'Bonus Points Awarded',
-    points: 100,
-    time: '6 hours ago',
-    type: 'bonus',
-  },
-  {
-    id: '4',
-    customer: 'Carlos Rodriguez',
-    action: 'Points Earned',
-    points: 175,
-    time: '1 day ago',
-    type: 'earn',
-  },
-  {
-    id: '5',
-    customer: 'Rosa Mendes',
-    action: 'Reward Redeemed',
-    points: -250,
-    time: '2 days ago',
-    type: 'redeem',
-  },
-];
-
-const MOCK_TOP_REWARDS = [
-  { name: 'Free Coffee', redemptions: 245, percentage: 35 },
-  { name: 'Free Pastry', redemptions: 189, percentage: 27 },
-  { name: '20% Discount', redemptions: 156, percentage: 22 },
-  { name: 'Free Lunch', redemptions: 87, percentage: 12 },
-];
 
 // ============================================
 // TYPES
@@ -244,18 +178,24 @@ function WelcomeModalHandler() {
 // MAIN COMPONENT
 // ============================================
 
-export default function DashboardPage() {
-  const {
-    isPreview,
-    isActive,
-    isLoading: isLoadingSubscription,
-  } = useSubscriptionGate();
+// Default empty state values
+const DEFAULT_STATS: Stats = {
+  totalCustomers: 0,
+  customersGrowth: 0,
+  pointsIssuedToday: 0,
+  pointsGrowth: 0,
+  activeRewards: 0,
+  rewardsGrowth: 0,
+  revenueThisMonth: 0,
+  revenueGrowth: 0,
+};
 
-  const [stats, setStats] = useState<Stats>(MOCK_STATS);
-  const [transactions, setTransactions] = useState<Transaction[]>(
-    MOCK_RECENT_TRANSACTIONS,
-  );
-  const [topRewards, setTopRewards] = useState<TopReward[]>(MOCK_TOP_REWARDS);
+export default function DashboardPage() {
+  const { isLoading: isLoadingSubscription } = useSubscriptionGate();
+
+  const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [topRewards, setTopRewards] = useState<TopReward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -294,22 +234,8 @@ export default function DashboardPage() {
             business.name || metadata.business_name || 'Your Business',
           );
 
-          // Check if user has active subscription
-          const hasActiveSubscription =
-            business.is_free_forever ||
-            ['active', 'trialing', 'free_forever'].includes(
-              business.subscription_status,
-            );
-
-          if (hasActiveSubscription) {
-            // REAL-TIME DATA for paid users
-            await loadRealTimeData(supabase, business.id);
-          } else {
-            // MOCK DATA for preview users
-            setStats(MOCK_STATS);
-            setTransactions(MOCK_RECENT_TRANSACTIONS);
-            setTopRewards(MOCK_TOP_REWARDS);
-          }
+          // Load real-time data for all users
+          await loadRealTimeData(supabase, business.id);
         }
       }
 
@@ -319,9 +245,9 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  // Set up real-time subscription for paid users
+  // Set up real-time subscription for all users
   useEffect(() => {
-    if (!businessId || isPreview) return;
+    if (!businessId) return;
 
     const supabase = createClient();
 
@@ -346,7 +272,7 @@ export default function DashboardPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [businessId, isPreview]);
+  }, [businessId]);
 
   const loadRealTimeData = async (
     supabase: ReturnType<typeof createClient>,
@@ -460,23 +386,19 @@ export default function DashboardPage() {
             time: formatRelativeTime(tx.created_at!),
             type: tx.type,
           }));
-        setTransactions(
-          transformedTx.length > 0 ? transformedTx : MOCK_RECENT_TRANSACTIONS,
-        );
+        setTransactions(transformedTx);
       }
 
       // Transform top rewards
-      if (sortedRewards.length > 0) {
-        const transformedRewards: TopReward[] = sortedRewards.map((r) => ({
-          name: r.name,
-          redemptions: r.count,
-          percentage:
-            totalRedemptions > 0
-              ? Math.round((r.count / totalRedemptions) * 100)
-              : 0,
-        }));
-        setTopRewards(transformedRewards);
-      }
+      const transformedRewards: TopReward[] = sortedRewards.map((r) => ({
+        name: r.name,
+        redemptions: r.count,
+        percentage:
+          totalRedemptions > 0
+            ? Math.round((r.count / totalRedemptions) * 100)
+            : 0,
+      }));
+      setTopRewards(transformedRewards);
     } catch (error) {
       console.error('Error loading real-time data:', error);
     }
@@ -537,26 +459,6 @@ export default function DashboardPage() {
       </Suspense>
 
       <div className="space-y-8">
-        {/* Preview Mode Banner */}
-        {isPreview && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-amber-800 dark:text-amber-200">
-                Preview Mode
-              </p>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                You’re viewing demo data. Upgrade via{' '}
-                {/* Change this Link to /checkout/core to use xendit*/}
-                <Link href="/" className="underline font-semibold">
-                  Home Page → Pricing
-                </Link>{' '}
-                to see real-time performance.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -632,40 +534,52 @@ export default function DashboardPage() {
 
             {/* Table Body */}
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                >
-                  <div className="col-span-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                      {tx.customer
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
-                    </div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {tx.customer}
-                    </span>
-                  </div>
-                  <div className="col-span-3">
-                    {getActionBadge(tx.type, tx.action)}
-                  </div>
-                  <div
-                    className={`col-span-2 text-right font-semibold ${
-                      tx.points >= 0
-                        ? 'text-green-600'
-                        : 'text-gray-900 dark:text-white'
-                    }`}
-                  >
-                    {tx.points >= 0 ? '+' : ''}
-                    {tx.points.toLocaleString()}
-                  </div>
-                  <div className="col-span-3 text-right text-sm text-gray-500 dark:text-gray-400">
-                    {tx.time}
-                  </div>
+              {transactions.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <TrendingUp className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    No transactions yet
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Start by adding customers and issuing points.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                transactions.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  >
+                    <div className="col-span-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {tx.customer
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {tx.customer}
+                      </span>
+                    </div>
+                    <div className="col-span-3">
+                      {getActionBadge(tx.type, tx.action)}
+                    </div>
+                    <div
+                      className={`col-span-2 text-right font-semibold ${
+                        tx.points >= 0
+                          ? 'text-green-600'
+                          : 'text-gray-900 dark:text-white'
+                      }`}
+                    >
+                      {tx.points >= 0 ? '+' : ''}
+                      {tx.points.toLocaleString()}
+                    </div>
+                    <div className="col-span-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                      {tx.time}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -680,47 +594,59 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="p-6 space-y-5">
-              {topRewards.map((reward, index) => (
-                <div key={index}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          index === 0
-                            ? 'bg-amber-100 text-amber-600'
-                            : index === 1
-                              ? 'bg-gray-100 text-gray-600'
-                              : index === 2
-                                ? 'bg-orange-100 text-orange-600'
-                                : 'bg-cyan-100 text-cyan-600'
-                        }`}
-                      >
-                        <Star className="w-4 h-4" />
+              {topRewards.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Gift className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    No rewards redeemed yet
+                  </p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Create rewards to get started.
+                  </p>
+                </div>
+              ) : (
+                topRewards.map((reward, index) => (
+                  <div key={index}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            index === 0
+                              ? 'bg-amber-100 text-amber-600'
+                              : index === 1
+                                ? 'bg-gray-100 text-gray-600'
+                                : index === 2
+                                  ? 'bg-orange-100 text-orange-600'
+                                  : 'bg-cyan-100 text-cyan-600'
+                          }`}
+                        >
+                          <Star className="w-4 h-4" />
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {reward.name}
+                        </span>
                       </div>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {reward.name}
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {reward.redemptions}
                       </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {reward.redemptions}
-                    </span>
+                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          index === 0
+                            ? 'bg-linear-to-r from-cyan-500 to-blue-500'
+                            : index === 1
+                              ? 'bg-linear-to-r from-cyan-400 to-cyan-500'
+                              : index === 2
+                                ? 'bg-linear-to-r from-cyan-300 to-cyan-400'
+                                : 'bg-cyan-200'
+                        }`}
+                        style={{ width: `${reward.percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        index === 0
-                          ? 'bg-linear-to-r from-cyan-500 to-blue-500'
-                          : index === 1
-                            ? 'bg-linear-to-r from-cyan-400 to-cyan-500'
-                            : index === 2
-                              ? 'bg-linear-to-r from-cyan-300 to-cyan-400'
-                              : 'bg-cyan-200'
-                      }`}
-                      style={{ width: `${reward.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
