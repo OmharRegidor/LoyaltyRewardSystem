@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Never use `any` type for type declarations. Create type interfaces instead.
 - Build only the minimum viable version of every feature.
 - Follow the anti-overengineering rules.
+- Act as senior software engineer to fix the error/bug with clean code, future proof and latest approach.  
 
 ## Build & Development Commands
 

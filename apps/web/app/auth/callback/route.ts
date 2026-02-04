@@ -17,6 +17,15 @@ export async function GET(request: Request) {
   const plan = requestUrl.searchParams.get('plan');
   const interval = requestUrl.searchParams.get('interval') || 'monthly';
 
+  // Debug logging to trace auth callback flow
+  console.log('[Auth Callback] Request params:', {
+    hasCode: !!code,
+    hasTokenHash: !!token_hash,
+    type,
+    error,
+    plan,
+  });
+
   if (error) {
     console.error('Auth callback error:', error, error_description);
     return NextResponse.redirect(
@@ -54,16 +63,18 @@ export async function GET(request: Request) {
   let userId: string | null = null;
   let userEmail: string | null = null;
   let userMetadata: Record<string, unknown> | undefined;
+  let sessionEstablished = false;
 
-  // Handle email verification
+  // Handle email verification with token_hash (older email verification format)
   if (token_hash && type) {
+    console.log('[Auth Callback] Verifying OTP with token_hash, type:', type);
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
       token_hash,
       type: type as 'signup' | 'recovery' | 'invite' | 'email',
     });
 
     if (verifyError) {
-      console.error('OTP verification error:', verifyError);
+      console.error('[Auth Callback] OTP verification error:', verifyError);
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent(verifyError.message)}`, requestUrl.origin),
       );
@@ -73,15 +84,22 @@ export async function GET(request: Request) {
       userId = data.user.id;
       userEmail = data.user.email || null;
       userMetadata = data.user.user_metadata;
+      sessionEstablished = !!data.session;
+      console.log('[Auth Callback] OTP verification success:', {
+        userId,
+        userEmail,
+        sessionEstablished,
+      });
     }
   }
 
-  // Handle OAuth code exchange
+  // Handle code exchange (PKCE flow - used by email verification and OAuth)
   if (code && !userId) {
+    console.log('[Auth Callback] Exchanging code for session');
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      console.error('Code exchange error:', exchangeError);
+      console.error('[Auth Callback] Code exchange error:', exchangeError);
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin),
       );
@@ -91,15 +109,31 @@ export async function GET(request: Request) {
       userId = data.user.id;
       userEmail = data.user.email || null;
       userMetadata = data.user.user_metadata;
+      sessionEstablished = !!data.session;
+      console.log('[Auth Callback] Code exchange success:', {
+        userId,
+        userEmail,
+        sessionEstablished,
+      });
     }
   }
 
   // If we have a user, set up their account
   if (userId) {
+    console.log('[Auth Callback] User authenticated, ensuring business exists:', { userId, userEmail });
     const selectedPlan = plan || (userMetadata?.selected_plan as string | undefined);
     const billingInterval = interval || (userMetadata?.billing_interval as string | undefined) || 'monthly';
 
-    await ensureBusinessExists(userId, userEmail, userMetadata);
+    const business = await ensureBusinessExists(userId, userEmail, userMetadata);
+
+    if (!business) {
+      console.error('[Auth Callback] Failed to create business for user:', userId);
+      return NextResponse.redirect(
+        new URL('/login?error=setup_failed', requestUrl.origin),
+      );
+    }
+
+    console.log('[Auth Callback] Business ready:', { businessId: business.id });
 
     const finalRedirectUrl = await getRedirectUrl(userId, requestUrl, selectedPlan, billingInterval);
 
@@ -127,6 +161,13 @@ async function ensureBusinessExists(
   userMetadata?: Record<string, unknown>,
 ) {
   const { createClient } = await import('@supabase/supabase-js');
+
+  // Check if service role key is configured
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[Auth Callback] SUPABASE_SERVICE_ROLE_KEY is not configured!');
+    return null;
+  }
+
   const serviceSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -139,7 +180,12 @@ async function ensureBusinessExists(
       .eq('owner_id', userId)
       .maybeSingle();
 
-    if (existingBusiness) return existingBusiness;
+    if (existingBusiness) {
+      console.log('[Auth Callback] Found existing business:', existingBusiness.id);
+      return existingBusiness;
+    }
+
+    console.log('[Auth Callback] Creating new business for user:', userId);
 
     const businessName = (userMetadata?.business_name as string) || 'My Business';
     const ownerEmail = userEmail || (userMetadata?.email as string) || '';
@@ -160,10 +206,16 @@ async function ensureBusinessExists(
       .single();
 
     if (error) {
-      console.error('Error creating business:', error);
+      console.error('[Auth Callback] Error creating business:', {
+        userId,
+        error: error.message,
+        code: error.code,
+        details: error.details,
+      });
       return null;
     }
 
+    console.log('[Auth Callback] Business created successfully:', newBusiness.id);
     return newBusiness;
   } catch (err) {
     console.error('Error in ensureBusinessExists:', err);

@@ -14,5 +14,5 @@ export function createClient() {
 }
 
 // Type exports
-export type SupabaseClient = ReturnType<typeof createClient>;
+export type SupabaseClient = ReturnType<typeof createClient>; 
 export type { Database };

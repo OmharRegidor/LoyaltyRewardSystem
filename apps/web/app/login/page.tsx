@@ -123,6 +123,8 @@ function LoginForm() {
     if (error) return error;
     if (urlError === 'unauthorized')
       return 'You do not have permission to access that page.';
+    if (urlError === 'setup_failed')
+      return 'Account setup failed. Please try signing up again or contact support.';
     if (urlError === 'deactivated')
       return 'Your account has been deactivated. Contact your manager.';
     if (urlError === 'session_expired')

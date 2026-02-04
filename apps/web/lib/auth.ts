@@ -3,6 +3,9 @@
 import { createClient } from './supabase';
 import type { Database } from '../../../packages/shared/types/database';
 
+// Canonical app URL for email redirects - prevents domain mismatch issues
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 // ============================================
 // TYPES
 // ============================================
@@ -104,12 +107,38 @@ async function updateStaffLastLogin(
 }
 
 // ============================================
+// HELPER: Clear Supabase Auth Cookies
+// ============================================
+
+/**
+ * Clears Supabase auth cookies from the browser.
+ * This must be called BEFORE creating a Supabase client to prevent
+ * the auto-refresh mechanism from trying to use stale tokens.
+ */
+function clearSupabaseCookies(): void {
+  if (typeof document === 'undefined') return;
+
+  // Get all cookies and clear any Supabase auth-related ones
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name] = cookie.trim().split('=');
+    // Supabase auth cookies typically contain 'sb-' prefix and 'auth-token'
+    if (name.includes('sb-') && name.includes('auth-token')) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    }
+  }
+}
+
+// ============================================
 // SIGNUP - Requires Email Verification
 // ============================================
 
 export async function signupBusinessOwner(
   data: SignupData,
 ): Promise<AuthResponse> {
+  // Clear stale auth cookies BEFORE creating client to prevent refresh token errors
+  clearSupabaseCookies();
+
   const supabase = createClient();
 
   try {
@@ -150,8 +179,8 @@ export async function signupBusinessOwner(
           business_name: data.businessName,
           business_type: data.businessType,
         },
-        // Redirect URL after email confirmation
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Redirect URL after email confirmation - use canonical domain
+        emailRedirectTo: `${APP_URL}/auth/callback`,
       },
     });
 
@@ -438,7 +467,7 @@ export async function resendVerificationEmail(
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${APP_URL}/auth/callback`,
       },
     });
 
@@ -523,7 +552,7 @@ export async function requestPasswordReset(
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${APP_URL}/reset-password`,
     });
 
     if (error) {
