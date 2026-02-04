@@ -36,8 +36,6 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies();
-
-  // Track cookies that need to be set on the response
   const cookiesToSet: Array<{ name: string; value: string; options: any }> = [];
 
   const supabase = createServerClient<Database>(
@@ -50,12 +48,11 @@ export async function GET(request: Request) {
         },
         setAll(cookies) {
           cookies.forEach(({ name, value, options }) => {
-            // Store cookies to set on response later
             cookiesToSet.push({ name, value, options });
             try {
               cookieStore.set(name, value, options);
             } catch {
-              // Ignore - will set on response
+              // Ignore
             }
           });
         },
@@ -66,7 +63,7 @@ export async function GET(request: Request) {
   let session = null;
   let user = null;
 
-  // Handle email verification with token_hash
+  // Handle email verification
   if (token_hash && type) {
     console.log('[Auth Callback] Verifying OTP...');
 
@@ -118,14 +115,18 @@ export async function GET(request: Request) {
     });
   }
 
-  // If we have session and user, set up account and redirect
+  // If we have session and user, set up account
   if (session && user) {
     console.log('[Auth Callback] Setting up account for:', user.id);
 
-    // Ensure business exists
-    await ensureBusinessExists(user.id, user.email || null, user.user_metadata);
+    // Ensure business and subscription exist
+    await ensureBusinessAndSubscription(
+      user.id,
+      user.email || null,
+      user.user_metadata,
+    );
 
-    // Determine redirect path
+    // Get redirect path
     const redirectPath = await getRedirectPath(user.id);
     console.log('[Auth Callback] Redirect path:', redirectPath);
 
@@ -134,13 +135,11 @@ export async function GET(request: Request) {
       new URL(redirectPath, requestUrl.origin),
     );
 
-    // CRITICAL: Set all the cookies that Supabase created
+    // Set cookies
     console.log('[Auth Callback] Setting', cookiesToSet.length, 'cookies');
-
     for (const { name, value, options } of cookiesToSet) {
       response.cookies.set(name, value, {
         ...options,
-        // Ensure cookies work in production
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
@@ -150,101 +149,126 @@ export async function GET(request: Request) {
     return response;
   }
 
-  // No session - redirect to login
+  // No session
   console.log('[Auth Callback] No session, redirecting to login');
-
   if (user) {
     return NextResponse.redirect(
       new URL('/login?message=email_verified', requestUrl.origin),
     );
   }
-
   return NextResponse.redirect(new URL('/login', requestUrl.origin));
 }
 
-async function ensureBusinessExists(
+// ============================================
+// Create business AND subscription in one flow
+// ============================================
+async function ensureBusinessAndSubscription(
   userId: string,
   userEmail: string | null,
   userMetadata?: Record<string, unknown>,
 ) {
   const { createClient } = await import('@supabase/supabase-js');
-  const serviceSupabase = createClient(
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
   try {
-    // Check if exists
-    const { data: existing } = await serviceSupabase
+    // Step 1: Check if business already exists
+    const { data: existingBusiness } = await supabase
       .from('businesses')
       .select('id')
       .eq('owner_id', userId)
       .maybeSingle();
 
-    if (existing) {
-      console.log('[Auth Callback] Business exists:', existing.id);
-      return existing;
+    let businessId: string;
+
+    if (existingBusiness) {
+      console.log('[Auth Callback] Business exists:', existingBusiness.id);
+      businessId = existingBusiness.id;
+    } else {
+      // Step 2: Create business
+      const businessName =
+        (userMetadata?.business_name as string) || 'My Business';
+
+      const { data: newBusiness, error: bizError } = await supabase
+        .from('businesses')
+        .insert({
+          owner_id: userId,
+          name: businessName,
+          owner_email: userEmail || '',
+          is_free_forever: true,
+          subscription_status: 'active',
+          points_per_purchase: 1,
+          pesos_per_point: 100,
+          min_purchase_for_points: 0,
+        })
+        .select('id')
+        .single();
+
+      if (bizError) {
+        console.error('[Auth Callback] Business create error:', bizError);
+        return null;
+      }
+
+      console.log('[Auth Callback] Business created:', newBusiness.id);
+      businessId = newBusiness.id;
     }
 
-    // Create new
-    const businessName =
-      (userMetadata?.business_name as string) || 'My Business';
-
-    const { data: newBiz, error } = await serviceSupabase
-      .from('businesses')
-      .insert({
-        owner_id: userId,
-        name: businessName,
-        owner_email: userEmail || '',
-        is_free_forever: true,
-        subscription_status: 'active',
-        points_per_purchase: 1,
-        pesos_per_point: 100,
-        min_purchase_for_points: 0,
-      })
+    // Step 3: Ensure subscription exists
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
       .select('id')
-      .single();
+      .eq('business_id', businessId)
+      .maybeSingle();
 
-    if (error) {
-      console.error('[Auth Callback] Create business error:', error);
+    if (!existingSub) {
+      // Get free plan
+      const { data: freePlan } = await supabase
+        .from('plans')
+        .select('id')
+        .eq('name', 'free')
+        .single();
 
-      // If subscription trigger failed, business might still exist
-      if (error.code === '23505') {
-        const { data: created } = await serviceSupabase
-          .from('businesses')
-          .select('id')
-          .eq('owner_id', userId)
-          .maybeSingle();
+      if (freePlan) {
+        const { error: subError } = await supabase
+          .from('subscriptions')
+          .insert({
+            business_id: businessId,
+            plan_id: freePlan.id,
+            status: 'active',
+          });
 
-        if (created) {
+        if (subError) {
+          console.error('[Auth Callback] Subscription create error:', subError);
+          // Not fatal - continue anyway
+        } else {
           console.log(
-            '[Auth Callback] Found business after error:',
-            created.id,
+            '[Auth Callback] Subscription created for business:',
+            businessId,
           );
-          return created;
         }
       }
-      return null;
+    } else {
+      console.log('[Auth Callback] Subscription exists:', existingSub.id);
     }
 
-    console.log('[Auth Callback] Created business:', newBiz.id);
-    return newBiz;
+    return { id: businessId };
   } catch (err) {
-    console.error('[Auth Callback] ensureBusinessExists error:', err);
+    console.error('[Auth Callback] ensureBusinessAndSubscription error:', err);
     return null;
   }
 }
 
 async function getRedirectPath(userId: string): Promise<string> {
   const { createClient } = await import('@supabase/supabase-js');
-  const serviceSupabase = createClient(
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
   try {
-    // Check staff first
-    const { data: staff } = await serviceSupabase
+    const { data: staff } = await supabase
       .from('staff')
       .select('id')
       .eq('user_id', userId)
@@ -253,8 +277,7 @@ async function getRedirectPath(userId: string): Promise<string> {
 
     if (staff) return '/staff';
 
-    // Check business owner
-    const { data: business } = await serviceSupabase
+    const { data: business } = await supabase
       .from('businesses')
       .select('id')
       .eq('owner_id', userId)
