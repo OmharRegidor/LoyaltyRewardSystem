@@ -6,6 +6,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -159,6 +160,9 @@ export function BookingDetailDialog({
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Booking Details</DialogTitle>
+            <DialogDescription className="sr-only">
+              View and manage booking information
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

@@ -455,9 +455,9 @@ export async function searchCustomers(
     // Return recent customers
     const { data, error } = await supabase
       .from('customers')
-      .select('id, name, phone, email')
-      .eq('business_id', businessId)
-      .order('updated_at', { ascending: false })
+      .select('id, full_name, phone, email')
+      .eq('created_by_business_id', businessId)
+      .order('created_at', { ascending: false })
       .limit(10);
 
     if (error) {
@@ -465,15 +465,21 @@ export async function searchCustomers(
       return [];
     }
 
-    return data || [];
+    // Map full_name to name for the interface
+    return (data || []).map(c => ({
+      id: c.id,
+      name: c.full_name || '',
+      phone: c.phone,
+      email: c.email,
+    }));
   }
 
   // Search by name or phone
   const { data, error } = await supabase
     .from('customers')
-    .select('id, name, phone, email')
-    .eq('business_id', businessId)
-    .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+    .select('id, full_name, phone, email')
+    .eq('created_by_business_id', businessId)
+    .or(`full_name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
     .limit(10);
 
   if (error) {
@@ -481,5 +487,11 @@ export async function searchCustomers(
     return [];
   }
 
-  return data || [];
+  // Map full_name to name for the interface
+  return (data || []).map(c => ({
+    id: c.id,
+    name: c.full_name || '',
+    phone: c.phone,
+    email: c.email,
+  }));
 }

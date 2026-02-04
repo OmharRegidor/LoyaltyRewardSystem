@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -353,6 +354,9 @@ export function CreateBookingModal({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New Booking</DialogTitle>
+          <DialogDescription className="sr-only">
+            Create a new booking by selecting a service, customer, date and time
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -162,6 +162,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/dashboard/team') return pathname === '/dashboard/team';
     if (href === '/dashboard/settings')
       return pathname === '/dashboard/settings';
+    if (href === '/dashboard/booking') return pathname === '/dashboard/booking';
+    if (href === '/dashboard/booking/services')
+      return pathname === '/dashboard/booking/services';
+    if (href === '/dashboard/booking/availability')
+      return pathname === '/dashboard/booking/availability';
     return pathname.startsWith(href);
   };
 

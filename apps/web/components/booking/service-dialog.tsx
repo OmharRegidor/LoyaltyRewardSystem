@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -133,6 +134,9 @@ export function ServiceDialog({
           <DialogTitle>
             {mode === 'create' ? 'Add Service' : 'Edit Service'}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {mode === 'create' ? 'Create a new service' : 'Edit service details'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
