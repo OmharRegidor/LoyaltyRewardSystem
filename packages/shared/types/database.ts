@@ -1,4 +1,3 @@
-Initialising login role...
 export type Json =
   | string
   | number
@@ -78,6 +77,166 @@ export type Database = {
           },
         ]
       }
+      availability: {
+        Row: {
+          branch_id: string | null
+          business_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          staff_id: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          business_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean
+          staff_id?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          business_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          staff_id?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          booking_date: string
+          branch_id: string | null
+          business_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          service_id: string
+          staff_id: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          booking_date: string
+          branch_id?: string | null
+          business_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          service_id: string
+          staff_id?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          branch_id?: string | null
+          business_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          service_id?: string
+          staff_id?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string | null
@@ -145,6 +304,7 @@ export type Database = {
           points_expiry_days: number | null
           points_per_purchase: number | null
           qr_code_url: string | null
+          slug: string
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string | null
           xendit_customer_id: string | null
@@ -169,6 +329,7 @@ export type Database = {
           points_expiry_days?: number | null
           points_per_purchase?: number | null
           qr_code_url?: string | null
+          slug: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
           xendit_customer_id?: string | null
@@ -193,6 +354,7 @@ export type Database = {
           points_expiry_days?: number | null
           points_per_purchase?: number | null
           qr_code_url?: string | null
+          slug?: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
           xendit_customer_id?: string | null
@@ -560,14 +722,17 @@ export type Database = {
           description: string | null
           display_name: string
           features: Json | null
+          has_booking: boolean
+          has_loyalty: boolean
+          has_pos: boolean
           id: string
           is_active: boolean | null
           max_branches: number | null
           max_customers: number | null
           max_staff_per_branch: number | null
           name: string
-          price_annual: number
-          price_monthly: number
+          price_annual: number | null
+          price_monthly: number | null
           updated_at: string | null
         }
         Insert: {
@@ -575,14 +740,17 @@ export type Database = {
           description?: string | null
           display_name: string
           features?: Json | null
+          has_booking?: boolean
+          has_loyalty?: boolean
+          has_pos?: boolean
           id?: string
           is_active?: boolean | null
           max_branches?: number | null
           max_customers?: number | null
           max_staff_per_branch?: number | null
           name: string
-          price_annual: number
-          price_monthly: number
+          price_annual?: number | null
+          price_monthly?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -590,14 +758,17 @@ export type Database = {
           description?: string | null
           display_name?: string
           features?: Json | null
+          has_booking?: boolean
+          has_loyalty?: boolean
+          has_pos?: boolean
           id?: string
           is_active?: boolean | null
           max_branches?: number | null
           max_customers?: number | null
           max_staff_per_branch?: number | null
           name?: string
-          price_annual?: number
-          price_monthly?: number
+          price_annual?: number | null
+          price_monthly?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -816,6 +987,60 @@ export type Database = {
           },
         ]
       }
+      services: {
+        Row: {
+          branch_id: string | null
+          business_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          price_centavos: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          business_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_centavos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_centavos?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff: {
         Row: {
           branch_id: string | null
@@ -940,6 +1165,42 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_services: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          staff_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          staff_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_services_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -1210,6 +1471,11 @@ export type Database = {
           qr_code_url: string
         }[]
       }
+      generate_business_slug: {
+        Args: { business_name: string }
+        Returns: string
+      }
+      generate_slug: { Args: { name: string }; Returns: string }
       get_customer_tier: {
         Args: { p_lifetime_points: number }
         Returns: string
@@ -1286,6 +1552,12 @@ export type Database = {
     }
     Enums: {
       billing_interval: "monthly" | "annual"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "no_show"
       invoice_status: "draft" | "open" | "paid" | "void" | "uncollectible"
       payment_status:
         | "pending"
@@ -1436,6 +1708,13 @@ export const Constants = {
   public: {
     Enums: {
       billing_interval: ["monthly", "annual"],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
       invoice_status: ["draft", "open", "paid", "void", "uncollectible"],
       payment_status: [
         "pending",
