@@ -12,11 +12,15 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, Phone, Sparkles, Calendar } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Clock, Phone, Sparkles, Calendar, ArrowRight, Package } from 'lucide-react';
 import type {
   PublicBusiness,
   PublicService,
+  PublicAvailability,
+  PublicAddon,
 } from '@/lib/services/public-business.service';
+import { BookingModal } from '@/components/booking';
 
 // ============================================
 // TYPES
@@ -25,6 +29,8 @@ import type {
 interface ServicesPageClientProps {
   business: PublicBusiness;
   services: PublicService[];
+  availability: PublicAvailability[];
+  addons?: PublicAddon[];
 }
 
 // ============================================
@@ -73,6 +79,11 @@ function formatPrice(centavos: number): string {
 }
 
 function formatDuration(minutes: number): string {
+  if (minutes >= 1440) {
+    const days = minutes / 1440;
+    if (days === 1) return '1 night';
+    return `${days} nights`;
+  }
   if (minutes < 60) {
     return `${minutes} min`;
   }
@@ -84,6 +95,19 @@ function formatDuration(minutes: number): string {
   return `${hours} hr ${remainingMins} min`;
 }
 
+// Group addons by category
+function groupAddonsByCategory(addons: PublicAddon[]): Map<string, PublicAddon[]> {
+  const grouped = new Map<string, PublicAddon[]>();
+  for (const addon of addons) {
+    const category = addon.category || 'Other';
+    if (!grouped.has(category)) {
+      grouped.set(category, []);
+    }
+    grouped.get(category)!.push(addon);
+  }
+  return grouped;
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -91,161 +115,305 @@ function formatDuration(minutes: number): string {
 export function ServicesPageClient({
   business,
   services,
+  availability,
+  addons = [],
 }: ServicesPageClientProps) {
   const [mounted, setMounted] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<PublicService | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const handleBookNow = (service: PublicService) => {
+    setSelectedService(service);
+    setBookingOpen(true);
+  };
+
   if (!mounted) {
     return null;
   }
 
+  const groupedAddons = groupAddonsByCategory(addons);
+
   return (
-    <div className="relative">
-      {/* Animated Background Blobs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
-        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
-      </div>
+    <>
+      <div className="relative">
+        {/* Animated Background Blobs */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
+          <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
+          <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
+        </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <motion.div
-          className="mb-10"
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
-              <Calendar className="h-7 w-7" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Our Services</h1>
-              <p className="text-muted-foreground text-base sm:text-lg">
-                Browse our available services and book your appointment
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Services Grid */}
-        {services.length > 0 ? (
+        <div className="container mx-auto px-4 py-8">
+          {/* Page Header */}
           <motion.div
-            className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainerVariants}
-          >
-            {services.map((service) => (
-              <motion.div key={service.id} variants={cardVariants}>
-                <Card className="flex flex-col h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
-
-                  <CardHeader className="relative">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-lg">{service.name}</CardTitle>
-                    </div>
-                    {service.description && (
-                      <CardDescription className="line-clamp-2">
-                        {service.description}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-
-                  <CardContent className="flex-1 flex flex-col justify-end relative">
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <Badge
-                        variant="outline"
-                        className="gap-1.5 bg-muted/50 border-border/50"
-                      >
-                        <Clock className="h-3.5 w-3.5 text-primary" />
-                        {formatDuration(service.duration_minutes)}
-                      </Badge>
-                      {service.price_centavos && (
-                        <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/20 hover:from-primary/20 hover:to-secondary/20">
-                          {formatPrice(service.price_centavos)}
-                        </Badge>
-                      )}
-                    </div>
-                    <Button
-                      className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg hover:scale-[1.02] transition-all"
-                      disabled
-                    >
-                      Book Now
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
+            className="mb-10"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
           >
-            <Card className="text-center py-12 border-border/50">
-              <CardContent>
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
-                  <Sparkles className="h-10 w-10 text-primary/60" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">
-                  No Services Available
-                </h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
-                  This business hasn&apos;t added any services yet. Check back
-                  later or contact them directly.
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+                <Calendar className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">What We Offer</h1>
+                <p className="text-muted-foreground text-base sm:text-lg">
+                  Browse our services and book your appointment
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
-        )}
 
-        {/* Contact CTA */}
-        {business.phone && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Card className="mt-10 overflow-hidden border-primary/20 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
-              <CardContent className="py-6 relative">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
-                      <Phone className="h-6 w-6" />
-                    </div>
-                    <div className="text-center sm:text-left">
-                      <h3 className="font-semibold text-lg">
-                        Need help booking?
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Contact us directly for assistance with your appointment
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    asChild
-                    className="rounded-xl px-4 sm:px-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all font-semibold"
+          {/* Services Section */}
+          {services.length > 0 && (
+            <div className="mb-12">
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="mb-6"
+              >
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Services
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select a service to book your appointment
+                </p>
+              </motion.div>
+
+              <motion.div
+                className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                initial="hidden"
+                animate="visible"
+                variants={staggerContainerVariants}
+              >
+                {services.map((service) => (
+                  <motion.div key={service.id} variants={cardVariants}>
+                    <Card className="flex flex-col h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
+
+                      <CardHeader className="relative">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-lg">{service.name}</CardTitle>
+                        </div>
+                        {service.description && (
+                          <CardDescription className="line-clamp-2">
+                            {service.description}
+                          </CardDescription>
+                        )}
+                      </CardHeader>
+
+                      <CardContent className="flex-1 flex flex-col justify-end relative">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <Badge
+                            variant="outline"
+                            className="gap-1.5 bg-muted/50 border-border/50"
+                          >
+                            <Clock className="h-3.5 w-3.5 text-primary" />
+                            {formatDuration(service.duration_minutes)}
+                          </Badge>
+                          {service.price_centavos && (
+                            <Badge className="bg-gradient-to-r from-primary/10 to-secondary/10 text-primary border-primary/20 hover:from-primary/20 hover:to-secondary/20">
+                              {formatPrice(service.price_centavos)}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg hover:scale-[1.02] transition-all"
+                          onClick={() => handleBookNow(service)}
+                        >
+                          Book Now
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          )}
+
+          {/* Add-ons Section */}
+          {addons.length > 0 && (
+            <div className="mb-12">
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+                className="mb-6"
+              >
+                <Separator className="mb-8" />
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  Add-ons & Extras
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Enhance your booking with these optional extras
+                </p>
+              </motion.div>
+
+              {Array.from(groupedAddons.entries()).map(([category, categoryAddons]) => (
+                <div key={category} className="mb-8">
+                  {groupedAddons.size > 1 && (
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3 capitalize">
+                      {category}
+                    </h3>
+                  )}
+                  <motion.div
+                    className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                    initial="hidden"
+                    animate="visible"
+                    variants={staggerContainerVariants}
                   >
-                    <a href={`tel:${business.phone}`}>
-                      <Phone className="mr-2 h-4 w-4" />
-                      {business.phone}
-                    </a>
-                  </Button>
+                    {categoryAddons.map((addon) => (
+                      <motion.div key={addon.id} variants={cardVariants}>
+                        <Card className="h-full border-border/50 hover:border-primary/30 transition-colors">
+                          <CardContent className="py-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">{addon.name}</p>
+                                {addon.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                    {addon.description}
+                                  </p>
+                                )}
+                                {addon.duration_minutes && (
+                                  <Badge variant="outline" className="gap-1 text-xs mt-2">
+                                    <Clock className="h-3 w-3" />
+                                    {formatDuration(addon.duration_minutes)}
+                                  </Badge>
+                                )}
+                              </div>
+                              <Badge className="bg-primary/10 text-primary border-primary/20 shrink-0">
+                                {formatPrice(addon.price_centavos)}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+              ))}
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-sm text-muted-foreground text-center mt-4"
+              >
+                Add-ons can be selected during the booking process
+              </motion.p>
+            </div>
+          )}
+
+          {/* No Services State */}
+          {services.length === 0 && addons.length === 0 && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+            >
+              <Card className="text-center py-12 border-border/50">
+                <CardContent>
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
+                    <Sparkles className="h-10 w-10 text-primary/60" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    No Services Available
+                  </h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto">
+                    This business hasn&apos;t added any services yet. Check back
+                    later or contact them directly.
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Contact CTA */}
+          {business.phone && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="mt-10 overflow-hidden border-primary/20 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
+                <CardContent className="py-6 relative">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+                        <Phone className="h-6 w-6" />
+                      </div>
+                      <div className="text-center sm:text-left">
+                        <h3 className="font-semibold text-lg">
+                          Need help booking?
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Contact us directly for assistance with your appointment
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      asChild
+                      className="rounded-xl px-4 sm:px-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all font-semibold"
+                    >
+                      <a href={`tel:${business.phone}`}>
+                        <Phone className="mr-2 h-4 w-4" />
+                        {business.phone}
+                      </a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Booking Modal - New Full-Screen Design */}
+      <BookingModal
+        open={bookingOpen}
+        onOpenChange={setBookingOpen}
+        business={{
+          id: business.id,
+          name: business.name,
+          slug: business.slug,
+          logo_url: business.logo_url,
+          phone: business.phone,
+          address: business.address,
+          points_per_purchase: business.points_per_purchase,
+          pesos_per_point: business.pesos_per_point,
+        }}
+        services={services.map((s) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          price_centavos: s.price_centavos,
+          duration_minutes: s.duration_minutes,
+          max_guests: 1,
+          requires_time_slot: s.duration_minutes < 1440,
+          price_type: s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
+        }))}
+        addons={addons.map((a) => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          price_centavos: a.price_centavos,
+          price_type: 'fixed' as const,
+          service_id: null,
+        }))}
+        availability={availability}
+        initialServiceId={selectedService?.id}
+      />
+    </>
   );
 }

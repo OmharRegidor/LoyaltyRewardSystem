@@ -4,13 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Core Colors - NoxaLoyalty Brand */
-  --primary: oklch(0.486 0.227 274.751); /* Deep Purple #6366f1 */
-  --primary-foreground: oklch(0.97 0 0); /* Light text on purple */
-  --secondary: oklch(0.559 0.191 202.24); /* Cyan #06b6d4 */
-  --secondary-foreground: oklch(0.145 0 0); /* Dark text on cyan */
-  --accent: oklch(0.559 0.191 202.24); /* Cyan accent */
-  --accent-foreground: oklch(0.145 0 0);
+  /* Core Colors - Trust Blue Theme */
+  --primary: oklch(0.546 0.245 262.881); /* Royal Blue #2563eb */
+  --primary-foreground: oklch(1 0 0); /* White text on blue */
+  --secondary: oklch(0.554 0.135 163.225); /* Teal #0d9488 */
+  --secondary-foreground: oklch(1 0 0); /* White text on teal */
+  --accent: oklch(0.704 0.198 74.348); /* Amber #f59e0b */
+  --accent-foreground: oklch(0.208 0.042 265.755); /* Dark text on amber */
 
   /* Status Colors */
   --success: oklch(0.598 0.147 142.55); /* Green #10b981 */
@@ -19,79 +19,83 @@
 
   /* Backgrounds */
   --background: oklch(1 0 0); /* White */
-  --foreground: oklch(0.145 0 0); /* Dark text */
+  --foreground: oklch(0.208 0.042 265.755); /* Slate 900 #0f172a */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.208 0.042 265.755);
 
   /* UI Elements */
-  --muted: oklch(0.97 0 0); /* Light gray */
-  --muted-foreground: oklch(0.556 0 0); /* Medium gray text */
-  --border: oklch(0.92 0 0); /* Light border */
-  --input: oklch(0.96 0 0);
-  --ring: oklch(0.486 0.227 274.751); /* Purple focus ring */
+  --muted: oklch(0.968 0.007 247.896); /* Slate 100 #f1f5f9 */
+  --muted-foreground: oklch(0.554 0.046 257.417); /* Slate 500 #64748b */
+  --border: oklch(0.929 0.013 255.508); /* Slate 200 #e2e8f0 */
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.546 0.245 262.881); /* Royal Blue focus ring */
 
   /* Charts */
-  --chart-1: oklch(0.486 0.227 274.751); /* Purple */
-  --chart-2: oklch(0.559 0.191 202.24); /* Cyan */
+  --chart-1: oklch(0.546 0.245 262.881); /* Royal Blue */
+  --chart-2: oklch(0.554 0.135 163.225); /* Teal */
   --chart-3: oklch(0.598 0.147 142.55); /* Green */
   --chart-4: oklch(0.704 0.198 74.348); /* Amber */
   --chart-5: oklch(0.577 0.245 27.325); /* Red */
 
   /* Sidebar */
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.486 0.227 274.751);
-  --sidebar-primary-foreground: oklch(0.97 0 0);
-  --sidebar-accent: oklch(0.559 0.191 202.24);
-  --sidebar-accent-foreground: oklch(0.145 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.486 0.227 274.751);
+  --sidebar: oklch(0.968 0.007 247.896); /* Slate 100 */
+  --sidebar-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.554 0.135 163.225);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.546 0.245 262.881);
 }
 
 .dark {
-  /* Updated dark mode color scheme for landing page and dashboard */
-  /* Dark Mode - Deep navy background */
-  --background: oklch(0.1 0 0); /* Almost black #0a0a0a */
-  --foreground: oklch(0.97 0 0); /* Light text */
-  --card: oklch(0.15 0 0); /* #1a1a1a */
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.97 0 0);
+  /* Dark Mode - Slate Navy Background */
+  --background: oklch(0.208 0.042 265.755); /* Slate 900 #0f172a */
+  --foreground: oklch(0.968 0.007 247.896); /* Slate 100 #f1f5f9 */
+  --card: oklch(0.279 0.041 260.031); /* Slate 800 #1e293b */
+  --card-foreground: oklch(0.968 0.007 247.896);
+  --popover: oklch(0.279 0.041 260.031);
+  --popover-foreground: oklch(0.968 0.007 247.896);
 
-  /* Enhanced colors for dark mode */
-  --primary: oklch(0.559 0.191 202.24); /* Cyan primary in dark */
-  --primary-foreground: oklch(0.1 0 0);
+  /* Trust Blue primary in dark mode */
+  --primary: oklch(0.623 0.214 259.815); /* Blue 500 #3b82f6 */
+  --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.486 0.227 274.751); /* Purple secondary in dark */
-  --secondary-foreground: oklch(0.97 0 0);
+  --secondary: oklch(0.765 0.152 180.524); /* Teal 400 #2dd4bf */
+  --secondary-foreground: oklch(0.208 0.042 265.755);
 
-  --accent: oklch(0.559 0.191 202.24); /* Cyan accent */
-  --accent-foreground: oklch(0.1 0 0);
+  --accent: oklch(0.704 0.198 74.348); /* Amber */
+  --accent-foreground: oklch(0.968 0.007 247.896);
 
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --border: oklch(0.25 0 0);
-  --input: oklch(0.2 0 0);
-  --ring: oklch(0.559 0.191 202.24);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788); /* Slate 400 #94a3b8 */
+  --border: oklch(0.372 0.044 257.287); /* Slate 700 #334155 */
+  --input: oklch(0.372 0.044 257.287);
+  --ring: oklch(0.623 0.214 259.815);
+
+  /* Status colors (same in dark) */
+  --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.598 0.147 142.55);
+  --warning: oklch(0.704 0.198 74.348);
 
   /* Dark mode sidebar */
-  --sidebar: oklch(0.12 0 0);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.559 0.191 202.24);
-  --sidebar-primary-foreground: oklch(0.1 0 0);
-  --sidebar-accent: oklch(0.486 0.227 274.751);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.559 0.191 202.24);
+  --sidebar: oklch(0.279 0.041 260.031);
+  --sidebar-foreground: oklch(0.968 0.007 247.896);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.765 0.152 180.524);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.372 0.044 257.287);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
 
-  /* Dark mode gradients */
-  --chart-1: oklch(0.559 0.191 202.24); /* Bright cyan in dark */
-  --chart-2: oklch(0.486 0.227 274.751); /* Purple in dark */
-  --chart-3: oklch(0.598 0.147 142.55); /* Bright green in dark */
-  --chart-4: oklch(0.704 0.198 74.348); /* Amber in dark */
-  --chart-5: oklch(0.577 0.245 27.325); /* Red in dark */
+  /* Charts */
+  --chart-1: oklch(0.623 0.214 259.815); /* Blue */
+  --chart-2: oklch(0.765 0.152 180.524); /* Teal */
+  --chart-3: oklch(0.598 0.147 142.55); /* Green */
+  --chart-4: oklch(0.704 0.198 74.348); /* Amber */
+  --chart-5: oklch(0.577 0.245 27.325); /* Red */
 }
 
 @theme inline {

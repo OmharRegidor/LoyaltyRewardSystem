@@ -23,7 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Loader2, Upload } from 'lucide-react';
+import { createClient } from '@/lib/supabase';
 import type { Service, ServiceFormData, Branch } from '@/types/booking.types';
 
 // ============================================
@@ -65,6 +67,9 @@ export function ServiceDialog({
   mode,
 }: ServiceDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [formData, setFormData] = useState<ServiceFormData>({
     name: '',
     description: '',
@@ -72,6 +77,7 @@ export function ServiceDialog({
     price: null,
     branch_id: null,
     is_active: true,
+    image_url: undefined,
   });
 
   // Reset form when dialog opens/closes or service changes
@@ -85,7 +91,9 @@ export function ServiceDialog({
           price: service.price_centavos ? service.price_centavos / 100 : null,
           branch_id: service.branch_id,
           is_active: service.is_active,
+          image_url: service.image_url || undefined,
         });
+        setImagePreview(service.image_url || null);
       } else {
         setFormData({
           name: '',
@@ -94,8 +102,11 @@ export function ServiceDialog({
           price: null,
           branch_id: null,
           is_active: true,
+          image_url: undefined,
         });
+        setImagePreview(null);
       }
+      setUploadError(null);
     }
   }, [isOpen, service, mode]);
 
@@ -124,6 +135,61 @@ export function ServiceDialog({
       if (!isNaN(numValue) && numValue >= 0) {
         setFormData((prev) => ({ ...prev, price: numValue }));
       }
+    }
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image must be less than 2MB');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError('Only PNG, JPG, and WebP images are allowed');
+      return;
+    }
+
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    // Upload to Supabase
+    setIsUploadingImage(true);
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `service-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)}.${fileExt}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from('reward-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('reward-images')
+        .getPublicUrl(fileName);
+
+      // Update form data with the uploaded URL
+      setFormData((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setUploadError('Failed to upload image. Please try again.');
+      setImagePreview(null);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -166,6 +232,54 @@ export function ServiceDialog({
               placeholder="Optional description of the service"
               rows={3}
             />
+          </div>
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <Label>Service Image</Label>
+            <label className="block cursor-pointer">
+              <Card className="border-2 border-dashed p-4 flex flex-col items-center justify-center hover:bg-muted/50 hover:border-primary/50 transition h-32 relative overflow-hidden">
+                {imagePreview ? (
+                  <>
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <Upload className="w-6 h-6 mx-auto mb-1" />
+                        <p className="text-xs font-medium">Change image</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {isUploadingImage ? (
+                      <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
+                    ) : (
+                      <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+                    )}
+                    <p className="text-xs font-medium">
+                      {isUploadingImage ? 'Uploading...' : 'Click to upload'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG up to 2MB
+                    </p>
+                  </>
+                )}
+              </Card>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleImageSelect}
+                disabled={isSubmitting || isUploadingImage}
+              />
+            </label>
+            {uploadError && (
+              <p className="text-xs text-red-500">{uploadError}</p>
+            )}
           </div>
 
           {/* Duration */}
@@ -257,7 +371,7 @@ export function ServiceDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !formData.name.trim()}>
+            <Button type="submit" disabled={isSubmitting || isUploadingImage || !formData.name.trim()}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {mode === 'create' ? 'Add Service' : 'Save Changes'}
             </Button>

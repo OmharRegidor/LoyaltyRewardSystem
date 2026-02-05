@@ -56,6 +56,15 @@ export interface PublicAvailability {
   is_available: boolean;
 }
 
+export interface PublicAddon {
+  id: string;
+  name: string;
+  description: string | null;
+  price_centavos: number;
+  duration_minutes: number | null;
+  category: string | null;
+}
+
 // ============================================
 // GET BUSINESS BY SLUG
 // ============================================
@@ -200,6 +209,40 @@ export async function getPublicAvailability(
 
   if (error) {
     console.error('Error fetching public availability:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+// ============================================
+// GET PUBLIC ADDONS
+// ============================================
+
+export async function getPublicAddons(
+  businessId: string
+): Promise<PublicAddon[]> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from('booking_addons')
+    .select(
+      `
+      id,
+      name,
+      description,
+      price_centavos,
+      duration_minutes,
+      category
+    `
+    )
+    .eq('business_id', businessId)
+    .eq('is_active', true)
+    .order('sort_order')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching public addons:', error);
     return [];
   }
 

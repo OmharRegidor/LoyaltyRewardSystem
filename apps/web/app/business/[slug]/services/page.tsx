@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import {
   getBusinessBySlug,
   getPublicServices,
+  getPublicAvailability,
+  getPublicAddons,
 } from '@/lib/services/public-business.service';
 import { ServicesPageClient } from './components/services-page-client';
 
@@ -19,7 +21,18 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
     notFound();
   }
 
-  const services = await getPublicServices(business.id);
+  const [services, availability, addons] = await Promise.all([
+    getPublicServices(business.id),
+    getPublicAvailability(business.id),
+    getPublicAddons(business.id),
+  ]);
 
-  return <ServicesPageClient business={business} services={services} />;
+  return (
+    <ServicesPageClient
+      business={business}
+      services={services}
+      availability={availability}
+      addons={addons}
+    />
+  );
 }

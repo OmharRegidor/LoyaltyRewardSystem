@@ -28,8 +28,8 @@ export default async function BusinessLayout({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="flex h-14 items-center justify-between">
             {/* Business Logo & Name */}
             <Link
               href={`/business/${slug}`}
@@ -61,6 +61,7 @@ export default async function BusinessLayout({
             <nav className="hidden md:flex items-center gap-1">
               <NavLink href={`/business/${slug}`}>About</NavLink>
               <NavLink href={`/business/${slug}/services`}>Services</NavLink>
+              <NavLink href={`/business/${slug}/my-bookings`}>My Bookings</NavLink>
               <NavLink href={`/business/${slug}/rewards`}>Rewards</NavLink>
               <NavLink href={`/business/${slug}/card`}>Get Card</NavLink>
             </nav>
@@ -72,11 +73,11 @@ export default async function BusinessLayout({
       </header>
 
       {/* Main Content */}
-      <main>{children}</main>
+      <main className="px-2 sm:px-4 lg:px-8">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-muted/30 py-8 mt-12">
-        <div className="container mx-auto px-4 text-center">
+      <footer className="border-t border-border/50 bg-muted/30 py-6 mt-10">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 text-center">
           <p className="text-sm text-muted-foreground">
             Powered by{' '}
             <Link

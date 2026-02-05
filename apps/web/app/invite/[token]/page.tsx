@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import type { AcceptStaffInviteResult } from '../../../../../packages/shared/types/database';
 import type { Database } from '../../../../../packages/shared/types/database';
 import {
   CheckCircle,

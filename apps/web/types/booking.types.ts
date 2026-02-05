@@ -8,6 +8,7 @@ export interface Service {
   description: string | null;
   duration_minutes: number;
   price_centavos: number | null;
+  image_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -20,6 +21,7 @@ export interface ServiceFormData {
   price: number | null; // UI uses pesos, convert to centavos on save
   branch_id: string | null;
   is_active: boolean;
+  image_url?: string;
 }
 
 export interface Branch {

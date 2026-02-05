@@ -10,6 +10,17 @@ import type { Database } from '../../../packages/shared/types/database';
 type StaffRole = 'owner' | 'manager' | 'cashier';
 type Business = Database['public']['Tables']['businesses']['Row'];
 
+// Helper to generate URL-safe slug from business name
+function generateSlug(name: string): string {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 40);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `${base}-${random}`;
+}
+
 interface StaffRecord {
   id: string;
   user_id: string;
@@ -255,6 +266,7 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
       .insert({
         owner_id: user.id,
         name: businessName,
+        slug: generateSlug(businessName),
         points_per_purchase: 10,
       })
       .select()
@@ -384,6 +396,7 @@ export async function loginBusinessOwner(
           .insert({
             owner_id: authData.user.id,
             name: businessName,
+            slug: generateSlug(businessName),
             points_per_purchase: 10,
           })
           .select()

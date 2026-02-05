@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Home, Calendar, Gift, CreditCard } from 'lucide-react';
+import { Menu, Home, Calendar, Gift, CreditCard, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -22,6 +22,7 @@ interface MobileNavProps {
 const navItems = [
   { label: 'About', path: '', icon: Home },
   { label: 'Services', path: '/services', icon: Calendar },
+  { label: 'My Bookings', path: '/my-bookings', icon: CalendarDays },
   { label: 'Rewards', path: '/rewards', icon: Gift },
   { label: 'Get Card', path: '/card', icon: CreditCard },
 ];

@@ -74,6 +74,7 @@ export async function createService(
       duration_minutes: data.duration_minutes,
       price_centavos: data.price ? Math.round(data.price * 100) : null,
       is_active: data.is_active,
+      image_url: data.image_url || null,
     })
     .select()
     .single();
@@ -107,6 +108,7 @@ export async function updateService(
     updateData.price_centavos = data.price ? Math.round(data.price * 100) : null;
   if (data.branch_id !== undefined) updateData.branch_id = data.branch_id;
   if (data.is_active !== undefined) updateData.is_active = data.is_active;
+  if (data.image_url !== undefined) updateData.image_url = data.image_url || null;
 
   const { data: service, error } = await supabase
     .from('services')

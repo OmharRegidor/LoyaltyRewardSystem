@@ -27,7 +27,10 @@ import {
 import type {
   PublicBusiness,
   PublicAvailability,
+  PublicService,
+  PublicAddon,
 } from '@/lib/services/public-business.service';
+import { BookingModal } from '@/components/booking';
 
 // ============================================
 // TYPES
@@ -36,6 +39,8 @@ import type {
 interface BusinessPageClientProps {
   business: PublicBusiness;
   availability: PublicAvailability[];
+  services: PublicService[];
+  addons: PublicAddon[];
   slug: string;
 }
 
@@ -118,9 +123,12 @@ function getTodayIndex(): number {
 export function BusinessPageClient({
   business,
   availability,
+  services,
+  addons,
   slug,
 }: BusinessPageClientProps) {
   const [mounted, setMounted] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const todayIndex = getTodayIndex();
 
   useEffect(() => {
@@ -200,15 +208,14 @@ export function BusinessPageClient({
             transition={{ delay: 0.3 }}
           >
             <Button
-              asChild
               size="lg"
               className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-semibold"
+              onClick={() => setBookingOpen(true)}
+              disabled={services.length === 0}
             >
-              <Link href={`/business/${slug}/services`}>
-                <Calendar className="mr-2 h-5 w-5" />
-                Book a Service
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              <Calendar className="mr-2 h-5 w-5" />
+              Book a Service
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -226,7 +233,7 @@ export function BusinessPageClient({
 
         {/* Cards Grid */}
         <motion.div
-          className="grid gap-6 md:grid-cols-2"
+          className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto"
           initial="hidden"
           animate="visible"
           variants={staggerContainerVariants}
@@ -323,94 +330,131 @@ export function BusinessPageClient({
               </CardContent>
             </Card>
           </motion.div>
+        </motion.div>
 
-          {/* Business Hours Card */}
-          <motion.div
-            className="md:col-span-2"
-            variants={cardVariants}
-          >
-            <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
-              <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
-                <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </div>
-                  Business Hours
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative pt-0 px-3 sm:px-6">
-                {availability.length > 0 ? (
-                  <motion.div
-                    className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
-                    initial="hidden"
-                    animate="visible"
-                    variants={staggerContainerVariants}
-                  >
-                    {DAY_NAMES.map((dayName, index) => {
-                      const dayAvailability = availability.find(
-                        (a) => a.day_of_week === index
-                      );
-                      const isToday = index === todayIndex;
-                      const isOpen =
-                        dayAvailability && dayAvailability.is_available;
-                      // Abbreviated day name for mobile
-                      const shortDayName = dayName.slice(0, 3);
+        {/* Business Hours Card */}
+        <motion.div
+          className="max-w-4xl mx-auto mt-6"
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+        >
+          <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
+            <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
+            <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+                Business Hours
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative pt-0 px-3 sm:px-6">
+              {availability.length > 0 ? (
+                <motion.div
+                  className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
+                  initial="hidden"
+                  animate="visible"
+                  variants={staggerContainerVariants}
+                >
+                  {DAY_NAMES.map((dayName, index) => {
+                    const dayAvailability = availability.find(
+                      (a) => a.day_of_week === index
+                    );
+                    const isToday = index === todayIndex;
+                    const isOpen =
+                      dayAvailability && dayAvailability.is_available;
+                    // Abbreviated day name for mobile
+                    const shortDayName = dayName.slice(0, 3);
 
-                      return (
-                        <motion.div
-                          key={index}
-                          variants={dayItemVariants}
-                          className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
-                            isToday
-                              ? 'bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
-                              : 'bg-muted/50 hover:bg-muted border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
-                            <span
-                              className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : ''}`}
-                            >
-                              <span className="sm:hidden">{shortDayName}</span>
-                              <span className="hidden sm:inline">{dayName}</span>
-                            </span>
-                            {isToday && (
-                              <span className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary shrink-0">
-                                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary" />
-                                </span>
-                                <span className="hidden sm:inline">Today</span>
+                    return (
+                      <motion.div
+                        key={index}
+                        variants={dayItemVariants}
+                        className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
+                          isToday
+                            ? 'bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
+                            : 'bg-muted/50 hover:bg-muted border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
+                          <span
+                            className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : ''}`}
+                          >
+                            <span className="sm:hidden">{shortDayName}</span>
+                            <span className="hidden sm:inline">{dayName}</span>
+                          </span>
+                          {isToday && (
+                            <span className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary shrink-0">
+                              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary" />
                               </span>
-                            )}
-                          </div>
-                          {isOpen ? (
-                            <span className="text-[10px] sm:text-sm text-muted-foreground">
-                              {formatTime(dayAvailability.start_time)} - {formatTime(dayAvailability.end_time)}
+                              <span className="hidden sm:inline">Today</span>
                             </span>
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="w-fit text-[10px] sm:text-xs px-1.5 sm:px-2.5"
-                            >
-                              Closed
-                            </Badge>
                           )}
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
-                ) : (
-                  <p className="text-muted-foreground text-sm p-3">
-                    Business hours not available. Please contact the business
-                    for their schedule.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                        </div>
+                        {isOpen ? (
+                          <span className="text-[10px] sm:text-sm text-muted-foreground">
+                            {formatTime(dayAvailability.start_time)} - {formatTime(dayAvailability.end_time)}
+                          </span>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="w-fit text-[10px] sm:text-xs px-1.5 sm:px-2.5"
+                          >
+                            Closed
+                          </Badge>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              ) : (
+                <p className="text-muted-foreground text-sm p-3">
+                  Business hours not available. Please contact the business
+                  for their schedule.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
+
+      {/* Booking Modal - New Full-Screen Design */}
+      <BookingModal
+        open={bookingOpen}
+        onOpenChange={setBookingOpen}
+        business={{
+          id: business.id,
+          name: business.name,
+          slug: business.slug,
+          logo_url: business.logo_url,
+          phone: business.phone,
+          address: business.address,
+          points_per_purchase: business.points_per_purchase,
+          pesos_per_point: business.pesos_per_point,
+        }}
+        services={services.map((s) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          price_centavos: s.price_centavos,
+          duration_minutes: s.duration_minutes,
+          max_guests: 1,
+          requires_time_slot: s.duration_minutes < 1440,
+          price_type: s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
+        }))}
+        addons={addons.map((a) => ({
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          price_centavos: a.price_centavos,
+          price_type: 'fixed' as const,
+          service_id: null,
+        }))}
+        availability={availability}
+      />
     </div>
   );
 }

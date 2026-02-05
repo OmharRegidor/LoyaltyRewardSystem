@@ -243,7 +243,7 @@ export function CustomerDetailModal({
 
   return (
     <Dialog open={!!customer} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Customer Details</DialogTitle>
         </DialogHeader>
@@ -254,11 +254,11 @@ export function CustomerDetailModal({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Left Side - Customer Info */}
-            <Card className="p-6 space-y-6">
+            <Card className="p-4 sm:p-6 space-y-6">
               <div className="flex flex-col items-center text-center">
-                <Avatar className="h-16 w-16 mb-4">
+                <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mb-3 sm:mb-4">
                   <AvatarFallback className="bg-primary/10 text-primary text-lg">
                     {getInitials(customer.name)}
                   </AvatarFallback>
@@ -311,7 +311,7 @@ export function CustomerDetailModal({
             </Card>
 
             {/* Right Side - Points History */}
-            <Card className="p-6 flex flex-col">
+            <Card className="p-4 sm:p-6 flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-semibold">Points History</h4>
                 {totalCount > 0 && (
@@ -321,7 +321,7 @@ export function CustomerDetailModal({
                 )}
               </div>
 
-              <div className="flex-1 min-h-[280px]">
+              <div className="flex-1 min-h-[200px] sm:min-h-[280px]">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
