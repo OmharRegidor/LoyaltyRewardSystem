@@ -168,26 +168,26 @@ export function BookingDetailDialog({
           <div className="space-y-4">
             {/* Customer Info */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+              <Label className="text-xs text-gray-500 uppercase tracking-wide">
                 Customer
               </Label>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
+                  <User className="w-4 h-4 text-gray-500" />
                   <span className="font-medium">{customerName}</span>
                 </div>
                 {booking.customer_phone && (
                   <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-500">
                       {booking.customer_phone}
                     </span>
                   </div>
                 )}
                 {booking.customer_email && (
                   <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-500">
                       {booking.customer_email}
                     </span>
                   </div>
@@ -197,12 +197,12 @@ export function BookingDetailDialog({
 
             {/* Service Info */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+              <Label className="text-xs text-gray-500 uppercase tracking-wide">
                 Service
               </Label>
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-lg bg-gray-50">
                 <div className="font-medium">{booking.service.name}</div>
-                <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                   <span>{formatDuration(booking.service.duration_minutes)}</span>
                   <span>•</span>
                   <span>{formatPrice(booking.service.price_centavos)}</span>
@@ -212,12 +212,12 @@ export function BookingDetailDialog({
 
             {/* Date & Time */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+              <Label className="text-xs text-gray-500 uppercase tracking-wide">
                 Schedule
               </Label>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <Calendar className="w-4 h-4 text-gray-500" />
                   <span className="text-sm">
                     {new Date(booking.booking_date).toLocaleDateString('en-US', {
                       weekday: 'short',
@@ -227,7 +227,7 @@ export function BookingDetailDialog({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Clock className="w-4 h-4 text-gray-500" />
                   <span className="text-sm">
                     {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
                   </span>
@@ -237,7 +237,7 @@ export function BookingDetailDialog({
 
             {/* Status */}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+              <Label className="text-xs text-gray-500 uppercase tracking-wide">
                 Status
               </Label>
               {booking.status === 'cancelled' ? (
@@ -267,12 +267,12 @@ export function BookingDetailDialog({
             {/* Notes */}
             {booking.notes && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                <Label className="text-xs text-gray-500 uppercase tracking-wide">
                   Notes
                 </Label>
                 <div className="flex items-start gap-2">
-                  <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
-                  <p className="text-sm text-muted-foreground">{booking.notes}</p>
+                  <FileText className="w-4 h-4 text-gray-500 mt-0.5" />
+                  <p className="text-sm text-gray-500">{booking.notes}</p>
                 </div>
               </div>
             )}

@@ -31,12 +31,23 @@ export interface PublicBusiness {
   pesos_per_point: number | null;
 }
 
+export interface PublicPriceVariant {
+  id: string;
+  name: string;
+  price_centavos: number;
+  description: string | null;
+  capacity: number | null;
+}
+
 export interface PublicService {
   id: string;
   name: string;
   description: string | null;
   duration_minutes: number;
   price_centavos: number | null;
+  pricing_type: string | null;
+  config: Record<string, unknown> | null;
+  price_variants: PublicPriceVariant[];
 }
 
 export interface PublicReward {
@@ -56,6 +67,13 @@ export interface PublicAvailability {
   is_available: boolean;
 }
 
+export interface PublicAddonOption {
+  id: string;
+  name: string;
+  price_centavos: number;
+  description: string | null;
+}
+
 export interface PublicAddon {
   id: string;
   name: string;
@@ -63,6 +81,7 @@ export interface PublicAddon {
   price_centavos: number;
   duration_minutes: number | null;
   category: string | null;
+  options: PublicAddonOption[];
 }
 
 // ============================================
@@ -132,7 +151,9 @@ export async function getPublicServices(
       name,
       description,
       duration_minutes,
-      price_centavos
+      price_centavos,
+      pricing_type,
+      config
     `
     )
     .eq('business_id', businessId)
@@ -144,7 +165,46 @@ export async function getPublicServices(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Fetch price variants for all services
+  const serviceIds = data.map((s) => s.id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: variants } = await (supabase as any)
+    .from('service_price_variants')
+    .select('id, service_id, name, price_centavos, description, capacity')
+    .in('service_id', serviceIds)
+    .eq('is_active', true)
+    .order('sort_order');
+
+  // Group variants by service_id
+  const variantsByService = new Map<string, PublicPriceVariant[]>();
+  for (const variant of variants || []) {
+    const serviceId = variant.service_id;
+    if (!variantsByService.has(serviceId)) {
+      variantsByService.set(serviceId, []);
+    }
+    variantsByService.get(serviceId)!.push({
+      id: variant.id,
+      name: variant.name,
+      price_centavos: variant.price_centavos,
+      description: variant.description,
+      capacity: variant.capacity,
+    });
+  }
+
+  return data.map((service) => ({
+    id: service.id,
+    name: service.name,
+    description: service.description,
+    duration_minutes: service.duration_minutes,
+    price_centavos: service.price_centavos,
+    pricing_type: (service as Record<string, unknown>).pricing_type as string | null,
+    config: (service as Record<string, unknown>).config as Record<string, unknown> | null,
+    price_variants: variantsByService.get(service.id) || [],
+  }));
 }
 
 // ============================================
@@ -246,7 +306,44 @@ export async function getPublicAddons(
     return [];
   }
 
-  return data || [];
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Fetch addon options for all addons
+  const addonIds = data.map((a) => a.id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: options } = await (supabase as any)
+    .from('booking_addon_options')
+    .select('id, addon_id, name, price_centavos, description')
+    .in('addon_id', addonIds)
+    .eq('is_active', true)
+    .order('sort_order');
+
+  // Group options by addon_id
+  const optionsByAddon = new Map<string, PublicAddonOption[]>();
+  for (const option of options || []) {
+    const addonId = option.addon_id;
+    if (!optionsByAddon.has(addonId)) {
+      optionsByAddon.set(addonId, []);
+    }
+    optionsByAddon.get(addonId)!.push({
+      id: option.id,
+      name: option.name,
+      price_centavos: option.price_centavos,
+      description: option.description,
+    });
+  }
+
+  return data.map((addon) => ({
+    id: addon.id,
+    name: addon.name,
+    description: addon.description,
+    price_centavos: addon.price_centavos,
+    duration_minutes: addon.duration_minutes,
+    category: addon.category,
+    options: optionsByAddon.get(addon.id) || [],
+  }));
 }
 
 // ============================================

@@ -9,6 +9,9 @@ import {
 } from '@/lib/services/public-business.service';
 import { BusinessPageClient } from './components/business-page-client';
 
+// Force dynamic rendering to always fetch fresh data from database
+export const dynamic = 'force-dynamic';
+
 interface BusinessPageProps {
   params: Promise<{ slug: string }>;
 }

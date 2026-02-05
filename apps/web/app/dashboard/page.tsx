@@ -67,7 +67,7 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
   const isPositive = growth >= 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-md hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div
           className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
@@ -85,11 +85,11 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
           {Math.abs(growth)}%
         </div>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+      <p className="text-sm text-gray-500 mb-1">{title}</p>
+      <p className="text-3xl font-bold text-gray-900 mb-1">
         {value}
       </p>
-      <p className="text-xs text-gray-400 dark:text-gray-500">
+      <p className="text-xs text-gray-400">
         {isPositive ? 'Increase' : 'Decrease'} from last month
       </p>
     </div>
@@ -103,11 +103,11 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 function WelcomeModalContent({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+      <div className="relative bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -115,30 +115,30 @@ function WelcomeModalContent({ onClose }: { onClose: () => void }) {
         {/* Content */}
         <div className="text-center">
           <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome to NoxaLoyalty!
           </h2>
-          <p className="text-green-600 dark:text-green-400 font-semibold mb-2">
+          <p className="text-green-600 font-semibold mb-2">
             Your Free plan is now active.
           </p>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-gray-600 mb-6">
             You have access to our full loyalty and rewards system.
           </p>
 
           {/* Upsell */}
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-6">
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/10">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <Calendar className="w-4 h-4 text-primary" />
+              <p className="text-sm text-gray-700">
                 Want Booking System & POS?
               </p>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-sm text-gray-600 mb-2">
               Upgrade to Enterprise anytime.
             </p>
             <Link
               href="/book-call"
-              className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+              className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
             >
               Book a Call <ChevronRight className="w-4 h-4" />
             </Link>
@@ -146,7 +146,7 @@ function WelcomeModalContent({ onClose }: { onClose: () => void }) {
 
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
           >
             Get Started
           </button>
@@ -408,19 +408,19 @@ export default function DashboardPage() {
     switch (type) {
       case 'earn':
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
             {action}
           </span>
         );
       case 'redeem':
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
             {action}
           </span>
         );
       case 'bonus':
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-secondary/30 text-gray-700">
             {action}
           </span>
         );
@@ -437,12 +437,12 @@ export default function DashboardPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6 animate-pulse">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64" />
+          <div className="h-8 bg-gray-200 rounded w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-40"
+                className="bg-white rounded-2xl p-6 h-40 border border-gray-100"
               />
             ))}
           </div>
@@ -462,18 +462,18 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
               Dashboard
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-gray-500 mt-1">
               Welcome back to {userName}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-400 dark:text-gray-500">
+            <p className="text-sm text-gray-400">
               Today's Date
             </p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            <p className="text-lg font-semibold text-gray-900">
               {currentDate}
             </p>
           </div>
@@ -485,47 +485,47 @@ export default function DashboardPage() {
             title="Total Customers"
             value={stats.totalCustomers.toLocaleString()}
             growth={stats.customersGrowth}
-            icon={<Users className="w-6 h-6 text-blue-600" />}
-            iconBg="bg-blue-50 dark:bg-blue-900/30"
+            icon={<Users className="w-6 h-6 text-primary" />}
+            iconBg="bg-primary/10"
           />
           <StatCard
             title="Points Issued Today"
             value={stats.pointsIssuedToday.toLocaleString()}
             growth={stats.pointsGrowth}
             icon={<TrendingUp className="w-6 h-6 text-emerald-600" />}
-            iconBg="bg-emerald-50 dark:bg-emerald-900/30"
+            iconBg="bg-emerald-50"
           />
           <StatCard
             title="Active Rewards"
             value={stats.activeRewards.toString()}
             growth={stats.rewardsGrowth}
-            icon={<Gift className="w-6 h-6 text-cyan-600" />}
-            iconBg="bg-cyan-50 dark:bg-cyan-900/30"
+            icon={<Gift className="w-6 h-6 text-gray-700" />}
+            iconBg="bg-secondary/80"
           />
           <StatCard
             title="Revenue This Month"
             value={`₱${stats.revenueThisMonth.toLocaleString()}`}
             growth={stats.revenueGrowth}
             icon={<DollarSign className="w-6 h-6 text-amber-600" />}
-            iconBg="bg-amber-50 dark:bg-amber-900/30"
+            iconBg="bg-amber-50"
           />
         </div>
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Transactions */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-md">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Recent Transactions
               </h2>
-              <button className="text-sm text-cyan-600 hover:text-cyan-700 font-medium flex items-center gap-1">
+              <button className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <div className="col-span-4">Customer</div>
               <div className="col-span-3">Action</div>
               <div className="col-span-2 text-right">Points</div>
@@ -533,14 +533,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="divide-y divide-gray-100">
               {transactions.length === 0 ? (
                 <div className="px-6 py-12 text-center">
-                  <TrendingUp className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                  <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">
                     No transactions yet
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 mt-1">
                     Start by adding customers and issuing points.
                   </p>
                 </div>
@@ -548,16 +548,16 @@ export default function DashboardPage() {
                 transactions.map((tx) => (
                   <div
                     key={tx.id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
                   >
                     <div className="col-span-4 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm">
                         {tx.customer
                           .split(' ')
                           .map((n) => n[0])
                           .join('')}
                       </div>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                      <span className="font-medium text-gray-900">
                         {tx.customer}
                       </span>
                     </div>
@@ -568,13 +568,13 @@ export default function DashboardPage() {
                       className={`col-span-2 text-right font-semibold ${
                         tx.points >= 0
                           ? 'text-green-600'
-                          : 'text-gray-900 dark:text-white'
+                          : 'text-gray-900'
                       }`}
                     >
                       {tx.points >= 0 ? '+' : ''}
                       {tx.points.toLocaleString()}
                     </div>
-                    <div className="col-span-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                    <div className="col-span-3 text-right text-sm text-gray-500">
                       {tx.time}
                     </div>
                   </div>
@@ -584,23 +584,23 @@ export default function DashboardPage() {
           </div>
 
           {/* Top Rewards */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Top Rewards Redeemed
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 This month
               </p>
             </div>
             <div className="p-6 space-y-5">
               {topRewards.length === 0 ? (
                 <div className="py-8 text-center">
-                  <Gift className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                  <Gift className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">
                     No rewards redeemed yet
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 mt-1">
                     Create rewards to get started.
                   </p>
                 </div>
@@ -617,29 +617,29 @@ export default function DashboardPage() {
                                 ? 'bg-gray-100 text-gray-600'
                                 : index === 2
                                   ? 'bg-orange-100 text-orange-600'
-                                  : 'bg-cyan-100 text-cyan-600'
+                                  : 'bg-secondary/30 text-gray-700'
                           }`}
                         >
                           <Star className="w-4 h-4" />
                         </div>
-                        <span className="font-medium text-gray-900 dark:text-white">
+                        <span className="font-medium text-gray-900">
                           {reward.name}
                         </span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <span className="text-sm font-semibold text-gray-900">
                         {reward.redemptions}
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
                           index === 0
-                            ? 'bg-linear-to-r from-cyan-500 to-blue-500'
+                            ? 'bg-gradient-to-r from-primary to-primary/70'
                             : index === 1
-                              ? 'bg-linear-to-r from-cyan-400 to-cyan-500'
+                              ? 'bg-gradient-to-r from-primary/80 to-primary/60'
                               : index === 2
-                                ? 'bg-linear-to-r from-cyan-300 to-cyan-400'
-                                : 'bg-cyan-200'
+                                ? 'bg-gradient-to-r from-primary/60 to-primary/40'
+                                : 'bg-primary/30'
                         }`}
                         style={{ width: `${reward.percentage}%` }}
                       />

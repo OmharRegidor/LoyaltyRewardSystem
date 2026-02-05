@@ -196,7 +196,7 @@ export default function TeamManagementPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     );
@@ -214,16 +214,16 @@ export default function TeamManagementPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900">
               Team Management
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-gray-500">
               Manage your staff and cashiers
             </p>
           </div>
           <button
             onClick={handleInviteClick}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Invite Team Member
@@ -232,25 +232,25 @@ export default function TeamManagementPage() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
+            <p className="text-2xl font-bold text-gray-900">
               {teamMembers.length}
             </p>
             <p className="text-sm text-gray-500">Total Members</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
             <p className="text-2xl font-bold text-green-600">
               {activeMembers.length}
             </p>
             <p className="text-sm text-gray-500">Active Staff</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
             <p className="text-2xl font-bold text-yellow-600">
               {pendingInvites.length}
             </p>
             <p className="text-sm text-gray-500">Pending Invites</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
             <p className="text-2xl font-bold text-gray-400">
               {inactiveMembers.length}
             </p>
@@ -260,35 +260,35 @@ export default function TeamManagementPage() {
 
         {/* Pending Invites Section */}
         {pendingInvites.length > 0 && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl border border-yellow-200 dark:border-yellow-800 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-yellow-200 dark:border-yellow-800">
-              <h2 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+          <div className="bg-yellow-50 rounded-2xl border border-yellow-200 overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-yellow-200">
+              <h2 className="text-lg font-semibold text-yellow-800 flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 Pending Invites ({pendingInvites.length})
               </h2>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              <p className="text-sm text-yellow-700 mt-1">
                 Share the invite link with your team members
               </p>
             </div>
-            <div className="divide-y divide-yellow-200 dark:divide-yellow-800">
+            <div className="divide-y divide-yellow-200">
               {pendingInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 dark:bg-gray-800/50"
+                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/50 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
                       <Mail className="w-5 h-5 text-yellow-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                      <p className="font-medium text-gray-900 truncate">
                         {invite.name}
                       </p>
                       <p className="text-sm text-gray-500 truncate">
                         {invite.email}
                       </p>
                     </div>
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 capitalize shrink-0">
+                    <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600 capitalize shrink-0">
                       {invite.role}
                     </span>
                   </div>
@@ -297,8 +297,8 @@ export default function TeamManagementPage() {
                       onClick={() => copyInviteLink(invite.token)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
                         copiedToken === invite.token
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
                       <Copy className="w-4 h-4" />
@@ -306,7 +306,7 @@ export default function TeamManagementPage() {
                     </button>
                     <button
                       onClick={() => handleCancelInvite(invite.id)}
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                       title="Cancel invite"
                     >
                       <XCircle className="w-5 h-5 text-red-500" />
@@ -319,9 +319,9 @@ export default function TeamManagementPage() {
         )}
 
         {/* Team Members Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Users className="w-5 h-5" />
               Team Members ({teamMembers.length})
             </h2>
@@ -329,26 +329,26 @@ export default function TeamManagementPage() {
 
           {teamMembers.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No team members yet
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+              <p className="text-gray-500 mb-6 max-w-sm mx-auto">
                 Invite your first team member to help manage your loyalty
                 program
               </p>
               <button
                 onClick={handleInviteClick}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-cyan-600 text-white rounded-xl font-semibold hover:bg-cyan-700 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
               >
                 <Plus className="w-5 h-5" />
                 Invite Team Member
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="divide-y divide-gray-100">
               {teamMembers.map((member) => (
                 <TeamMemberCard
                   key={member.id}
@@ -363,11 +363,11 @@ export default function TeamManagementPage() {
         </div>
 
         {/* Help Text */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800 dark:text-blue-200">
+        <div className="bg-primary/5 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <div className="text-sm text-primary/90">
             <p className="font-medium mb-1">How team roles work:</p>
-            <ul className="space-y-1 text-blue-700 dark:text-blue-300">
+            <ul className="space-y-1 text-primary/80">
               <li>
                 • <strong>Cashiers</strong> can only scan customer QR codes and
                 award points

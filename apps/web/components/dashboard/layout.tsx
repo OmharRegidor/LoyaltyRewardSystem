@@ -18,7 +18,7 @@ import {
   Menu,
   X,
   CalendarDays,
-  Briefcase,
+  FileEdit,
   Clock,
 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -42,7 +42,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { subscription } = useSubscription();
   const hasBooking = subscription?.plan?.hasBooking ?? false;
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
@@ -105,8 +105,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     loadUserData();
 
-    // Check dark mode
-    const isDark = localStorage.getItem('darkMode') !== 'false';
+    // Check dark mode - default to light mode
+    const isDark = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(isDark);
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -143,9 +143,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ? [
           { name: 'Bookings', href: '/dashboard/booking', icon: CalendarDays },
           {
-            name: 'Services',
-            href: '/dashboard/booking/services',
-            icon: Briefcase,
+            name: 'Business Form',
+            href: '/dashboard/booking/business-form',
+            icon: FileEdit,
           },
           {
             name: 'Availability',
@@ -163,8 +163,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/dashboard/settings')
       return pathname === '/dashboard/settings';
     if (href === '/dashboard/booking') return pathname === '/dashboard/booking';
-    if (href === '/dashboard/booking/services')
-      return pathname === '/dashboard/booking/services';
+    if (href === '/dashboard/booking/business-form')
+      return pathname === '/dashboard/booking/business-form';
     if (href === '/dashboard/booking/availability')
       return pathname === '/dashboard/booking/availability';
     return pathname.startsWith(href);
@@ -172,14 +172,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -188,9 +188,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Black for brand presence */}
       <aside
-        className={`fixed top-0 left-0 z-50 w-64 h-full bg-gray-900 dark:bg-gray-950 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 w-64 h-full bg-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -198,13 +198,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="p-6 flex items-center justify-between">
           <Link
             href="/dashboard"
-            className="text-2xl font-bold text-cyan-400 italic"
+            className="text-2xl font-bold text-sidebar-primary italic"
           >
             NoxaLoyalty
           </Link>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden p-2 text-gray-400 hover:text-white"
+            className="lg:hidden p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
           >
             <X className="w-5 h-5" />
           </button>
@@ -219,8 +219,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
                 isActive(item.href)
-                  ? 'bg-linear-to-r from-cyan-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg'
+                  : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -230,7 +230,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-4 space-y-2 border-t border-gray-800">
+        <div className="p-4 space-y-2 border-t border-sidebar-border">
           {/* Dark Mode Toggle */}
           {/* <button
             onClick={toggleDarkMode}
@@ -245,17 +245,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </button> */}
 
           {/* User Info */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/50 rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0">
-              <span className="text-white font-bold">
+          <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
+              <span className="text-sidebar-primary-foreground font-bold">
                 {userData.businessName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
                 {userData.businessName}
               </p>
-              <p className="text-xs text-gray-400 capitalize">
+              <p className="text-xs text-sidebar-foreground/70 capitalize">
                 {userData.role}
               </p>
             </div>
@@ -264,7 +264,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all"
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sidebar-foreground/70 hover:text-red-300 hover:bg-sidebar-accent/20 transition-all"
           >
             <LogOut className="w-5 h-5" />
             Logout
@@ -272,22 +272,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-30">
+      {/* Mobile Header - Maroon for brand consistency */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 z-30">
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 text-gray-400 hover:text-white"
+          className="p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
         >
           <Menu className="w-6 h-6" />
         </button>
-        <span className="text-lg font-bold text-cyan-400 italic">
+        <span className="text-lg font-bold text-sidebar-primary italic">
           NoxaLoyalty
         </span>
         <div className="w-10" /> {/* Spacer for centering */}
       </header>
 
-      {/* Main Content */}
-      <main className="lg:ml-64 min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Main Content - White background */}
+      <main className="lg:ml-64 min-h-screen" style={{ backgroundColor: '#ffffff' }}>
         <div className="p-4 pt-20 lg:p-8 lg:pt-8">{children}</div>
       </main>
     </div>

@@ -37,23 +37,23 @@ import type { BookingWithDetails, BookingStatus } from '@/types/booking.types';
 const STATUS_CONFIG: Record<BookingStatus, { label: string; className: string }> = {
   pending: {
     label: 'Pending',
-    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    className: 'bg-amber-100 text-amber-700',
   },
   confirmed: {
     label: 'Confirmed',
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    className: 'bg-primary/10 text-primary',
   },
   completed: {
     label: 'Completed',
-    className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    className: 'bg-green-100 text-green-700',
   },
   cancelled: {
     label: 'Cancelled',
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    className: 'bg-gray-100 text-gray-700',
   },
   no_show: {
     label: 'No Show',
-    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    className: 'bg-red-100 text-red-700',
   },
 };
 
@@ -132,7 +132,7 @@ function LoadingSkeleton() {
           <Skeleton className="h-9 w-9" />
         </div>
       </div>
-      <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-4">
+      <div className="rounded-lg border bg-white shadow-md p-4">
         <div className="space-y-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -153,13 +153,13 @@ function LoadingSkeleton() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-full bg-gray-100  flex items-center justify-center mb-4">
         <Calendar className="w-8 h-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+      <h3 className="text-lg font-semibold text-gray-900  mb-1">
         No bookings for this day
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+      <p className="text-sm text-gray-500  max-w-sm">
         There are no appointments scheduled. Bookings will appear here when customers
         make reservations.
       </p>
@@ -190,8 +190,8 @@ function DayView({ bookings, onBookingClick, onStatusChange }: DayViewProps) {
   }, [bookings]);
 
   return (
-    <div className="rounded-lg border bg-white dark:bg-gray-800/50">
-      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+    <div className="rounded-lg border bg-white shadow-md">
+      <div className="divide-y divide-gray-100 ">
         {TIME_SLOTS.map((slot) => {
           const slotBookings = bookingsBySlot.get(slot) || [];
           const hasBookings = slotBookings.length > 0;
@@ -200,11 +200,11 @@ function DayView({ bookings, onBookingClick, onStatusChange }: DayViewProps) {
             <div
               key={slot}
               className={`flex min-h-[60px] ${
-                hasBookings ? 'bg-white dark:bg-gray-800/50' : 'bg-gray-50/50 dark:bg-gray-900/20'
+                hasBookings ? 'bg-white shadow-md' : 'bg-gray-50/50 '
               }`}
             >
-              <div className="w-20 shrink-0 py-2 px-3 text-right border-r border-gray-100 dark:border-gray-700">
-                <span className="text-sm text-muted-foreground">{formatTime(slot)}</span>
+              <div className="w-20 shrink-0 py-2 px-3 text-right border-r border-gray-100 ">
+                <span className="text-sm text-gray-500">{formatTime(slot)}</span>
               </div>
               <div className="flex-1 p-2">
                 {slotBookings.map((booking) => (
@@ -218,7 +218,7 @@ function DayView({ bookings, onBookingClick, onStatusChange }: DayViewProps) {
                         <div className="font-medium text-sm truncate">
                           {booking.customer_name || 'Guest'}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="text-xs text-gray-500 truncate">
                           {booking.service.name}
                         </div>
                       </div>
@@ -261,33 +261,33 @@ function ListView({ bookings, onBookingClick, onStatusChange }: ListViewProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-white dark:bg-gray-800/50 overflow-hidden">
+    <div className="rounded-lg border bg-white shadow-md overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20">
-            <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3">
+          <tr className="border-b border-gray-100  bg-gray-50/50 ">
+            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-3">
               Time
             </th>
-            <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3">
+            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-3">
               Customer
             </th>
-            <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3">
+            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-3">
               Service
             </th>
-            <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3">
+            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-3">
               Price
             </th>
-            <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide px-4 py-3">
+            <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide px-4 py-3">
               Status
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+        <tbody className="divide-y divide-gray-100 ">
           {bookings.map((booking) => (
             <tr
               key={booking.id}
               onClick={() => onBookingClick(booking)}
-              className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+              className="hover:bg-gray-50  cursor-pointer transition-colors"
             >
               <td className="px-4 py-3">
                 <span className="text-sm font-medium">
@@ -298,7 +298,7 @@ function ListView({ bookings, onBookingClick, onStatusChange }: ListViewProps) {
                 <span className="text-sm">{booking.customer_name || 'Guest'}</span>
               </td>
               <td className="px-4 py-3">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-500">
                   {booking.service.name}
                 </span>
               </td>
@@ -480,10 +480,10 @@ export default function BookingsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 ">
               Bookings
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500  mt-1">
               Manage customer appointments
             </p>
           </div>
@@ -531,13 +531,13 @@ export default function BookingsPage() {
         </div>
 
         {/* Date Display */}
-        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="text-lg font-semibold text-gray-900 ">
           {formatDateDisplay(selectedDate)}
         </div>
 
         {/* Content */}
         {isLoading ? (
-          <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-8">
+          <div className="rounded-lg border bg-white shadow-md p-8">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>

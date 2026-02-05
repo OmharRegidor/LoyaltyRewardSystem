@@ -148,8 +148,8 @@ export function CardModal({
           </div>
 
           {/* Instructions */}
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-            <p className="text-sm text-indigo-700 font-medium">
+          <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+            <p className="text-sm text-primary font-medium">
               Show this QR code to the cashier to earn points!
             </p>
           </div>

@@ -4,4 +4,10 @@ export { BookingForm } from './BookingForm';
 export { PriceSummary } from './PriceSummary';
 export * from './fields';
 
-export type { BookingService, BookingAddon, BusinessInfo } from './BookingModal';
+export type {
+  BookingService,
+  BookingAddon,
+  BusinessInfo,
+  AddonWithOptions,
+  ServiceWithVariants,
+} from './BookingModal';

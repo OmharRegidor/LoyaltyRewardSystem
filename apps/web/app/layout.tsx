@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/noxa_favicon.png',
+        url: '/logoloyalty.png',
         type: 'image/png',
       },
     ],
@@ -28,8 +28,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#2563eb' },
-    { media: '(prefers-color-scheme: dark)', color: '#3b82f6' },
+    { media: '(prefers-color-scheme: light)', color: '#7F0404' },
+    { media: '(prefers-color-scheme: dark)', color: '#A52A2A' },
   ],
 };
 
@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth dark">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <script
           dangerouslySetInnerHTML={{

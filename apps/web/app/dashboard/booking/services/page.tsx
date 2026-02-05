@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/layout';
-import { ServiceDialog } from '@/components/booking/service-dialog';
+import { ServiceConfigDialog } from '@/components/booking/service-config';
 import { DeleteServiceDialog } from '@/components/booking/delete-service-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,10 +28,11 @@ import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { createClient } from '@/lib/supabase';
 import {
   getServices,
-  createService,
-  updateService,
+  createServiceWithConfig,
+  updateServiceWithConfig,
   deleteService,
   getBranches,
+  getBusinessType,
 } from '@/lib/services/booking.service';
 import { motion } from 'framer-motion';
 import {
@@ -40,9 +41,8 @@ import {
   Pencil,
   Trash2,
   Calendar,
-  Loader2,
 } from 'lucide-react';
-import type { Service, ServiceFormData, Branch } from '@/types/booking.types';
+import type { Service, ServiceFormData, Branch, BusinessType } from '@/types/booking.types';
 
 // ============================================
 // HELPERS
@@ -100,13 +100,13 @@ function LoadingSkeleton() {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-full bg-gray-100  flex items-center justify-center mb-4">
         <Calendar className="w-8 h-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+      <h3 className="text-lg font-semibold text-gray-900  mb-1">
         No services yet
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-sm">
+      <p className="text-sm text-gray-500  mb-4 max-w-sm">
         Create your first service to start accepting bookings.
       </p>
       <Button onClick={onAdd}>
@@ -128,6 +128,7 @@ export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessType, setBusinessType] = useState<BusinessType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Dialog states
@@ -155,12 +156,13 @@ export default function ServicesPage() {
 
       const { data: business } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, business_type')
         .eq('owner_id', user.id)
         .single();
 
       if (!business) return;
       setBusinessId(business.id);
+      setBusinessType((business.business_type as BusinessType) || null);
 
       const [servicesData, branchesData] = await Promise.all([
         getServices(business.id),
@@ -199,7 +201,7 @@ export default function ServicesPage() {
   const handleCreate = async (data: ServiceFormData) => {
     if (!businessId) return;
 
-    const newService = await createService({
+    const newService = await createServiceWithConfig({
       ...data,
       business_id: businessId,
     });
@@ -210,7 +212,7 @@ export default function ServicesPage() {
   const handleUpdate = async (data: ServiceFormData) => {
     if (!selectedService) return;
 
-    const updatedService = await updateService(selectedService.id, data);
+    const updatedService = await updateServiceWithConfig(selectedService.id, data);
 
     setServices((prev) =>
       prev.map((s) => (s.id === updatedService.id ? updatedService : s))
@@ -252,10 +254,10 @@ export default function ServicesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 ">
               Services
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500  mt-1">
               Manage the services customers can book
             </p>
           </div>
@@ -269,7 +271,7 @@ export default function ServicesPage() {
         {services.length === 0 ? (
           <EmptyState onAdd={handleAddClick} />
         ) : (
-          <div className="rounded-lg border bg-white dark:bg-gray-800/50">
+          <div className="rounded-lg border bg-white /50">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -291,7 +293,7 @@ export default function ServicesPage() {
                         variant={service.is_active ? 'default' : 'secondary'}
                         className={
                           service.is_active
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? 'bg-green-100 text-green-700'
                             : ''
                         }
                       >
@@ -330,26 +332,34 @@ export default function ServicesPage() {
         )}
 
         {/* Create Dialog */}
-        <ServiceDialog
-          isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onSave={handleCreate}
-          branches={branches}
-          mode="create"
-        />
+        {businessId && (
+          <ServiceConfigDialog
+            isOpen={isCreateOpen}
+            onClose={() => setIsCreateOpen(false)}
+            onSave={handleCreate}
+            branches={branches}
+            businessId={businessId}
+            businessType={businessType}
+            mode="create"
+          />
+        )}
 
         {/* Edit Dialog */}
-        <ServiceDialog
-          isOpen={isEditOpen}
-          onClose={() => {
-            setIsEditOpen(false);
-            setSelectedService(null);
-          }}
-          onSave={handleUpdate}
-          service={selectedService}
-          branches={branches}
-          mode="edit"
-        />
+        {businessId && (
+          <ServiceConfigDialog
+            isOpen={isEditOpen}
+            onClose={() => {
+              setIsEditOpen(false);
+              setSelectedService(null);
+            }}
+            onSave={handleUpdate}
+            service={selectedService}
+            branches={branches}
+            businessId={businessId}
+            businessType={businessType}
+            mode="edit"
+          />
+        )}
 
         {/* Delete Dialog */}
         <DeleteServiceDialog

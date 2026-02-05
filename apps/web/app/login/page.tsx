@@ -144,10 +144,10 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md">
       <div className="mb-10">
-        <h2 className="text-4xl font-bold mb-3 text-gray-900 dark:text-white">
+        <h2 className="text-4xl font-bold mb-3 text-gray-900">
           Sign in to your account
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
+        <p className="text-gray-600 text-lg">
           Access your dashboard and manage your loyalty program
         </p>
       </div>
@@ -181,7 +181,7 @@ function LoginForm() {
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+            className="block text-sm font-semibold mb-2 text-gray-700"
           >
             Email Address
           </label>
@@ -193,7 +193,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white border-2 border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 placeholder-gray-400"
               required
               disabled={isLoading}
               autoComplete="email"
@@ -205,7 +205,7 @@ function LoginForm() {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+            className="block text-sm font-semibold mb-2 text-gray-700"
           >
             Password
           </label>
@@ -217,7 +217,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white"
+              className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white border-2 border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-gray-900"
               required
               disabled={isLoading}
               autoComplete="current-password"
@@ -244,16 +244,16 @@ function LoginForm() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              className="w-4 h-4 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
               disabled={isLoading}
             />
-            <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
+            <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
               Remember me!
             </span>
           </label>
           <Link
             href="/forgot-password"
-            className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
           >
             Forgot password?
           </Link>
@@ -263,7 +263,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
@@ -280,19 +280,19 @@ function LoginForm() {
 
       {/* Divider */}
       <div className="my-8 flex items-center gap-4">
-        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-sm text-gray-500 font-medium">
           or
         </span>
-        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+        <div className="flex-1 h-px bg-gray-200" />
       </div>
 
       {/* Sign Up Link */}
-      <p className="text-center text-gray-600 dark:text-gray-400">
+      <p className="text-center text-gray-600">
         Don't have an account?{' '}
         <Link
           href="/signup"
-          className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+          className="font-semibold text-primary hover:text-primary/80 transition-colors"
         >
           Sign up
         </Link>
@@ -308,7 +308,7 @@ function LoginForm() {
 function LoginFormSkeleton() {
   return (
     <div className="w-full max-w-md flex items-center justify-center py-20">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
     </div>
   );
 }
@@ -339,19 +339,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
       {/* Left Side - Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-blue-700 to-cyan-600">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-red-600">
         {/* Background Effects */}
         <div className="absolute inset-0">
           <div
-            className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute top-20 left-20 w-72 h-72 bg-secondary/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '4s' }}
           />
           <div
-            className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-300/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-300/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '6s', animationDelay: '1s' }}
           />
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-400/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '5s', animationDelay: '2s' }}
           />
         </div>
@@ -383,11 +383,11 @@ export default function LoginPage() {
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Welcome back to
               <br />
-              <span className="bg-linear-to-r from-cyan-200 to-white bg-clip-text text-transparent">
+              <span className="text-secondary drop-shadow-sm">
                 NoxaLoyalty
               </span>
             </h1>
-            <p className="text-xl text-blue-100 max-w-lg leading-relaxed">
+            <p className="text-xl text-white/80 max-w-lg leading-relaxed">
               Manage your loyalty program and grow your business with powerful
               analytics and customer insights.
             </p>
@@ -400,14 +400,14 @@ export default function LoginPage() {
                 className="group bg-white/10 backdrop-blur-md rounded-2xl p-6 hover:bg-white/20 transition-all duration-300 transform hover:translate-x-2 border border-white/20 shadow-lg hover:shadow-2xl"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                  <div className="w-12 h-12 rounded-xl bg-secondary/90 flex items-center justify-center text-secondary-foreground group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     {feature.icon}
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-blue-100 text-sm leading-relaxed">
+                    <p className="text-white/70 text-sm leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -419,16 +419,16 @@ export default function LoginPage() {
           <div className="mt-12 pt-8 border-t border-white/20">
             <div className="flex items-center gap-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">10K+</div>
-                <div className="text-sm text-blue-100">Active Users</div>
+                <div className="text-3xl font-bold text-secondary mb-1">10K+</div>
+                <div className="text-sm text-white/70">Active Users</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">99.9%</div>
-                <div className="text-sm text-blue-100">Uptime</div>
+                <div className="text-3xl font-bold text-secondary mb-1">99.9%</div>
+                <div className="text-sm text-white/70">Uptime</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">24/7</div>
-                <div className="text-sm text-blue-100">Support</div>
+                <div className="text-3xl font-bold text-secondary mb-1">24/7</div>
+                <div className="text-sm text-white/70">Support</div>
               </div>
             </div>
           </div>
@@ -436,7 +436,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-16 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-16" style={{ backgroundColor: '#ffffff' }}>
         <Suspense fallback={<LoginFormSkeleton />}>
           <LoginForm />
         </Suspense>

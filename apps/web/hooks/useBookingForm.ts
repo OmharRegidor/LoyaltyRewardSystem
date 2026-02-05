@@ -26,6 +26,13 @@ export interface BookingService {
   price_type: 'per_night' | 'per_session' | 'per_hour';
 }
 
+export interface AddonOption {
+  id: string;
+  name: string;
+  price_centavos: number;
+  description: string | null;
+}
+
 export interface BookingAddon {
   id: string;
   name: string;
@@ -33,6 +40,15 @@ export interface BookingAddon {
   price_centavos: number;
   price_type: 'fixed' | 'per_day' | 'per_person';
   service_id: string | null;
+  options?: AddonOption[];
+}
+
+export interface PriceVariant {
+  id: string;
+  name: string;
+  price_centavos: number;
+  description: string | null;
+  capacity: number | null;
 }
 
 export interface SelectedAddon {
@@ -41,16 +57,23 @@ export interface SelectedAddon {
   priceCentavos: number;
   priceType: 'fixed' | 'per_day' | 'per_person';
   quantity: number;
+  selectedOption?: {
+    id: string;
+    name: string;
+    priceCentavos: number;
+  };
 }
 
 export interface ContactInfo {
   phone: string;
   name: string;
+  email: string;
 }
 
 export interface BookingFormState {
   // Service selection
   selectedService: BookingService | null;
+  selectedVariant: PriceVariant | null;
 
   // Dates
   checkInDate: Date | null;
@@ -60,6 +83,7 @@ export interface BookingFormState {
   // Guests
   adultsCount: number;
   childrenCount: number;
+  partySize: number;
 
   // Add-ons
   selectedAddons: SelectedAddon[];
@@ -81,12 +105,36 @@ export interface BookingPriceBreakdown {
   pointsEstimate: number;
 }
 
+export type BusinessType = 'retail' | 'restaurant' | 'salon' | 'hotel';
+
+// Service config from business form settings
+export interface ServiceConfig {
+  // Restaurant config
+  party_size_min?: number;
+  party_size_max?: number;
+  time_interval_minutes?: number;
+  slot_duration_minutes?: number;
+  // Hotel config
+  capacity_base?: number;
+  capacity_max?: number;
+  check_in_time?: string;
+  check_out_time?: string;
+  min_stay_nights?: number;
+  max_stay_nights?: number;
+  advance_booking_days?: number;
+  // Allow additional properties from database
+  [key: string]: unknown;
+}
+
 export interface UseBookingFormOptions {
   services: BookingService[];
   addons: BookingAddon[];
   pointsPerPurchase: number | null;
   pesosPerPoint: number | null;
   initialServiceId?: string | null;
+  businessType?: BusinessType | null;
+  priceVariants?: PriceVariant[];
+  serviceConfig?: ServiceConfig | Record<string, unknown> | null;
 }
 
 export interface UseBookingFormReturn {
@@ -94,6 +142,7 @@ export interface UseBookingFormReturn {
 
   // Service actions
   selectService: (service: BookingService | null) => void;
+  selectVariant: (variant: PriceVariant | null) => void;
 
   // Date actions
   setCheckInDate: (date: Date | null) => void;
@@ -107,14 +156,17 @@ export interface UseBookingFormReturn {
   decrementAdults: () => void;
   incrementChildren: () => void;
   decrementChildren: () => void;
+  setPartySize: (size: number) => void;
 
   // Addon actions
   toggleAddon: (addon: BookingAddon) => void;
   setAddonQuantity: (addonId: string, quantity: number) => void;
+  setAddonOption: (addonId: string, option: { id: string; name: string; priceCentavos: number } | null) => void;
 
   // Contact actions
   setPhone: (phone: string) => void;
   setName: (name: string) => void;
+  setEmail: (email: string) => void;
   setSpecialRequests: (requests: string) => void;
 
   // Form actions
@@ -132,6 +184,7 @@ export interface UseBookingFormReturn {
   isTimeBased: boolean;
   requiresTimeSlot: boolean;
   maxGuests: number;
+  businessType: BusinessType | null;
 }
 
 // ============================================
@@ -155,22 +208,44 @@ function calculateNights(checkIn: Date | null, checkOut: Date | null): number {
 // ============================================
 
 export function useBookingForm(options: UseBookingFormOptions): UseBookingFormReturn {
-  const { services, addons, pointsPerPurchase, pesosPerPoint, initialServiceId } = options;
+  const { services, addons, pointsPerPurchase, pesosPerPoint, initialServiceId, businessType: initialBusinessType, serviceConfig } = options;
 
   // Initial service from prop
   const initialService = initialServiceId
     ? services.find((s) => s.id === initialServiceId) || null
     : null;
 
+  const businessType = initialBusinessType || null;
+
+  // Cast config for type-safe access
+  const config = serviceConfig as ServiceConfig | null;
+
+  // Get initial values from config
+  const getInitialAdultsCount = () => {
+    if (businessType === 'hotel' && config?.capacity_base) {
+      return config.capacity_base;
+    }
+    return 1;
+  };
+
+  const getInitialPartySize = () => {
+    if (businessType === 'restaurant' && config?.party_size_min) {
+      return config.party_size_min;
+    }
+    return 2;
+  };
+
   // State
   const [selectedService, setSelectedService] = useState<BookingService | null>(initialService);
+  const [selectedVariant, setSelectedVariant] = useState<PriceVariant | null>(null);
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [adultsCount, setAdultsCount] = useState(1);
+  const [adultsCount, setAdultsCount] = useState(getInitialAdultsCount);
   const [childrenCount, setChildrenCount] = useState(0);
+  const [partySize, setPartySize] = useState(getInitialPartySize);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
-  const [contact, setContact] = useState<ContactInfo>({ phone: '', name: '' });
+  const [contact, setContact] = useState<ContactInfo>({ phone: '', name: '', email: '' });
   const [specialRequests, setSpecialRequests] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +256,7 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     setCheckOutDate(null);
     setSelectedTime(null);
     setSelectedAddons([]);
+    setSelectedVariant(null);
   }, [selectedService?.id]);
 
   // Computed: Service type helpers
@@ -190,7 +266,8 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
   const isMultiDay = serviceType === 'multi-day';
   const isTimeBased = serviceType === 'time-based';
   const requiresTimeSlot = selectedService?.requires_time_slot ?? isTimeBased;
-  const maxGuests = selectedService?.max_guests || 1;
+  // Use config capacity_max for hotels, otherwise fallback to service max_guests or default
+  const maxGuests = config?.capacity_max || selectedService?.max_guests || 10;
 
   // Computed: Available addons for selected service
   const availableAddons = useMemo(() => {
@@ -209,14 +286,16 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     const nights = isMultiDay ? calculateNights(checkInDate, checkOutDate) : 1;
     const totalGuests = adultsCount + childrenCount;
 
-    // Service subtotal
-    const servicePrice = selectedService.price_centavos || 0;
+    // Service subtotal - use variant price if selected, otherwise service price
+    const servicePrice = selectedVariant?.price_centavos ?? selectedService.price_centavos ?? 0;
     const serviceSubtotal = servicePrice * nights;
 
     // Addons total
     let addonsTotal = 0;
     for (const addon of selectedAddons) {
-      let addonPrice = addon.priceCentavos * addon.quantity;
+      // Use selected option price if available, otherwise addon base price
+      const unitPrice = addon.selectedOption?.priceCentavos ?? addon.priceCentavos;
+      let addonPrice = unitPrice * addon.quantity;
 
       switch (addon.priceType) {
         case 'per_day':
@@ -248,6 +327,7 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     };
   }, [
     selectedService,
+    selectedVariant,
     isMultiDay,
     checkInDate,
     checkOutDate,
@@ -265,13 +345,25 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     if (isMultiDay && !checkOutDate) return false;
     if (requiresTimeSlot && !selectedTime) return false;
     if (!contact.phone || contact.phone.length < 10) return false;
+    if (!contact.name || contact.name.trim().length < 2) return false;
+
+    // Business-type specific validation
+    if (businessType === 'restaurant') {
+      if (partySize < 1) return false;
+    }
+
     return true;
-  }, [selectedService, checkInDate, checkOutDate, isMultiDay, requiresTimeSlot, selectedTime, contact]);
+  }, [selectedService, checkInDate, checkOutDate, isMultiDay, requiresTimeSlot, selectedTime, contact, businessType, partySize]);
 
   // Actions
   const selectService = useCallback((service: BookingService | null) => {
     setSelectedService(service);
+    setSelectedVariant(null);
     setError(null);
+  }, []);
+
+  const selectVariant = useCallback((variant: PriceVariant | null) => {
+    setSelectedVariant(variant);
   }, []);
 
   const incrementAdults = useCallback(() => {
@@ -320,6 +412,17 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     );
   }, []);
 
+  const setAddonOption = useCallback(
+    (addonId: string, option: { id: string; name: string; priceCentavos: number } | null) => {
+      setSelectedAddons((prev) =>
+        prev.map((a) =>
+          a.id === addonId ? { ...a, selectedOption: option || undefined } : a
+        )
+      );
+    },
+    []
+  );
+
   const setPhone = useCallback((phone: string) => {
     setContact((prev) => ({ ...prev, phone }));
   }, []);
@@ -328,28 +431,37 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     setContact((prev) => ({ ...prev, name }));
   }, []);
 
+  const setEmail = useCallback((email: string) => {
+    setContact((prev) => ({ ...prev, email }));
+  }, []);
+
   const reset = useCallback(() => {
     setSelectedService(initialService);
+    setSelectedVariant(null);
     setCheckInDate(null);
     setCheckOutDate(null);
     setSelectedTime(null);
-    setAdultsCount(1);
+    setAdultsCount(getInitialAdultsCount());
     setChildrenCount(0);
+    setPartySize(getInitialPartySize());
     setSelectedAddons([]);
-    setContact({ phone: '', name: '' });
+    setContact({ phone: '', name: '', email: '' });
     setSpecialRequests('');
     setIsSubmitting(false);
     setError(null);
-  }, [initialService]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialService, serviceConfig]);
 
   // Build state object
   const state: BookingFormState = {
     selectedService,
+    selectedVariant,
     checkInDate,
     checkOutDate,
     selectedTime,
     adultsCount,
     childrenCount,
+    partySize,
     selectedAddons,
     contact,
     specialRequests,
@@ -362,6 +474,7 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
 
     // Service actions
     selectService,
+    selectVariant,
 
     // Date actions
     setCheckInDate,
@@ -375,14 +488,17 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     decrementAdults,
     incrementChildren,
     decrementChildren,
+    setPartySize,
 
     // Addon actions
     toggleAddon,
     setAddonQuantity,
+    setAddonOption,
 
     // Contact actions
     setPhone,
     setName,
+    setEmail,
     setSpecialRequests,
 
     // Form actions
@@ -400,5 +516,6 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
     isTimeBased,
     requiresTimeSlot,
     maxGuests,
+    businessType,
   };
 }

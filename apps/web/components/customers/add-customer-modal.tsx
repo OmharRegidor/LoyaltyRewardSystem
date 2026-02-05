@@ -193,7 +193,7 @@ export function AddCustomerModal({
               <h3 className="text-xl font-semibold mb-2">
                 {isNewCustomer ? 'Customer Added!' : 'Email Sent!'}
               </h3>
-              <p className="text-muted-foreground text-sm mb-6">
+              <p className="text-gray-500 text-sm mb-6">
                 {submitMessage}
               </p>
               <div className="flex gap-3">
@@ -211,11 +211,11 @@ export function AddCustomerModal({
             </div>
           ) : submitState === 'error' ? (
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-destructive" />
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Error</h3>
-              <p className="text-muted-foreground text-sm mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Error</h3>
+              <p className="text-gray-500 text-sm mb-6">
                 {submitMessage}
               </p>
               <Button
@@ -230,11 +230,11 @@ export function AddCustomerModal({
             <div className="space-y-4">
               {/* Full Name */}
               <div className="space-y-2">
-                <Label htmlFor="fullName">
-                  Full Name <span className="text-destructive">*</span>
+                <Label htmlFor="fullName" className="text-gray-700">
+                  Full Name <span className="text-red-600">*</span>
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="fullName"
                     value={formData.fullName}
@@ -243,22 +243,22 @@ export function AddCustomerModal({
                     }
                     placeholder="Juan Dela Cruz"
                     className={`pl-10 ${
-                      errors.fullName ? 'border-destructive' : ''
+                      errors.fullName ? 'border-red-500' : ''
                     }`}
                   />
                 </div>
                 {errors.fullName && (
-                  <p className="text-xs text-destructive">{errors.fullName}</p>
+                  <p className="text-xs text-red-600">{errors.fullName}</p>
                 )}
               </div>
 
               {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email">
-                  Email Address <span className="text-destructive">*</span>
+                <Label htmlFor="email" className="text-gray-700">
+                  Email Address <span className="text-red-600">*</span>
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
@@ -266,22 +266,22 @@ export function AddCustomerModal({
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="juan@email.com"
                     className={`pl-10 ${
-                      errors.email ? 'border-destructive' : ''
+                      errors.email ? 'border-red-500' : ''
                     }`}
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email}</p>
+                  <p className="text-xs text-red-600">{errors.email}</p>
                 )}
               </div>
 
               {/* Phone */}
               <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Mobile Number <span className="text-destructive">*</span>
+                <Label htmlFor="phone" className="text-gray-700">
+                  Mobile Number <span className="text-red-600">*</span>
                 </Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="phone"
                     type="tel"
@@ -289,22 +289,22 @@ export function AddCustomerModal({
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="09123456789"
                     className={`pl-10 ${
-                      errors.phone ? 'border-destructive' : ''
+                      errors.phone ? 'border-red-500' : ''
                     }`}
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-xs text-destructive">{errors.phone}</p>
+                  <p className="text-xs text-red-600">{errors.phone}</p>
                 )}
               </div>
 
               {/* Age */}
               <div className="space-y-2">
-                <Label htmlFor="age">
-                  Age <span className="text-muted-foreground">(optional)</span>
+                <Label htmlFor="age" className="text-gray-700">
+                  Age <span className="text-gray-500">(optional)</span>
                 </Label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="age"
                     type="number"
@@ -314,12 +314,12 @@ export function AddCustomerModal({
                     min="13"
                     max="120"
                     className={`pl-10 ${
-                      errors.age ? 'border-destructive' : ''
+                      errors.age ? 'border-red-500' : ''
                     }`}
                   />
                 </div>
                 {errors.age && (
-                  <p className="text-xs text-destructive">{errors.age}</p>
+                  <p className="text-xs text-red-600">{errors.age}</p>
                 )}
               </div>
 

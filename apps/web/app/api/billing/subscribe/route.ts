@@ -37,40 +37,54 @@ const SubscribeSchema = z.object({
 // PLAN CONFIGURATION
 // ============================================
 
-const PLANS: Record<
-  string,
-  {
-    name: string;
-    displayName: string;
-    priceMonthly: number;
-    priceAnnual: number;
+interface PlanConfig {
+  name: string;
+  displayName: string;
+  priceMonthly: number;
+  priceAnnual: number;
+  limits: {
+    customers: number | null;
+    branches: number | null;
+    staffPerBranch: number | null;
+  };
+  modules: {
+    has_loyalty: boolean;
+    has_booking: boolean;
+    has_pos: boolean;
+  };
+}
+
+const PLANS: Record<string, PlanConfig> = {
+  free: {
+    name: 'free',
+    displayName: 'Free',
+    priceMonthly: 0,
+    priceAnnual: 0,
     limits: {
-      customers: number | null;
-      branches: number | null;
-      staffPerBranch: number | null;
-    };
-  }
-> = {
-  core: {
-    name: 'core',
-    displayName: 'Core',
-    priceMonthly: 349900, // ₱3,499 in centavos
-    priceAnnual: 3499000, // ₱34,990 in centavos
-    limits: {
-      customers: 3000,
+      customers: null, // Unlimited
       branches: 3,
-      staffPerBranch: 3,
+      staffPerBranch: 5,
+    },
+    modules: {
+      has_loyalty: true,
+      has_booking: false,
+      has_pos: false,
     },
   },
   enterprise: {
     name: 'enterprise',
     displayName: 'Enterprise',
-    priceMonthly: 999900, // ₱9,999 in centavos
-    priceAnnual: 9999000, // ₱99,990 in centavos
+    priceMonthly: 0, // Contact for pricing
+    priceAnnual: 0,
     limits: {
-      customers: null, // unlimited
-      branches: null,
-      staffPerBranch: null,
+      customers: null, // Unlimited
+      branches: null, // Unlimited
+      staffPerBranch: null, // Unlimited
+    },
+    modules: {
+      has_loyalty: true,
+      has_booking: true,
+      has_pos: true,
     },
   },
 };
@@ -204,6 +218,9 @@ export async function POST(request: NextRequest) {
           max_customers: plan.limits.customers,
           max_branches: plan.limits.branches,
           max_staff_per_branch: plan.limits.staffPerBranch,
+          has_loyalty: plan.modules.has_loyalty,
+          has_booking: plan.modules.has_booking,
+          has_pos: plan.modules.has_pos,
           is_active: true,
         })
         .select('id')

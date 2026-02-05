@@ -23,6 +23,11 @@ interface DateRangePickerProps {
   onCheckOutChange: (date: Date | null) => void;
   disabledDays?: (date: Date) => boolean;
   closedDaysOfWeek?: number[];
+  // Stay duration limits from service config
+  minStayNights?: number;
+  maxStayNights?: number;
+  advanceBookingDays?: number;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -33,6 +38,10 @@ export function DateRangePicker({
   onCheckOutChange,
   disabledDays,
   closedDaysOfWeek = [],
+  minStayNights = 1,
+  maxStayNights = 365,
+  advanceBookingDays = 90,
+  disabled = false,
   className,
 }: DateRangePickerProps) {
   const [open, setOpen] = useState(false);
@@ -40,12 +49,44 @@ export function DateRangePicker({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // Calculate max booking date based on advance booking days
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + advanceBookingDays);
+
   const range: DateRange | undefined =
     checkInDate || checkOutDate
       ? { from: checkInDate || undefined, to: checkOutDate || undefined }
       : undefined;
 
   const handleSelect = (newRange: DateRange | undefined) => {
+    if (newRange?.from && newRange?.to) {
+      // Calculate nights
+      const nights = Math.ceil(
+        (newRange.to.getTime() - newRange.from.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Enforce min/max stay nights
+      if (nights < minStayNights) {
+        // Auto-adjust checkout to minimum stay
+        const adjustedCheckout = new Date(newRange.from);
+        adjustedCheckout.setDate(adjustedCheckout.getDate() + minStayNights);
+        onCheckInChange(newRange.from);
+        onCheckOutChange(adjustedCheckout);
+        setOpen(false);
+        return;
+      }
+
+      if (nights > maxStayNights) {
+        // Auto-adjust checkout to maximum stay
+        const adjustedCheckout = new Date(newRange.from);
+        adjustedCheckout.setDate(adjustedCheckout.getDate() + maxStayNights);
+        onCheckInChange(newRange.from);
+        onCheckOutChange(adjustedCheckout);
+        setOpen(false);
+        return;
+      }
+    }
+
     onCheckInChange(newRange?.from || null);
     onCheckOutChange(newRange?.to || null);
 
@@ -55,95 +96,119 @@ export function DateRangePicker({
     }
   };
 
-  // Combine disabled days
-  const disabled = [
+  // Combine disabled days for the calendar
+  const disabledDates = [
     { before: today },
+    { after: maxDate },
     ...(closedDaysOfWeek.length > 0
       ? [(date: Date) => closedDaysOfWeek.includes(date.getDay())]
       : []),
     ...(disabledDays ? [disabledDays] : []),
   ];
 
-  const formatDateRange = () => {
-    if (!checkInDate) return 'Select dates';
-    if (!checkOutDate) return format(checkInDate, 'MMM d, yyyy');
-    return `${format(checkInDate, 'MMM d')} - ${format(checkOutDate, 'MMM d, yyyy')}`;
-  };
-
   return (
-    <div className={cn('space-y-2', className)}>
-      <Label className="flex items-center gap-2 text-sm font-medium">
-        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-        Check-in / Check-out
-      </Label>
+    <div className={cn('space-y-1', className)}>
+      <div className="grid grid-cols-2 gap-3">
+        {/* Check-in */}
+        <div className="space-y-1">
+          <Label className="text-xs text-gray-500">Check-in</Label>
+          <Popover open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={disabled}
+                className={cn(
+                  'w-full justify-start text-left font-normal h-9 text-sm',
+                  !checkInDate && 'text-gray-500'
+                )}
+              >
+                <CalendarDays className="mr-2 h-3 w-3" />
+                {checkInDate ? format(checkInDate, 'MMM d, yyyy') : 'Select date'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <DayPicker
+                mode="range"
+                selected={range}
+                onSelect={handleSelect}
+                disabled={disabledDates}
+                numberOfMonths={1}
+                showOutsideDays={false}
+                className="p-3"
+                classNames={{
+                  months: 'flex flex-col gap-4',
+                  month: 'space-y-4',
+                  caption: 'flex justify-center pt-1 relative items-center',
+                  caption_label: 'text-sm font-medium',
+                  nav: 'space-x-1 flex items-center',
+                  nav_button:
+                    'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 hover:text-gray-900',
+                  nav_button_previous: 'absolute left-1',
+                  nav_button_next: 'absolute right-1',
+                  table: 'w-full border-collapse space-y-1',
+                  head_row: 'flex',
+                  head_cell:
+                    'text-gray-500 rounded-md w-9 font-normal text-[0.8rem]',
+                  row: 'flex w-full mt-2',
+                  cell: 'h-9 w-9 text-center text-sm p-0 relative',
+                  day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 hover:text-gray-900 rounded-md',
+                  day_range_start: 'day-range-start',
+                  day_range_end: 'day-range-end',
+                  day_selected:
+                    'bg-gray-900 text-white hover:bg-gray-800 hover:text-white focus:bg-gray-900 focus:text-white',
+                  day_range_middle:
+                    'aria-selected:bg-gray-200 aria-selected:text-gray-900',
+                  day_today: 'bg-yellow-100 text-gray-900',
+                  day_outside: 'text-gray-500 opacity-50',
+                  day_disabled: 'text-gray-500 opacity-50',
+                }}
+                components={{
+                  Chevron: ({ orientation }) =>
+                    orientation === 'left' ? (
+                      <ChevronLeft className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    ),
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+        {/* Check-out */}
+        <div className="space-y-1">
+          <Label className="text-xs text-gray-500">Check-out</Label>
           <Button
             variant="outline"
-            className={cn(
-              'w-full justify-start text-left font-normal h-11',
-              !checkInDate && 'text-muted-foreground'
-            )}
-          >
-            <CalendarDays className="mr-2 h-4 w-4" />
-            {formatDateRange()}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <DayPicker
-            mode="range"
-            selected={range}
-            onSelect={handleSelect}
             disabled={disabled}
-            numberOfMonths={1}
-            showOutsideDays={false}
-            className="p-3"
-            classNames={{
-              months: 'flex flex-col gap-4',
-              month: 'space-y-4',
-              caption: 'flex justify-center pt-1 relative items-center',
-              caption_label: 'text-sm font-medium',
-              nav: 'space-x-1 flex items-center',
-              nav_button:
-                'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground',
-              nav_button_previous: 'absolute left-1',
-              nav_button_next: 'absolute right-1',
-              table: 'w-full border-collapse space-y-1',
-              head_row: 'flex',
-              head_cell:
-                'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
-              row: 'flex w-full mt-2',
-              cell: 'h-9 w-9 text-center text-sm p-0 relative',
-              day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md',
-              day_range_start: 'day-range-start',
-              day_range_end: 'day-range-end',
-              day_selected:
-                'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-              day_range_middle:
-                'aria-selected:bg-primary/20 aria-selected:text-foreground',
-              day_today: 'bg-accent text-accent-foreground',
-              day_outside: 'text-muted-foreground opacity-50',
-              day_disabled: 'text-muted-foreground opacity-50',
-            }}
-            components={{
-              Chevron: ({ orientation }) =>
-                orientation === 'left' ? (
-                  <ChevronLeft className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                ),
-            }}
-          />
-        </PopoverContent>
-      </Popover>
+            className={cn(
+              'w-full justify-start text-left font-normal h-9 text-sm',
+              !checkOutDate && 'text-gray-500'
+            )}
+            onClick={() => !disabled && setOpen(true)}
+          >
+            <CalendarDays className="mr-2 h-3 w-3" />
+            {checkOutDate ? format(checkOutDate, 'MMM d, yyyy') : 'Select date'}
+          </Button>
+        </div>
+      </div>
 
       {checkInDate && checkOutDate && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-500">
           {Math.ceil(
             (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
           )}{' '}
           night(s)
+          {(minStayNights > 1 || maxStayNights < 365) && (
+            <span className="ml-1">
+              ({minStayNights}-{maxStayNights} nights allowed)
+            </span>
+          )}
+        </p>
+      )}
+      {checkInDate && !checkOutDate && (minStayNights > 1 || maxStayNights < 365) && (
+        <p className="text-xs text-gray-500">
+          Stay: {minStayNights}-{maxStayNights} nights
         </p>
       )}
     </div>

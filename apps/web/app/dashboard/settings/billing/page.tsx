@@ -239,13 +239,13 @@ function PaymentForm({
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={onCancel}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          className="p-2 hover:bg-gray-100  rounded-lg"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
           <h1 className="text-2xl font-bold">Complete your subscription</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 ">
             {plan.displayName} plan • {interval === 'annual' ? 'Annual' : 'Monthly'} billing
           </p>
         </div>
@@ -253,12 +253,12 @@ function PaymentForm({
 
       {/* Test Mode Banner */}
       {isTestMode && (
-        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <div className="mb-6 p-4 bg-amber-50  border border-amber-200  rounded-xl">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <div>
-              <p className="font-medium text-amber-800 dark:text-amber-200">Test Mode</p>
-              <p className="text-sm text-amber-700 dark:text-amber-300">
+              <p className="font-medium text-amber-800 ">Test Mode</p>
+              <p className="text-sm text-amber-700 ">
                 Payments are simulated. No real charges will be made.
               </p>
             </div>
@@ -267,7 +267,7 @@ function PaymentForm({
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300">
+        <div className="mb-6 p-4 bg-red-50  border border-red-200  rounded-xl text-red-700 ">
           {error}
         </div>
       )}
@@ -291,15 +291,15 @@ function PaymentForm({
                     onClick={() => setPaymentMethod(method.id as typeof paymentMethod)}
                     className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${
                       paymentMethod === method.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        ? 'border-primary bg-primary/5 '
+                        : 'border-gray-200  hover:border-gray-300'
                     }`}
                   >
                     <method.icon className={`w-6 h-6 ${
-                      paymentMethod === method.id ? 'text-blue-600' : 'text-gray-400'
+                      paymentMethod === method.id ? 'text-primary' : 'text-gray-400'
                     }`} />
                     <span className={`text-sm font-medium ${
-                      paymentMethod === method.id ? 'text-blue-600' : ''
+                      paymentMethod === method.id ? 'text-primary' : ''
                     }`}>
                       {method.label}
                     </span>
@@ -318,7 +318,7 @@ function PaymentForm({
                     value={cardData.name}
                     onChange={(e) => setCardData({ ...cardData, name: e.target.value })}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300  bg-white  focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Juan Dela Cruz"
                   />
                 </div>
@@ -330,7 +330,7 @@ function PaymentForm({
                     onChange={(e) => setCardData({ ...cardData, number: formatCardNumber(e.target.value) })}
                     required
                     maxLength={19}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-300  bg-white  focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="4242 4242 4242 4242"
                   />
                 </div>
@@ -343,7 +343,7 @@ function PaymentForm({
                       onChange={(e) => setCardData({ ...cardData, expiry: formatExpiry(e.target.value) })}
                       required
                       maxLength={5}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300  bg-white  focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="MM/YY"
                     />
                   </div>
@@ -355,7 +355,7 @@ function PaymentForm({
                       onChange={(e) => setCardData({ ...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                       required
                       maxLength={4}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300  bg-white  focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="123"
                     />
                   </div>
@@ -365,8 +365,8 @@ function PaymentForm({
 
             {/* E-wallet Notice */}
             {(paymentMethod === 'gcash' || paymentMethod === 'maya') && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="p-4 bg-primary/5  border border-primary/20  rounded-xl">
+                <p className="text-sm text-primary/90 ">
                   You'll be redirected to {paymentMethod === 'gcash' ? 'GCash' : 'Maya'} to complete payment.
                 </p>
               </div>
@@ -375,7 +375,7 @@ function PaymentForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 rounded-xl bg-linear-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-4 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -394,14 +394,14 @@ function PaymentForm({
 
         {/* Order Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 sticky top-8">
+          <div className="bg-gray-50  rounded-2xl p-6 sticky top-8">
             <h3 className="font-semibold mb-4">Order Summary</h3>
             
-            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 ">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                 plan.id === 'enterprise'
-                  ? 'bg-linear-to-br from-purple-500 to-pink-500'
-                  : 'bg-linear-to-br from-blue-500 to-cyan-500'
+                  ? 'bg-gradient-to-br from-secondary to-yellow-500'
+                  : 'bg-gradient-to-br from-primary to-primary/70'
               }`}>
                 {plan.id === 'enterprise' ? (
                   <Crown className="w-5 h-5 text-white" />
@@ -424,9 +424,9 @@ function PaymentForm({
               ))}
             </div>
 
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-4 border-t border-gray-200 ">
               <div className="flex justify-between mb-2">
-                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="text-gray-600 ">Subtotal</span>
                 <span>{formatPrice(price)}</span>
               </div>
               {interval === 'annual' && (
@@ -435,7 +435,7 @@ function PaymentForm({
                   <span>-{formatPrice(plan.priceMonthly * 12 - plan.priceAnnual)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-semibold text-lg pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between font-semibold text-lg pt-2 border-t border-gray-200 ">
                 <span>Total</span>
                 <span>{formatPrice(price)}</span>
               </div>
@@ -489,15 +489,15 @@ function CancelModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl"
+        className="relative w-full max-w-lg bg-white  rounded-2xl shadow-2xl"
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 ">
           <h2 className="text-xl font-bold">
             {step === 'reason' ? 'Cancel Subscription' : 'Confirm'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+            className="p-2 hover:bg-gray-100  rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -505,7 +505,7 @@ function CancelModal({
         <div className="p-6">
           {step === 'reason' ? (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 ">
                 Why are you canceling?
               </p>
               <div className="space-y-2">
@@ -514,8 +514,8 @@ function CancelModal({
                     key={r.value}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer ${
                       reason === r.value
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700'
+                        ? 'border-primary bg-primary/5 '
+                        : 'border-gray-200 '
                     }`}
                   >
                     <input
@@ -540,10 +540,10 @@ function CancelModal({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+              <div className="p-4 bg-amber-50  border border-amber-200  rounded-xl">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                  <div className="text-sm text-amber-700 dark:text-amber-300">
+                  <div className="text-sm text-amber-700 ">
                     <p className="font-medium">What happens:</p>
                     <ul className="mt-1 space-y-1">
                       <li>• Active until {endDate}</li>
@@ -556,7 +556,7 @@ function CancelModal({
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep('reason')}
-                  className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 font-semibold"
+                  className="flex-1 py-3 rounded-xl border-2 border-gray-300  font-semibold"
                 >
                   Back
                 </button>
@@ -606,19 +606,19 @@ function ReactivateModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 text-center"
+        className="relative w-full max-w-md bg-white  rounded-2xl shadow-2xl p-6 text-center"
       >
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Sparkles className="w-8 h-8 text-green-600" />
         </div>
         <h2 className="text-xl font-bold mb-2">Reactivate Subscription?</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-gray-600  mb-6">
           Your subscription will continue normally.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 font-semibold"
+            className="flex-1 py-3 rounded-xl border-2 border-gray-300  font-semibold"
           >
             Cancel
           </button>
@@ -743,7 +743,7 @@ function BillingContent() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -766,7 +766,7 @@ function BillingContent() {
     <div className="max-w-4xl mx-auto space-y-8 p-6">
       <div>
         <h1 className="text-3xl font-bold">Billing & Subscription</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-gray-600  mt-1">
           Manage your subscription and payments
         </p>
       </div>
@@ -778,16 +778,16 @@ function BillingContent() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3"
+            className="bg-green-50  border border-green-200  rounded-xl p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-100  rounded-full flex items-center justify-center">
               <Check className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="font-medium text-green-800 dark:text-green-200">
+              <p className="font-medium text-green-800 ">
                 Subscription activated!
               </p>
-              <p className="text-sm text-green-700 dark:text-green-300">
+              <p className="text-sm text-green-700 ">
                 Your card will be auto-charged each billing cycle.
               </p>
             </div>
@@ -796,25 +796,25 @@ function BillingContent() {
       </AnimatePresence>
 
       {/* Current Plan */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+      <div className="bg-white  rounded-2xl border border-gray-200 ">
+        <div className="p-6 border-b border-gray-200 ">
           <h2 className="text-lg font-semibold">Current Plan</h2>
         </div>
         <div className="p-6">
           {subscription?.status === 'preview' && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gray-100  rounded-full flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
                 No Active Subscription
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-gray-600  mb-6">
                 Subscribe to unlock all features.
               </p>
               <Link
                 href="/#pricing"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-medium"
               >
                 <Zap className="w-5 h-5" />
                 View Plans
@@ -829,8 +829,8 @@ function BillingContent() {
                   <div
                     className={`w-14 h-14 rounded-xl flex items-center justify-center ${
                       subscription.plan?.name === 'enterprise'
-                        ? 'bg-linear-to-br from-purple-500 to-pink-500'
-                        : 'bg-linear-to-br from-blue-500 to-cyan-500'
+                        ? 'bg-gradient-to-br from-secondary to-yellow-500'
+                        : 'bg-gradient-to-br from-primary to-primary/70'
                     }`}
                   >
                     {subscription.plan?.name === 'enterprise' ? (
@@ -846,17 +846,17 @@ function BillingContent() {
                       </h3>
                       {subscription.status === 'active' &&
                         !subscription.cancelAtPeriodEnd && (
-                          <span className="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-medium px-2 py-1 rounded-full">
+                          <span className="bg-green-100  text-green-700  text-xs font-medium px-2 py-1 rounded-full">
                             Active
                           </span>
                         )}
                       {subscription.cancelAtPeriodEnd && (
-                        <span className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium px-2 py-1 rounded-full">
+                        <span className="bg-amber-100  text-amber-700  text-xs font-medium px-2 py-1 rounded-full">
                           Canceling
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-600 ">
                       {subscription.isFreeForever
                         ? 'Unlimited access'
                         : `Auto-renews ${
@@ -870,9 +870,9 @@ function BillingContent() {
               </div>
 
               {subscription.currentPeriodEnd && !subscription.isFreeForever && (
-                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="flex items-center gap-3 p-4 bg-gray-50  rounded-xl">
                   <Calendar className="w-5 h-5 text-gray-400" />
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-gray-700 ">
                     {subscription.cancelAtPeriodEnd
                       ? 'Ends on '
                       : 'Next renewal: '}
@@ -889,14 +889,14 @@ function BillingContent() {
 
       {/* Payment Method */}
       {subscription?.hasAccess && !subscription?.isFreeForever && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <div className="bg-white  rounded-2xl border border-gray-200 ">
+          <div className="p-6 border-b border-gray-200  flex items-center justify-between">
             <h2 className="text-lg font-semibold">Payment Method</h2>
           </div>
           <div className="p-6">
             {paymentMethod ? (
               <div className="flex items-center gap-4">
-                <div className="w-12 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-8 bg-gray-100  rounded-lg flex items-center justify-center">
                   {paymentMethod.type === 'card' ? (
                     <CreditCard className="w-6 h-6 text-gray-600" />
                   ) : paymentMethod.type === 'ewallet' ? (
@@ -923,11 +923,11 @@ function BillingContent() {
       {subscription?.hasAccess &&
         !subscription?.isFreeForever &&
         invoices.length > 0 && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="bg-white  rounded-2xl border border-gray-200 ">
+            <div className="p-6 border-b border-gray-200 ">
               <h2 className="text-lg font-semibold">Billing History</h2>
             </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-800">
+            <div className="divide-y divide-gray-200 ">
               {invoices.slice(0, 5).map((inv) => (
                 <div
                   key={inv.id}
@@ -964,15 +964,15 @@ function BillingContent() {
 
       {/* Actions */}
       {subscription?.hasAccess && !subscription?.isFreeForever && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="bg-white  rounded-2xl border border-gray-200 ">
+          <div className="p-6 border-b border-gray-200 ">
             <h2 className="text-lg font-semibold">Manage Subscription</h2>
           </div>
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+          <div className="divide-y divide-gray-200 ">
             {subscription.cancelAtPeriodEnd ? (
               <button
                 onClick={() => setShowReactivateModal(true)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 "
               >
                 <div className="flex items-center gap-3">
                   <RotateCcw className="w-5 h-5 text-green-500" />
@@ -985,7 +985,7 @@ function BillingContent() {
             ) : (
               <button
                 onClick={() => setShowCancelModal(true)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 "
               >
                 <div className="flex items-center gap-3">
                   <Ban className="w-5 h-5 text-red-500" />
@@ -1035,7 +1035,7 @@ export default function BillingPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       }
     >

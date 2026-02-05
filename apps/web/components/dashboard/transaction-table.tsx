@@ -65,8 +65,8 @@ export function TransactionTable() {
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-border">
-              <tr className="text-left text-sm font-semibold text-muted-foreground">
+            <thead className="border-b border-gray-200">
+              <tr className="text-left text-sm font-semibold text-gray-500">
                 <th className="pb-4 pl-4">Customer</th>
                 <th className="pb-4">Action</th>
                 <th className="pb-4 text-right">Points</th>
@@ -77,7 +77,7 @@ export function TransactionTable() {
               {transactions.map((tx, idx) => (
                 <motion.tr
                   key={tx.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors"
+                  className="border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-colors"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: idx * 0.05 }}
@@ -97,9 +97,9 @@ export function TransactionTable() {
                     </Badge>
                   </td>
                   <td className="py-4 text-right font-semibold">
-                    <span className={tx.type === "earn" ? "text-success" : "text-foreground"}>{tx.points}</span>
+                    <span className={tx.type === "earn" ? "text-green-600" : "text-gray-900"}>{tx.points}</span>
                   </td>
-                  <td className="py-4 pr-4 text-right text-sm text-muted-foreground">{tx.timestamp}</td>
+                  <td className="py-4 pr-4 text-right text-sm text-gray-500">{tx.timestamp}</td>
                 </motion.tr>
               ))}
             </tbody>

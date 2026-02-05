@@ -23,20 +23,20 @@ export function RewardsHeader({
       transition={{ duration: 0.3 }}
     >
       <div>
-        <h1 className="text-3xl font-bold">Rewards Catalog</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-bold text-gray-900">Rewards Catalog</h1>
+        <p className="text-gray-500 mt-1">
           Create and manage customer rewards
         </p>
       </div>
 
       <div className="flex gap-3 w-full sm:w-auto">
-        <div className="flex gap-1 border border-border rounded-lg p-1 bg-muted/50">
+        <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-gray-100">
           <button
             onClick={() => onViewModeChange('grid')}
             className={`p-2 rounded transition ${
               viewMode === 'grid'
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted-foreground/10'
+                ? 'bg-primary text-white'
+                : 'hover:bg-gray-200 text-gray-600'
             }`}
           >
             <Grid2X2 className="w-4 h-4" />
@@ -45,8 +45,8 @@ export function RewardsHeader({
             onClick={() => onViewModeChange('list')}
             className={`p-2 rounded transition ${
               viewMode === 'list'
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted-foreground/10'
+                ? 'bg-primary text-white'
+                : 'hover:bg-gray-200 text-gray-600'
             }`}
           >
             <List className="w-4 h-4" />

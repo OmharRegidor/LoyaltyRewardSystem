@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
-import { CalendarDays, Clock, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,6 +12,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 import 'react-day-picker/style.css';
@@ -25,6 +32,7 @@ interface DateTimePickerProps {
   serviceId: string | null;
   disabledDays?: (date: Date) => boolean;
   closedDaysOfWeek?: number[];
+  disabled?: boolean;
   className?: string;
 }
 
@@ -45,6 +53,7 @@ export function DateTimePicker({
   serviceId,
   disabledDays,
   closedDaysOfWeek = [],
+  disabled = false,
   className,
 }: DateTimePickerProps) {
   const [dateOpen, setDateOpen] = useState(false);
@@ -108,8 +117,8 @@ export function DateTimePicker({
     onTimeChange(selectedTime);
   };
 
-  // Combine disabled days
-  const disabled = [
+  // Combine disabled days for the calendar
+  const disabledDates = [
     { before: today },
     ...(closedDaysOfWeek.length > 0
       ? [(d: Date) => closedDaysOfWeek.includes(d.getDay())]
@@ -118,25 +127,23 @@ export function DateTimePicker({
   ];
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('grid grid-cols-2 gap-3', className)}>
       {/* Date Selection */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          Date
-        </Label>
+      <div className="space-y-1">
+        <Label className="text-xs text-gray-500">Date</Label>
 
-        <Popover open={dateOpen} onOpenChange={setDateOpen}>
+        <Popover open={disabled ? false : dateOpen} onOpenChange={disabled ? undefined : setDateOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
+              disabled={disabled}
               className={cn(
-                'w-full justify-start text-left font-normal h-11',
-                !date && 'text-muted-foreground'
+                'w-full justify-start text-left font-normal h-9 text-sm',
+                !date && 'text-gray-500'
               )}
             >
-              <CalendarDays className="mr-2 h-4 w-4" />
-              {date ? format(date, 'EEEE, MMMM d, yyyy') : 'Select a date'}
+              <CalendarDays className="mr-2 h-3 w-3" />
+              {date ? format(date, 'MMM d, yyyy') : 'Select date'}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -144,7 +151,7 @@ export function DateTimePicker({
               mode="single"
               selected={date || undefined}
               onSelect={handleDateSelect}
-              disabled={disabled}
+              disabled={disabledDates}
               numberOfMonths={1}
               showOutsideDays={false}
               className="p-3"
@@ -155,21 +162,21 @@ export function DateTimePicker({
                 caption_label: 'text-sm font-medium',
                 nav: 'space-x-1 flex items-center',
                 nav_button:
-                  'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground',
+                  'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 hover:text-gray-900',
                 nav_button_previous: 'absolute left-1',
                 nav_button_next: 'absolute right-1',
                 table: 'w-full border-collapse space-y-1',
                 head_row: 'flex',
                 head_cell:
-                  'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
+                  'text-gray-500 rounded-md w-9 font-normal text-[0.8rem]',
                 row: 'flex w-full mt-2',
                 cell: 'h-9 w-9 text-center text-sm p-0 relative',
-                day: 'h-9 w-9 p-0 font-normal hover:bg-accent hover:text-accent-foreground rounded-md',
+                day: 'h-9 w-9 p-0 font-normal hover:bg-gray-100 hover:text-gray-900 rounded-md',
                 day_selected:
-                  'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground',
-                day_today: 'bg-accent text-accent-foreground',
-                day_outside: 'text-muted-foreground opacity-50',
-                day_disabled: 'text-muted-foreground opacity-50',
+                  'bg-gray-900 text-white hover:bg-gray-800 hover:text-white',
+                day_today: 'bg-yellow-100 text-gray-900',
+                day_outside: 'text-gray-500 opacity-50',
+                day_disabled: 'text-gray-500 opacity-50',
               }}
               components={{
                 Chevron: ({ orientation }) =>
@@ -185,54 +192,52 @@ export function DateTimePicker({
       </div>
 
       {/* Time Selection */}
-      {date && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            Time
-          </Label>
+      <div className="space-y-1">
+        <Label className="text-xs text-gray-500">Time</Label>
 
-          {isLoadingSlots ? (
-            <div className="flex items-center justify-center py-6 border rounded-lg bg-muted/30">
-              <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
-              <span className="text-sm text-muted-foreground">
-                Loading available times...
-              </span>
-            </div>
-          ) : slotsError ? (
-            <div className="p-4 border rounded-lg bg-destructive/10 text-destructive text-sm">
-              {slotsError}
-            </div>
-          ) : timeSlots.length === 0 ? (
-            <div className="p-4 border rounded-lg bg-muted/30 text-center">
-              <Clock className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
-                No available times for this date.
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Please select a different date.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
+        {disabled ? (
+          <Select disabled>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Select time" />
+            </SelectTrigger>
+          </Select>
+        ) : isLoadingSlots ? (
+          <div className="flex items-center justify-center h-9 border rounded-md bg-gray-100/30">
+            <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+          </div>
+        ) : slotsError ? (
+          <Select disabled>
+            <SelectTrigger className="h-9 text-sm text-red-600">
+              <SelectValue placeholder="Error loading" />
+            </SelectTrigger>
+          </Select>
+        ) : !date ? (
+          <Select disabled>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Select time" />
+            </SelectTrigger>
+          </Select>
+        ) : timeSlots.length === 0 ? (
+          <Select disabled>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="No times available" />
+            </SelectTrigger>
+          </Select>
+        ) : (
+          <Select value={time || ''} onValueChange={handleTimeSelect}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder="Select time" />
+            </SelectTrigger>
+            <SelectContent>
               {timeSlots.map((slot) => (
-                <Button
-                  key={slot}
-                  variant={time === slot ? 'default' : 'outline'}
-                  size="sm"
-                  className={cn(
-                    'h-9',
-                    time === slot && 'bg-primary text-primary-foreground'
-                  )}
-                  onClick={() => handleTimeSelect(slot)}
-                >
+                <SelectItem key={slot} value={slot}>
                   {formatTimeForDisplay(slot)}
-                </Button>
+                </SelectItem>
               ))}
-            </div>
-          )}
-        </div>
-      )}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
     </div>
   );
 }

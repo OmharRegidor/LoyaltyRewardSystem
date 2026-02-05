@@ -238,12 +238,12 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
   });
 
   return (
-    <div className="relative">
-      {/* Animated Background Blobs */}
+    <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      {/* Subtle Background Decoration */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
-        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
+        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-muted/50 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
       </div>
 
       <div className="container mx-auto px-4 py-8">
@@ -259,8 +259,8 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
               <CalendarDays className="h-7 w-7" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">My Bookings</h1>
-              <p className="text-muted-foreground text-base sm:text-lg">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">My Bookings</h1>
+              <p className="text-gray-500 text-base sm:text-lg">
                 View your booking history at {business.name}
               </p>
             </div>
@@ -273,9 +273,9 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
           animate="visible"
           variants={containerVariants}
         >
-          <Card className="mb-8 border-border/50">
+          <Card className="mb-8 border-l-4 border-l-primary rounded-2xl bg-white shadow-md border border-gray-100">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2 text-gray-900">
                 <Search className="h-5 w-5 text-primary" />
                 Find Your Bookings
               </CardTitle>
@@ -284,7 +284,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <Phone className="h-4 w-4 text-gray-500" />
                     Phone Number
                   </Label>
                   <div className="flex gap-3">
@@ -292,12 +292,12 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                       id="phone"
                       placeholder="09171234567"
                       {...register('phone')}
-                      className={`flex-1 ${errors.phone ? 'border-destructive' : ''}`}
+                      className={`flex-1 rounded-xl ${errors.phone ? 'border-destructive' : ''}`}
                     />
                     <Button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
+                      className="bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl"
                     >
                       {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -313,7 +313,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                     <p className="text-xs text-destructive">{errors.phone.message}</p>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   Enter the phone number you used when making your booking
                 </p>
               </form>
@@ -327,7 +327,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-destructive/50 bg-destructive/5 mb-8">
+            <Card className="border-destructive/50 bg-destructive/5 mb-8 rounded-2xl">
               <CardContent className="py-4">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-destructive" />
@@ -347,15 +347,15 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
           >
             {bookings.length === 0 ? (
               <motion.div variants={cardVariants}>
-                <Card className="text-center py-12 border-border/50">
+                <Card className="text-center py-12 border-border/50 rounded-2xl">
                   <CardContent>
                     <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
                       <CalendarDays className="h-10 w-10 text-primary/60" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">
+                    <h3 className="text-xl font-semibold mb-2 text-gray-900">
                       No Bookings Found
                     </h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">
+                    <p className="text-gray-500 max-w-sm mx-auto">
                       We couldn&apos;t find any bookings for {searchedPhone}. Make sure
                       you entered the correct phone number.
                     </p>
@@ -367,24 +367,24 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                 {/* Upcoming Bookings */}
                 {upcomingBookings && upcomingBookings.length > 0 && (
                   <div className="mb-8">
-                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
                       <Calendar className="h-5 w-5 text-primary" />
                       Upcoming Bookings
                     </h2>
                     <div className="space-y-4">
                       {upcomingBookings.map((booking) => (
                         <motion.div key={booking.id} variants={cardVariants}>
-                          <Card className="border-border/50 hover:shadow-lg transition-shadow">
+                          <Card className="border-l-4 border-l-secondary border-border/50 hover:shadow-lg transition-shadow rounded-2xl bg-white">
                             <CardContent className="py-4">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="font-semibold">
+                                    <h3 className="font-semibold text-gray-900">
                                       {booking.service.name}
                                     </h3>
                                     {getStatusBadge(booking.status, booking.bookingDate)}
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
                                       <CalendarDays className="h-4 w-4" />
                                       {format(parseISO(booking.bookingDate), 'EEEE, MMMM d, yyyy')}
@@ -411,7 +411,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                                   )}
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-xs text-muted-foreground mb-1">
+                                  <p className="text-xs text-gray-500 mb-1">
                                     Confirmation
                                   </p>
                                   <p className="font-mono font-bold text-primary">
@@ -435,24 +435,24 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                 {/* Past Bookings */}
                 {pastBookings && pastBookings.length > 0 && (
                   <div>
-                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-muted-foreground" />
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                      <Clock className="h-5 w-5 text-gray-500" />
                       Past Bookings
                     </h2>
                     <div className="space-y-4">
                       {pastBookings.map((booking) => (
                         <motion.div key={booking.id} variants={cardVariants}>
-                          <Card className="border-border/50 opacity-75">
+                          <Card className="border-border/50 opacity-75 rounded-2xl bg-white">
                             <CardContent className="py-4">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="font-semibold">
+                                    <h3 className="font-semibold text-gray-900">
                                       {booking.service.name}
                                     </h3>
                                     {getStatusBadge(booking.status, booking.bookingDate)}
                                   </div>
-                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
                                       <CalendarDays className="h-4 w-4" />
                                       {format(parseISO(booking.bookingDate), 'MMMM d, yyyy')}
@@ -466,7 +466,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-mono text-sm text-muted-foreground">
+                                  <p className="font-mono text-sm text-gray-500">
                                     {booking.confirmationCode}
                                   </p>
                                   {booking.totalPriceCentavos && (

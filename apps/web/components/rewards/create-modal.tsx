@@ -182,7 +182,7 @@ export function CreateRewardModal({
             <div className="space-y-3">
               <label className="text-sm font-medium">Reward Image</label>
               <label className="block cursor-pointer">
-                <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center hover:bg-muted/50 hover:border-primary/50 transition h-48 relative overflow-hidden">
+                <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center hover:bg-gray-50 hover:border-primary/50 transition h-48 relative overflow-hidden">
                   {imagePreview ? (
                     <>
                       <img
@@ -202,12 +202,12 @@ export function CreateRewardModal({
                       {isUploadingImage ? (
                         <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
                       ) : (
-                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                        <Upload className="w-8 h-8 text-gray-500 mb-2" />
                       )}
                       <p className="text-sm font-medium">
                         {isUploadingImage ? 'Uploading...' : 'Click to upload'}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         PNG, JPG up to 2MB
                       </p>
                     </>
@@ -250,7 +250,7 @@ export function CreateRewardModal({
                 <textarea
                   placeholder="Describe this reward..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -292,7 +292,7 @@ export function CreateRewardModal({
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   Enter -1 for unlimited stock
                 </p>
               </div>
@@ -332,7 +332,7 @@ export function CreateRewardModal({
                     setFormData({ ...formData, expiryDate: e.target.value })
                   }
                   disabled={isSubmitting}
-                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 dark:[&::-webkit-calendar-picker-indicator]:invert"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 dark:[&::-webkit-calendar-picker-indicator]:invert"
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
@@ -340,7 +340,7 @@ export function CreateRewardModal({
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 pt-6 border-t border-border">
+          <div className="flex gap-3 pt-6 border-t border-gray-200">
             <Button
               type="button"
               variant="outline"

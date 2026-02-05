@@ -19,7 +19,9 @@ import type {
   PublicService,
   PublicAvailability,
   PublicAddon,
+  PublicPriceVariant,
 } from '@/lib/services/public-business.service';
+import type { BusinessType } from '@/types/booking.types';
 import { BookingModal } from '@/components/booking';
 
 // ============================================
@@ -108,6 +110,21 @@ function groupAddonsByCategory(addons: PublicAddon[]): Map<string, PublicAddon[]
   return grouped;
 }
 
+// Extract max guests from service config
+function getMaxGuestsFromConfig(service: PublicService): number {
+  if (!service.config) return 1;
+  const config = service.config as Record<string, unknown>;
+  // Hotel config has capacity_max
+  if (typeof config.capacity_max === 'number') {
+    return config.capacity_max;
+  }
+  // Restaurant config has party_size_max
+  if (typeof config.party_size_max === 'number') {
+    return config.party_size_max;
+  }
+  return 1;
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -139,12 +156,12 @@ export function ServicesPageClient({
 
   return (
     <>
-      <div className="relative">
-        {/* Animated Background Blobs */}
+      <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+        {/* Subtle Background Decoration */}
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
-          <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
-          <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
+          <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+          <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+          <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-muted/50 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
         </div>
 
         <div className="container mx-auto px-4 py-8">
@@ -160,8 +177,8 @@ export function ServicesPageClient({
                 <Calendar className="h-7 w-7" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">What We Offer</h1>
-                <p className="text-muted-foreground text-base sm:text-lg">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">What We Offer</h1>
+                <p className="text-gray-500 text-base sm:text-lg">
                   Browse our services and book your appointment
                 </p>
               </div>
@@ -177,11 +194,11 @@ export function ServicesPageClient({
                 variants={containerVariants}
                 className="mb-6"
               >
-                <h2 className="text-xl font-semibold flex items-center gap-2">
+                <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-900">
                   <Calendar className="h-5 w-5 text-primary" />
                   Services
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-gray-500 mt-1">
                   Select a service to book your appointment
                 </p>
               </motion.div>
@@ -194,7 +211,7 @@ export function ServicesPageClient({
               >
                 {services.map((service) => (
                   <motion.div key={service.id} variants={cardVariants}>
-                    <Card className="flex flex-col h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
+                    <Card className="flex flex-col h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-primary border border-gray-100 shadow-md bg-white">
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
 
                       <CardHeader className="relative">
@@ -212,7 +229,7 @@ export function ServicesPageClient({
                         <div className="flex flex-wrap gap-2 mb-4">
                           <Badge
                             variant="outline"
-                            className="gap-1.5 bg-muted/50 border-border/50"
+                            className="gap-1.5 bg-muted/50 border border-gray-100 shadow-md"
                           >
                             <Clock className="h-3.5 w-3.5 text-primary" />
                             {formatDuration(service.duration_minutes)}
@@ -248,11 +265,11 @@ export function ServicesPageClient({
                 className="mb-6"
               >
                 <Separator className="mb-8" />
-                <h2 className="text-xl font-semibold flex items-center gap-2">
+                <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-900">
                   <Package className="h-5 w-5 text-primary" />
                   Add-ons & Extras
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-gray-500 mt-1">
                   Enhance your booking with these optional extras
                 </p>
               </motion.div>
@@ -260,7 +277,7 @@ export function ServicesPageClient({
               {Array.from(groupedAddons.entries()).map(([category, categoryAddons]) => (
                 <div key={category} className="mb-8">
                   {groupedAddons.size > 1 && (
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3 capitalize">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3 capitalize">
                       {category}
                     </h3>
                   )}
@@ -272,13 +289,13 @@ export function ServicesPageClient({
                   >
                     {categoryAddons.map((addon) => (
                       <motion.div key={addon.id} variants={cardVariants}>
-                        <Card className="h-full border-border/50 hover:border-primary/30 transition-colors">
+                        <Card className="h-full border border-gray-100 shadow-md hover:border-primary/30 transition-colors bg-white">
                           <CardContent className="py-4">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm">{addon.name}</p>
                                 {addon.description && (
-                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                  <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                                     {addon.description}
                                   </p>
                                 )}
@@ -305,7 +322,7 @@ export function ServicesPageClient({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-sm text-muted-foreground text-center mt-4"
+                className="text-sm text-gray-500 text-center mt-4"
               >
                 Add-ons can be selected during the booking process
               </motion.p>
@@ -319,15 +336,15 @@ export function ServicesPageClient({
               animate="visible"
               variants={containerVariants}
             >
-              <Card className="text-center py-12 border-border/50">
+              <Card className="text-center py-12 border border-gray-100 shadow-md">
                 <CardContent>
                   <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
                     <Sparkles className="h-10 w-10 text-primary/60" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">
+                  <h3 className="text-xl font-semibold mb-2 text-gray-900">
                     No Services Available
                   </h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
+                  <p className="text-gray-500 max-w-sm mx-auto">
                     This business hasn&apos;t added any services yet. Check back
                     later or contact them directly.
                   </p>
@@ -343,7 +360,7 @@ export function ServicesPageClient({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <Card className="mt-10 overflow-hidden border-primary/20 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <Card className="mt-10 overflow-hidden border-t-4 border-t-primary border border-gray-100 shadow-md group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl bg-white">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
                 <CardContent className="py-6 relative">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -352,10 +369,10 @@ export function ServicesPageClient({
                         <Phone className="h-6 w-6" />
                       </div>
                       <div className="text-center sm:text-left">
-                        <h3 className="font-semibold text-lg">
+                        <h3 className="font-semibold text-lg text-gray-900">
                           Need help booking?
                         </h3>
-                        <p className="text-muted-foreground">
+                        <p className="text-gray-500">
                           Contact us directly for assistance with your appointment
                         </p>
                       </div>
@@ -364,7 +381,7 @@ export function ServicesPageClient({
                       variant="outline"
                       size="lg"
                       asChild
-                      className="rounded-xl px-4 sm:px-6 border-2 hover:border-primary/50 hover:bg-primary/5 transition-all font-semibold"
+                      className="rounded-xl px-4 sm:px-6 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold"
                     >
                       <a href={`tel:${business.phone}`}>
                         <Phone className="mr-2 h-4 w-4" />
@@ -392,6 +409,7 @@ export function ServicesPageClient({
           address: business.address,
           points_per_purchase: business.points_per_purchase,
           pesos_per_point: business.pesos_per_point,
+          business_type: business.business_type as BusinessType | null,
         }}
         services={services.map((s) => ({
           id: s.id,
@@ -399,9 +417,16 @@ export function ServicesPageClient({
           description: s.description,
           price_centavos: s.price_centavos,
           duration_minutes: s.duration_minutes,
-          max_guests: 1,
+          max_guests: getMaxGuestsFromConfig(s),
           requires_time_slot: s.duration_minutes < 1440,
-          price_type: s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
+          price_type: s.pricing_type === 'per_night' ? 'per_night' : s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
+          price_variants: (s.price_variants || []).map((v: PublicPriceVariant) => ({
+            id: v.id,
+            name: v.name,
+            price_centavos: v.price_centavos,
+            description: v.description,
+            capacity: v.capacity,
+          })),
         }))}
         addons={addons.map((a) => ({
           id: a.id,
@@ -410,6 +435,12 @@ export function ServicesPageClient({
           price_centavos: a.price_centavos,
           price_type: 'fixed' as const,
           service_id: null,
+          options: (a.options || []).map((o) => ({
+            id: o.id,
+            name: o.name,
+            price_centavos: o.price_centavos,
+            description: o.description,
+          })),
         }))}
         availability={availability}
         initialServiceId={selectedService?.id}

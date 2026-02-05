@@ -25,9 +25,9 @@ export default async function BusinessLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60">
+    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      {/* Header - Primary color background like landing page */}
+      <header className="sticky top-0 z-50 bg-primary shadow-lg">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12">
           <div className="flex h-14 items-center justify-between">
             {/* Business Logo & Name */}
@@ -37,22 +37,22 @@ export default async function BusinessLayout({
             >
               {/* Glow effect on hover */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-125" />
+                <div className="absolute inset-0 bg-secondary/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-125" />
                 {business.logo_url ? (
                   <Image
                     src={business.logo_url}
                     alt={business.name}
                     width={40}
                     height={40}
-                    className="rounded-lg object-cover relative z-10 transition-transform duration-300 group-hover:scale-105"
+                    className="rounded-lg object-cover relative z-10 transition-transform duration-300 group-hover:scale-105 ring-2 ring-white/20"
                   />
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 relative z-10 transition-transform duration-300 group-hover:scale-105">
-                    <Building2 className="h-5 w-5 text-primary" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 border border-white/20 relative z-10 transition-transform duration-300 group-hover:scale-105">
+                    <Building2 className="h-5 w-5 text-white" />
                   </div>
                 )}
               </div>
-              <span className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors duration-300 truncate max-w-[120px] sm:max-w-none">
+              <span className="font-semibold text-base sm:text-lg text-white group-hover:text-secondary transition-colors duration-300 truncate max-w-[120px] sm:max-w-none">
                 {business.name}
               </span>
             </Link>
@@ -60,7 +60,6 @@ export default async function BusinessLayout({
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               <NavLink href={`/business/${slug}`}>About</NavLink>
-              <NavLink href={`/business/${slug}/services`}>Services</NavLink>
               <NavLink href={`/business/${slug}/my-bookings`}>My Bookings</NavLink>
               <NavLink href={`/business/${slug}/rewards`}>Rewards</NavLink>
               <NavLink href={`/business/${slug}/card`}>Get Card</NavLink>
@@ -76,9 +75,9 @@ export default async function BusinessLayout({
       <main className="px-2 sm:px-4 lg:px-8">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-muted/30 py-6 mt-10">
+      <footer className="border-t border-gray-200 py-6 mt-10" style={{ backgroundColor: '#f9fafb' }}>
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             Powered by{' '}
             <Link
               href="/"

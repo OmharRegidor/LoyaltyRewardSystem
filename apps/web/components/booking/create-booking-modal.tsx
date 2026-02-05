@@ -376,7 +376,7 @@ export function CreateBookingModal({
                   <SelectItem key={service.id} value={service.id}>
                     <span className="flex items-center gap-2">
                       <span>{service.name}</span>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-gray-500 text-xs">
                         {formatDuration(service.duration_minutes)}
                         {service.price_centavos !== null &&
                           ` • ${formatPrice(service.price_centavos)}`}
@@ -404,7 +404,7 @@ export function CreateBookingModal({
             {formData.customer_mode === 'existing' ? (
               <div className="space-y-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
                     placeholder="Search by name or phone..."
                     value={customerSearch}
@@ -431,7 +431,7 @@ export function CreateBookingModal({
                   </SelectTrigger>
                   <SelectContent>
                     {filteredCustomers.length === 0 ? (
-                      <div className="py-2 px-3 text-sm text-muted-foreground">
+                      <div className="py-2 px-3 text-sm text-gray-500">
                         No customers found
                       </div>
                     ) : (
@@ -440,7 +440,7 @@ export function CreateBookingModal({
                           <span>
                             {customer.name}
                             {customer.phone && (
-                              <span className="text-muted-foreground ml-2">
+                              <span className="text-gray-500 ml-2">
                                 {customer.phone}
                               </span>
                             )}
@@ -509,7 +509,7 @@ export function CreateBookingModal({
                   variant="outline"
                   className={cn(
                     'w-full justify-start text-left font-normal',
-                    !formData.booking_date && 'text-muted-foreground'
+                    !formData.booking_date && 'text-gray-500'
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -533,22 +533,22 @@ export function CreateBookingModal({
           <div className="space-y-2">
             <Label>Time *</Label>
             {!formData.service_id ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Select a service first
               </p>
             ) : !formData.booking_date ? (
-              <p className="text-sm text-muted-foreground">Select a date first</p>
+              <p className="text-sm text-gray-500">Select a date first</p>
             ) : isLoadingSlots ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading available times...
               </div>
             ) : timeSlots.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 No available times on this day. The business may be closed.
               </p>
             ) : availableSlots.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 All time slots are booked for this day.
               </p>
             ) : (
@@ -569,7 +569,7 @@ export function CreateBookingModal({
                       disabled={!slot.available}
                     >
                       <span
-                        className={cn(!slot.available && 'text-muted-foreground')}
+                        className={cn(!slot.available && 'text-gray-500')}
                       >
                         {slot.label}
                         {!slot.available && ' (Booked)'}

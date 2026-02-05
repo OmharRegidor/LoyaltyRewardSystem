@@ -54,7 +54,7 @@ export default function CustomersPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-3 text-muted-foreground">Loading...</span>
+          <span className="ml-3 text-gray-500">Loading...</span>
         </div>
       </DashboardLayout>
     );
@@ -65,7 +65,7 @@ export default function CustomersPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             No business found. Please set up your business first.
           </p>
         </div>

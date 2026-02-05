@@ -60,14 +60,23 @@ export async function GET(request: Request) {
       .single();
 
     if (!subscription) {
+      // Free plan limits - matches landing page promises:
+      // Unlimited customers, 3 branches, 5 staff per branch
       return NextResponse.json({
-        status: 'preview',
-        hasAccess: false,
-        plan: null,
+        status: 'free',
+        hasAccess: true,
+        plan: {
+          id: 'free',
+          name: 'free',
+          displayName: 'Free',
+          hasLoyalty: true,
+          hasBooking: false,
+          hasPOS: false,
+        },
         limits: {
-          customers: 50,
-          branches: 1,
-          staff: 2,
+          customers: null, // Unlimited
+          branches: 3,
+          staff: 5,
         },
       });
     }
@@ -102,9 +111,9 @@ export async function GET(request: Request) {
           staff: subscription.plan.max_staff_per_branch || Infinity,
         }
       : {
-          customers: 50,
-          branches: 1,
-          staff: 2,
+          customers: null, // Unlimited for free plan
+          branches: 3,
+          staff: 5,
         };
 
     const hasAccess =

@@ -184,17 +184,17 @@ export default function AnalyticsPage() {
           {
             name: 'High Value',
             value: Math.round((highValue / total) * 100) || 0,
-            color: '#6366f1',
+            color: '#D32F2F', // Primary red
           },
           {
             name: 'Regular',
             value: Math.round((regular / total) * 100) || 0,
-            color: '#06b6d4',
+            color: '#FFC107', // Secondary yellow
           },
           {
             name: 'Inactive',
             value: Math.round((inactive / total) * 100) || 0,
-            color: '#ef4444',
+            color: '#9CA3AF', // Gray for inactive
           },
         ]);
 
@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-cyan-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
     );
@@ -266,14 +266,14 @@ export default function AnalyticsPage() {
           variants={itemVariants}
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-gray-900">
               Analytics
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-gray-500 mt-1">
               Track your loyalty program performance
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition">
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
             <Download className="w-4 h-4" />
             Export
           </button>
@@ -300,11 +300,11 @@ export default function AnalyticsPage() {
             { label: 'Repeat Customer Rate', value: `${kpi.repeatRate}%` },
           ].map((item, i) => (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+              <Card className="p-6 bg-white border border-gray-100 shadow-md">
+                <p className="text-sm text-gray-500 mb-1">
                   {item.label}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-gray-900">
                   {item.value}
                 </p>
                 <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
@@ -322,17 +322,17 @@ export default function AnalyticsPage() {
         >
           {/* Monthly Points */}
           <motion.div variants={itemVariants}>
-            <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
                 Monthly Points
               </h2>
               {monthlyData.length === 0 ? (
                 <div className="h-[300px] flex flex-col items-center justify-center">
-                  <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                  <BarChart3 className="w-12 h-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-medium">
                     No points data yet
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 mt-1">
                     Issue points to customers to see trends.
                   </p>
                 </div>
@@ -343,7 +343,7 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="month" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
                     <Tooltip />
-                    <Bar dataKey="points" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="points" fill="#D32F2F" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -352,17 +352,17 @@ export default function AnalyticsPage() {
 
           {/* Customer Segments */}
           <motion.div variants={itemVariants}>
-            <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">
                 Customer Segments
               </h2>
               {customerSegments.length === 0 ? (
                 <div className="h-[300px] flex flex-col items-center justify-center">
-                  <PieChartIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">
+                  <PieChartIcon className="w-12 h-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-medium">
                     No customer data yet
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 mt-1">
                     Add customers to see segment breakdown.
                   </p>
                 </div>
@@ -392,17 +392,17 @@ export default function AnalyticsPage() {
           {/* Reward Performance */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
             <div className="max-w-2xl mx-auto">
-              <Card className="p-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+              <Card className="p-6 bg-white border border-gray-100 shadow-md">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">
                   Top Rewards
                 </h2>
                 {rewardPerformance.length === 0 ? (
                   <div className="py-12 flex flex-col items-center justify-center">
-                    <Gift className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    <Gift className="w-12 h-12 text-gray-300 mb-4" />
+                    <p className="text-gray-500 font-medium">
                       No rewards redeemed yet
                     </p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-sm text-gray-400 mt-1">
                       Create rewards and customers will start redeeming them.
                     </p>
                   </div>
@@ -411,15 +411,15 @@ export default function AnalyticsPage() {
                     {rewardPerformance.map((item, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                       >
                         <div className="flex items-center gap-3">
-                          <Gift className="w-5 h-5 text-cyan-500" />
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <Gift className="w-5 h-5 text-gray-700" />
+                          <span className="font-medium text-gray-900">
                             {item.reward}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="text-sm text-gray-500">
                           {item.redemptions} redemptions
                         </span>
                       </div>

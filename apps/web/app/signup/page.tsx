@@ -258,17 +258,14 @@ export default function SignupPage() {
     {
       value: '10,000+',
       label: 'Active Businesses',
-      color: 'from-cyan-400 to-blue-500',
     },
     {
       value: '500K+',
       label: 'Happy Customers',
-      color: 'from-blue-400 to-indigo-500',
     },
     {
       value: '₱50M+',
       label: 'Points Issued',
-      color: 'from-indigo-400 to-purple-500',
     },
   ];
 
@@ -285,19 +282,19 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
       {/* Left Side - Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-linear-to-br from-blue-600 via-indigo-700 to-purple-600">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-red-600">
         {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div
-            className="absolute top-20 left-20 w-80 h-80 bg-cyan-400/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute top-20 left-20 w-80 h-80 bg-secondary/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '5s' }}
           />
           <div
-            className="absolute bottom-20 right-20 w-96 h-96 bg-purple-400/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-300/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '7s', animationDelay: '1s' }}
           />
           <div
-            className="absolute top-1/2 left-1/3 w-72 h-72 bg-indigo-400/20 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
+            className="absolute top-1/2 left-1/3 w-72 h-72 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl animate-pulse"
             style={{ animationDuration: '6s', animationDelay: '2s' }}
           />
         </div>
@@ -329,11 +326,11 @@ export default function SignupPage() {
             <h1 className="text-6xl font-bold mb-4 text-white leading-tight">
               Start growing
               <br />
-              <span className="bg-linear-to-r from-cyan-200 via-blue-200 to-purple-200 bg-clip-text text-transparent">
+              <span className="text-secondary drop-shadow-sm">
                 your business
               </span>
             </h1>
-            <p className="text-xl text-blue-100 max-w-lg leading-relaxed mb-10">
+            <p className="text-xl text-white/80 max-w-lg leading-relaxed mb-10">
               Join thousands of businesses using NoxaLoyalty to build customer
               loyalty and drive growth.
             </p>
@@ -349,14 +346,14 @@ export default function SignupPage() {
                   }}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-linear-to-br from-white/20 to-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <div className="w-14 h-14 rounded-xl bg-secondary/90 flex items-center justify-center text-secondary-foreground group-hover:scale-110 transition-transform duration-300 shadow-lg">
                       {benefit.icon}
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-white mb-1">
                         {benefit.title}
                       </h3>
-                      <p className="text-blue-100 text-sm leading-relaxed">
+                      <p className="text-white/70 text-sm leading-relaxed">
                         {benefit.description}
                       </p>
                     </div>
@@ -376,12 +373,10 @@ export default function SignupPage() {
                   animation: `fadeIn 0.6s ease-out ${0.6 + i * 0.1}s both`,
                 }}
               >
-                <div
-                  className={`text-2xl font-bold bg-linear-to-r ${stat.color} bg-clip-text text-transparent mb-1 group-hover:scale-110 transition-transform`}
-                >
+                <div className="text-2xl font-bold text-secondary mb-1 group-hover:scale-110 transition-transform">
                   {stat.value}
                 </div>
-                <div className="text-xs text-blue-100 font-medium">
+                <div className="text-xs text-white/70 font-medium">
                   {stat.label}
                 </div>
               </div>
@@ -390,12 +385,12 @@ export default function SignupPage() {
 
           {/* Trust Badge */}
           <div className="mt-10 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-            <Shield className="w-6 h-6 text-cyan-300" />
+            <Shield className="w-6 h-6 text-secondary" />
             <div>
               <p className="text-white font-semibold text-sm">
                 Trusted by businesses worldwide
               </p>
-              <p className="text-blue-100 text-xs">
+              <p className="text-white/70 text-xs">
                 SOC 2 certified • GDPR compliant
               </p>
             </div>
@@ -427,7 +422,7 @@ export default function SignupPage() {
       </div>
 
       {/* Right Side - Signup Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-16 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-16" style={{ backgroundColor: '#ffffff' }}>
         <div className="w-full max-w-md">
           {/* Progress Indicator */}
           <div className="mb-10">
@@ -437,8 +432,8 @@ export default function SignupPage() {
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base transition-all duration-300 ${
                       s <= step
-                        ? 'bg-linear-to-br from-blue-600 to-cyan-600 text-white shadow-lg'
-                        : 'bg-gray-200 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-400'
+                        ? 'bg-primary text-white shadow-lg'
+                        : 'bg-gray-200 border-2 border-gray-300 text-gray-400'
                     }`}
                   >
                     {s < step ? <Check className="w-6 h-6" /> : s}
@@ -446,7 +441,7 @@ export default function SignupPage() {
                   <span
                     className={`text-xs font-semibold mt-2 transition-colors ${
                       s <= step
-                        ? 'text-gray-900 dark:text-white'
+                        ? 'text-gray-900'
                         : 'text-gray-400'
                     }`}
                   >
@@ -456,21 +451,21 @@ export default function SignupPage() {
               ))}
             </div>
             {/* Progress Line */}
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-linear-to-r from-blue-600 to-cyan-600 transition-all duration-500 ease-out"
+                className="h-full bg-primary transition-all duration-500 ease-out"
                 style={{ width: `${(step / 3) * 100}%` }}
               />
             </div>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-4xl font-bold mb-3 text-gray-900 dark:text-white">
+            <h2 className="text-4xl font-bold mb-3 text-gray-900">
               {step === 1 && 'Tell us about your business'}
               {step === 2 && 'Create your account'}
               {step === 3 && "You're all set!"}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+            <p className="text-gray-600 text-lg">
               {step === 1 && "Let's start with your business information"}
               {step === 2 && 'Set up your login credentials'}
               {step === 3 && 'Review and confirm to get started'}
@@ -495,7 +490,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="businessName"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Business Name
                 </label>
@@ -505,11 +500,11 @@ export default function SignupPage() {
                   value={businessName}
                   onChange={handleBusinessNameChange}
                   placeholder="Your business name"
-                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white border-2 ${
                     validationErrors.businessName
                       ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                      : 'border-gray-200 focus:border-primary'
+                  } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                   required
                   maxLength={100}
                 />
@@ -526,7 +521,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="businessType"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Business Type
                 </label>
@@ -542,23 +537,18 @@ export default function SignupPage() {
                       }));
                     }
                   }}
-                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white border-2 ${
                     validationErrors.businessType
                       ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                      : 'border-gray-200 focus:border-primary'
+                  } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                   required
                 >
                   <option value="">Select your business type</option>
-                  <option value="cafe">Café</option>
-                  <option value="restaurant">Restaurant</option>
-                  <option value="gym">Gym</option>
-                  <option value="spa">Spa</option>
-                  <option value="retail">Retail</option>
-                  <option value="salon">Salon / Barbershop</option>
-                  <option value="bakery">Bakery</option>
-                  <option value="grocery">Grocery / Convenience Store</option>
-                  <option value="other">Other</option>
+                  <option value="retail">Retail Stores</option>
+                  <option value="restaurant">Restaurants & Cafés</option>
+                  <option value="salon">Salons & Spas</option>
+                  <option value="hotel">Hotels & Travel</option>
                 </select>
                 {validationErrors.businessType && (
                   <p className="text-red-500 text-sm mt-1">
@@ -570,12 +560,12 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Phone Number
                 </label>
                 <div className="flex">
-                  <span className="px-4 py-3.5 rounded-l-xl bg-gray-200 dark:bg-gray-800 border-2 border-r-0 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-semibold">
+                  <span className="px-4 py-3.5 rounded-l-xl bg-gray-200 border-2 border-r-0 border-gray-200 text-gray-600 font-semibold">
                     +63
                   </span>
                   <input
@@ -585,11 +575,11 @@ export default function SignupPage() {
                     value={phone}
                     onChange={handlePhoneChange}
                     placeholder="9123456789"
-                    className={`flex-1 px-4 py-3.5 rounded-r-xl bg-white dark:bg-gray-800 border-2 ${
+                    className={`flex-1 px-4 py-3.5 rounded-r-xl bg-white border-2 ${
                       validationErrors.phone
                         ? 'border-red-500 focus:border-red-500'
-                        : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                    } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                        : 'border-gray-200 focus:border-primary'
+                    } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                     required
                     maxLength={10}
                   />
@@ -613,7 +603,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Email Address
                 </label>
@@ -623,11 +613,11 @@ export default function SignupPage() {
                   value={email}
                   onChange={handleEmailChange}
                   placeholder="you@example.com"
-                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white border-2 ${
                     validationErrors.email
                       ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                      : 'border-gray-200 focus:border-primary'
+                  } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                   required
                 />
                 {validationErrors.email && (
@@ -640,7 +630,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Password
                 </label>
@@ -651,11 +641,11 @@ export default function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className={`w-full px-4 py-3.5 pr-12 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                    className={`w-full px-4 py-3.5 pr-12 rounded-xl bg-white border-2 ${
                       validationErrors.password
                         ? 'border-red-500 focus:border-red-500'
-                        : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                    } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                        : 'border-gray-200 focus:border-primary'
+                    } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                     required
                   />
                   <button
@@ -680,7 +670,7 @@ export default function SignupPage() {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300"
+                  className="block text-sm font-semibold mb-2 text-gray-700"
                 >
                   Confirm Password
                 </label>
@@ -690,11 +680,11 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full px-4 py-3.5 rounded-xl bg-white dark:bg-gray-800 border-2 ${
+                  className={`w-full px-4 py-3.5 rounded-xl bg-white border-2 ${
                     validationErrors.confirmPassword
                       ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-200 dark:border-gray-700 focus:border-blue-500'
-                  } focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 dark:text-white`}
+                      : 'border-gray-200 focus:border-primary'
+                  } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
                   required
                 />
                 {validationErrors.confirmPassword && (
@@ -705,8 +695,8 @@ export default function SignupPage() {
               </div>
 
               {/* Password Requirements */}
-              <div className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-xl p-5 border border-blue-100 dark:border-gray-700">
-                <p className="text-sm font-bold mb-3 text-gray-900 dark:text-white">
+              <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-5 border border-primary/20">
+                <p className="text-sm font-bold mb-3 text-gray-900">
                   Password requirements:
                 </p>
                 <div className="space-y-2">
@@ -733,7 +723,7 @@ export default function SignupPage() {
                         className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                           req.met
                             ? 'bg-green-500 scale-110'
-                            : 'bg-gray-300 dark:bg-gray-600'
+                            : 'bg-gray-300'
                         }`}
                       >
                         {req.met && <Check className="w-3 h-3 text-white" />}
@@ -741,8 +731,8 @@ export default function SignupPage() {
                       <span
                         className={`transition-colors ${
                           req.met
-                            ? 'text-gray-900 dark:text-white font-semibold'
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-gray-900 font-semibold'
+                            : 'text-gray-500'
                         }`}
                       >
                         {req.label}
@@ -757,17 +747,17 @@ export default function SignupPage() {
           {/* Step 3: Agreement */}
           {step === 3 && (
             <div className="space-y-6">
-              <div className="bg-linear-to-br from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-6 border-2 border-blue-200 dark:border-gray-700">
+              <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 border-2 border-primary/20">
                 <div className="space-y-4">
                   <div className="flex gap-4">
                     <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
                       <Check className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 dark:text-white">
+                      <p className="font-bold text-gray-900">
                         Business Information
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         {businessName} • {businessType}
                       </p>
                     </div>
@@ -777,10 +767,10 @@ export default function SignupPage() {
                       <Check className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 dark:text-white">
+                      <p className="font-bold text-gray-900">
                         Account Details
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         {email}
                       </p>
                     </div>
@@ -790,10 +780,10 @@ export default function SignupPage() {
                       <Check className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 dark:text-white">
+                      <p className="font-bold text-gray-900">
                         Phone Number
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         +63 {phone}
                       </p>
                     </div>
@@ -801,19 +791,19 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <label className="flex items-start gap-3 cursor-pointer group p-4 rounded-xl hover:bg-gray-100 transition-colors">
                 <input
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer mt-0.5 shrink-0"
+                  className="w-5 h-5 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary/20 cursor-pointer mt-0.5 shrink-0"
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <span className="text-sm text-gray-600 leading-relaxed">
                   I agree to the{' '}
                   <a
                     href="/terms"
                     target="_blank"
-                    className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     Terms of Service
                   </a>{' '}
@@ -821,7 +811,7 @@ export default function SignupPage() {
                   <a
                     href="/privacy"
                     target="_blank"
-                    className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                    className="text-primary font-bold hover:underline"
                   >
                     Privacy Policy
                   </a>
@@ -831,12 +821,12 @@ export default function SignupPage() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex gap-4 mt-10 pt-8 border-t-2 border-gray-200 dark:border-gray-800">
+          <div className="flex gap-4 mt-10 pt-8 border-t-2 border-gray-200">
             {step > 1 && (
               <button
                 onClick={handleBack}
                 disabled={isLoading}
-                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 hover:bg-gray-100 font-semibold text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back
               </button>
@@ -846,7 +836,7 @@ export default function SignupPage() {
               <button
                 onClick={handleNext}
                 disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
-                className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="flex-1 bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 Next <ArrowRight className="w-5 h-5" />
               </button>
@@ -856,7 +846,7 @@ export default function SignupPage() {
               <button
                 onClick={handleSubmit}
                 disabled={!agreed || isLoading}
-                className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl py-4 font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-1 bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -873,11 +863,11 @@ export default function SignupPage() {
           </div>
 
           {/* Sign In Link */}
-          <p className="text-center text-gray-600 dark:text-gray-400 mt-8">
+          <p className="text-center text-gray-600 mt-8">
             Already have an account?{' '}
             <a
               href="/login"
-              className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              className="font-semibold text-primary hover:text-primary/80 transition-colors"
             >
               Sign in
             </a>

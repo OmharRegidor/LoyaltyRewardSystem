@@ -256,15 +256,15 @@ export function CustomerDetailModal({
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Left Side - Customer Info */}
-            <Card className="p-4 sm:p-6 space-y-6">
+            <Card className="p-4 sm:p-6 space-y-6 bg-white">
               <div className="flex flex-col items-center text-center">
                 <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mb-3 sm:mb-4">
                   <AvatarFallback className="bg-primary/10 text-primary text-lg">
                     {getInitials(customer.name)}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="text-xl font-bold">{customer.name}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-xl font-bold text-gray-900">{customer.name}</h3>
+                <p className="text-sm text-gray-500">
                   {customer.phone || 'No phone'}
                 </p>
                 <Badge
@@ -278,44 +278,44 @@ export function CustomerDetailModal({
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Star className="w-5 h-5 text-yellow-500 shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       Total Points
                     </p>
-                    <p className="text-lg font-bold">
+                    <p className="text-lg font-bold text-gray-900">
                       {customer.points.toLocaleString()}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <TrendingUp className="w-5 h-5 text-green-500 shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       Total Visits
                     </p>
-                    <p className="text-lg font-bold">{customer.visits}</p>
+                    <p className="text-lg font-bold text-gray-900">{customer.visits}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-blue-500 shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Last Visit</p>
-                    <p className="text-lg font-bold">{customer.lastVisit}</p>
+                    <p className="text-xs text-gray-500">Last Visit</p>
+                    <p className="text-lg font-bold text-gray-900">{customer.lastVisit}</p>
                   </div>
                 </div>
               </div>
             </Card>
 
             {/* Right Side - Points History */}
-            <Card className="p-4 sm:p-6 flex flex-col">
+            <Card className="p-4 sm:p-6 flex flex-col bg-white">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">Points History</h4>
+                <h4 className="font-semibold text-gray-900">Points History</h4>
                 {totalCount > 0 && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-500">
                     {totalCount} transaction{totalCount !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -327,7 +327,7 @@ export function CustomerDetailModal({
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : transactions.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     No transactions yet
                   </div>
                 ) : (
@@ -335,7 +335,7 @@ export function CustomerDetailModal({
                     {transactions.map((tx, idx) => (
                       <motion.div
                         key={tx.id}
-                        className="flex items-start gap-3 pb-3 border-b border-border last:border-0"
+                        className="flex items-start gap-3 pb-3 border-b border-gray-200 last:border-0"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
@@ -350,13 +350,13 @@ export function CustomerDetailModal({
                           {tx.type === 'earn' ? '+' : '-'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {tx.description ||
                               (tx.type === 'earn'
                                 ? 'Points earned'
                                 : 'Points redeemed')}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-gray-500">
                             {formatRelativeDate(tx.createdAt)}
                           </p>
                         </div>
@@ -378,8 +378,8 @@ export function CustomerDetailModal({
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-auto">
+                  <span className="text-xs text-gray-500">
                     Page {currentPage} of {totalPages}
                   </span>
                   <div className="flex gap-2">

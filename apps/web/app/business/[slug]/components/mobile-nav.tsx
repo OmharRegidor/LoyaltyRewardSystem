@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Home, Calendar, Gift, CreditCard, CalendarDays } from 'lucide-react';
+import { Menu, Home, Gift, CreditCard, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -21,7 +21,6 @@ interface MobileNavProps {
 
 const navItems = [
   { label: 'About', path: '', icon: Home },
-  { label: 'Services', path: '/services', icon: Calendar },
   { label: 'My Bookings', path: '/my-bookings', icon: CalendarDays },
   { label: 'Rewards', path: '/rewards', icon: Gift },
   { label: 'Get Card', path: '/card', icon: CreditCard },
@@ -35,7 +34,7 @@ export function MobileNav({ slug, businessName }: MobileNavProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-white/10">
           <Menu className="h-5 w-5" />
           <span className="sr-only">Open menu</span>
         </Button>
@@ -58,7 +57,7 @@ export function MobileNav({ slug, businessName }: MobileNavProps) {
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
                 <Icon className="h-5 w-5" />

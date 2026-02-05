@@ -8,6 +8,8 @@ import {
   Gift,
   ChevronDown,
   ChevronUp,
+  Phone,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,22 +17,42 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
+interface SelectedAddonOption {
+  id: string;
+  name: string;
+  priceCentavos: number;
+}
+
 interface SelectedAddon {
   id: string;
   name: string;
   priceCentavos: number;
   priceType: 'fixed' | 'per_day' | 'per_person';
   quantity: number;
+  selectedOption?: SelectedAddonOption;
 }
 
+interface PriceVariant {
+  id: string;
+  name: string;
+  price_centavos: number;
+  description: string | null;
+  capacity: number | null;
+}
+
+type BusinessType = 'retail' | 'restaurant' | 'salon' | 'hotel';
+
 interface PriceSummaryProps {
+  businessType?: BusinessType | null;
   serviceName: string | null;
+  selectedVariant?: PriceVariant | null;
   checkInDate: Date | null;
   checkOutDate: Date | null;
   selectedTime: string | null;
   nights: number;
   adultsCount: number;
   childrenCount: number;
+  partySize?: number;
   serviceSubtotal: number;
   selectedAddons: SelectedAddon[];
   addonsTotal: number;
@@ -40,6 +62,7 @@ interface PriceSummaryProps {
   isValid: boolean;
   isSubmitting: boolean;
   onConfirm: () => void;
+  businessPhone?: string | null;
   className?: string;
 }
 
@@ -62,13 +85,16 @@ function formatTimeForDisplay(time: string): string {
 }
 
 export function PriceSummary({
+  businessType,
   serviceName,
+  selectedVariant,
   checkInDate,
   checkOutDate,
   selectedTime,
   nights,
   adultsCount,
   childrenCount,
+  partySize,
   serviceSubtotal,
   selectedAddons,
   addonsTotal,
@@ -78,22 +104,26 @@ export function PriceSummary({
   isValid,
   isSubmitting,
   onConfirm,
+  businessPhone,
   className,
 }: PriceSummaryProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const totalGuests = adultsCount + childrenCount;
 
+  // Display name: variant name for hotels, service name for others
+  const displayName = selectedVariant?.name || serviceName;
+
   return (
     <div
       className={cn(
-        'bg-card border rounded-xl shadow-sm overflow-hidden',
+        'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden',
         className
       )}
     >
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 border-b">
+      <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-lg">Booking Summary</h3>
+          <h3 className="font-semibold text-lg text-gray-900">Booking Summary</h3>
           {/* Mobile collapse toggle */}
           <Button
             variant="ghost"
@@ -119,12 +149,19 @@ export function PriceSummary({
       >
         <div className="p-4 space-y-4">
           {/* Service & Date Summary */}
-          {serviceName && (
+          {displayName && (
             <div className="space-y-2">
-              <p className="font-medium">{serviceName}</p>
+              <p className="font-medium text-gray-900">{displayName}</p>
+
+              {/* Show service name if variant is selected */}
+              {selectedVariant && serviceName && (
+                <p className="text-sm text-gray-500">
+                  {serviceName}
+                </p>
+              )}
 
               {checkInDate && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
                   <CalendarDays className="h-4 w-4" />
                   <span>
                     {format(checkInDate, 'MMM d')}
@@ -148,8 +185,9 @@ export function PriceSummary({
                 </Badge>
               )}
 
-              {totalGuests > 1 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {/* Hotel guests */}
+              {businessType === 'hotel' && totalGuests > 0 && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Users className="h-4 w-4" />
                   <span>
                     {adultsCount} adult{adultsCount !== 1 ? 's' : ''}
@@ -157,6 +195,14 @@ export function PriceSummary({
                       <>, {childrenCount} child{childrenCount !== 1 ? 'ren' : ''}</>
                     )}
                   </span>
+                </div>
+              )}
+
+              {/* Restaurant party size */}
+              {businessType === 'restaurant' && partySize && partySize > 0 && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Users className="h-4 w-4" />
+                  <span>Party of {partySize}</span>
                 </div>
               )}
             </div>
@@ -170,7 +216,7 @@ export function PriceSummary({
             {serviceSubtotal > 0 && (
               <div className="flex justify-between text-sm">
                 <span>
-                  {serviceName}
+                  {selectedVariant?.name || serviceName}
                   {nights > 1 && ` (${nights} nights)`}
                 </span>
                 <span>{formatPrice(serviceSubtotal)}</span>
@@ -180,27 +226,35 @@ export function PriceSummary({
             {/* Add-ons */}
             {selectedAddons.length > 0 && (
               <div className="space-y-1">
-                {selectedAddons.map((addon) => (
-                  <div
-                    key={addon.id}
-                    className="flex justify-between text-sm text-muted-foreground"
-                  >
-                    <span>
-                      {addon.name}
-                      {addon.quantity > 1 && ` x${addon.quantity}`}
-                    </span>
-                    <span>
-                      {formatPrice(addon.priceCentavos * addon.quantity)}
-                    </span>
-                  </div>
-                ))}
+                {selectedAddons.map((addon) => {
+                  const displayOption = addon.selectedOption;
+                  const displayPrice = displayOption?.priceCentavos ?? addon.priceCentavos;
+                  const displayName = displayOption
+                    ? `${addon.name} - ${displayOption.name}`
+                    : addon.name;
+
+                  return (
+                    <div
+                      key={addon.id}
+                      className="flex justify-between text-sm text-gray-500"
+                    >
+                      <span>
+                        {displayName}
+                        {!displayOption && addon.quantity > 1 && ` x${addon.quantity}`}
+                      </span>
+                      <span>
+                        {formatPrice(displayOption ? displayPrice : displayPrice * addon.quantity)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             {/* Add-ons subtotal if there are add-ons */}
             {addonsTotal > 0 && (
               <div className="flex justify-between text-sm pt-1">
-                <span className="text-muted-foreground">Add-ons subtotal</span>
+                <span className="text-gray-500">Add-ons subtotal</span>
                 <span>{formatPrice(addonsTotal)}</span>
               </div>
             )}
@@ -210,22 +264,38 @@ export function PriceSummary({
 
           {/* Total */}
           <div className="flex justify-between items-center">
-            <span className="font-semibold text-lg">Total</span>
-            <span className="font-bold text-xl text-primary">
+            <span className="font-semibold text-lg text-gray-900">Total</span>
+            <span className="font-bold text-xl text-gray-900">
               {formatPrice(total)}
             </span>
           </div>
 
           {/* Points earned preview */}
           {pointsEstimate > 0 && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <Gift className="h-4 w-4 text-primary" />
-              <span className="text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+              <Gift className="h-4 w-4 text-yellow-600" />
+              <span className="text-sm text-gray-700">
                 You&apos;ll earn{' '}
-                <span className="font-semibold text-primary">
+                <span className="font-semibold text-gray-900">
                   {pointsEstimate} point{pointsEstimate !== 1 ? 's' : ''}
                 </span>
               </span>
+            </div>
+          )}
+
+          {/* Confirmation note */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <Info className="h-4 w-4 text-gray-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-500">
+              This is a reservation request. We&apos;ll confirm your booking within 24 hours.
+            </p>
+          </div>
+
+          {/* Business contact */}
+          {businessPhone && (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Phone className="h-3 w-3" />
+              <span>Questions? Call {businessPhone}</span>
             </div>
           )}
         </div>
@@ -235,12 +305,12 @@ export function PriceSummary({
           <Button
             onClick={onConfirm}
             disabled={!isValid || isSubmitting}
-            className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold text-base"
+            className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold text-base border border-gray-900"
           >
             {isSubmitting ? 'Confirming...' : 'Confirm Booking'}
           </Button>
 
-          <p className="text-xs text-center text-muted-foreground mt-3">
+          <p className="text-xs text-center text-gray-500 mt-3">
             By booking, you agree to our terms & conditions
           </p>
         </div>
@@ -249,8 +319,8 @@ export function PriceSummary({
       {/* Collapsed state shows total on mobile */}
       {isCollapsed && (
         <div className="p-4 md:hidden flex items-center justify-between">
-          <span className="font-semibold">Total</span>
-          <span className="font-bold text-lg text-primary">
+          <span className="font-semibold text-gray-900">Total</span>
+          <span className="font-bold text-lg text-gray-900">
             {formatPrice(total)}
           </span>
         </div>

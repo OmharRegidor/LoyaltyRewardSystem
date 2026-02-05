@@ -33,6 +33,8 @@ export interface DateRangeAvailabilityResult {
 export interface AddonSelection {
   addonId: string;
   quantity: number;
+  optionId?: string;
+  optionPriceCentavos?: number;
 }
 
 export interface CreatePublicBookingData {
@@ -46,6 +48,11 @@ export interface CreatePublicBookingData {
   customerPhone: string;
   customerEmail?: string;
   notes?: string;
+  // New fields for hotel/restaurant bookings
+  variantId?: string;
+  partySize?: number;
+  guestsAdults?: number;
+  guestsChildren?: number;
   addons?: AddonSelection[];
 }
 
@@ -141,10 +148,10 @@ export async function getAvailableSlots(
 ): Promise<AvailableSlotsResult | FullDayAvailabilityResult> {
   const supabase = createServiceClient();
 
-  // Get service to determine duration
+  // Get service to determine duration and config
   const { data: service } = await supabase
     .from('services')
-    .select('duration_minutes')
+    .select('duration_minutes, config')
     .eq('id', serviceId)
     .single();
 
@@ -153,6 +160,9 @@ export async function getAvailableSlots(
   }
 
   const durationMinutes = service.duration_minutes;
+  // Extract time interval from config (restaurant uses this)
+  const config = service.config as Record<string, unknown> | null;
+  const timeIntervalMinutes = (config?.time_interval_minutes as number) || 30;
 
   // For full-day services (>= 1440 min), check if date is available
   if (durationMinutes >= 1440) {
@@ -188,12 +198,12 @@ export async function getAvailableSlots(
     return { date, slots: [], businessHours: null };
   }
 
-  // Generate 30-minute slots within business hours
+  // Generate time slots based on service config interval (or default 30 min)
   const slots: string[] = [];
   const startMinutes = timeToMinutes(availabilityData.start_time);
   const endMinutes = timeToMinutes(availabilityData.end_time);
 
-  for (let minutes = startMinutes; minutes + durationMinutes <= endMinutes; minutes += 30) {
+  for (let minutes = startMinutes; minutes + durationMinutes <= endMinutes; minutes += timeIntervalMinutes) {
     slots.push(minutesToTime(minutes));
   }
 
@@ -341,6 +351,23 @@ export async function createPublicBooking(
     throw new Error('Service not found');
   }
 
+  // 1b. Get variant details if provided
+  let variantPriceCentavos: number | null = null;
+  let variantName: string | null = null;
+  if (data.variantId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: variant } = await (supabase as any)
+      .from('service_price_variants')
+      .select('name, price_centavos')
+      .eq('id', data.variantId)
+      .single();
+
+    if (variant) {
+      variantPriceCentavos = variant.price_centavos;
+      variantName = variant.name;
+    }
+  }
+
   // 2. Get business settings for points calculation
   const { data: business, error: businessError } = await supabase
     .from('businesses')
@@ -377,12 +404,15 @@ export async function createPublicBooking(
 
   // 4. Calculate total price
   const nights = data.nights || 1;
-  const servicePriceCentavos = (service.price_centavos || 0) * nights;
+  // Use variant price if available, otherwise use service base price
+  const basePriceCentavos = variantPriceCentavos ?? service.price_centavos ?? 0;
+  const servicePriceCentavos = basePriceCentavos * nights;
 
   let addonsTotalCentavos = 0;
   if (data.addons) {
     for (const addon of data.addons) {
-      const unitPrice = addonPrices.get(addon.addonId);
+      // Use option price if provided, otherwise use base addon price
+      const unitPrice = addon.optionPriceCentavos ?? addonPrices.get(addon.addonId);
       if (unitPrice !== undefined) {
         addonsTotalCentavos += unitPrice * addon.quantity;
       }
@@ -489,6 +519,24 @@ export async function createPublicBooking(
   }
 
   // 7. Create booking
+  // Build addons JSON for storage
+  const addonsJson = data.addons && data.addons.length > 0 ? {
+    variant_id: data.variantId || null,
+    variant_name: variantName || null,
+    party_size: data.partySize || null,
+    items: data.addons.map(addon => ({
+      addon_id: addon.addonId,
+      quantity: addon.quantity,
+      option_id: addon.optionId || null,
+      option_price_centavos: addon.optionPriceCentavos || null,
+    })),
+  } : (data.variantId ? {
+    variant_id: data.variantId,
+    variant_name: variantName,
+    party_size: data.partySize || null,
+    items: [],
+  } : null);
+
   const { data: booking, error: bookingError } = await supabase
     .from('bookings')
     .insert({
@@ -505,6 +553,11 @@ export async function createPublicBooking(
       status: 'pending',
       total_price_centavos: totalPriceCentavos,
       nights: nights > 1 ? nights : null,
+      guests_adults: data.guestsAdults || null,
+      guests_children: data.guestsChildren ?? null,
+      addons_json: addonsJson,
+      addons_total_centavos: addonsTotalCentavos > 0 ? addonsTotalCentavos : null,
+      subtotal_centavos: servicePriceCentavos,
     })
     .select('id, confirmation_code')
     .single();
@@ -516,12 +569,12 @@ export async function createPublicBooking(
   // 8. Create addon selections
   if (data.addons && data.addons.length > 0) {
     const addonSelections = data.addons
-      .filter((addon) => addonPrices.has(addon.addonId))
+      .filter((addon) => addonPrices.has(addon.addonId) || addon.optionPriceCentavos !== undefined)
       .map((addon) => ({
         booking_id: booking.id,
         addon_id: addon.addonId,
         quantity: addon.quantity,
-        unit_price_centavos: addonPrices.get(addon.addonId)!,
+        unit_price_centavos: addon.optionPriceCentavos ?? addonPrices.get(addon.addonId)!,
       }));
 
     if (addonSelections.length > 0) {

@@ -14,6 +14,8 @@ import type { Json } from '../../../../../../../../packages/shared/types/databas
 const AddonSelectionSchema = z.object({
   addon_id: z.string().uuid('Invalid addon ID'),
   quantity: z.number().int().min(1, 'Quantity must be at least 1').max(99, 'Quantity too high'),
+  option_id: z.string().uuid('Invalid option ID').optional().nullable(),
+  option_price_centavos: z.number().int().min(0).optional().nullable(),
 });
 
 const CreateBookingSchema = z.object({
@@ -40,6 +42,11 @@ const CreateBookingSchema = z.object({
     .regex(/^[0-9]+$/, 'Phone number must contain only digits'),
   customer_email: z.string().email('Invalid email').optional().nullable(),
   notes: z.string().max(500, 'Notes are too long').optional().nullable(),
+  // New fields for hotel/restaurant bookings
+  variant_id: z.string().uuid('Invalid variant ID').optional().nullable(),
+  party_size: z.number().int().min(1).max(100).optional().nullable(),
+  guests_adults: z.number().int().min(1).max(50).optional().nullable(),
+  guests_children: z.number().int().min(0).max(50).optional().nullable(),
   addons: z.array(AddonSelectionSchema).max(20, 'Too many add-ons').optional().nullable(),
 });
 
@@ -166,9 +173,16 @@ export async function POST(
       customerPhone: data.customer_phone,
       customerEmail: data.customer_email || undefined,
       notes: data.notes || undefined,
+      // New fields
+      variantId: data.variant_id || undefined,
+      partySize: data.party_size || undefined,
+      guestsAdults: data.guests_adults || undefined,
+      guestsChildren: data.guests_children || undefined,
       addons: data.addons?.map((a) => ({
         addonId: a.addon_id,
         quantity: a.quantity,
+        optionId: a.option_id || undefined,
+        optionPriceCentavos: a.option_price_centavos || undefined,
       })),
     });
 

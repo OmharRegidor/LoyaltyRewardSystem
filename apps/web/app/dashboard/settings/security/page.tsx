@@ -116,7 +116,7 @@ export default function SecuritySettingsPage() {
         <motion.div variants={itemVariants}>
           <button
             onClick={() => router.push('/dashboard/settings')}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition mb-4 group"
+            className="flex items-center gap-2 text-gray-500 hover:text-foreground transition mb-4 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span className="text-sm font-medium">Back to Settings</span>
@@ -128,7 +128,7 @@ export default function SecuritySettingsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Security Settings</h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-gray-500 mt-1">
                 Manage your account security and password
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function SecuritySettingsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Change Password</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Secure your account with a new password
                 </p>
               </div>
@@ -161,14 +161,14 @@ export default function SecuritySettingsPage() {
                   className="space-y-6"
                 >
                   {/* Security Info Box */}
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl">
+                  <div className="p-4 bg-primary/5  border border-primary/20  rounded-xl">
                     <div className="flex gap-3">
-                      <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                      <ShieldCheck className="w-5 h-5 text-primary  shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-blue-900 dark:text-blue-100">
+                        <p className="font-medium text-primary/90 /80">
                           Secure Password Reset
                         </p>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        <p className="text-sm text-primary/80 /70 mt-1">
                           For your security, we'll send a password reset link to
                           your email. This ensures only you can change your
                           password.
@@ -180,15 +180,15 @@ export default function SecuritySettingsPage() {
                   {/* Email Display */}
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      <Mail className="w-4 h-4 inline mr-2 text-muted-foreground" />
+                      <Mail className="w-4 h-4 inline mr-2 text-gray-500" />
                       Reset link will be sent to
                     </label>
-                    <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border">
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                       {isLoadingEmail ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
                       ) : (
                         <>
-                          <Mail className="w-5 h-5 text-muted-foreground" />
+                          <Mail className="w-5 h-5 text-gray-500" />
                           <span className="font-medium">{userEmail}</span>
                         </>
                       )}
@@ -197,7 +197,7 @@ export default function SecuritySettingsPage() {
 
                   {/* How it works */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-gray-500">
                       How it works:
                     </p>
                     <div className="space-y-2">
@@ -213,7 +213,7 @@ export default function SecuritySettingsPage() {
                               {index + 1}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-gray-500">
                             {step}
                           </p>
                         </div>
@@ -244,7 +244,7 @@ export default function SecuritySettingsPage() {
                 >
                   <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
                   <p className="font-medium">Sending reset email...</p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-gray-500 mt-1">
                     Please wait a moment
                   </p>
                 </motion.div>
@@ -259,11 +259,11 @@ export default function SecuritySettingsPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="py-8 text-center"
                 >
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Email Sent!</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">
                     We've sent a password reset link to{' '}
                     <span className="font-medium text-foreground">
                       {userEmail}
@@ -272,12 +272,12 @@ export default function SecuritySettingsPage() {
                   </p>
 
                   {/* Email Tips */}
-                  <div className="p-4 bg-muted/50 rounded-xl text-left mb-6">
+                  <div className="p-4 bg-gray-50 rounded-xl text-left mb-6">
                     <div className="flex items-start gap-3">
-                      <Info className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                      <Info className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
                       <div className="text-sm">
                         <p className="font-medium mb-1">Don't see the email?</p>
-                        <ul className="text-muted-foreground space-y-1">
+                        <ul className="text-gray-500 space-y-1">
                           <li>• Check your spam or junk folder</li>
                           <li>• Make sure {userEmail} is correct</li>
                           <li>• Wait a few minutes and try again</li>
@@ -289,7 +289,7 @@ export default function SecuritySettingsPage() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setRequestStatus('idle')}
-                      className="flex-1 px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition font-medium"
+                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-100 transition font-medium"
                     >
                       Send Again
                     </button>
@@ -312,11 +312,11 @@ export default function SecuritySettingsPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="py-8 text-center"
                 >
-                  <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-600" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">Failed to Send</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">
                     {errorMessage || 'Something went wrong. Please try again.'}
                   </p>
 
@@ -363,10 +363,10 @@ export default function SecuritySettingsPage() {
               ].map((tip, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-muted/50 rounded-xl border border-border"
+                  className="p-4 bg-gray-50 rounded-xl border border-gray-200"
                 >
                   <p className="font-medium text-sm">{tip.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {tip.desc}
                   </p>
                 </div>

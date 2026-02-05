@@ -75,7 +75,7 @@ function LoadingSkeleton() {
         <Skeleton className="h-8 w-40 mb-2" />
         <Skeleton className="h-5 w-72" />
       </div>
-      <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-6 space-y-4">
+      <div className="rounded-lg border bg-white shadow-md p-6 space-y-4">
         {[...Array(7)].map((_, i) => (
           <div key={i} className="flex items-center gap-4">
             <Skeleton className="h-5 w-24" />
@@ -105,7 +105,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
   const shortDayName = day.label.slice(0, 3);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-gray-100  last:border-b-0">
       {/* Row 1 on mobile: Day name + Toggle */}
       <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4">
         <div className="w-20 sm:w-28 shrink-0">
@@ -120,7 +120,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
             checked={data.is_available}
             onCheckedChange={(checked) => onChange(day.value, { is_available: checked })}
           />
-          <span className="text-sm text-gray-500 dark:text-gray-400 w-12 sm:w-auto">
+          <span className="text-sm text-gray-500  w-12 sm:w-auto">
             {data.is_available ? 'Open' : 'Closed'}
           </span>
         </div>
@@ -145,7 +145,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
             </SelectContent>
           </Select>
 
-          <span className="text-sm text-gray-500 dark:text-gray-400">to</span>
+          <span className="text-sm text-gray-500 ">to</span>
 
           <Select
             value={data.end_time}
@@ -164,7 +164,7 @@ function DayRow({ day, data, onChange }: DayRowProps) {
           </Select>
         </div>
       ) : (
-        <span className="text-sm text-gray-400 dark:text-gray-500 italic sm:block hidden">
+        <span className="text-sm text-gray-400  italic sm:block hidden">
           Closed
         </span>
       )}
@@ -298,19 +298,19 @@ export default function AvailabilityPage() {
       >
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 ">
             Availability
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-500  mt-1">
             Set when customers can book appointments
           </p>
         </div>
 
         {/* Weekly Schedule Card */}
-        <div className="rounded-lg border bg-white dark:bg-gray-800/50 p-4 sm:p-6">
+        <div className="rounded-lg border bg-white shadow-md p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Clock className="w-5 h-5 text-gray-500 " />
+            <h2 className="text-lg font-semibold text-gray-900 ">
               Business Hours
             </h2>
           </div>

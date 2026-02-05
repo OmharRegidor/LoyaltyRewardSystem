@@ -62,15 +62,6 @@ const DAY_NAMES = [
 // ANIMATION VARIANTS
 // ============================================
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: 'easeOut' },
-  },
-};
-
 const staggerContainerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -140,209 +131,203 @@ export function BusinessPageClient({
   }
 
   return (
-    <div className="relative">
-      {/* Animated Background Blobs */}
+    <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      {/* Subtle Background Decoration */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
-        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
+        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-muted/50 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
+        {/* Bento Grid Container */}
         <motion.div
-          className="mb-12"
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6">
-            {/* Logo with glow effect */}
-            <motion.div
-              className="relative group"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              {/* Glow effect on hover */}
-              <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-110" />
-
-              {business.logo_url ? (
-                <Image
-                  src={business.logo_url}
-                  alt={business.name}
-                  width={120}
-                  height={120}
-                  className="rounded-2xl object-cover relative z-10 shadow-lg"
-                />
-              ) : (
-                <div className="flex h-[120px] w-[120px] items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-secondary/20 relative z-10 shadow-lg">
-                  <Building2 className="h-14 w-14 text-primary" />
-                </div>
-              )}
-            </motion.div>
-
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">
-                  {business.name}
-                </h1>
-                {business.business_type && (
-                  <Badge className="bg-linear-to-r from-primary/10 to-secondary/10 text-primary border-primary/20 hover:from-primary/20 hover:to-secondary/20 transition-colors text-sm px-3 py-1">
-                    {business.business_type}
-                  </Badge>
-                )}
-              </div>
-              {business.description && (
-                <p className="text-muted-foreground text-base sm:text-lg max-w-2xl leading-relaxed">
-                  {business.description}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Action Buttons */}
-          <motion.div
-            className="flex flex-wrap gap-3 sm:gap-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Button
-              size="lg"
-              className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 transition-all font-semibold"
-              onClick={() => setBookingOpen(true)}
-              disabled={services.length === 0}
-            >
-              <Calendar className="mr-2 h-5 w-5" />
-              Book a Service
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              asChild
-              size="lg"
-              className="rounded-xl px-4 sm:px-8 h-10 sm:h-12 border-2 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all font-semibold"
-            >
-              <Link href={`/business/${slug}/rewards`}>
-                <Gift className="mr-2 h-5 w-5" />
-                View Rewards
-              </Link>
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Cards Grid */}
-        <motion.div
-          className="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto"
+          className="max-w-5xl mx-auto"
           initial="hidden"
           animate="visible"
           variants={staggerContainerVariants}
         >
-          {/* Contact Information Card */}
-          <motion.div variants={cardVariants}>
-            <Card className="h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                    <MapPin className="h-5 w-5" />
+          {/* Main 2-column grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left Column - Business Info + Buttons */}
+            <motion.div
+              className="flex flex-col gap-4"
+              variants={cardVariants}
+            >
+              {/* Logo with glow effect */}
+              <motion.div
+                className="relative group w-fit"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-110" />
+
+                {business.logo_url ? (
+                  <Image
+                    src={business.logo_url}
+                    alt={business.name}
+                    width={120}
+                    height={120}
+                    className="rounded-2xl object-cover relative z-10 shadow-lg"
+                  />
+                ) : (
+                  <div className="flex h-[120px] w-[120px] items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-secondary/20 relative z-10 shadow-lg">
+                    <Building2 className="h-14 w-14 text-primary" />
                   </div>
-                  Contact Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 relative">
-                {(business.address || business.city) && (
-                  <div className="flex items-start gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      {business.address && (
-                        <p className="font-medium">{business.address}</p>
+                )}
+              </motion.div>
+
+              {/* Business Name + Badge */}
+              <div>
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+                    {business.name}
+                  </h1>
+                  {business.business_type && (
+                    <span className="text-gray-500 text-base sm:text-lg font-normal">
+                      {business.business_type}
+                    </span>
+                  )}
+                </div>
+                {business.description && (
+                  <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
+                    {business.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons - Yellow CTA, Maroon Outline */}
+              <div className="flex flex-wrap gap-3 mt-2">
+                <Button
+                  size="lg"
+                  className="bg-secondary text-secondary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold"
+                  onClick={() => setBookingOpen(true)}
+                  disabled={services.length === 0}
+                >
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Book Now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  asChild
+                  size="lg"
+                  className="rounded-xl px-4 sm:px-8 h-10 sm:h-12 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold"
+                >
+                  <Link href={`/business/${slug}/rewards`}>
+                    <Gift className="mr-2 h-5 w-5" />
+                    View Rewards
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Right Column - Contact + Loyalty stacked */}
+            <motion.div
+              className="flex flex-col gap-6"
+              variants={cardVariants}
+            >
+              {/* Contact Information Card */}
+              <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-primary rounded-2xl bg-white shadow-md border border-gray-100">
+                <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+                <CardHeader className="relative pb-3">
+                  <CardTitle className="flex items-center gap-3 text-base text-gray-900">
+                    <div className="p-2 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 relative pt-0">
+                  {(business.address || business.city) && (
+                    <div className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        {business.address && (
+                          <p className="font-medium text-gray-900">{business.address}</p>
+                        )}
+                        {business.city && (
+                          <p className="text-gray-500">{business.city}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {business.phone && (
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <Phone className="h-4 w-4 text-secondary shrink-0" />
+                      <a
+                        href={`tel:${business.phone}`}
+                        className="text-secondary hover:underline font-medium text-sm"
+                      >
+                        {business.phone}
+                      </a>
+                    </div>
+                  )}
+
+                  {!business.address && !business.city && !business.phone && (
+                    <p className="text-gray-500 text-sm p-2.5">
+                      No contact information available.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Loyalty Program Card */}
+              <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-secondary rounded-2xl bg-white shadow-md border border-gray-100">
+                <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+                <CardHeader className="relative pb-3">
+                  <CardTitle className="flex items-center gap-3 text-base text-gray-900">
+                    <div className="p-2 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
+                      <Star className="h-4 w-4" />
+                    </div>
+                    Loyalty Program
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-500">
+                    Earn points with every purchase
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative pt-0">
+                  {business.points_per_purchase || business.pesos_per_point ? (
+                    <div className="space-y-3">
+                      {business.points_per_purchase && (
+                        <div className="p-3 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 border border-primary/20">
+                          <p className="text-base text-gray-700">
+                            Earn{' '}
+                            <span className="font-bold text-lg bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+                              {business.points_per_purchase} points
+                            </span>{' '}
+                            per purchase
+                          </p>
+                        </div>
                       )}
-                      {business.city && (
-                        <p className="text-muted-foreground">{business.city}</p>
+                      {business.pesos_per_point && (
+                        <p className="text-gray-500 text-sm flex items-center gap-2">
+                          <span className="inline-block w-2 h-2 rounded-full bg-primary" />
+                          {business.pesos_per_point} peso(s) = 1 point
+                        </p>
                       )}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-gray-500 text-sm p-2.5">
+                      Contact the business for loyalty program details.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
 
-                {business.phone && (
-                  <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                    <Phone className="h-5 w-5 text-primary shrink-0" />
-                    <a
-                      href={`tel:${business.phone}`}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      {business.phone}
-                    </a>
-                  </div>
-                )}
-
-                {!business.address && !business.city && !business.phone && (
-                  <p className="text-muted-foreground text-sm p-3">
-                    No contact information available.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Loyalty Program Card */}
-          <motion.div variants={cardVariants}>
-            <Card className="h-full overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                    <Star className="h-5 w-5" />
-                  </div>
-                  Loyalty Program
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Earn points with every purchase
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                {business.points_per_purchase || business.pesos_per_point ? (
-                  <div className="space-y-4">
-                    {business.points_per_purchase && (
-                      <div className="p-4 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 border border-primary/20">
-                        <p className="text-xl">
-                          Earn{' '}
-                          <span className="font-bold text-2xl bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                            {business.points_per_purchase} points
-                          </span>{' '}
-                          per purchase
-                        </p>
-                      </div>
-                    )}
-                    {business.pesos_per_point && (
-                      <p className="text-muted-foreground flex items-center gap-2">
-                        <span className="inline-block w-2 h-2 rounded-full bg-primary" />
-                        {business.pesos_per_point} peso(s) = 1 point
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm p-3">
-                    Contact the business for loyalty program details.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Business Hours Card */}
-        <motion.div
-          className="max-w-4xl mx-auto mt-6"
-          initial="hidden"
-          animate="visible"
-          variants={cardVariants}
-        >
-          <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-            <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
+          {/* Business Hours Card - Full width at bottom */}
+          <motion.div
+            className="mt-6"
+            variants={cardVariants}
+          >
+          <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 border-t-primary rounded-2xl bg-white shadow-md border border-gray-100">
+            <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
             <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
-              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg text-gray-900">
                 <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
@@ -373,13 +358,13 @@ export function BusinessPageClient({
                         variants={dayItemVariants}
                         className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
                           isToday
-                            ? 'bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
-                            : 'bg-muted/50 hover:bg-muted border border-transparent'
+                            ? 'bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
+                            : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
                           <span
-                            className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : ''}`}
+                            className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : 'text-gray-900'}`}
                           >
                             <span className="sm:hidden">{shortDayName}</span>
                             <span className="hidden sm:inline">{dayName}</span>
@@ -395,7 +380,7 @@ export function BusinessPageClient({
                           )}
                         </div>
                         {isOpen ? (
-                          <span className="text-[10px] sm:text-sm text-muted-foreground">
+                          <span className="text-[10px] sm:text-sm text-gray-600">
                             {formatTime(dayAvailability.start_time)} - {formatTime(dayAvailability.end_time)}
                           </span>
                         ) : (
@@ -411,13 +396,14 @@ export function BusinessPageClient({
                   })}
                 </motion.div>
               ) : (
-                <p className="text-muted-foreground text-sm p-3">
+                <p className="text-gray-500 text-sm p-3">
                   Business hours not available. Please contact the business
                   for their schedule.
                 </p>
               )}
             </CardContent>
           </Card>
+          </motion.div>
         </motion.div>
       </div>
 
@@ -434,6 +420,7 @@ export function BusinessPageClient({
           address: business.address,
           points_per_purchase: business.points_per_purchase,
           pesos_per_point: business.pesos_per_point,
+          business_type: business.business_type as 'retail' | 'restaurant' | 'salon' | 'hotel' | null,
         }}
         services={services.map((s) => ({
           id: s.id,
@@ -444,6 +431,14 @@ export function BusinessPageClient({
           max_guests: 1,
           requires_time_slot: s.duration_minutes < 1440,
           price_type: s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
+          config: s.config,
+          price_variants: s.price_variants?.map((v) => ({
+            id: v.id,
+            name: v.name,
+            price_centavos: v.price_centavos,
+            description: v.description,
+            capacity: v.capacity,
+          })),
         }))}
         addons={addons.map((a) => ({
           id: a.id,
@@ -452,6 +447,12 @@ export function BusinessPageClient({
           price_centavos: a.price_centavos,
           price_type: 'fixed' as const,
           service_id: null,
+          options: a.options?.map((o) => ({
+            id: o.id,
+            name: o.name,
+            price_centavos: o.price_centavos,
+            description: o.description,
+          })),
         }))}
         availability={availability}
       />

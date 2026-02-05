@@ -18,14 +18,14 @@ export function NavLink({ href, children }: NavLinkProps) {
       href={href}
       className={`relative px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors rounded-md group ${
         isActive
-          ? 'text-foreground'
-          : 'text-muted-foreground hover:text-foreground'
+          ? 'text-secondary'
+          : 'text-white/80 hover:text-white'
       }`}
     >
       {children}
       {/* Animated underline */}
       <span
-        className={`absolute -bottom-0.5 left-2 right-2 h-0.5 bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full ${
+        className={`absolute -bottom-0.5 left-2 right-2 h-0.5 bg-secondary transition-all duration-300 rounded-full ${
           isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
         }`}
       />

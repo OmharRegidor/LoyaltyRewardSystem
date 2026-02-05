@@ -55,28 +55,28 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
       >
         {/* Handle Bar */}
         <div className="flex justify-center py-3">
-          <div className="w-12 h-1 bg-muted rounded-full" />
+          <div className="w-12 h-1 bg-gray-100 rounded-full" />
         </div>
 
         <div className="px-6 pb-8 space-y-6 max-h-[70vh] overflow-y-auto">
           {!isConfirmed ? (
             <>
               {/* Customer Info */}
-              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-xl">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${customer.customerName}`} />
                   <AvatarFallback>{customer.customerName[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <p className="font-semibold">{customer.customerName}</p>
-                  <p className="text-sm text-muted-foreground">ID: {customer.customerId}</p>
+                  <p className="text-sm text-gray-500">ID: {customer.customerId}</p>
                 </div>
               </div>
 
               {/* Points Display */}
-              <Card className="p-4 bg-linear-to-r from-primary/10 to-secondary/10 border-primary/50">
-                <p className="text-sm text-muted-foreground mb-1">Current Points Balance</p>
-                <p className="text-4xl font-bold text-primary">{customer.currentPoints}</p>
+              <Card className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-300">
+                <p className="text-sm text-gray-500 mb-1">Current Points Balance</p>
+                <p className="text-4xl font-bold text-gray-900">{customer.currentPoints}</p>
               </Card>
 
               {/* Points to Award */}
@@ -85,7 +85,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setPointsToAward(Math.max(0, pointsToAward - 10))}
-                    className="p-2 hover:bg-muted rounded-lg transition"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
@@ -97,7 +97,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                   />
                   <button
                     onClick={() => setPointsToAward(pointsToAward + 10)}
-                    className="p-2 hover:bg-muted rounded-lg transition"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -111,8 +111,8 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                       onClick={() => setPointsToAward(preset)}
                       className={`px-4 py-2 rounded-lg font-medium transition ${
                         pointsToAward === preset
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted-foreground/20"
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
                       +{preset}
@@ -138,7 +138,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground" onClick={handleConfirm}>
+                <Button className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900" onClick={handleConfirm}>
                   <Check className="w-4 h-4 mr-2" />
                   Confirm Award
                 </Button>
@@ -153,23 +153,23 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
               transition={{ duration: 0.3 }}
             >
               <motion.div
-                className="w-16 h-16 mx-auto bg-success/10 rounded-full flex items-center justify-center"
+                className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center"
                 animate={{ scale: [0.8, 1.2, 1] }}
                 transition={{ duration: 0.6 }}
               >
-                <Check className="w-8 h-8 text-success" />
+                <Check className="w-8 h-8 text-green-600" />
               </motion.div>
 
               <div>
                 <h3 className="text-2xl font-bold mb-2">Points Awarded!</h3>
-                <p className="text-muted-foreground">
+                <p className="text-gray-500">
                   {pointsToAward} points added to {customer.customerName}
                 </p>
               </div>
 
-              <div className="bg-success/10 p-4 rounded-xl">
-                <p className="text-sm text-muted-foreground mb-1">New Points Balance</p>
-                <p className="text-3xl font-bold text-success">{customer.currentPoints + pointsToAward}</p>
+              <div className="bg-green-50 p-4 rounded-xl border border-green-200">
+                <p className="text-sm text-gray-500 mb-1">New Points Balance</p>
+                <p className="text-3xl font-bold text-green-600">{customer.currentPoints + pointsToAward}</p>
               </div>
 
               {/* Confetti Animation */}
@@ -177,7 +177,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                 {[...Array(10)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-2 h-2 bg-primary rounded-full"
+                    className="absolute w-2 h-2 bg-yellow-400 rounded-full"
                     initial={{
                       x: 0,
                       y: 0,

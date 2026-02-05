@@ -55,9 +55,9 @@ export function StatsCard({ title, value, change, icon: Icon, color = "primary" 
           </div>
         </div>
 
-        <h3 className="text-sm text-muted-foreground mb-1">{title}</h3>
+        <h3 className="text-sm text-gray-500 mb-1">{title}</h3>
         <p className="text-3xl font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground mt-2">{isPositive ? "Increase" : "Decrease"} from last month</p>
+        <p className="text-xs text-gray-500 mt-2">{isPositive ? "Increase" : "Decrease"} from last month</p>
       </Card>
     </motion.div>
   )

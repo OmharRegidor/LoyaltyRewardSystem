@@ -79,12 +79,12 @@ export function RewardsPageClient({
   }
 
   return (
-    <div className="relative">
-      {/* Animated Background Blobs */}
+    <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      {/* Subtle Background Decoration */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 dark:bg-primary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob" />
-        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 dark:bg-secondary/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 dark:bg-primary/3 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-blob animation-delay-4000" />
+        <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+        <div className="absolute top-40 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/10 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-20 left-1/2 w-64 sm:w-96 h-64 sm:h-96 bg-muted/50 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
       </div>
 
       <div className="container mx-auto px-4 py-8">
@@ -100,8 +100,8 @@ export function RewardsPageClient({
               <Gift className="h-7 w-7" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Rewards Catalog</h1>
-              <p className="text-muted-foreground text-base sm:text-lg">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Rewards Catalog</h1>
+              <p className="text-gray-500 text-base sm:text-lg">
                 Earn points and redeem them for these rewards
               </p>
             </div>
@@ -118,8 +118,8 @@ export function RewardsPageClient({
           >
             {rewards.map((reward) => (
               <motion.div key={reward.id} variants={cardVariants}>
-                <Card className="overflow-hidden flex flex-col h-full group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" />
+                <Card className="overflow-hidden flex flex-col h-full group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-primary rounded-2xl bg-white shadow-md border border-gray-100">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
 
                   {/* Reward Image */}
                   <div className="relative aspect-square bg-muted">
@@ -173,7 +173,7 @@ export function RewardsPageClient({
                       <span className="font-bold text-primary">
                         {reward.points_cost.toLocaleString()}
                       </span>
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-gray-500 text-sm">
                         points
                       </span>
                     </div>
@@ -188,15 +188,15 @@ export function RewardsPageClient({
             animate="visible"
             variants={containerVariants}
           >
-            <Card className="text-center py-12 border-border/50">
+            <Card className="text-center py-12 border-border/50 rounded-2xl">
               <CardContent>
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
                   <Sparkles className="h-10 w-10 text-primary/60" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-gray-900">
                   No Rewards Available
                 </h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
+                <p className="text-gray-500 max-w-sm mx-auto">
                   This business hasn&apos;t added any rewards yet. Check back
                   later for exciting rewards!
                 </p>
@@ -211,7 +211,7 @@ export function RewardsPageClient({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="mt-10 overflow-hidden border-primary/20 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="mt-10 overflow-hidden border-t-4 border-t-primary border-border/50 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl bg-white">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
             <CardContent className="py-6 relative">
               <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -219,10 +219,10 @@ export function RewardsPageClient({
                   <Star className="h-7 w-7" />
                 </div>
                 <div className="text-center sm:text-left">
-                  <h3 className="font-semibold text-lg mb-1">
+                  <h3 className="font-semibold text-lg mb-1 text-gray-900">
                     How to Earn Points
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-gray-500">
                     {business.points_per_purchase ? (
                       <>
                         Earn{' '}
@@ -253,7 +253,7 @@ export function RewardsPageClient({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className="mt-4 overflow-hidden border-primary/20 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <Card className="mt-4 overflow-hidden border-t-4 border-t-secondary border-border/50 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl bg-white">
             <div className="absolute inset-0 bg-gradient-to-r from-secondary/5 to-primary/5 pointer-events-none" />
             <CardContent className="py-6 relative">
               <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -261,8 +261,8 @@ export function RewardsPageClient({
                   <Gift className="h-7 w-7" />
                 </div>
                 <div className="text-center sm:text-left">
-                  <h3 className="font-semibold text-lg mb-1">How to Redeem</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-semibold text-lg mb-1 text-gray-900">How to Redeem</h3>
+                  <p className="text-gray-500">
                     Visit us in-store to redeem your rewards. Show your points
                     balance to our staff and choose from our available rewards!
                   </p>

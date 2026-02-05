@@ -42,13 +42,13 @@ export function RewardsGrid({
 }: RewardsGridProps) {
   if (rewards.length === 0) {
     return (
-      <Card className="p-12 text-center">
+      <Card className="p-12 text-center bg-white">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-border mx-auto mb-4 flex items-center justify-center">
-            <span className="text-3xl">+</span>
+          <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-300 mx-auto mb-4 flex items-center justify-center">
+            <span className="text-3xl text-gray-400">+</span>
           </div>
-          <h3 className="font-semibold mb-2">Create Your First Reward</h3>
-          <p className="text-muted-foreground">
+          <h3 className="font-semibold mb-2 text-gray-900">Create Your First Reward</h3>
+          <p className="text-gray-500">
             Start building your rewards catalog
           </p>
         </div>
@@ -115,21 +115,21 @@ function RewardCard({
 
   const getBadgeStatus = () => {
     if (isHidden)
-      return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
+      return { text: 'HIDDEN', className: 'bg-gray-200 text-gray-600' };
     if (isOutOfStock)
       return {
         text: 'OUT OF STOCK',
-        className: 'bg-destructive text-destructive-foreground',
+        className: 'bg-red-100 text-red-700',
       };
-    return { text: 'ACTIVE', className: 'bg-success text-success-foreground' };
+    return { text: 'ACTIVE', className: 'bg-green-100 text-green-700' };
   };
 
   const badgeStatus = getBadgeStatus();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group">
+    <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group bg-white">
       {/* Image */}
-      <div className="relative h-40 bg-muted overflow-hidden">
+      <div className="relative h-40 bg-gray-100 overflow-hidden">
         <img
           src={reward.image || '/placeholder.svg'}
           alt={reward.title}
@@ -153,8 +153,8 @@ function RewardCard({
       {/* Content */}
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-bold line-clamp-2">{reward.title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+          <h3 className="font-bold line-clamp-2 text-gray-900">{reward.title}</h3>
+          <p className="text-sm text-gray-500 line-clamp-1 mt-1">
             {reward.description}
           </p>
         </div>
@@ -162,20 +162,20 @@ function RewardCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Coins className="w-4 h-4 text-primary" />
-            <span className="font-bold text-lg">{reward.pointsCost}</span>
+            <span className="font-bold text-lg text-gray-900">{reward.pointsCost}</span>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-gray-500">
             {reward.stock === -1 ? 'Unlimited' : `${reward.stock} left`}
           </span>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 border-t border-border">
+        <div className="flex gap-2 pt-2 border-t border-gray-200">
           {/* Desktop: Inline buttons */}
           <div className="hidden md:flex gap-2 flex-1">
             <button
               onClick={() => onToggleStatus(reward.id)}
-              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition text-sm text-gray-700"
             >
               {reward.isVisible !== false ? (
                 <>
@@ -191,14 +191,14 @@ function RewardCard({
             </button>
             <button
               onClick={() => onEdit?.(reward.id)}
-              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted rounded-lg transition text-sm"
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition text-sm text-gray-700"
             >
               <Edit className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={() => onDelete(reward.id)}
-              className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
+              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -208,8 +208,8 @@ function RewardCard({
           <div className="md:hidden flex-1 flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:bg-muted rounded-lg transition">
-                  <MoreVertical className="w-4 h-4" />
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                  <MoreVertical className="w-4 h-4 text-gray-600" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -261,23 +261,23 @@ function RewardListItem({
 
   const getBadgeStatus = () => {
     if (isHidden)
-      return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
+      return { text: 'HIDDEN', className: 'bg-gray-200 text-gray-600' };
     if (isOutOfStock)
       return {
         text: 'OUT',
-        className: 'bg-destructive text-destructive-foreground',
+        className: 'bg-red-100 text-red-700',
       };
-    return { text: 'ACTIVE', className: 'bg-success text-success-foreground' };
+    return { text: 'ACTIVE', className: 'bg-green-100 text-green-700' };
   };
 
   const badgeStatus = getBadgeStatus();
 
   return (
-    <Card className="p-4 hover:shadow-lg transition-all">
+    <Card className="p-4 hover:shadow-lg transition-all bg-white">
       <div className="flex gap-4">
         {/* Thumbnail */}
         <div
-          className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-muted cursor-pointer"
+          className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-gray-100 cursor-pointer"
           onClick={() => onView?.(reward.id)}
         >
           <img
@@ -292,12 +292,12 @@ function RewardListItem({
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
               <h3
-                className="font-bold cursor-pointer hover:text-primary transition"
+                className="font-bold cursor-pointer hover:text-primary transition text-gray-900"
                 onClick={() => onView?.(reward.id)}
               >
                 {reward.title}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 {reward.description}
               </p>
             </div>
@@ -308,9 +308,9 @@ function RewardListItem({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <Coins className="w-4 h-4 text-primary" />
-                <span className="font-bold">{reward.pointsCost}</span>
+                <span className="font-bold text-gray-900">{reward.pointsCost}</span>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 Stock: {reward.stock === -1 ? 'Unlimited' : reward.stock}
               </span>
             </div>
@@ -320,7 +320,7 @@ function RewardListItem({
               <div className="hidden md:flex gap-2">
                 <button
                   onClick={() => onToggleStatus(reward.id)}
-                  className="p-2 hover:bg-muted rounded-lg transition"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600"
                 >
                   {reward.isVisible !== false ? (
                     <EyeOff className="w-4 h-4" />
@@ -330,13 +330,13 @@ function RewardListItem({
                 </button>
                 <button
                   onClick={() => onEdit?.(reward.id)}
-                  className="p-2 hover:bg-muted rounded-lg transition"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onDelete(reward.id)}
-                  className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition"
+                  className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -346,8 +346,8 @@ function RewardListItem({
               <div className="md:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-2 hover:bg-muted rounded-lg transition">
-                      <MoreVertical className="w-4 h-4" />
+                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                      <MoreVertical className="w-4 h-4 text-gray-600" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

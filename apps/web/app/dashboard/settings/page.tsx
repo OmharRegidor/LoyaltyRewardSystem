@@ -60,15 +60,10 @@ type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 // ============================================
 
 const BUSINESS_TYPES = [
-  { value: 'cafe', label: 'Café' },
-  { value: 'restaurant', label: 'Restaurant' },
-  { value: 'retail', label: 'Retail Store' },
-  { value: 'gym', label: 'Gym / Fitness' },
-  { value: 'spa', label: 'Spa / Wellness' },
-  { value: 'salon', label: 'Salon / Barbershop' },
-  { value: 'grocery', label: 'Grocery Store' },
-  { value: 'pharmacy', label: 'Pharmacy' },
-  { value: 'other', label: 'Other' },
+  { value: 'retail', label: 'Retail Stores' },
+  { value: 'restaurant', label: 'Restaurants & Cafés' },
+  { value: 'salon', label: 'Salons & Spas' },
+  { value: 'hotel', label: 'Hotels & Travel' },
 ];
 
 const POINTS_RATE_PRESETS = [
@@ -457,7 +452,7 @@ export default function SettingsPage() {
         {/* Header */}
         <motion.div variants={itemVariants}>
           <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-gray-500 mt-1">
             Manage your business profile and loyalty program settings
           </p>
         </motion.div>
@@ -471,7 +466,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Business Profile</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Your business information
                 </p>
               </div>
@@ -506,7 +501,7 @@ export default function SettingsPage() {
                       />
                     </label>
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
+                  <p className="text-xs text-gray-500 text-center mt-2">
                     Click to upload
                   </p>
                 </div>
@@ -526,7 +521,7 @@ export default function SettingsPage() {
                           businessName: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                       placeholder="Your business name"
                     />
                   </div>
@@ -542,7 +537,7 @@ export default function SettingsPage() {
                           businessType: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     >
                       <option value="">Select type</option>
                       {BUSINESS_TYPES.map((type) => (
@@ -560,11 +555,11 @@ export default function SettingsPage() {
                 {/* Phone */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5">
-                    <Phone className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
+                    <Phone className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
                     Phone Number
                   </label>
                   <div className="flex">
-                    <span className="px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-xl text-muted-foreground text-sm">
+                    <span className="px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-500 text-sm">
                       +63
                     </span>
                     <input
@@ -576,7 +571,7 @@ export default function SettingsPage() {
                           phone: e.target.value,
                         }))
                       }
-                      className="flex-1 px-4 py-2.5 border border-border rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                       placeholder="9123456789"
                     />
                   </div>
@@ -585,21 +580,21 @@ export default function SettingsPage() {
                 {/* Owner Email */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5">
-                    <Mail className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
+                    <Mail className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
                     Owner Email
                   </label>
                   <input
                     type="email"
                     value={profile.ownerEmail}
                     disabled
-                    className="w-full px-4 py-2.5 border border-border rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed text-sm"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
                   />
                 </div>
 
                 {/* Address */}
                 <div>
                   <label className="block text-sm font-medium mb-1.5">
-                    <MapPin className="w-3.5 h-3.5 inline mr-1.5 text-muted-foreground" />
+                    <MapPin className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
                     Address
                   </label>
                   <input
@@ -611,7 +606,7 @@ export default function SettingsPage() {
                         address: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     placeholder="Street address"
                   />
                 </div>
@@ -627,7 +622,7 @@ export default function SettingsPage() {
                     onChange={(e) =>
                       setProfile((prev) => ({ ...prev, city: e.target.value }))
                     }
-                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     placeholder="City"
                   />
                 </div>
@@ -637,7 +632,7 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5">
                   Description
-                  <span className="text-muted-foreground font-normal ml-1">
+                  <span className="text-gray-500 font-normal ml-1">
                     (optional)
                   </span>
                 </label>
@@ -650,7 +645,7 @@ export default function SettingsPage() {
                     }))
                   }
                   rows={2}
-                  className="w-full px-4 py-2.5 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none text-sm"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none text-sm"
                   placeholder="Brief description of your business..."
                 />
               </div>
@@ -665,7 +660,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Loyalty Points</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Configure earning rates
                 </p>
               </div>
@@ -686,11 +681,11 @@ export default function SettingsPage() {
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         selectedPreset === preset.value
                           ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                          : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                       }`}
                     >
                       <p className="font-semibold text-sm">{preset.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {preset.description}
                       </p>
                     </button>
@@ -699,9 +694,9 @@ export default function SettingsPage() {
 
                 {/* Custom Input */}
                 {showCustomInput && (
-                  <div className="mt-3 p-3 bg-muted/50 rounded-xl">
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground">₱</span>
+                      <span className="text-gray-500">₱</span>
                       <input
                         type="number"
                         min="1"
@@ -709,10 +704,10 @@ export default function SettingsPage() {
                         onChange={(e) => handleCustomRateChange(e.target.value)}
                         onBlur={handleCustomRateBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-20 px-3 py-2 border border-border rounded-lg bg-background text-center font-semibold"
+                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg bg-background text-center font-semibold"
                         placeholder="1"
                       />
-                      <span className="text-muted-foreground">= 1 point</span>
+                      <span className="text-gray-500">= 1 point</span>
                     </div>
                   </div>
                 )}
@@ -725,17 +720,17 @@ export default function SettingsPage() {
                   <span className="font-medium text-sm">Preview</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">₱</span>
+                  <span className="text-gray-500">₱</span>
                   <input
                     type="number"
                     value={inputValues.previewAmount}
                     onChange={(e) => handlePreviewAmountChange(e.target.value)}
                     onBlur={handlePreviewAmountBlur}
                     onFocus={(e) => e.target.select()}
-                    className="w-20 px-2 py-1 border border-border rounded-lg bg-background text-center font-semibold"
+                    className="w-20 px-2 py-1 border border-gray-200 rounded-lg bg-background text-center font-semibold"
                     placeholder="0"
                   />
-                  <span className="text-muted-foreground">=</span>
+                  <span className="text-gray-500">=</span>
                   <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
                     {calculatePoints(
                       parseFloat(inputValues.previewAmount) || 0,
@@ -746,10 +741,10 @@ export default function SettingsPage() {
               </div>
 
               {/* Advanced Options */}
-              <div className="pt-4 border-t border-border">
+              <div className="pt-4 border-t border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
+                  <Info className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-500">
                     Advanced
                   </span>
                 </div>
@@ -759,7 +754,7 @@ export default function SettingsPage() {
                       Min. Purchase
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                         ₱
                       </span>
                       <input
@@ -771,7 +766,7 @@ export default function SettingsPage() {
                         }
                         onBlur={handleMinPurchaseBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-full pl-7 pr-3 py-2 border border-border rounded-lg bg-background text-sm"
+                        className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg bg-background text-sm"
                         placeholder="0"
                       />
                     </div>
@@ -790,7 +785,7 @@ export default function SettingsPage() {
                           maxPointsPerTransaction: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-background text-sm"
                       placeholder="No limit"
                     />
                   </div>
@@ -807,7 +802,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Security</h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Manage account security
                 </p>
               </div>
@@ -815,27 +810,27 @@ export default function SettingsPage() {
 
             <button
               onClick={() => router.push('/dashboard/settings/security')}
-              className="w-full p-4 bg-muted/50 hover:bg-muted rounded-xl flex items-center justify-between transition group"
+              className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-background rounded-lg">
-                  <Shield className="w-4 h-4 text-muted-foreground" />
+                  <Shield className="w-4 h-4 text-gray-500" />
                 </div>
                 <div className="text-left">
                   <p className="font-medium">Change Password</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     Update your account password
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-5 h-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
             </button>
           </Card>
         </div>
 
         {/* Floating Save Button */}
         <motion.div variants={itemVariants} className="sticky bottom-6 z-10">
-          <Card className="p-4 bg-background/95 backdrop-blur-xl border-2 border-border/50 shadow-2xl">
+          <Card className="p-4 bg-background/95 backdrop-blur-xl border-2 border-gray-200/50 shadow-2xl">
             <div className="flex items-center justify-between gap-4">
               {/* Status Messages */}
               <div className="flex-1 min-w-0">
@@ -843,9 +838,9 @@ export default function SettingsPage() {
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-green-600 dark:text-green-400"
+                    className="flex items-center gap-2 text-green-600"
                   >
-                    <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+                    <div className="p-1 bg-green-100 rounded-full">
                       <CheckCircle className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium">
@@ -857,9 +852,9 @@ export default function SettingsPage() {
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-red-600 dark:text-red-400"
+                    className="flex items-center gap-2 text-red-600"
                   >
-                    <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <div className="p-1 bg-red-100 rounded-full">
                       <AlertCircle className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium truncate">
@@ -868,7 +863,7 @@ export default function SettingsPage() {
                   </motion.div>
                 )}
                 {saveStatus === 'idle' && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-500">
                     Make changes and click save to update your settings
                   </p>
                 )}

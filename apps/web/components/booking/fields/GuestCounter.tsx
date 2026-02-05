@@ -1,7 +1,7 @@
 // apps/web/components/booking/fields/GuestCounter.tsx
 'use client';
 
-import { Users, Minus, Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ interface GuestCounterProps {
   onDecrementAdults: () => void;
   onIncrementChildren: () => void;
   onDecrementChildren: () => void;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -27,47 +28,39 @@ export function GuestCounter({
   onDecrementAdults,
   onIncrementChildren,
   onDecrementChildren,
+  disabled = false,
   className,
 }: GuestCounterProps) {
   const totalGuests = adultsCount + childrenCount;
   const canAddMoreGuests = totalGuests < maxGuests;
 
   return (
-    <div className={cn('space-y-3', className)}>
-      <Label className="flex items-center gap-2 text-sm font-medium">
-        <Users className="h-4 w-4 text-muted-foreground" />
-        Guests
-        <span className="text-xs text-muted-foreground font-normal ml-auto">
-          Max {maxGuests} guest{maxGuests !== 1 ? 's' : ''}
-        </span>
-      </Label>
+    <div className={cn('space-y-1', className)}>
+      <Label className="text-xs text-gray-500">Guests</Label>
 
-      <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+      <div className="flex items-center gap-4">
         {/* Adults */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Adults</p>
-            <p className="text-xs text-muted-foreground">Ages 13+</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-700">Adults:</span>
+          <div className="flex items-center gap-1">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={onDecrementAdults}
-              disabled={adultsCount <= 1}
+              disabled={disabled || adultsCount <= 1}
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-8 text-center font-medium">{adultsCount}</span>
+            <span className="w-6 text-center text-sm text-gray-900">{adultsCount}</span>
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={onIncrementAdults}
-              disabled={!canAddMoreGuests}
+              disabled={disabled || !canAddMoreGuests}
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -75,41 +68,37 @@ export function GuestCounter({
         </div>
 
         {/* Children */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Children</p>
-            <p className="text-xs text-muted-foreground">Ages 0-12</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-700">Children:</span>
+          <div className="flex items-center gap-1">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={onDecrementChildren}
-              disabled={childrenCount <= 0}
+              disabled={disabled || childrenCount <= 0}
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="w-8 text-center font-medium">{childrenCount}</span>
+            <span className="w-6 text-center text-sm text-gray-900">{childrenCount}</span>
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={onIncrementChildren}
-              disabled={!canAddMoreGuests}
+              disabled={disabled || !canAddMoreGuests}
             >
               <Plus className="h-3 w-3" />
             </Button>
           </div>
         </div>
-
-        {/* Total summary */}
-        <div className="pt-2 border-t text-xs text-muted-foreground">
-          Total: {totalGuests} guest{totalGuests !== 1 ? 's' : ''}
-        </div>
       </div>
+
+      <p className="text-xs text-gray-500">
+        Max {maxGuests} guest{maxGuests !== 1 ? 's' : ''}
+      </p>
     </div>
   );
 }

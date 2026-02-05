@@ -313,6 +313,9 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
       // Continue anyway - staff record is not critical
     }
 
+    // Note: Free subscription is auto-created by database trigger
+    // See migration: 20260203000000_auto_free_subscription.sql
+
     return {
       success: true,
       data: {
@@ -405,6 +408,7 @@ export async function loginBusinessOwner(
         business = newBiz;
 
         // Create staff record (fire and forget)
+        // Note: Free subscription is auto-created by database trigger
         if (newBiz) {
           supabase
             .rpc('insert_staff_record', {
@@ -414,7 +418,7 @@ export async function loginBusinessOwner(
               p_name: businessName,
               p_email: String(authData.user.email),
             })
-            .match(() => {});
+            .then(() => {});
         }
       } catch (e) {}
     }

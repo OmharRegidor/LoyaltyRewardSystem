@@ -177,9 +177,9 @@ export const CustomersTable = memo(function CustomersTable({
   // Loading state
   if (isLoading) {
     return (
-      <Card className="flex items-center justify-center py-20">
+      <Card className="flex items-center justify-center py-20 bg-white">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-3 text-muted-foreground">Loading customers...</span>
+        <span className="ml-3 text-gray-500">Loading customers...</span>
       </Card>
     );
   }
@@ -187,8 +187,8 @@ export const CustomersTable = memo(function CustomersTable({
   // Error state
   if (error) {
     return (
-      <Card className="flex items-center justify-center py-20">
-        <p className="text-destructive">{error}</p>
+      <Card className="flex items-center justify-center py-20 bg-white">
+        <p className="text-red-600">{error}</p>
       </Card>
     );
   }
@@ -199,11 +199,11 @@ export const CustomersTable = memo(function CustomersTable({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
     >
-      <Card>
+      <Card className="bg-white">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-border bg-muted/50">
-              <tr className="text-left text-sm font-semibold text-muted-foreground">
+            <thead className="border-b border-gray-200 bg-gray-50">
+              <tr className="text-left text-sm font-semibold text-gray-500">
                 <th className="px-6 py-4 w-8">
                   <input type="checkbox" className="rounded" />
                 </th>
@@ -218,7 +218,7 @@ export const CustomersTable = memo(function CustomersTable({
               {paginatedCustomers.map((customer, idx) => (
                 <motion.tr
                   key={customer.id}
-                  className={`border-b border-border last:border-0 hover:bg-muted/30 transition-all cursor-pointer ${
+                  className={`border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-all cursor-pointer ${
                     customer.isNew
                       ? 'bg-green-500/10 ring-1 ring-green-500/30 ring-inset'
                       : ''
@@ -274,7 +274,7 @@ export const CustomersTable = memo(function CustomersTable({
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-gray-500">
                           {customer.email ||
                             customer.phone ||
                             'No contact info'}
@@ -300,7 +300,7 @@ export const CustomersTable = memo(function CustomersTable({
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                  <td className="px-6 py-4 text-sm text-gray-500">
                     {formatLastVisit(customer.lastVisit)}
                   </td>
                   <td className="px-6 py-4">
@@ -309,8 +309,8 @@ export const CustomersTable = memo(function CustomersTable({
                         asChild
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button className="p-2 hover:bg-muted rounded-lg transition">
-                          <MoreVertical className="w-4 h-4" />
+                        <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                          <MoreVertical className="w-4 h-4 text-gray-600" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -326,7 +326,7 @@ export const CustomersTable = memo(function CustomersTable({
 
         {sortedCustomers.length === 0 && !isLoading && (
           <div className="px-6 py-12 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-gray-500">
               {customers.length === 0
                 ? 'No customers yet. Add your first customer!'
                 : 'No customers match your filters'}
@@ -335,8 +335,8 @@ export const CustomersTable = memo(function CustomersTable({
         )}
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-sm text-gray-500">
             Showing {paginatedCustomers.length > 0 ? startIndex + 1 : 0}-
             {Math.min(startIndex + ITEMS_PER_PAGE, sortedCustomers.length)} of{' '}
             {sortedCustomers.length} customers
@@ -344,7 +344,7 @@ export const CustomersTable = memo(function CustomersTable({
           {totalPages > 1 && (
             <div className="flex gap-2">
               <button
-                className="px-3 py-1 border border-border rounded-lg hover:bg-muted transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
               >
@@ -366,8 +366,8 @@ export const CustomersTable = memo(function CustomersTable({
                     key={pageNum}
                     className={`px-3 py-1 rounded-lg text-sm ${
                       currentPage === pageNum
-                        ? 'bg-primary text-primary-foreground'
-                        : 'border border-border hover:bg-muted transition'
+                        ? 'bg-primary text-white'
+                        : 'border border-gray-200 hover:bg-gray-100 transition text-gray-700'
                     }`}
                     onClick={() => handlePageClick(pageNum)}
                   >
@@ -376,7 +376,7 @@ export const CustomersTable = memo(function CustomersTable({
                 );
               })}
               <button
-                className="px-3 py-1 border border-border rounded-lg hover:bg-muted transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
               >

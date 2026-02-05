@@ -238,7 +238,7 @@ export function ServiceDialog({
           <div className="space-y-2">
             <Label>Service Image</Label>
             <label className="block cursor-pointer">
-              <Card className="border-2 border-dashed p-4 flex flex-col items-center justify-center hover:bg-muted/50 hover:border-primary/50 transition h-32 relative overflow-hidden">
+              <Card className="border-2 border-dashed p-4 flex flex-col items-center justify-center hover:bg-gray-50 hover:border-primary/50 transition h-32 relative overflow-hidden">
                 {imagePreview ? (
                   <>
                     <img
@@ -258,12 +258,12 @@ export function ServiceDialog({
                     {isUploadingImage ? (
                       <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
                     ) : (
-                      <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+                      <Upload className="w-6 h-6 text-gray-500 mb-1" />
                     )}
                     <p className="text-xs font-medium">
                       {isUploadingImage ? 'Uploading...' : 'Click to upload'}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       PNG, JPG up to 2MB
                     </p>
                   </>
@@ -311,7 +311,7 @@ export function ServiceDialog({
           <div className="space-y-2">
             <Label htmlFor="price">Price</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                 ₱
               </span>
               <Input
