@@ -13,6 +13,7 @@ ALTER TABLE plans
   ADD COLUMN IF NOT EXISTS has_pos boolean NOT NULL DEFAULT false;
 
 -- Step 3: Update existing Core plan to Free plan
+-- Landing page promises: Unlimited customers, 3 branches, 5 staff per branch
 UPDATE plans
 SET
   name = 'free',
@@ -21,8 +22,8 @@ SET
   price_monthly = 0,
   price_annual = 0,
   max_customers = NULL,         -- unlimited
-  max_branches = NULL,          -- unlimited
-  max_staff_per_branch = NULL,  -- unlimited
+  max_branches = 3,             -- up to 3 branches
+  max_staff_per_branch = 5,     -- up to 5 staff per branch
   has_loyalty = true,
   has_booking = false,
   has_pos = false,
@@ -46,8 +47,9 @@ SET
 WHERE name = 'enterprise' OR name = 'Enterprise';
 
 -- Step 5: Insert Free plan if neither free nor core exists
+-- Landing page promises: Unlimited customers, 3 branches, 5 staff per branch
 INSERT INTO plans (name, display_name, description, price_monthly, price_annual, max_customers, max_branches, max_staff_per_branch, has_loyalty, has_booking, has_pos, is_active)
-SELECT 'free', 'Free', 'Free plan with unlimited access to all loyalty features', 0, 0, NULL, NULL, NULL, true, false, false, true
+SELECT 'free', 'Free', 'Free plan with unlimited access to all loyalty features', 0, 0, NULL, 3, 5, true, false, false, true
 WHERE NOT EXISTS (SELECT 1 FROM plans WHERE name IN ('free', 'core', 'Core'));
 
 -- Step 6: Insert Enterprise plan if doesn't exist
