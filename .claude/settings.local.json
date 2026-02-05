@@ -20,7 +20,8 @@
       "Bash(npm run dev:web:*)",
       "Bash(dir:*)",
       "Bash(find:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(grep:*)"
     ]
   }
 }

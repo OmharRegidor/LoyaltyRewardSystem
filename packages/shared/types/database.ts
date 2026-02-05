@@ -138,6 +138,98 @@ export type Database = {
           },
         ]
       }
+      booking_addon_selections: {
+        Row: {
+          addon_id: string
+          booking_id: string
+          created_at: string | null
+          id: string
+          quantity: number | null
+          unit_price_centavos: number
+        }
+        Insert: {
+          addon_id: string
+          booking_id: string
+          created_at?: string | null
+          id?: string
+          quantity?: number | null
+          unit_price_centavos: number
+        }
+        Update: {
+          addon_id?: string
+          booking_id?: string
+          created_at?: string | null
+          id?: string
+          quantity?: number | null
+          unit_price_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_addon_selections_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "booking_addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addon_selections_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_addons: {
+        Row: {
+          business_id: string
+          category: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_centavos: number
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_centavos: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_centavos?: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_addons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -145,6 +237,7 @@ export type Database = {
           business_id: string
           cancellation_reason: string | null
           cancelled_at: string | null
+          confirmation_code: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -152,11 +245,13 @@ export type Database = {
           customer_phone: string | null
           end_time: string
           id: string
+          nights: number | null
           notes: string | null
           service_id: string
           staff_id: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
+          total_price_centavos: number | null
           updated_at: string
         }
         Insert: {
@@ -165,6 +260,7 @@ export type Database = {
           business_id: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          confirmation_code?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -172,11 +268,13 @@ export type Database = {
           customer_phone?: string | null
           end_time: string
           id?: string
+          nights?: number | null
           notes?: string | null
           service_id: string
           staff_id?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
+          total_price_centavos?: number | null
           updated_at?: string
         }
         Update: {
@@ -185,6 +283,7 @@ export type Database = {
           business_id?: string
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          confirmation_code?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -192,11 +291,13 @@ export type Database = {
           customer_phone?: string | null
           end_time?: string
           id?: string
+          nights?: number | null
           notes?: string | null
           service_id?: string
           staff_id?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
+          total_price_centavos?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -995,6 +1096,7 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          image_url: string | null
           is_active: boolean
           name: string
           price_centavos: number | null
@@ -1007,6 +1109,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name: string
           price_centavos?: number | null
@@ -1019,6 +1122,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name?: string
           price_centavos?: number | null
@@ -1471,6 +1575,7 @@ export type Database = {
           qr_code_url: string
         }[]
       }
+      generate_booking_code: { Args: never; Returns: string }
       generate_business_slug: {
         Args: { business_name: string }
         Returns: string
