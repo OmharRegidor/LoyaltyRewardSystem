@@ -112,7 +112,7 @@ export function InviteModal({
         // If user already exists, we can still create the invite
         if (result.code === 'USER_EXISTS') {
           setError(
-            'This email is already registered. The cashier can use their existing password to login.'
+            'This email is already registered. The cashier can use their existing password to login.',
           );
           setState('form');
           return;
@@ -179,18 +179,18 @@ export function InviteModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-md border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-[#7F0404] rounded-t-2xl z-10">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-cyan-400" />
-            {state === 'success' ? 'Invite Created!' : 'Invite Cashier'}
+            <UserPlus className="w-5 h-5 text-white" />
+            {state === 'success' ? 'Invite Created!' : 'Invite Staff/Cashier'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-white/80" />
           </button>
         </div>
 
@@ -203,9 +203,9 @@ export function InviteModal({
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
-                <p className="text-gray-300">
+                <p className="text-gray-500">
                   Invite created for{' '}
-                  <span className="text-white font-medium">{name}</span>
+                  <span className="text-gray-900 font-medium">{name}</span>
                 </p>
                 {branchName && (
                   <p className="text-gray-500 text-sm">Branch: {branchName}</p>
@@ -213,10 +213,10 @@ export function InviteModal({
               </div>
 
               {/* Invite Link */}
-              <div className="bg-gray-700/50 rounded-xl p-4">
-                <p className="text-sm text-gray-400 mb-2">Share this link:</p>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-2">Share this link:</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-gray-900 px-3 py-2 rounded-lg text-cyan-400 text-sm truncate">
+                  <code className="flex-1 bg-gray-100 px-3 py-2 rounded-lg text-gray-800 text-sm truncate">
                     {inviteLink}
                   </code>
                   <button
@@ -224,7 +224,7 @@ export function InviteModal({
                     className={`p-2 rounded-lg transition-colors ${
                       copied
                         ? 'bg-green-600 hover:bg-green-700'
-                        : 'bg-cyan-600 hover:bg-cyan-700'
+                        : 'bg-[#7F0404] hover:bg-[#6a0303]'
                     }`}
                   >
                     {copied ? (
@@ -237,18 +237,18 @@ export function InviteModal({
               </div>
 
               {/* Password Reminder */}
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="text-amber-200 font-medium">
+                    <p className="text-amber-800 font-medium">
                       Share with your cashier:
                     </p>
-                    <ul className="text-amber-200/70 mt-2 space-y-1">
+                    <ul className="text-amber-700 mt-2 space-y-1">
                       <li>• The invite link above</li>
                       <li>
                         • Password:{' '}
-                        <code className="bg-amber-900/30 px-2 py-0.5 rounded text-amber-300">
+                        <code className="bg-amber-100 px-2 py-0.5 rounded text-amber-800">
                           {password}
                         </code>
                       </li>
@@ -259,7 +259,7 @@ export function InviteModal({
 
               <button
                 onClick={handleDone}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium transition-colors"
+                className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900 rounded-xl font-medium transition-colors"
               >
                 Done
               </button>
@@ -269,8 +269,8 @@ export function InviteModal({
             <div className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Cashier Name <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cashier Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -279,7 +279,7 @@ export function InviteModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter cashier's name"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
                     disabled={state === 'submitting'}
                   />
                 </div>
@@ -287,8 +287,8 @@ export function InviteModal({
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -297,7 +297,7 @@ export function InviteModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="cashier@email.com"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
                     disabled={state === 'submitting'}
                   />
                 </div>
@@ -305,7 +305,7 @@ export function InviteModal({
 
               {/* Branch Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Branch Name <span className="text-gray-500">(optional)</span>
                 </label>
                 <div className="relative">
@@ -315,23 +315,23 @@ export function InviteModal({
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
                     placeholder="e.g., San Pedro Branch"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
                     disabled={state === 'submitting'}
                   />
                 </div>
               </div>
 
               {/* Divider */}
-              <div className="border-t border-gray-700 pt-4">
-                <p className="text-sm text-gray-400 mb-4">
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm text-gray-500 mb-4">
                   Set login credentials for this cashier:
                 </p>
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Password <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -340,13 +340,13 @@ export function InviteModal({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    className="w-full pl-12 pr-12 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-12 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
                     disabled={state === 'submitting'}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -359,8 +359,8 @@ export function InviteModal({
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -369,15 +369,15 @@ export function InviteModal({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm password"
-                    className="w-full pl-12 pr-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
                     disabled={state === 'submitting'}
                   />
                 </div>
               </div>
 
               {/* Info Box */}
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <p className="text-sm text-blue-300">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <p className="text-sm text-gray-700">
                   💡 You'll need to share this password with your cashier along
                   with the invite link.
                 </p>
@@ -385,8 +385,8 @@ export function InviteModal({
 
               {/* Error */}
               {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-                  <p className="text-red-400 text-sm">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
 
@@ -394,7 +394,7 @@ export function InviteModal({
               <button
                 onClick={handleSubmit}
                 disabled={state === 'submitting'}
-                className="w-full py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {state === 'submitting' ? (
                   <>
