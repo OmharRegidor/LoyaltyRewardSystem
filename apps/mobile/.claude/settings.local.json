@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(eas build:*)",
+      "Bash(npx expo start --dev-client)",
+      "Bash(ipconfig:*)",
+      "Bash(npx expo start:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(netsh advfirewall firewall add rule:*)",
+      "Bash(netsh advfirewall firewall show rule:*)",
+      "Bash(npm install:*)",
+      "Bash(adb devices:*)",
+      "Bash(node -e:*)",
+      "Bash(npx expo install:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(eas build:view:*)",
+      "Bash(ls:*)",
+      "Bash(eas credentials:*)",
+      "Bash(eas api:*)",
+      "Bash(npx expo-cli:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: convert Rewards tab to Brands tab with brand-grouped rewards\n\nReorganizes the rewards browsing experience so users first browse brands\n\\(businesses with active rewards\\), then tap into a brand to see its branches\nand rewards. This improves discovery and clarity when multiple businesses exist.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git diff:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
+    ]
+  }
+}
