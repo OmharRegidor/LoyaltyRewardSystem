@@ -41,22 +41,45 @@ function HomeIcon({ color, size = 24 }: { color: string; size?: number }) {
   );
 }
 
-function RewardsIcon({ color, size = 24 }: { color: string; size?: number }) {
+function BrandsIcon({ color, size = 24 }: { color: string; size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 21H21"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M3 7L12 3L21 7"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M4 7V21"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <Path
+        d="M20 7V21"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
       <Rect
-        x="3"
-        y="8"
-        width="18"
-        height="13"
-        rx="2"
+        x="9"
+        y="13"
+        width="6"
+        height="8"
+        rx="1"
         stroke={color}
         strokeWidth={1.8}
       />
-      <Path d="M12 8V21" stroke={color} strokeWidth={1.8} />
-      <Path d="M3 12H21" stroke={color} strokeWidth={1.8} />
       <Path
-        d="M7.5 8C7.5 8 7.5 3 12 3C16.5 3 16.5 8 16.5 8"
+        d="M9 10H15"
         stroke={color}
         strokeWidth={1.8}
         strokeLinecap="round"
@@ -152,8 +175,8 @@ function CustomTabBar() {
     { name: 'index', label: 'Home', Icon: HomeIcon, route: '/(main)' },
     {
       name: 'reward',
-      label: 'Rewards',
-      Icon: RewardsIcon,
+      label: 'Brands',
+      Icon: BrandsIcon,
       route: '/(main)/reward',
     },
     { name: 'earn', label: 'Earn', Icon: null, route: null }, // Center button

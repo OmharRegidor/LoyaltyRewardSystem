@@ -1,4 +1,4 @@
-// app/(main)/rewards.tsx
+// app/(main)/reward.tsx — Brands list screen
 
 import React, { useState, useCallback } from 'react';
 import {
@@ -7,165 +7,85 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  SearchBar,
-  FilterTabs,
-  RewardCard,
-  RewardSkeletonList,
-  EmptyState,
-} from '../../src/components/rewards';
-import { useRewards } from '../../src/hooks/useRewards';
+import { useRouter } from 'expo-router';
+import { SearchBar } from '../../src/components/rewards';
+import { BrandCard, BrandSkeletonList } from '../../src/components/brands';
+import { EmptyState } from '../../src/components/rewards';
+import { useBrands } from '../../src/hooks/useBrands';
 import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
-import type { Reward } from '../../src/types/rewards.types';
-import { getTierInfo } from '../../src/types/rewards.types';
+import type { Brand } from '../../src/types/brands.types';
 
-export default function RewardsScreen() {
+export default function BrandsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
-    rewards,
+    brands,
     isLoading,
     isRefreshing,
-    activeCategory,
-    setActiveCategory,
     searchQuery,
     setSearchQuery,
     refresh,
-    redeemReward,
-    redeemingId,
-    userPoints,
-    userTier,
-    isLocked,
-  } = useRewards();
+  } = useBrands();
 
   const [searchDebounce, setSearchDebounce] = useState('');
 
-  // Debounced search
   const handleSearch = useCallback(
     (text: string) => {
       setSearchDebounce(text);
       const timer = setTimeout(() => setSearchQuery(text), 300);
       return () => clearTimeout(timer);
     },
-    [setSearchQuery]
+    [setSearchQuery],
   );
 
-  // Handle redeem
-  const handleRedeem = useCallback(
-    async (reward: Reward) => {
-      // Check if locked
-      if (isLocked(reward)) {
-        const tierInfo = getTierInfo(reward.tier_required!);
-        Alert.alert(
-          '🔒 Tier Locked',
-          `This reward requires ${tierInfo.emoji} ${tierInfo.name} membership.\n\nKeep earning points to unlock higher tiers!`,
-          [{ text: 'Got it' }]
-        );
-        return;
-      }
-
-      Alert.alert(
-        'Redeem Reward',
-        `Redeem "${
-          reward.title
-        }" for ${reward.points_cost.toLocaleString()} points?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Redeem',
-            onPress: async () => {
-              try {
-                const redemption = await redeemReward(reward);
-                Alert.alert(
-                  '🎉 Success!',
-                  `Your code:\n\n${redemption.redemption_code}\n\nShow to cashier within 24 hours.`,
-                  [{ text: 'OK' }]
-                );
-              } catch (error) {
-                Alert.alert(
-                  'Redemption Failed',
-                  error instanceof Error
-                    ? error.message
-                    : 'Something went wrong'
-                );
-              }
-            },
-          },
-        ]
-      );
+  const handleBrandPress = useCallback(
+    (brand: Brand) => {
+      router.push({ pathname: '/brand/[id]', params: { id: brand.id } } as never);
     },
-    [redeemReward, isLocked]
+    [router],
   );
 
-  // Render reward card
-  const renderReward = useCallback(
-    ({ item }: { item: Reward }) => (
-      <RewardCard
-        reward={item}
-        userPoints={userPoints}
-        userTier={userTier}
-        onRedeem={handleRedeem}
-        isRedeeming={redeemingId === item.id}
-      />
+  const renderBrand = useCallback(
+    ({ item }: { item: Brand }) => (
+      <BrandCard brand={item} onPress={handleBrandPress} />
     ),
-    [userPoints, userTier, handleRedeem, redeemingId]
+    [handleBrandPress],
   );
 
-  const keyExtractor = useCallback((item: Reward) => item.id, []);
-
-  // Header with tier info
-  const tierInfo = getTierInfo(userTier);
+  const keyExtractor = useCallback((item: Brand) => item.id, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Available Rewards</Text>
-        <View style={styles.tierIndicator}>
-          <Text style={styles.tierEmoji}>{tierInfo.emoji}</Text>
-          <Text style={[styles.tierName, { color: tierInfo.color }]}>
-            {tierInfo.name}
-          </Text>
-        </View>
-      </View>
-
-      {/* Points Display */}
-      <View style={styles.pointsBar}>
-        <Text style={styles.pointsLabel}>Your Points</Text>
-        <Text style={styles.pointsValue}>{userPoints.toLocaleString()}</Text>
+        <Text style={styles.title}>Explore Brands</Text>
       </View>
 
       {/* Search */}
       <SearchBar
         value={searchDebounce}
         onChangeText={handleSearch}
-        placeholder="Search rewards..."
-      />
-
-      {/* Filter Tabs */}
-      <FilterTabs
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
+        placeholder="Search brands..."
       />
 
       {/* Content */}
       {isLoading ? (
-        <RewardSkeletonList count={3} />
-      ) : rewards.length === 0 ? (
+        <BrandSkeletonList count={5} />
+      ) : brands.length === 0 ? (
         <EmptyState
-          title={searchQuery ? 'No results found' : 'No Rewards Available'}
+          title={searchQuery ? 'No brands found' : 'No Brands Available'}
           subtitle={
             searchQuery
-              ? `No rewards match "${searchQuery}"`
-              : 'Check back later for new rewards!'
+              ? `No brands match "${searchQuery}"`
+              : 'Check back later for new brands!'
           }
         />
       ) : (
         <FlatList
-          data={rewards}
-          renderItem={renderReward}
+          data={brands}
+          renderItem={renderBrand}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -189,9 +109,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[50],
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.base,
     paddingBottom: SPACING.sm,
@@ -200,42 +117,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE['2xl'],
     fontWeight: '700',
     color: COLORS.gray[900],
-  },
-  tierIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.gray[100],
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  tierEmoji: {
-    fontSize: 14,
-  },
-  tierName: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
-  pointsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.primary + '10',
-    borderRadius: 12,
-  },
-  pointsLabel: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.gray[600],
-  },
-  pointsValue: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '700',
-    color: COLORS.primary,
   },
   listContent: {
     paddingHorizontal: SPACING.lg,
