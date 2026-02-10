@@ -1,9 +1,9 @@
 // src/hooks/useBrandRewards.ts
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCustomer } from './useCustomer';
-import type { Reward, RewardCategory, TierLevel } from '../types/rewards.types';
+import type { Reward, TierLevel } from '../types/rewards.types';
 import { canAccessReward } from '../types/rewards.types';
 import type { BrandBranch } from '../types/brands.types';
 import {
@@ -30,7 +30,6 @@ export function useBrandRewards(businessId: string) {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<RewardCategory>('all');
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
   const fetchBrandData = useCallback(async (): Promise<void> => {
@@ -127,11 +126,6 @@ export function useBrandRewards(businessId: string) {
     };
   }, [fetchBrandData, businessId]);
 
-  const filteredRewards = useMemo((): Reward[] => {
-    if (activeCategory === 'all') return rewards;
-    return rewards.filter((r) => r.category === activeCategory);
-  }, [rewards, activeCategory]);
-
   const canRedeem = useCallback(
     (reward: Reward): boolean => {
       const hasPoints = points >= reward.points_cost;
@@ -199,11 +193,9 @@ export function useBrandRewards(businessId: string) {
 
   return {
     brand,
-    rewards: filteredRewards,
+    rewards,
     isLoading,
     isRefreshing,
-    activeCategory,
-    setActiveCategory,
     redeemReward,
     redeemingId,
     canRedeem,

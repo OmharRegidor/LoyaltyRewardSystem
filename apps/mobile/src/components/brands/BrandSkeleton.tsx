@@ -13,7 +13,7 @@ import {
 function BrandSkeleton() {
   return (
     <View style={styles.card}>
-      <Skeleton width={56} height={56} borderRadius={BORDER_RADIUS.md} />
+      <Skeleton width={64} height={64} borderRadius={BORDER_RADIUS.lg} />
       <View style={styles.info}>
         <Skeleton width="70%" height={16} borderRadius={4} />
         <Skeleton
@@ -49,13 +49,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
+    padding: SPACING.base,
+    marginBottom: SPACING.base,
     ...SHADOWS.md,
   },
   info: {
     flex: 1,
-    marginLeft: SPACING.md,
+    marginLeft: SPACING.base,
   },
   list: {
     paddingHorizontal: SPACING.lg,

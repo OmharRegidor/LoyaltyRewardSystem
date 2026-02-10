@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
-import { RewardCard, FilterTabs, EmptyState } from '../../src/components/rewards';
+import { RewardCard, EmptyState } from '../../src/components/rewards';
 import { BranchCard } from '../../src/components/brands';
 import { useBrandRewards } from '../../src/hooks/useBrandRewards';
 import {
@@ -38,8 +38,6 @@ export default function BrandDetailScreen() {
     rewards,
     isLoading,
     isRefreshing,
-    activeCategory,
-    setActiveCategory,
     redeemReward,
     redeemingId,
     isLocked,
@@ -183,15 +181,10 @@ export default function BrandDetailScreen() {
             <Text style={styles.sectionCount}>{rewards.length}</Text>
           </View>
 
-          <FilterTabs
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-          />
-
           {rewards.length === 0 ? (
             <EmptyState
               title="No rewards"
-              subtitle="This brand has no rewards in this category."
+              subtitle="This brand has no rewards available."
             />
           ) : (
             rewards.map((reward) => (

@@ -44,7 +44,7 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
         <View style={styles.metaRow}>
           <Ionicons
             name="location-outline"
-            size={13}
+            size={14}
             color={COLORS.gray[400]}
           />
           <Text style={styles.metaText}>
@@ -55,7 +55,7 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
 
         {brand.points_per_purchase != null && brand.points_per_purchase > 0 && (
           <View style={styles.metaRow}>
-            <Ionicons name="star" size={13} color={COLORS.gold} />
+            <Ionicons name="star" size={14} color={COLORS.gold} />
             <Text style={styles.metaText}>
               {brand.points_per_purchase} pts per purchase
             </Text>
@@ -79,14 +79,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
+    padding: SPACING.base,
+    marginBottom: SPACING.base,
     ...SHADOWS.md,
   },
   logo: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.md,
+    width: 64,
+    height: 64,
+    borderRadius: BORDER_RADIUS.lg,
   },
   logoFallback: {
     backgroundColor: COLORS.primary + '15',
@@ -100,11 +100,11 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    marginLeft: SPACING.md,
+    marginLeft: SPACING.base,
     marginRight: SPACING.sm,
   },
   name: {
-    fontSize: FONT_SIZE.base,
+    fontSize: FONT_SIZE.lg,
     fontWeight: '600',
     color: COLORS.gray[900],
     marginBottom: 4,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   metaText: {
-    fontSize: FONT_SIZE.xs,
+    fontSize: FONT_SIZE.sm,
     color: COLORS.gray[500],
   },
 });
