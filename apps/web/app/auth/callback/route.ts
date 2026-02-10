@@ -115,20 +115,26 @@ export async function GET(request: Request) {
 
     // If we have session and user
     if (session && user) {
-      console.log('[Auth Callback] Setting up account...');
+      if (type === 'recovery') {
+        // Skip business setup, redirect to reset page
+        console.log('[Auth Callback] Recovery flow, redirecting to reset-password');
+        redirectUrl = new URL('/reset-password', requestUrl.origin);
+      } else {
+        console.log('[Auth Callback] Setting up account...');
 
-      // Create business and subscription
-      await ensureBusinessAndSubscription(
-        user.id,
-        user.email || null,
-        user.user_metadata,
-      );
+        // Create business and subscription
+        await ensureBusinessAndSubscription(
+          user.id,
+          user.email || null,
+          user.user_metadata,
+        );
 
-      // Get redirect path
-      const redirectPath = await getRedirectPath(user.id);
-      redirectUrl = new URL(redirectPath, requestUrl.origin);
+        // Get redirect path
+        const redirectPath = await getRedirectPath(user.id);
+        redirectUrl = new URL(redirectPath, requestUrl.origin);
 
-      console.log('[Auth Callback] Success! Redirecting to:', redirectPath);
+        console.log('[Auth Callback] Success! Redirecting to:', redirectPath);
+      }
     } else if (user && !session) {
       console.log('[Auth Callback] User verified but no session');
       redirectUrl = new URL('/login?message=email_verified', requestUrl.origin);

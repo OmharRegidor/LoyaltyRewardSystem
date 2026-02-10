@@ -135,6 +135,8 @@ function LoginForm() {
   const getSuccessMessage = () => {
     if (urlMessage === 'email_verified')
       return 'Email verified successfully! Please sign in to continue.';
+    if (urlMessage === 'password_reset')
+      return 'Password reset successfully! Please sign in with your new password.';
     return '';
   };
 
@@ -268,11 +270,11 @@ function LoginForm() {
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Signing in...
+              Logging in...
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              Sign In <ArrowRight className="w-5 h-5" />
+              Log in <ArrowRight className="w-5 h-5" />
             </span>
           )}
         </button>

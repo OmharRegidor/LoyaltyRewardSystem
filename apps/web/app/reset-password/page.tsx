@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push('/login');
+        router.push('/login?message=password_reset');
       }, 3000);
     } catch (error) {
       console.error('Password reset error:', error);
@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
             Redirecting to login...
           </p>
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/login?message=password_reset')}
             className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition font-medium"
           >
             Go to Login

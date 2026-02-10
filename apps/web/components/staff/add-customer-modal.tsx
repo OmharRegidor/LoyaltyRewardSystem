@@ -177,23 +177,23 @@ export function AddCustomerModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-gray-700">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-700">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-[#7F0404]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-cyan-500/20 rounded-full flex items-center justify-center">
-              <UserPlus className="w-5 h-5 text-cyan-400" />
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <UserPlus className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">Add Customer</h2>
-              <p className="text-xs text-gray-400">{businessName}</p>
+              <p className="text-xs text-white/70">{businessName}</p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-white/80" />
           </button>
         </div>
 
@@ -202,23 +202,23 @@ export function AddCustomerModal({
           {submitState === 'success' ? (
             // Success State
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-500" />
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 {isNewCustomer ? 'Customer Added!' : 'Email Sent!'}
               </h3>
-              <p className="text-gray-400 text-sm mb-6">{submitMessage}</p>
+              <p className="text-gray-500 text-sm mb-6">{submitMessage}</p>
               <div className="flex gap-3">
                 <button
                   onClick={handleAddAnother}
-                  className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors border border-gray-300"
                 >
                   Add Another
                 </button>
                 <button
                   onClick={handleClose}
-                  className="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-medium transition-colors"
+                  className="flex-1 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-xl font-medium transition-colors border border-gray-900"
                 >
                   Done
                 </button>
@@ -227,14 +227,14 @@ export function AddCustomerModal({
           ) : submitState === 'error' ? (
             // Error State
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-red-500" />
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Error</h3>
-              <p className="text-gray-400 text-sm mb-6">{submitMessage}</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Error</h3>
+              <p className="text-gray-500 text-sm mb-6">{submitMessage}</p>
               <button
                 onClick={() => setSubmitState('idle')}
-                className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors border border-gray-300"
               >
                 Try Again
               </button>
@@ -244,11 +244,11 @@ export function AddCustomerModal({
             <div className="space-y-4">
               {/* Full Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Full Name <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     value={formData.fullName}
@@ -256,73 +256,73 @@ export function AddCustomerModal({
                       handleInputChange('fullName', e.target.value)
                     }
                     placeholder="Juan Dela Cruz"
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
                       errors.fullName
                         ? 'border-red-500'
-                        : 'border-gray-700 focus:border-cyan-500'
+                        : 'border-gray-300 focus:border-yellow-400'
                     }`}
                   />
                 </div>
                 {errors.fullName && (
-                  <p className="mt-1 text-xs text-red-400">{errors.fullName}</p>
+                  <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Email Address <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Email Address <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="juan@email.com"
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
                       errors.email
                         ? 'border-red-500'
-                        : 'border-gray-700 focus:border-cyan-500'
+                        : 'border-gray-300 focus:border-yellow-400'
                     }`}
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-xs text-red-400">{errors.email}</p>
+                  <p className="mt-1 text-xs text-red-500">{errors.email}</p>
                 )}
               </div>
 
               {/* Phone */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Mobile Number <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Mobile Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="09123456789"
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
                       errors.phone
                         ? 'border-red-500'
-                        : 'border-gray-700 focus:border-cyan-500'
+                        : 'border-gray-300 focus:border-yellow-400'
                     }`}
                   />
                 </div>
                 {errors.phone && (
-                  <p className="mt-1 text-xs text-red-400">{errors.phone}</p>
+                  <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
                 )}
               </div>
 
               {/* Age (Optional) */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Age <span className="text-gray-500">(optional)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Age <span className="text-gray-400">(optional)</span>
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="number"
                     value={formData.age}
@@ -330,21 +330,21 @@ export function AddCustomerModal({
                     placeholder="25"
                     min="13"
                     max="120"
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500/50 transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
                       errors.age
                         ? 'border-red-500'
-                        : 'border-gray-700 focus:border-cyan-500'
+                        : 'border-gray-300 focus:border-yellow-400'
                     }`}
                   />
                 </div>
                 {errors.age && (
-                  <p className="mt-1 text-xs text-red-400">{errors.age}</p>
+                  <p className="mt-1 text-xs text-red-500">{errors.age}</p>
                 )}
               </div>
 
               {/* Info Box */}
-              <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4">
-                <p className="text-xs text-cyan-300">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <p className="text-xs text-gray-700">
                   📧 Customer will receive an email with their QR code and
                   loyalty card. They can use the same email to log in to the
                   NoxaLoyalty app later.
@@ -355,7 +355,7 @@ export function AddCustomerModal({
               <button
                 onClick={handleSubmit}
                 disabled={submitState === 'submitting'}
-                className="w-full py-3.5 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-900"
               >
                 {submitState === 'submitting' ? (
                   <>

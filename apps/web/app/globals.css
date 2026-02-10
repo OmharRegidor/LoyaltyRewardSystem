@@ -4,9 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Core Colors - Dark Maroon #560005 + Yellow Theme */
-  --primary: oklch(0.28 0.12 20);        /* Dark Maroon #560005 */
-  --primary-foreground: oklch(1 0 0);    /* White text on maroon */
+  /* Core Colors - Burgundy #751e26 + Yellow Theme */
+  --primary: oklch(0.35 0.10 15);        /* Burgundy #751e26 */
+  --primary-foreground: oklch(1 0 0);    /* White text on burgundy */
   --secondary: oklch(0.88 0.16 90);      /* Golden Yellow #FDDE54 */
   --secondary-foreground: oklch(0.15 0.02 0); /* Dark text on yellow */
   --accent: oklch(0.58 0.17 55);         /* Orange #C46B02 */
@@ -30,23 +30,23 @@
   --muted-foreground: oklch(0.45 0.01 0); /* Medium gray text */
   --border: oklch(0.90 0.005 0);         /* Light border */
   --input: oklch(0.97 0.005 0);          /* Light input bg */
-  --ring: oklch(0.28 0.12 20);           /* Maroon focus ring */
+  --ring: oklch(0.35 0.10 15);           /* Burgundy focus ring */
 
   /* Charts */
-  --chart-1: oklch(0.28 0.12 20);        /* Maroon */
+  --chart-1: oklch(0.35 0.10 15);        /* Burgundy */
   --chart-2: oklch(0.88 0.16 90);        /* Yellow */
   --chart-3: oklch(0.58 0.17 55);        /* Orange */
   --chart-4: oklch(0.598 0.147 142.55);  /* Green */
-  --chart-5: oklch(0.45 0.12 20);        /* Lighter Maroon */
+  --chart-5: oklch(0.50 0.08 15);        /* Lighter Burgundy */
 
-  /* Sidebar - MAROON for brand presence */
-  --sidebar: oklch(0.28 0.12 20);        /* Dark Maroon #560005 */
+  /* Sidebar - BURGUNDY for brand presence */
+  --sidebar: oklch(0.35 0.10 15);        /* Burgundy #751e26 */
   --sidebar-foreground: oklch(1 0 0);    /* White text */
   --sidebar-primary: oklch(0.88 0.16 90); /* Yellow active */
   --sidebar-primary-foreground: oklch(0.15 0.01 0);
-  --sidebar-accent: oklch(0.35 0.10 20); /* Lighter maroon accent */
+  --sidebar-accent: oklch(0.42 0.08 15); /* Lighter burgundy accent */
   --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.38 0.08 20); /* Maroon border */
+  --sidebar-border: oklch(0.45 0.08 15); /* Burgundy border */
   --sidebar-ring: oklch(0.88 0.16 90);   /* Yellow */
 }
 

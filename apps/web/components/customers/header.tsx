@@ -25,14 +25,12 @@ export function CustomersHeader({
     >
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-        <p className="text-gray-500 mt-1">
-          Manage and view all your customers
-        </p>
+        <p className="text-gray-500 mt-1">Manage and view all your customers</p>
       </div>
 
       <div className="flex gap-3 w-full sm:w-auto">
         <div className="relative flex-1 sm:flex-none sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
           <Input
             placeholder="Search customers..."
             className="pl-10"

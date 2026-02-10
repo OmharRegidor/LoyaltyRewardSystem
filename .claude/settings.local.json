@@ -25,7 +25,12 @@
       "Bash(xargs:*)",
       "Bash(ls:*)",
       "Bash(curl:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx:*)",
+      "Bash(git diff:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(git fetch:*)"
     ]
   }
 }

@@ -31,7 +31,7 @@ export default async function CardSignupPage({ params }: PageProps) {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 bg-linear-to-br from-primary/10 to-secondary/10 rounded-full mb-4">
             <CreditCard className="w-6 sm:w-8 h-6 sm:h-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -44,7 +44,7 @@ export default async function CardSignupPage({ params }: PageProps) {
 
         {/* Benefits */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 rounded-2xl p-4 text-center">
+          <div className="bg-linear-to-br from-secondary/10 to-secondary/5 border border-secondary/20 rounded-2xl p-4 text-center">
             <Star className="w-6 h-6 text-secondary mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-900">Earn Points</p>
             <p className="text-xs text-gray-600">
@@ -52,7 +52,7 @@ export default async function CardSignupPage({ params }: PageProps) {
               {business.pesos_per_point ? `₱${business.pesos_per_point}` : 'purchase'}
             </p>
           </div>
-          <div className="bg-gradient-to-br from-primary/5 to-secondary/5 border border-primary/10 rounded-2xl p-4 text-center">
+          <div className="bg-linear-to-br from-primary/5 to-secondary/5 border border-primary/10 rounded-2xl p-4 text-center">
             <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-900">Get Rewards</p>
             <p className="text-xs text-gray-600">Redeem for exclusive perks</p>

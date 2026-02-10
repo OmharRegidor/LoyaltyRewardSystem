@@ -470,33 +470,13 @@ export async function createSelfSignupCustomer(
   const normalizedPhone = phone.replace(/\s+/g, '');
   const normalizedEmail = email?.toLowerCase().trim() || null;
 
-  // Check for existing customer by phone (global) or email (global)
-  // Phone has a global unique constraint, so we check globally
-  let existingCustomer = null;
-
-  // First check by phone globally (unique constraint is global, not per-business)
-  const { data: byPhone } = await supabase
+  // Check for existing customer by phone within this business
+  const { data: existingCustomer } = await supabase
     .from('customers')
     .select('id, qr_code_url, card_token, email')
     .eq('phone', normalizedPhone)
+    .eq('created_by_business_id', businessId)
     .maybeSingle();
-
-  if (byPhone) {
-    existingCustomer = byPhone;
-  }
-
-  // If not found by phone and email provided, check by email globally
-  if (!existingCustomer && normalizedEmail) {
-    const { data: byEmail } = await supabase
-      .from('customers')
-      .select('id, qr_code_url, card_token, email')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
-
-    if (byEmail) {
-      existingCustomer = byEmail;
-    }
-  }
 
   if (existingCustomer) {
     // Customer exists - ensure card_token exists
@@ -552,8 +532,35 @@ export async function createSelfSignupCustomer(
     .single();
 
   if (createError || !newCustomer) {
-    console.error('Create self-signup customer error:', createError);
-    throw new Error('Failed to create customer');
+    // INSERT failed — re-check for existing customer (concurrent insert race)
+    const { data: existing } = await supabase
+      .from('customers')
+      .select('id, qr_code_url, card_token, email')
+      .eq('phone', normalizedPhone)
+      .eq('created_by_business_id', businessId)
+      .maybeSingle();
+
+    if (!existing) {
+      console.error('Create self-signup customer error:', createError);
+      throw new Error('Failed to create customer');
+    }
+
+    let fallbackCardToken = existing.card_token;
+    if (!fallbackCardToken) {
+      fallbackCardToken = generateCardToken(existing.id);
+      await supabase
+        .from('customers')
+        .update({ card_token: fallbackCardToken, card_token_created_at: new Date().toISOString() })
+        .eq('id', existing.id);
+    }
+
+    return {
+      customerId: existing.id,
+      isNewCustomer: false,
+      cardToken: fallbackCardToken,
+      qrCodeUrl: existing.qr_code_url || '',
+      email: normalizedEmail || existing.email,
+    };
   }
 
   const cardToken = generateCardToken(newCustomer.id);

@@ -60,7 +60,9 @@ export default async function BusinessLayout({
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               <NavLink href={`/business/${slug}`}>About</NavLink>
-              <NavLink href={`/business/${slug}/my-bookings`}>My Bookings</NavLink>
+              <NavLink href={`/business/${slug}/my-bookings`}>
+                My Bookings
+              </NavLink>
               <NavLink href={`/business/${slug}/rewards`}>Rewards</NavLink>
               <NavLink href={`/business/${slug}/card`}>Get Card</NavLink>
             </nav>
@@ -75,13 +77,16 @@ export default async function BusinessLayout({
       <main className="px-2 sm:px-4 lg:px-8">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 py-6 mt-10" style={{ backgroundColor: '#f9fafb' }}>
+      <footer
+        className="border-t border-gray-200 py-6 mt-10"
+        style={{ backgroundColor: '#f9fafb' }}
+      >
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 text-center">
           <p className="text-sm text-gray-500">
             Powered by{' '}
             <Link
               href="/"
-              className="font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+              className="font-medium bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent hover:opacity-80 transition-opacity"
             >
               NoxaLoyalty
             </Link>

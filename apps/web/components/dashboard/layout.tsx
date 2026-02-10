@@ -12,14 +12,13 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Sun,
-  Moon,
   UsersRound,
   Menu,
   X,
   CalendarDays,
   FileEdit,
   Clock,
+  ShoppingCart,
 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase';
@@ -42,7 +41,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const { subscription } = useSubscription();
   const hasBooking = subscription?.plan?.hasBooking ?? false;
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const hasPOS = subscription?.plan?.hasPOS ?? false;
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
@@ -105,26 +104,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     loadUserData();
 
-    // Check dark mode - default to light mode
-    const isDark = localStorage.getItem('darkMode') === 'true';
-    setIsDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Force light mode only - dark mode disabled
+    document.documentElement.classList.remove('dark');
   }, [router]);
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem('darkMode', String(newMode));
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -154,6 +136,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           },
         ]
       : []),
+    // POS items - only show if plan has POS feature
+    ...(hasPOS
+      ? [
+          { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart },
+        ]
+      : []),
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
@@ -167,6 +155,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       return pathname === '/dashboard/booking/business-form';
     if (href === '/dashboard/booking/availability')
       return pathname === '/dashboard/booking/availability';
+    if (href === '/dashboard/pos') return pathname.startsWith('/dashboard/pos');
     return pathname.startsWith(href);
   };
 

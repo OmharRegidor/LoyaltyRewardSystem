@@ -539,16 +539,32 @@ export async function requestPasswordReset(
   const supabase = createClient();
 
   try {
+    // Check if email exists in the system
+    const checkRes = await fetch('/api/auth/check-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const { exists } = await checkRes.json();
+
+    if (!exists) {
+      return {
+        success: false,
+        error: 'No account found with this email address. Please check and try again.',
+      };
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     });
 
     if (error) {
       return { success: false, error: error.message };
     }
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
   }
 }
 
@@ -562,6 +578,27 @@ export async function updatePassword(
       return {
         success: false,
         error: 'Password must be at least 8 characters',
+      };
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      return {
+        success: false,
+        error: 'Password must contain at least one uppercase letter',
+      };
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      return {
+        success: false,
+        error: 'Password must contain at least one lowercase letter',
+      };
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      return {
+        success: false,
+        error: 'Password must contain at least one number',
       };
     }
 

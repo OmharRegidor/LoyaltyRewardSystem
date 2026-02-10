@@ -39,21 +39,30 @@ const TIER_ORDER: Record<string, number> = {
 // COMPONENT
 // ============================================
 
-export function RewardsTab({ rewards, customerPoints, customerTier }: RewardsTabProps) {
+export function RewardsTab({
+  rewards,
+  customerPoints,
+  customerTier,
+}: RewardsTabProps) {
   if (rewards.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Gift className="w-8 h-8 text-gray-400" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Rewards Available</h3>
-        <p className="text-gray-500 text-sm">Check back later for exciting rewards!</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No Rewards Available
+        </h3>
+        <p className="text-gray-500 text-sm">
+          Check back later for exciting rewards!
+        </p>
       </div>
     );
   }
 
   const canAfford = (pointsCost: number) => customerPoints >= pointsCost;
-  const pointsNeeded = (pointsCost: number) => Math.max(0, pointsCost - customerPoints);
+  const pointsNeeded = (pointsCost: number) =>
+    Math.max(0, pointsCost - customerPoints);
 
   return (
     <div className="space-y-4">
@@ -123,7 +132,9 @@ export function RewardsTab({ rewards, customerPoints, customerTier }: RewardsTab
                 {/* Category & Stock */}
                 <div className="flex items-center gap-3 mt-2">
                   {reward.category && (
-                    <span className="text-xs text-gray-400">{reward.category}</span>
+                    <span className="text-xs text-gray-400">
+                      {reward.category}
+                    </span>
                   )}
                   {reward.stock !== null && reward.stock <= 5 && (
                     <span className="text-xs text-amber-600">

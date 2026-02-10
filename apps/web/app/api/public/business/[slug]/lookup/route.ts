@@ -21,32 +21,8 @@ const PhoneLookupSchema = z.object({
 });
 
 // ============================================
-// RATE LIMIT CONSTANTS
-// ============================================
-
-const RATE_LIMIT = {
-  maxRequests: 10,
-  windowSeconds: 3600, // 1 hour
-};
-
-// ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-async function checkRateLimit(
-  supabase: ReturnType<typeof createServiceClient>,
-  ipAddress: string
-): Promise<boolean> {
-  const { data } = await supabase.rpc('check_rate_limit', {
-    p_identifier: ipAddress,
-    p_identifier_type: 'ip_address',
-    p_action: 'card_lookup',
-    p_max_requests: RATE_LIMIT.maxRequests,
-    p_window_seconds: RATE_LIMIT.windowSeconds,
-  });
-
-  return data === true;
-}
 
 async function logAuditEvent(
   supabase: ReturnType<typeof createServiceClient>,
@@ -89,30 +65,9 @@ export async function POST(
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
 
-    // 2. Check rate limit
     const serviceClient = createServiceClient();
-    const withinLimit = await checkRateLimit(serviceClient, ipAddress);
 
-    if (!withinLimit) {
-      await logAuditEvent(serviceClient, {
-        action: 'card_lookup_rate_limited',
-        businessId: business.id,
-        details: {
-          reason: 'rate_limit_exceeded',
-          ipAddress,
-          userAgent,
-        },
-      });
-
-      return NextResponse.json(
-        {
-          error: 'Too many lookup attempts. Please try again in an hour.',
-        },
-        { status: 429 }
-      );
-    }
-
-    // 3. Parse and validate input
+    // 2. Parse and validate input
     const body = await request.json();
     const validation = PhoneLookupSchema.safeParse(body);
 
@@ -128,7 +83,7 @@ export async function POST(
 
     const { phone } = validation.data;
 
-    // 4. Look up customer by phone
+    // 3. Look up customer by phone
     const customer = await getCustomerByPhone(business.id, phone);
 
     if (!customer) {
@@ -152,7 +107,7 @@ export async function POST(
       );
     }
 
-    // 5. Log audit event
+    // 4. Log audit event
     await logAuditEvent(serviceClient, {
       action: 'card_lookup_success',
       businessId: business.id,
@@ -164,7 +119,7 @@ export async function POST(
       },
     });
 
-    // 6. Return success response with card data
+    // 5. Return success response with card data
     return NextResponse.json({
       success: true,
       data: {

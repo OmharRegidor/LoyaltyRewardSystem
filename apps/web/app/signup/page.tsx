@@ -869,7 +869,7 @@ export default function SignupPage() {
               href="/login"
               className="font-semibold text-primary hover:text-primary/80 transition-colors"
             >
-              Sign in
+              Log in
             </a>
           </p>
         </div>

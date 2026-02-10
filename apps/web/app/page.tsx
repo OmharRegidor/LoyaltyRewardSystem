@@ -40,7 +40,7 @@ const PLANS: Plan[] = [
     name: 'Free',
     description: 'Perfect for small businesses getting started',
     priceLabel: '₱0',
-    period: 'forever',
+    period: 'from ₱5000/month',
     features: [
       'Loyalty & Rewards System',
       'Unlimited Customers',
@@ -210,7 +210,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
                   variant="outline"
                   className="w-full h-12 text-base font-bold rounded-xl border-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
                 >
-                  Sign In
+                  Log in
                 </Button>
               </Link>
             </div>
@@ -261,11 +261,8 @@ function Header() {
 
                 {/* Brand Text - Always Visible */}
                 <div className="flex flex-col justify-center border-l border-white/30 pl-2 sm:pl-3">
-                  <span className="text-xs sm:text-sm font-bold leading-tight text-white">
+                  <span className="text-md md:text-md font-bold leading-tight text-white">
                     NoxaLoyalty
-                  </span>
-                  <span className="text-[9px] sm:text-[10px] leading-tight text-white/70">
-                    Rewards Platform
                   </span>
                 </div>
               </div>
@@ -295,7 +292,7 @@ function Header() {
                     variant="ghost"
                     className="transition-all font-bold text-sm px-4 text-white/90 hover:text-white hover:bg-white/10"
                   >
-                    Sign In
+                    Log in
                   </Button>
                 </Link>
                 <Link href="/signup">

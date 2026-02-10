@@ -23,28 +23,29 @@ interface CardModalProps {
 // TIER STYLES
 // ============================================
 
-const TIER_STYLES: Record<string, { bg: string; text: string; badge: string }> = {
-  bronze: {
-    bg: 'from-amber-700 to-amber-900',
-    text: 'text-amber-100',
-    badge: 'bg-amber-600',
-  },
-  silver: {
-    bg: 'from-gray-400 to-gray-600',
-    text: 'text-gray-100',
-    badge: 'bg-gray-500',
-  },
-  gold: {
-    bg: 'from-yellow-500 to-yellow-700',
-    text: 'text-yellow-100',
-    badge: 'bg-yellow-600',
-  },
-  platinum: {
-    bg: 'from-slate-600 to-slate-800',
-    text: 'text-slate-100',
-    badge: 'bg-slate-500',
-  },
-};
+const TIER_STYLES: Record<string, { bg: string; text: string; badge: string }> =
+  {
+    bronze: {
+      bg: 'from-amber-700 to-amber-900',
+      text: 'text-amber-100',
+      badge: 'bg-amber-600',
+    },
+    silver: {
+      bg: 'from-gray-400 to-gray-600',
+      text: 'text-gray-100',
+      badge: 'bg-gray-500',
+    },
+    gold: {
+      bg: 'from-yellow-500 to-yellow-700',
+      text: 'text-yellow-100',
+      badge: 'bg-yellow-600',
+    },
+    platinum: {
+      bg: 'from-slate-600 to-slate-800',
+      text: 'text-slate-100',
+      badge: 'bg-slate-500',
+    },
+  };
 
 // ============================================
 // COMPONENT
@@ -105,7 +106,7 @@ export function CardModal({
         </button>
 
         {/* Card Header */}
-        <div className={`bg-gradient-to-br ${tierStyle.bg} p-6 text-center`}>
+        <div className={`bg-linear-to-br ${tierStyle.bg} p-6 text-center`}>
           <h2 className={`text-xl font-bold ${tierStyle.text}`}>
             {businessName}
           </h2>
@@ -159,7 +160,8 @@ export function CardModal({
         <div className="bg-gray-50 px-6 py-3 flex items-center justify-center gap-2">
           <CreditCard className="w-4 h-4 text-gray-400" />
           <span className="text-xs text-gray-500">
-            Powered by <span className="font-semibold text-gray-700">NoxaLoyalty</span>
+            Powered by{' '}
+            <span className="font-semibold text-gray-700">NoxaLoyalty</span>
           </span>
         </div>
       </div>

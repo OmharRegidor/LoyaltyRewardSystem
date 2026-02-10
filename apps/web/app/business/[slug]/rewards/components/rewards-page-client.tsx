@@ -157,7 +157,7 @@ export function RewardsPageClient({
                   </div>
 
                   <CardHeader className="pb-2 relative">
-                    <CardTitle className="text-base line-clamp-1">
+                    <CardTitle className="text-black line-clamp-1">
                       {reward.title}
                     </CardTitle>
                     {reward.description && (
@@ -188,7 +188,7 @@ export function RewardsPageClient({
             animate="visible"
             variants={containerVariants}
           >
-            <Card className="text-center py-12 border-border/50 rounded-2xl">
+            <Card className="bg-white text-center py-12 border-border/50 rounded-2xl">
               <CardContent>
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
                   <Sparkles className="h-10 w-10 text-primary/60" />

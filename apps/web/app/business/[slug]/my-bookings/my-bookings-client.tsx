@@ -255,7 +255,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
           variants={containerVariants}
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-linear-to-br from-primary to-secondary text-white shadow-lg">
               <CalendarDays className="h-7 w-7" />
             </div>
             <div>
@@ -297,7 +297,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                     <Button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl"
+                      className="bg-linear-to-r from-primary to-secondary text-primary-foreground rounded-xl"
                     >
                       {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -349,7 +349,7 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
               <motion.div variants={cardVariants}>
                 <Card className="text-center py-12 border-border/50 rounded-2xl">
                   <CardContent>
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/10 to-secondary/10 mb-4">
                       <CalendarDays className="h-10 w-10 text-primary/60" />
                     </div>
                     <h3 className="text-xl font-semibold mb-2 text-gray-900">

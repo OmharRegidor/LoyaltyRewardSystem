@@ -663,8 +663,8 @@ export default function StaffScannerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-gray-900 animate-spin" />
       </div>
     );
   }
@@ -676,23 +676,23 @@ export default function StaffScannerPage() {
   // ============================================
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-gray-900 to-gray-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Header */}
-      <header className="p-4 flex items-center justify-between border-b border-gray-800">
+      <header className="p-4 flex items-center justify-between border-b border-gray-200 bg-[#7F0404]">
         <div>
-          <h1 className="text-lg font-bold text-cyan-400">
+          <h1 className="text-lg font-bold text-white">
             {staffData?.businessName}
           </h1>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-white/70">
             Cashier: {staffData?.userName}
           </p>
         </div>
         <button
           onClick={handleLogout}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           aria-label="Logout"
         >
-          <LogOut className="w-5 h-5 text-gray-400" />
+          <LogOut className="w-5 h-5 text-white/80" />
         </button>
       </header>
 
@@ -703,7 +703,7 @@ export default function StaffScannerPage() {
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <button
               onClick={startScanner}
-              className="w-40 h-40 bg-linear-to-br from-cyan-600 to-blue-600 rounded-full flex flex-col items-center justify-center mb-6 hover:shadow-2xl hover:shadow-cyan-500/30 hover:scale-105 transition-all active:scale-95"
+              className="w-40 h-40 bg-yellow-400 hover:bg-yellow-500 rounded-full flex flex-col items-center justify-center mb-6 hover:shadow-2xl hover:shadow-yellow-400/30 hover:scale-105 transition-all active:scale-95 border border-gray-900 text-gray-900"
             >
               <QrCode className="w-14 h-14 mb-2" />
               <span className="font-semibold text-sm">Scan Customer</span>
@@ -716,20 +716,20 @@ export default function StaffScannerPage() {
             <div className="flex gap-3 mb-4">
               <button
                 onClick={() => setIsAddCustomerModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+                className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors"
               >
-                <UserPlus className="w-5 h-5 text-cyan-400" />
-                <span className="text-gray-300 text-sm">Add Customer</span>
+                <UserPlus className="w-5 h-5 text-yellow-600" />
+                <span className="text-gray-700 text-sm">Add Customer</span>
               </button>
               <button
                 onClick={() => setScannerState('verify-redemption')}
-                className="flex items-center gap-2 px-5 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl transition-colors"
+                className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors"
               >
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                <span className="text-gray-300 text-sm">Verify Code</span>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-gray-700 text-sm">Verify Code</span>
               </button>
             </div>
-            <p className="text-gray-600 text-xs">
+            <p className="text-gray-500 text-xs">
               Add customers or verify redemption codes
             </p>
           </div>
@@ -738,7 +738,7 @@ export default function StaffScannerPage() {
         {/* VERIFY REDEMPTION STATE */}
         {scannerState === 'verify-redemption' && (
           <div className="max-w-sm mx-auto">
-            <h2 className="text-xl font-bold text-center mb-6">
+            <h2 className="text-xl font-bold text-center mb-6 text-gray-900">
               Verify Redemption
             </h2>
 
@@ -746,7 +746,7 @@ export default function StaffScannerPage() {
             {!redemptionData && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Enter 6-digit code
                   </label>
                   <input
@@ -758,29 +758,29 @@ export default function StaffScannerPage() {
                       )
                     }
                     placeholder="ABC123"
-                    className="w-full px-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-2xl font-mono text-center tracking-widest placeholder-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                    className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
                     maxLength={6}
                     autoFocus
                   />
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
                   </div>
                 )}
 
                 <div className="flex gap-3">
                   <button
                     onClick={resetScanner}
-                    className="flex-1 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={verifyRedemptionCode}
                     disabled={redemptionCode.length < 6 || isVerifying}
-                    className="flex-1 py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-900 border border-gray-900"
                   >
                     {isVerifying ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -795,64 +795,64 @@ export default function StaffScannerPage() {
             {/* Redemption Found */}
             {redemptionData && (
               <div className="space-y-4">
-                <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-green-400 mb-1">
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-green-700 mb-1">
                     Valid Code
                   </h3>
-                  <p className="text-gray-400 text-sm">Ready to complete</p>
+                  <p className="text-gray-500 text-sm">Ready to complete</p>
                 </div>
 
-                <div className="bg-gray-800 rounded-2xl p-5 space-y-3">
+                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Code</span>
-                    <span className="font-mono font-bold text-cyan-400">
+                    <span className="text-gray-500">Code</span>
+                    <span className="font-mono font-bold text-yellow-600">
                       {redemptionData.code}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Reward</span>
-                    <span className="font-medium text-white">
+                    <span className="text-gray-500">Reward</span>
+                    <span className="font-medium text-gray-900">
                       {redemptionData.rewardTitle}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Customer</span>
-                    <span className="text-white">
+                    <span className="text-gray-500">Customer</span>
+                    <span className="text-gray-900">
                       {redemptionData.customerName}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Points Used</span>
-                    <span className="text-white">
+                    <span className="text-gray-500">Points Used</span>
+                    <span className="text-gray-900">
                       {redemptionData.pointsUsed.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Expires</span>
-                    <span className="text-white">
+                    <span className="text-gray-500">Expires</span>
+                    <span className="text-gray-900">
                       {new Date(redemptionData.expiresAt).toLocaleString()}
                     </span>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p className="text-red-400 text-sm text-center">{error}</p>
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-red-600 text-sm text-center">{error}</p>
                   </div>
                 )}
 
                 <div className="flex gap-3">
                   <button
                     onClick={resetScanner}
-                    className="flex-1 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={completeRedemption}
                     disabled={isVerifying}
-                    className="flex-1 py-4 bg-linear-to-r from-green-600 to-emerald-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-green-500 hover:bg-green-600 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-white"
                   >
                     {isVerifying ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -872,15 +872,15 @@ export default function StaffScannerPage() {
         {/* SCANNING STATE */}
         {scannerState === 'scanning' && (
           <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-sm aspect-square bg-black rounded-2xl overflow-hidden mb-4">
+            <div className="relative w-full max-w-sm aspect-square bg-gray-900 rounded-2xl overflow-hidden mb-4 border border-gray-200">
               <div id={scannerContainerId} className="w-full h-full" />
               <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-64 border-2 border-cyan-400 rounded-xl relative">
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-cyan-400 rounded-tl-lg" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-cyan-400 rounded-tr-lg" />
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-cyan-400 rounded-bl-lg" />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-cyan-400 rounded-br-lg" />
+                  <div className="w-64 h-64 border-2 border-yellow-400 rounded-xl relative">
+                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-yellow-400 rounded-tl-lg" />
+                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-yellow-400 rounded-tr-lg" />
+                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-yellow-400 rounded-bl-lg" />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-yellow-400 rounded-br-lg" />
                   </div>
                 </div>
               </div>
@@ -891,7 +891,7 @@ export default function StaffScannerPage() {
                 <SwitchCamera className="w-5 h-5 text-white" />
               </button>
             </div>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-500 mb-4">
               Point camera at customer's QR code
             </p>
             <button
@@ -899,7 +899,7 @@ export default function StaffScannerPage() {
                 stopScanner();
                 setScannerState('idle');
               }}
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors"
+              className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-700 border border-gray-300"
             >
               Cancel
             </button>
@@ -910,14 +910,14 @@ export default function StaffScannerPage() {
         {scannerState === 'customer-found' && customer && tierInfo && (
           <div className="max-w-sm mx-auto">
             {/* Customer Info */}
-            <div className="bg-gray-800 rounded-2xl p-6 mb-6">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-cyan-500/20 rounded-full flex items-center justify-center">
-                  <User className="w-7 h-7 text-cyan-400" />
+                <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <User className="w-7 h-7 text-yellow-600" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold">{customer.name}</h2>
-                  <p className="text-gray-400 text-sm">
+                  <h2 className="text-lg font-semibold text-gray-900">{customer.name}</h2>
+                  <p className="text-gray-500 text-sm">
                     {customer.currentPoints.toLocaleString()} points
                   </p>
                 </div>
@@ -938,9 +938,9 @@ export default function StaffScannerPage() {
 
               {/* Tier Multiplier Info */}
               {tierInfo.multiplier > 1 && (
-                <div className="flex items-center gap-2 p-3 bg-linear-to-r from-amber-500/10 to-yellow-500/10 rounded-xl border border-amber-500/20">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <span className="text-amber-300 font-medium">
+                <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
+                  <Sparkles className="w-5 h-5 text-yellow-600" />
+                  <span className="text-yellow-700 font-medium">
                     {tierInfo.multiplier}x Points Bonus Active!
                   </span>
                 </div>
@@ -949,11 +949,11 @@ export default function StaffScannerPage() {
 
             {/* Transaction Amount */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Transaction Amount (₱)
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">
                   ₱
                 </span>
                 <input
@@ -961,39 +961,39 @@ export default function StaffScannerPage() {
                   value={transactionAmount}
                   onChange={(e) => setTransactionAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full pl-10 pr-4 py-4 bg-gray-800 border border-gray-700 rounded-xl text-white text-xl font-semibold placeholder-gray-600 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  className="w-full pl-10 pr-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-xl font-semibold placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
                   autoFocus
                 />
               </div>
             </div>
 
             {/* Points Calculation */}
-            <div className="bg-linear-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 rounded-xl p-4 mb-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-cyan-400" />
-                  <span className="text-gray-300">Points to Award</span>
+                  <Coins className="w-5 h-5 text-yellow-600" />
+                  <span className="text-gray-700">Points to Award</span>
                 </div>
-                <span className="text-2xl font-bold text-cyan-400">
+                <span className="text-2xl font-bold text-yellow-600">
                   +{calculatedPoints.total.toLocaleString()}
                 </span>
               </div>
 
               {/* Breakdown */}
-              <div className="space-y-1 pt-3 border-t border-cyan-500/20">
+              <div className="space-y-1 pt-3 border-t border-yellow-200">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Base points</span>
-                  <span className="text-gray-300">
+                  <span className="text-gray-500">Base points</span>
+                  <span className="text-gray-700">
                     {calculatedPoints.base.toLocaleString()}
                   </span>
                 </div>
                 {calculatedPoints.bonus > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-amber-400 flex items-center gap-1">
+                    <span className="text-amber-600 flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
                       {tierInfo.name} bonus ({tierInfo.multiplier}x)
                     </span>
-                    <span className="text-amber-400">
+                    <span className="text-amber-600">
                       +{calculatedPoints.bonus.toLocaleString()}
                     </span>
                   </div>
@@ -1009,14 +1009,14 @@ export default function StaffScannerPage() {
             <div className="flex gap-3">
               <button
                 onClick={resetScanner}
-                className="flex-1 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium transition-colors"
+                className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={awardPoints}
                 disabled={calculatedPoints.total <= 0}
-                className="flex-1 py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 border border-gray-900"
               >
                 Award Points
               </button>
@@ -1027,49 +1027,49 @@ export default function StaffScannerPage() {
         {/* AWARDING STATE */}
         {scannerState === 'awarding' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
-            <p className="text-gray-400">Awarding points...</p>
+            <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mb-4" />
+            <p className="text-gray-500">Awarding points...</p>
           </div>
         )}
 
         {/* SUCCESS STATE */}
         {scannerState === 'success' && scanResult?.success && (
           <div className="max-w-sm mx-auto text-center">
-            <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12 text-green-500" />
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Points Awarded!</h2>
-            <p className="text-gray-400 mb-6">{scanResult.customerName}</p>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900">Points Awarded!</h2>
+            <p className="text-gray-500 mb-6">{scanResult.customerName}</p>
 
-            <div className="bg-gray-800 rounded-2xl p-6 mb-6">
-              <p className="text-5xl font-bold text-cyan-400 mb-2">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+              <p className="text-5xl font-bold text-yellow-600 mb-2">
                 +{scanResult.totalPointsAwarded?.toLocaleString()}
               </p>
-              <p className="text-gray-400">points added</p>
+              <p className="text-gray-500">points added</p>
 
               {/* Bonus breakdown */}
               {scanResult.bonusPoints && scanResult.bonusPoints > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="mt-4 pt-4 border-t border-gray-200">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-500">Base points</span>
-                    <span className="text-gray-400">
+                    <span className="text-gray-700">
                       {scanResult.basePoints?.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-amber-400">
+                    <span className="text-amber-600">
                       Tier bonus ({scanResult.multiplier}x)
                     </span>
-                    <span className="text-amber-400">
+                    <span className="text-amber-600">
                       +{scanResult.bonusPoints.toLocaleString()}
                     </span>
                   </div>
                 </div>
               )}
 
-              <div className="mt-4 pt-4 border-t border-gray-700">
+              <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-sm text-gray-500">New Balance</p>
-                <p className="text-xl font-semibold text-white">
+                <p className="text-xl font-semibold text-gray-900">
                   {scanResult.newTotal?.toLocaleString()} points
                 </p>
               </div>
@@ -1077,7 +1077,7 @@ export default function StaffScannerPage() {
 
             <button
               onClick={resetScanner}
-              className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
             >
               Scan Next Customer
             </button>
@@ -1087,20 +1087,20 @@ export default function StaffScannerPage() {
         {/* ERROR STATE */}
         {scannerState === 'error' && (
           <div className="max-w-sm mx-auto text-center">
-            <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-12 h-12 text-red-500" />
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-12 h-12 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-2 text-red-400">
+            <h2 className="text-2xl font-bold mb-2 text-red-600">
               {scanResult?.error ? 'Award Failed' : 'Scan Error'}
             </h2>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-500 mb-6">
               {scanResult?.error ||
                 error ||
                 'Something went wrong. Please try again.'}
             </p>
             <button
               onClick={resetScanner}
-              className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
             >
               Try Again
             </button>
@@ -1116,23 +1116,23 @@ export default function StaffScannerPage() {
       </main>
 
       {/* Footer Stats */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-gray-800/90 backdrop-blur-lg border-t border-gray-700 p-4">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4">
         <div className="max-w-sm mx-auto">
-          <p className="text-xs text-gray-400 text-center mb-2">
+          <p className="text-xs text-gray-500 text-center mb-2">
             Today's Activity
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-900/50 rounded-xl p-3 text-center">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <User className="w-4 h-4 text-cyan-400" />
-                <span className="text-xl font-bold">{stats.scansToday}</span>
+                <User className="w-4 h-4 text-yellow-600" />
+                <span className="text-xl font-bold text-gray-900">{stats.scansToday}</span>
               </div>
               <p className="text-xs text-gray-500">Customers Scanned</p>
             </div>
-            <div className="bg-gray-900/50 rounded-xl p-3 text-center">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <Award className="w-4 h-4 text-cyan-400" />
-                <span className="text-xl font-bold">
+                <Award className="w-4 h-4 text-yellow-600" />
+                <span className="text-xl font-bold text-gray-900">
                   {stats.pointsAwardedToday.toLocaleString()}
                 </span>
               </div>

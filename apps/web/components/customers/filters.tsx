@@ -29,7 +29,7 @@ export function CustomersFilters({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="p-4">
+      <Card className="p-4 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Status Filter */}
           <div className="space-y-2">
