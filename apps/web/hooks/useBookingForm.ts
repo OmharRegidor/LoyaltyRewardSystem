@@ -283,7 +283,11 @@ export function useBookingForm(options: UseBookingFormOptions): UseBookingFormRe
       return { serviceSubtotal: 0, addonsTotal: 0, total: 0, nights: 1, pointsEstimate: 0 };
     }
 
-    const nights = isMultiDay ? calculateNights(checkInDate, checkOutDate) : 1;
+    // For multi-day bookings (hotels), calculate nights from dates
+    // Use 1 night as default when dates not yet selected to show base price
+    const nights = isMultiDay
+      ? (checkInDate && checkOutDate ? calculateNights(checkInDate, checkOutDate) : 1)
+      : 1;
     const totalGuests = adultsCount + childrenCount;
 
     // Service subtotal - use variant price if selected, otherwise service price

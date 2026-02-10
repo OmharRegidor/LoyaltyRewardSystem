@@ -131,7 +131,10 @@ export function BusinessPageClient({
   }
 
   return (
-    <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+    <div
+      className="relative min-h-screen"
+      style={{ backgroundColor: '#ffffff' }}
+    >
       {/* Subtle Background Decoration */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
@@ -150,10 +153,7 @@ export function BusinessPageClient({
           {/* Main 2-column grid */}
           <div className="grid md:grid-cols-2 gap-6">
             {/* Left Column - Business Info + Buttons */}
-            <motion.div
-              className="flex flex-col gap-4"
-              variants={cardVariants}
-            >
+            <motion.div className="flex flex-col gap-4" variants={cardVariants}>
               {/* Logo with glow effect */}
               <motion.div
                 className="relative group w-fit"
@@ -224,10 +224,7 @@ export function BusinessPageClient({
             </motion.div>
 
             {/* Right Column - Contact + Loyalty stacked */}
-            <motion.div
-              className="flex flex-col gap-6"
-              variants={cardVariants}
-            >
+            <motion.div className="flex flex-col gap-6" variants={cardVariants}>
               {/* Contact Information Card */}
               <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-primary rounded-2xl bg-white shadow-md border border-gray-100">
                 <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
@@ -245,7 +242,9 @@ export function BusinessPageClient({
                       <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <div className="text-sm">
                         {business.address && (
-                          <p className="font-medium text-gray-900">{business.address}</p>
+                          <p className="font-medium text-gray-900">
+                            {business.address}
+                          </p>
                         )}
                         {business.city && (
                           <p className="text-gray-500">{business.city}</p>
@@ -320,89 +319,89 @@ export function BusinessPageClient({
           </div>
 
           {/* Business Hours Card - Full width at bottom */}
-          <motion.div
-            className="mt-6"
-            variants={cardVariants}
-          >
-          <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 border-t-primary rounded-2xl bg-white shadow-md border border-gray-100">
-            <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-            <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
-              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg text-gray-900">
-                <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-                Business Hours
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative pt-0 px-3 sm:px-6">
-              {availability.length > 0 ? (
-                <motion.div
-                  className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
-                  initial="hidden"
-                  animate="visible"
-                  variants={staggerContainerVariants}
-                >
-                  {DAY_NAMES.map((dayName, index) => {
-                    const dayAvailability = availability.find(
-                      (a) => a.day_of_week === index
-                    );
-                    const isToday = index === todayIndex;
-                    const isOpen =
-                      dayAvailability && dayAvailability.is_available;
-                    // Abbreviated day name for mobile
-                    const shortDayName = dayName.slice(0, 3);
+          <motion.div className="mt-6" variants={cardVariants}>
+            <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 border-t-primary rounded-2xl bg-white shadow-md border border-gray-100">
+              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+              <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
+                <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg text-gray-900">
+                  <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                  Business Hours
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative pt-0 px-3 sm:px-6">
+                {availability.length > 0 ? (
+                  <motion.div
+                    className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
+                    initial="hidden"
+                    animate="visible"
+                    variants={staggerContainerVariants}
+                  >
+                    {DAY_NAMES.map((dayName, index) => {
+                      const dayAvailability = availability.find(
+                        (a) => a.day_of_week === index,
+                      );
+                      const isToday = index === todayIndex;
+                      const isOpen =
+                        dayAvailability && dayAvailability.is_available;
+                      // Abbreviated day name for mobile
+                      const shortDayName = dayName.slice(0, 3);
 
-                    return (
-                      <motion.div
-                        key={index}
-                        variants={dayItemVariants}
-                        className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
-                          isToday
-                            ? 'bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
-                            : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
-                          <span
-                            className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : 'text-gray-900'}`}
-                          >
-                            <span className="sm:hidden">{shortDayName}</span>
-                            <span className="hidden sm:inline">{dayName}</span>
-                          </span>
-                          {isToday && (
-                            <span className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary shrink-0">
-                              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary" />
+                      return (
+                        <motion.div
+                          key={index}
+                          variants={dayItemVariants}
+                          className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
+                            isToday
+                              ? 'bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
+                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
+                            <span
+                              className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : 'text-gray-900'}`}
+                            >
+                              <span className="sm:hidden">{shortDayName}</span>
+                              <span className="hidden sm:inline">
+                                {dayName}
                               </span>
-                              <span className="hidden sm:inline">Today</span>
                             </span>
+                            {isToday && (
+                              <span className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary shrink-0">
+                                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary" />
+                                </span>
+                                <span className="hidden sm:inline">Today</span>
+                              </span>
+                            )}
+                          </div>
+                          {isOpen ? (
+                            <span className="text-[10px] sm:text-sm text-gray-600">
+                              {formatTime(dayAvailability.start_time)} -{' '}
+                              {formatTime(dayAvailability.end_time)}
+                            </span>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="w-fit text-[10px] sm:text-xs px-1.5 sm:px-2.5"
+                            >
+                              Closed
+                            </Badge>
                           )}
-                        </div>
-                        {isOpen ? (
-                          <span className="text-[10px] sm:text-sm text-gray-600">
-                            {formatTime(dayAvailability.start_time)} - {formatTime(dayAvailability.end_time)}
-                          </span>
-                        ) : (
-                          <Badge
-                            variant="secondary"
-                            className="w-fit text-[10px] sm:text-xs px-1.5 sm:px-2.5"
-                          >
-                            Closed
-                          </Badge>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              ) : (
-                <p className="text-gray-500 text-sm p-3">
-                  Business hours not available. Please contact the business
-                  for their schedule.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+                ) : (
+                  <p className="text-gray-500 text-sm p-3">
+                    Business hours not available. Please contact the business
+                    for their schedule.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         </motion.div>
       </div>
@@ -420,7 +419,12 @@ export function BusinessPageClient({
           address: business.address,
           points_per_purchase: business.points_per_purchase,
           pesos_per_point: business.pesos_per_point,
-          business_type: business.business_type as 'retail' | 'restaurant' | 'salon' | 'hotel' | null,
+          business_type: business.business_type as
+            | 'retail'
+            | 'restaurant'
+            | 'salon'
+            | 'hotel'
+            | null,
         }}
         services={services.map((s) => ({
           id: s.id,
@@ -447,6 +451,7 @@ export function BusinessPageClient({
           price_centavos: a.price_centavos,
           price_type: 'fixed' as const,
           service_id: null,
+          category: a.category,
           options: a.options?.map((o) => ({
             id: o.id,
             name: o.name,

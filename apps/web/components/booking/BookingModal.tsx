@@ -52,6 +52,7 @@ interface AddonOption {
 
 interface AddonWithOptions extends BookingAddon {
   options?: AddonOption[];
+  category?: string | null;
 }
 
 interface ServiceWithVariants extends BookingService {
@@ -175,6 +176,20 @@ export function BookingModal({
     );
     return service?.config || null;
   }, [form.state.selectedService, services]);
+
+  // Filter addons based on service config (e.g., diving addons)
+  const filteredAddons = useMemo(() => {
+    const config = selectedServiceConfig as { enable_diving_addons?: boolean } | null;
+    const divingEnabled = config?.enable_diving_addons ?? false;
+
+    return addons.filter((addon) => {
+      // If diving addons are disabled, filter out addons with category 'diving'
+      if (!divingEnabled && addon.category === 'diving') {
+        return false;
+      }
+      return true;
+    });
+  }, [addons, selectedServiceConfig]);
 
   // Reset form and auto-select first service when modal opens
   useEffect(() => {
@@ -498,7 +513,7 @@ export function BookingModal({
                 onDecrementChildren={form.decrementChildren}
                 partySize={form.state.partySize}
                 onPartySizeChange={form.setPartySize}
-                addons={addons}
+                addons={filteredAddons}
                 selectedAddons={form.state.selectedAddons}
                 onAddonToggle={form.toggleAddon}
                 onAddonQuantityChange={form.setAddonQuantity}

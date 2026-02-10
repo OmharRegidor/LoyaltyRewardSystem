@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { DayPicker, DateRange } from 'react-day-picker';
+import { DayPicker, DateRange, getDefaultClassNames } from 'react-day-picker';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -48,6 +48,8 @@ export function DateRangePicker({
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const defaultClassNames = getDefaultClassNames();
 
   // Calculate max booking date based on advance booking days
   const maxDate = new Date(today);
@@ -97,11 +99,12 @@ export function DateRangePicker({
   };
 
   // Combine disabled days for the calendar
+  // In react-day-picker v9, use { dayOfWeek: [...] } for disabling specific days
   const disabledDates = [
     { before: today },
     { after: maxDate },
     ...(closedDaysOfWeek.length > 0
-      ? [(date: Date) => closedDaysOfWeek.includes(date.getDay())]
+      ? [{ dayOfWeek: closedDaysOfWeek }]
       : []),
     ...(disabledDays ? [disabledDays] : []),
   ];
@@ -136,31 +139,24 @@ export function DateRangePicker({
                 showOutsideDays={false}
                 className="p-3"
                 classNames={{
-                  months: 'flex flex-col gap-4',
-                  month: 'space-y-4',
-                  caption: 'flex justify-center pt-1 relative items-center',
-                  caption_label: 'text-sm font-medium',
-                  nav: 'space-x-1 flex items-center',
-                  nav_button:
-                    'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 hover:text-gray-900',
-                  nav_button_previous: 'absolute left-1',
-                  nav_button_next: 'absolute right-1',
-                  table: 'w-full border-collapse space-y-1',
-                  head_row: 'flex',
-                  head_cell:
-                    'text-gray-500 rounded-md w-9 font-normal text-[0.8rem]',
-                  row: 'flex w-full mt-2',
-                  cell: 'h-9 w-9 text-center text-sm p-0 relative',
-                  day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 hover:text-gray-900 rounded-md',
-                  day_range_start: 'day-range-start',
-                  day_range_end: 'day-range-end',
-                  day_selected:
-                    'bg-gray-900 text-white hover:bg-gray-800 hover:text-white focus:bg-gray-900 focus:text-white',
-                  day_range_middle:
-                    'aria-selected:bg-gray-200 aria-selected:text-gray-900',
-                  day_today: 'bg-yellow-100 text-gray-900',
-                  day_outside: 'text-gray-500 opacity-50',
-                  day_disabled: 'text-gray-500 opacity-50',
+                  months: `flex flex-col gap-4 ${defaultClassNames.months}`,
+                  month: `space-y-4 ${defaultClassNames.month}`,
+                  month_caption: `flex justify-center pt-1 relative items-center ${defaultClassNames.month_caption}`,
+                  caption_label: `text-sm font-medium ${defaultClassNames.caption_label}`,
+                  nav: `space-x-1 flex items-center ${defaultClassNames.nav}`,
+                  button_previous: `absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 hover:text-gray-900 ${defaultClassNames.button_previous}`,
+                  button_next: `absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-gray-200 hover:bg-gray-100 hover:text-gray-900 ${defaultClassNames.button_next}`,
+                  weekdays: `flex ${defaultClassNames.weekdays}`,
+                  weekday: `text-gray-500 rounded-md w-9 font-normal text-[0.8rem] ${defaultClassNames.weekday}`,
+                  week: `flex w-full mt-2 ${defaultClassNames.week}`,
+                  day: `h-9 w-9 text-center text-sm p-0 relative font-normal aria-selected:opacity-100 hover:bg-gray-100 hover:text-gray-900 rounded-md ${defaultClassNames.day}`,
+                  range_start: `bg-gray-900 text-white ${defaultClassNames.range_start}`,
+                  range_end: `bg-gray-900 text-white ${defaultClassNames.range_end}`,
+                  selected: `bg-gray-900 text-white hover:bg-gray-800 hover:text-white focus:bg-gray-900 focus:text-white ${defaultClassNames.selected}`,
+                  range_middle: `bg-gray-200 text-gray-900 ${defaultClassNames.range_middle}`,
+                  today: `bg-yellow-100 text-gray-900 ${defaultClassNames.today}`,
+                  outside: `text-gray-500 opacity-50 ${defaultClassNames.outside}`,
+                  disabled: `text-gray-500 opacity-50 ${defaultClassNames.disabled}`,
                 }}
                 components={{
                   Chevron: ({ orientation }) =>
