@@ -20,6 +20,7 @@ import {
   MemberQRCard,
   QuickActions,
   NearbyBusinesses,
+  RedeemableRewards,
 } from '../../src/components/home';
 import { COLORS, SPACING } from '../../src/lib/constants';
 
@@ -92,6 +93,9 @@ export default function HomeScreen() {
 
           {/* Quick Actions */}
           {/* <QuickActions /> */}
+
+          {/* Redeemable Rewards */}
+          <RedeemableRewards />
 
           {/* Nearby Businesses */}
           {/* <NearbyBusinesses onBusinessPress={handleBusinessPress} /> */}

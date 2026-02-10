@@ -46,6 +46,9 @@ export function BalanceCard({ points, lifetimePoints }: BalanceCardProps) {
           }
           showLabel
         />
+        <Text style={styles.lifetimeLabel}>
+          {lifetimePoints.toLocaleString()} lifetime pts earned
+        </Text>
       </View>
     </View>
   );
@@ -88,5 +91,11 @@ const styles = StyleSheet.create({
   tierContainer: {
     width: '100%',
     marginTop: SPACING.lg,
+  },
+  lifetimeLabel: {
+    fontSize: FONT_SIZE.xs,
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
   },
 });
