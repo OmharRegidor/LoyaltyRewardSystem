@@ -8,21 +8,16 @@ import { COLORS } from '../../src/lib/constants';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const { user, isInitialized } = useAuth();
+  const { user, isLoading, isInitialized } = useAuth();
 
   useEffect(() => {
-    if (!isInitialized) return;
-    // Wait a bit for auth state to settle, then redirect
-    const timer = setTimeout(() => {
-      if (user) {
-        router.replace('/(main)');
-      } else {
-        router.replace('/(auth)/welcome');
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [user, isInitialized]);
+    if (!isInitialized || isLoading) return;
+    if (user) {
+      router.replace('/(main)');
+    } else {
+      router.replace('/(auth)/welcome');
+    }
+  }, [user, isLoading, isInitialized, router]);
 
   return (
     <View style={styles.container}>

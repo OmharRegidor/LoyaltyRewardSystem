@@ -12,7 +12,8 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://womlcxkgguxolrmnxtni.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "151913803842-ul8hmrfsdnt8v61k8q53se44q34jstm3.apps.googleusercontent.com"
       }
     },
     "preview": {
@@ -23,7 +24,8 @@
       "developmentClient": false,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://womlcxkgguxolrmnxtni.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "151913803842-ul8hmrfsdnt8v61k8q53se44q34jstm3.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -31,7 +33,8 @@
       "developmentClient": false,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://womlcxkgguxolrmnxtni.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvbWxjeGtnZ3V4b2xybW54dG5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk0MDIsImV4cCI6MjA4MDI2NTQwMn0.3kZVAAib0QK4OBRKdDBcDYETx6Y3fep5FCMLolAlrmY",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "151913803842-ul8hmrfsdnt8v61k8q53se44q34jstm3.apps.googleusercontent.com"
       }
     }
   },

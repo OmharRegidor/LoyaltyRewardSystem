@@ -9,14 +9,14 @@ import React, {
   useRef,
 } from 'react';
 import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { supabase } from '../lib/supabase';
 import { customerService } from '../services/customer.service';
 import type { Customer } from '../types/database.types';
-import { makeRedirectUri } from 'expo-auth-session';
 
-WebBrowser.maybeCompleteAuthSession();
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+});
 
 interface AuthState {
   user: User | null;
@@ -80,14 +80,6 @@ function extractUserProfile(user: User): {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
-  const redirectTo = makeRedirectUri({
-    scheme: 'NoxaLoyalty',
-    path: 'auth/callback',
-  });
-  // Log for debugging (remove after testing)
-  useEffect(() => {
-    console.log('[AuthProvider] OAuth Redirect URL:', redirectTo);
-  }, [redirectTo]);
   const isLoadingCustomer = useRef(false);
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
@@ -97,13 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoadingCustomer.current = true;
 
     try {
-      // Extract profile from OAuth user
       const profile = extractUserProfile(user);
-
-      // Find or create customer with profile data
-      // This will:
-      // 1. Link to existing customer by email (if staff-added)
-      // 2. Or create new customer with name/email from OAuth
       const customer = await customerService.findOrCreate(profile);
 
       setState({
@@ -114,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isInitialized: true,
       });
 
-      // Setup realtime subscription for this customer
       if (customer?.id) {
         setupRealtimeSubscription(customer.id);
       }
@@ -134,7 +119,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Setup realtime subscription for customer points updates
   const setupRealtimeSubscription = useCallback((customerId: string) => {
-    // Clean up existing subscription
     if (realtimeChannelRef.current) {
       supabase.removeChannel(realtimeChannelRef.current);
     }
@@ -148,7 +132,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         filter: `id=eq.${customerId}`,
       },
       (payload) => {
-        // Update customer state with new data
         setState((prev) => ({
           ...prev,
           customer: prev.customer
@@ -225,75 +208,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      console.log('[AuthProvider] Starting Google sign in...');
-      console.log('[AuthProvider] Redirect URL:', redirectTo);
+      await GoogleSignin.hasPlayServices();
+      const signInResult = await GoogleSignin.signIn();
+      const idToken = signInResult.data?.idToken;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      if (!idToken) throw new Error('No ID token returned from Google');
+
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
+        token: idToken,
       });
 
       if (error) throw error;
-      if (!data.url) throw new Error('No OAuth URL returned');
-
-      console.log('[AuthProvider] Opening browser for OAuth...');
-
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectTo,
-      );
-
-      console.log('[AuthProvider] Browser result:', result.type);
-
-      if (result.type === 'success' && result.url) {
-        console.log('[AuthProvider] Success URL:', result.url);
-
-        const hashIndex = result.url.indexOf('#');
-
-        if (hashIndex !== -1) {
-          const hash = result.url.substring(hashIndex + 1);
-          const params = new URLSearchParams(hash);
-
-          const access_token = params.get('access_token');
-          const refresh_token = params.get('refresh_token');
-
-          console.log(
-            '[AuthProvider] Tokens found:',
-            !!access_token,
-            !!refresh_token,
-          );
-
-          if (access_token && refresh_token) {
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
-            });
-
-            if (sessionError) {
-              console.error('[AuthProvider] Session error:', sessionError);
-              throw sessionError;
-            }
-
-            console.error('[AuthProvider] Session error:', sessionError);
-          }
-        }
-      } else {
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
+      // onAuthStateChange handles the rest
     } catch (error) {
       console.error('[AuthProvider] Sign in error:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
-  }, [redirectTo]);
+  }, []);
 
   const signOut = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
       cleanupRealtimeSubscription();
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
       await supabase.auth.signOut();
     } catch (error) {
       console.error('[AuthProvider] Sign out error:', error);

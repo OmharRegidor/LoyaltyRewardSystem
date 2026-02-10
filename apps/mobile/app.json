@@ -6,16 +6,21 @@
     "sdkVersion": "54.0.0",
     "newArchEnabled": true,
     "orientation": "portrait",
-    "icon": "./assets/images/noxa_favicon.png",
+    "icon": "./assets/images/logoloyalty.png",
     "scheme": "NoxaLoyalty",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/noxa_favicon.png",
+      "image": "./assets/images/logoloyalty.png",
       "resizeMode": "contain",
       "backgroundColor": "#edeef0"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.NoxaLoyalty.app",
@@ -29,7 +34,7 @@
       "newArchEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#edeef0",
-        "foregroundImage": "./assets/images/adaptive-icon-preview.png"
+        "foregroundImage": "./assets/images/adaptive-icon(1).png"
       },
       "intentFilters": [
         {
@@ -41,11 +46,19 @@
               "pathPrefix": "/callback"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "@react-native-google-signin/google-signin"
+    ],
     "experiments": {
       "typedRoutes": true
     },
