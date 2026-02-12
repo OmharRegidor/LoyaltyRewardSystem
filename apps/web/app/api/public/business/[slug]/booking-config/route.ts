@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
+import { checkModuleAccess } from '@/lib/feature-gate';
 
 // ============================================
 // TYPES
@@ -66,6 +67,15 @@ export async function GET(
     const business = await getBusinessBySlug(slug);
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+    }
+
+    // 1b. Check booking module access
+    const { allowed: hasBooking } = await checkModuleAccess(business.id, 'booking');
+    if (!hasBooking) {
+      return NextResponse.json(
+        { error: 'Booking is not available for this business.' },
+        { status: 403 }
+      );
     }
 
     const supabase = createServiceClient();

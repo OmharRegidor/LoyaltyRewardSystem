@@ -199,7 +199,6 @@ async function ensureBusinessAndSubscription(
           owner_id: userId,
           name: businessName,
           owner_email: userEmail || '',
-          is_free_forever: true,
           subscription_status: 'active',
           points_per_purchase: 1,
           pesos_per_point: 100,

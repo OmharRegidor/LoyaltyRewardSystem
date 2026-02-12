@@ -224,7 +224,7 @@ export default function DashboardPage() {
         const metadata = user.user_metadata || {};
         const { data: business } = await supabase
           .from('businesses')
-          .select('id, name, subscription_status, is_free_forever')
+          .select('id, name, subscription_status')
           .eq('owner_id', user.id)
           .maybeSingle();
 

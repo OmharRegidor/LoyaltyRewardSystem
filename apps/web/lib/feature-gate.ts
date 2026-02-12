@@ -76,17 +76,6 @@ export async function checkModuleAccess(
 ): Promise<ModuleCheckResult> {
   const supabase = getServiceClient();
 
-  // Check if business is free forever (has all modules)
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('is_free_forever')
-    .eq('id', businessId)
-    .single();
-
-  if (business?.is_free_forever) {
-    return { allowed: true };
-  }
-
   // Get subscription and plan module flags
   const { data: subscription } = await supabase
     .from('subscriptions')
@@ -156,17 +145,6 @@ export async function checkFeatureAccess(
 ): Promise<FeatureCheckResult> {
   const supabase = getServiceClient();
 
-  // Check if business is free forever
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('is_free_forever')
-    .eq('id', businessId)
-    .single();
-
-  if (business?.is_free_forever) {
-    return { allowed: true };
-  }
-
   // Get subscription and plan features
   const { data: subscription } = await supabase
     .from('subscriptions')
@@ -216,22 +194,6 @@ export async function checkLimitAccess(
   limitType: LimitType
 ): Promise<LimitCheckResult> {
   const supabase = getServiceClient();
-
-  // Check if business is free forever (no limits)
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('is_free_forever')
-    .eq('id', businessId)
-    .single();
-
-  if (business?.is_free_forever) {
-    return {
-      allowed: true,
-      current: 0,
-      limit: null,
-      remaining: null,
-    };
-  }
 
   // Get subscription and plan limits
   const { data: subscription } = await supabase
@@ -351,17 +313,6 @@ export async function checkSubscriptionAccess(
 ): Promise<{ hasAccess: boolean; status: string }> {
   const supabase = getServiceClient();
 
-  // Check if business is free forever
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('is_free_forever')
-    .eq('id', businessId)
-    .single();
-
-  if (business?.is_free_forever) {
-    return { hasAccess: true, status: 'free_forever' };
-  }
-
   // Get subscription status
   const { data: subscription } = await supabase
     .from('subscriptions')
@@ -370,7 +321,7 @@ export async function checkSubscriptionAccess(
     .single();
 
   const status = subscription?.status || 'preview';
-  const hasAccess = ['active', 'trialing', 'free_forever'].includes(status);
+  const hasAccess = ['active', 'trialing'].includes(status);
 
   return { hasAccess, status };
 }

@@ -41,17 +41,12 @@ export function useSubscriptionGate(): SubscriptionGate {
 
         const { data: business } = await supabase
           .from('businesses')
-          .select('subscription_status, is_free_forever')
+          .select('subscription_status')
           .eq('owner_id', user.id)
           .single();
 
         if (business) {
-          // If free_forever, treat as active
-          if (business.is_free_forever) {
-            setSubscriptionStatus('free_forever');
-          } else {
-            setSubscriptionStatus(business.subscription_status);
-          }
+          setSubscriptionStatus(business.subscription_status);
         }
       } catch (error) {
         console.error('Error fetching subscription status:', error);
@@ -64,7 +59,7 @@ export function useSubscriptionGate(): SubscriptionGate {
   }, []);
 
   const isPreview = subscriptionStatus === 'preview';
-  const isActive = ['active', 'trialing', 'free_forever'].includes(
+  const isActive = ['active', 'trialing'].includes(
     subscriptionStatus || '',
   );
 

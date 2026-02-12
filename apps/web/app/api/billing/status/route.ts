@@ -116,14 +116,11 @@ export async function GET(request: Request) {
           staff: 5,
         };
 
-    const hasAccess =
-      ['active', 'trialing'].includes(subscription.status) ||
-      subscription.is_free_forever;
+    const hasAccess = ['active', 'trialing'].includes(subscription.status);
 
     return NextResponse.json({
       status: subscription.status,
       hasAccess,
-      isFreeForever: subscription.is_free_forever || false,
       plan: subscription.plan
         ? {
             id: subscription.plan.id,

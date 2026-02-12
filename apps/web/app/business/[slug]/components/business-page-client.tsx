@@ -42,6 +42,7 @@ interface BusinessPageClientProps {
   services: PublicService[];
   addons: PublicAddon[];
   slug: string;
+  hasBooking: boolean;
 }
 
 // ============================================
@@ -117,6 +118,7 @@ export function BusinessPageClient({
   services,
   addons,
   slug,
+  hasBooking,
 }: BusinessPageClientProps) {
   const [mounted, setMounted] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -199,7 +201,7 @@ export function BusinessPageClient({
 
               {/* Action Buttons - Yellow CTA, Maroon Outline */}
               <div className="flex flex-wrap gap-3 mt-2">
-                {business.business_type !== 'retail' && (
+                {hasBooking && (
                   <Button
                     size="lg"
                     className="bg-secondary text-secondary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold"
@@ -409,7 +411,7 @@ export function BusinessPageClient({
       </div>
 
       {/* Booking Modal - New Full-Screen Design */}
-      {business.business_type !== 'retail' && <BookingModal
+      {hasBooking && <BookingModal
         open={bookingOpen}
         onOpenChange={setBookingOpen}
         business={{

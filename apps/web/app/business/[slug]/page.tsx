@@ -7,6 +7,7 @@ import {
   getPublicServices,
   getPublicAddons,
 } from '@/lib/services/public-business.service';
+import { checkModuleAccess } from '@/lib/feature-gate';
 import { BusinessPageClient } from './components/business-page-client';
 
 // Force dynamic rendering to always fetch fresh data from database
@@ -24,10 +25,12 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     notFound();
   }
 
+  const { allowed: hasBooking } = await checkModuleAccess(business.id, 'booking');
+
   const [availability, services, addons] = await Promise.all([
     getPublicAvailability(business.id),
-    getPublicServices(business.id),
-    getPublicAddons(business.id),
+    hasBooking ? getPublicServices(business.id) : Promise.resolve([]),
+    hasBooking ? getPublicAddons(business.id) : Promise.resolve([]),
   ]);
 
   return (
@@ -37,6 +40,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       services={services}
       addons={addons}
       slug={slug}
+      hasBooking={hasBooking}
     />
   );
 }

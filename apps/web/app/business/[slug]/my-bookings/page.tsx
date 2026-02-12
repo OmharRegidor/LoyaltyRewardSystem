@@ -2,6 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
+import { checkModuleAccess } from '@/lib/feature-gate';
 import { MyBookingsClient } from './my-bookings-client';
 
 interface MyBookingsPageProps {
@@ -12,7 +13,12 @@ export default async function MyBookingsPage({ params }: MyBookingsPageProps) {
   const { slug } = await params;
   const business = await getBusinessBySlug(slug);
 
-  if (!business || business.business_type === 'retail') {
+  if (!business) {
+    notFound();
+  }
+
+  const { allowed: hasBooking } = await checkModuleAccess(business.id, 'booking');
+  if (!hasBooking) {
     notFound();
   }
 

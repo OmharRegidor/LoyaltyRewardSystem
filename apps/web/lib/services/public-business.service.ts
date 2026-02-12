@@ -112,7 +112,7 @@ export async function getBusinessBySlug(
     `
     )
     .eq('slug', slug)
-    .in('subscription_status', ['active', 'trialing', 'free_forever'])
+    .in('subscription_status', ['active', 'trialing'])
     .single();
 
   if (error || !data) {

@@ -46,12 +46,6 @@ export const SUBSCRIPTION_STATUS_COPY = {
       'Your subscription has ended. Subscribe again to regain access to all features.',
     cta: 'Resubscribe',
   },
-  free_forever: {
-    title: 'Partner Access',
-    description:
-      'You have unlimited access to NoxaLoyalty as a valued partner.',
-    cta: null,
-  },
 } as const;
 
 // ============================================

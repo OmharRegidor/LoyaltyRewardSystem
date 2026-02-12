@@ -17,7 +17,7 @@ import {
 interface MobileNavProps {
   slug: string;
   businessName: string;
-  businessType: string | null;
+  hasBooking: boolean;
 }
 
 const navItems = [
@@ -27,12 +27,12 @@ const navItems = [
   { label: 'Get Card', path: '/card', icon: CreditCard },
 ];
 
-export function MobileNav({ slug, businessName, businessType }: MobileNavProps) {
+export function MobileNav({ slug, businessName, hasBooking }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const basePath = `/business/${slug}`;
 
-  const filteredNavItems = businessType === 'retail'
+  const filteredNavItems = !hasBooking
     ? navItems.filter((item) => item.path !== '/my-bookings')
     : navItems;
 
