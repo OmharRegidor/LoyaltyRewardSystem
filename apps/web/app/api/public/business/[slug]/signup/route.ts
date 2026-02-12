@@ -22,6 +22,10 @@ const SelfSignupSchema = z.object({
     .string()
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
+  email: z
+    .string()
+    .email('Invalid email address')
+    .min(1, 'Email is required'),
 });
 
 // ============================================
@@ -137,13 +141,14 @@ export async function POST(
       );
     }
 
-    const { fullName, phone } = validation.data;
+    const { fullName, phone, email } = validation.data;
 
     // 4. Create or find customer
     const result = await createSelfSignupCustomer(
       business.id,
       fullName,
-      phone
+      phone,
+      email,
     );
 
     // 5. Fetch customer data for response (non-critical)

@@ -22,6 +22,10 @@ const SelfSignupSchema = z.object({
     .string()
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
+  email: z
+    .string()
+    .email('Invalid email address')
+    .min(1, 'Email is required'),
 });
 
 type SelfSignupInput = z.infer<typeof SelfSignupSchema>;
@@ -62,6 +66,7 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
     defaultValues: {
       fullName: '',
       phone: '',
+      email: '',
     },
   });
 
@@ -140,7 +145,7 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
         </div>
 
         {/* Phone */}
-        <div className="mb-6">
+        <div className="mb-4">
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
             Phone Number <span className="text-red-500">*</span>
           </label>
@@ -162,6 +167,24 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
           />
           {errors.phone && (
             <p className="mt-1 text-sm text-red-500">{errors.phone.message}</p>
+          )}
+        </div>
+
+        {/* Email (Optional) */}
+        <div className="mb-6">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email <span className="text-red-500">*</span>
+          </label>
+          <input
+            {...register('email')}
+            type="email"
+            id="email"
+            placeholder="juan@email.com"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+            disabled={isSubmitting}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
           )}
         </div>
 
