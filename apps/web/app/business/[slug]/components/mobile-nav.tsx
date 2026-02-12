@@ -17,6 +17,7 @@ import {
 interface MobileNavProps {
   slug: string;
   businessName: string;
+  businessType: string | null;
 }
 
 const navItems = [
@@ -26,10 +27,14 @@ const navItems = [
   { label: 'Get Card', path: '/card', icon: CreditCard },
 ];
 
-export function MobileNav({ slug, businessName }: MobileNavProps) {
+export function MobileNav({ slug, businessName, businessType }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const basePath = `/business/${slug}`;
+
+  const filteredNavItems = businessType === 'retail'
+    ? navItems.filter((item) => item.path !== '/my-bookings')
+    : navItems;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -44,7 +49,7 @@ export function MobileNav({ slug, businessName }: MobileNavProps) {
           <SheetTitle>{businessName}</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-2 mt-6">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const href = `${basePath}${item.path}`;
             const isActive = pathname === href;
             const Icon = item.icon;

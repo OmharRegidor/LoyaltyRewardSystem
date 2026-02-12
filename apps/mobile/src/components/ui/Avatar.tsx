@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   fallback: {
-    backgroundColor: '#F97316', // Orange color like in screenshot
+    backgroundColor: '#C46B02',
     alignItems: 'center',
     justifyContent: 'center',
   },

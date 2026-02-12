@@ -40,7 +40,7 @@ function getStatusConfig(status: CustomerRedemption['status']) {
       return {
         label: 'Cancelled',
         bgColor: '#FFF3E8',
-        textColor: '#F59E0B',
+        textColor: '#C46B02',
       };
     default:
       return {

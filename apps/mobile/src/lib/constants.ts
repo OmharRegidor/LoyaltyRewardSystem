@@ -5,47 +5,41 @@
 // ============================================
 
 export const COLORS = {
-  // Primary gradient (purple to blue)
-  primary: '#6366f1',
-  primaryDark: '#4f46e5',
-  secondary: '#06b6d4',
-
-  // Gradient colors for header
-  gradient: {
-    start: '#8B5CF6',
-    middle: '#6366F1',
-    end: '#3B82F6',
-  },
+  // Primary red
+  primary: '#7F0404',
+  primaryDark: '#5E0303',
+  secondary: '#FDDE54',
+  accent: '#C46B02',
 
   // Status colors
   success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
+  warning: '#FDDE54',
+  error: '#cf2c2c',
 
   // Accent
-  gold: '#F59E0B',
+  gold: '#FDDE54',
 
   // Neutrals
   white: '#ffffff',
   black: '#000000',
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
+    50: '#fafafa',
+    100: '#f5f5f5',
+    200: '#e5e5e5',
+    300: '#d4d4d4',
+    400: '#a3a3a3',
+    500: '#737373',
+    600: '#525252',
+    700: '#404040',
+    800: '#333333',
+    900: '#262626',
   },
 
   // Dark mode
   dark: {
-    background: '#0a0a0a',
-    card: '#1a1a1a',
-    border: '#262626',
+    background: '#262626',
+    card: '#333333',
+    border: '#4d4d4d',
   },
 } as const;
 

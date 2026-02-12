@@ -199,16 +199,18 @@ export function BusinessPageClient({
 
               {/* Action Buttons - Yellow CTA, Maroon Outline */}
               <div className="flex flex-wrap gap-3 mt-2">
-                <Button
-                  size="lg"
-                  className="bg-secondary text-secondary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold"
-                  onClick={() => setBookingOpen(true)}
-                  disabled={services.length === 0}
-                >
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Book Now
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                {business.business_type !== 'retail' && (
+                  <Button
+                    size="lg"
+                    className="bg-secondary text-secondary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold"
+                    onClick={() => setBookingOpen(true)}
+                    disabled={services.length === 0}
+                  >
+                    <Calendar className="mr-2 h-5 w-5" />
+                    Book Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   asChild
@@ -407,7 +409,7 @@ export function BusinessPageClient({
       </div>
 
       {/* Booking Modal - New Full-Screen Design */}
-      <BookingModal
+      {business.business_type !== 'retail' && <BookingModal
         open={bookingOpen}
         onOpenChange={setBookingOpen}
         business={{
@@ -460,7 +462,7 @@ export function BusinessPageClient({
           })),
         }))}
         availability={availability}
-      />
+      />}
     </div>
   );
 }

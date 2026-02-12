@@ -146,37 +146,68 @@ export async function POST(
       phone
     );
 
-    // 5. Fetch customer data for response
-    const { data: customerData } = await serviceClient
-      .from('customers')
-      .select('tier, total_points')
-      .eq('id', result.customerId)
-      .single();
+    // 5. Fetch customer data for response (non-critical)
+    let tier = 'bronze';
+    let totalPoints = 0;
+    let storedName = fullName;
 
-    // 6. Log audit event
-    await logAuditEvent(serviceClient, {
-      action: result.isNewCustomer
-        ? 'customer_self_signup'
-        : 'customer_self_signup_existing',
-      businessId: business.id,
-      details: {
-        customerId: result.customerId,
-        isNewCustomer: result.isNewCustomer,
-        processingTimeMs: Date.now() - startTime,
-        ipAddress,
-        userAgent,
-      },
-    });
+    try {
+      const { data: customerData, error: fetchError } = await serviceClient
+        .from('customers')
+        .select('tier, total_points, full_name')
+        .eq('id', result.customerId)
+        .single();
+
+      if (!fetchError && customerData) {
+        tier = customerData.tier || 'bronze';
+        totalPoints = customerData.total_points || 0;
+        storedName = customerData.full_name || fullName;
+      }
+    } catch (fetchErr) {
+      console.error('Failed to fetch customer data after signup:', fetchErr);
+    }
+
+    // 5b. Reject if existing customer's name doesn't match
+    if (!result.isNewCustomer) {
+      const normalizedInput = fullName.trim().toLowerCase();
+      const normalizedStored = storedName.trim().toLowerCase();
+
+      if (normalizedInput !== normalizedStored) {
+        return NextResponse.json(
+          { error: 'This phone number is already registered. Use "View My Card" to access your existing card.' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 6. Log audit event (non-critical)
+    try {
+      await logAuditEvent(serviceClient, {
+        action: result.isNewCustomer
+          ? 'customer_self_signup'
+          : 'customer_self_signup_existing',
+        businessId: business.id,
+        details: {
+          customerId: result.customerId,
+          isNewCustomer: result.isNewCustomer,
+          processingTimeMs: Date.now() - startTime,
+          ipAddress,
+          userAgent,
+        },
+      });
+    } catch (auditErr) {
+      console.error('Failed to log audit event:', auditErr);
+    }
 
     // 7. Return success response with card data
     return NextResponse.json({
       success: true,
       data: {
         isNewCustomer: result.isNewCustomer,
-        customerName: fullName,
+        customerName: result.isNewCustomer ? fullName : storedName,
         qrCodeUrl: result.qrCodeUrl,
-        tier: customerData?.tier || 'bronze',
-        totalPoints: customerData?.total_points || 0,
+        tier,
+        totalPoints,
       },
     });
   } catch (error) {

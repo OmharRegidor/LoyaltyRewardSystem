@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, Redirect, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
@@ -226,14 +226,9 @@ function CustomTabBar() {
               activeOpacity={0.8}
               style={styles.centerButtonContainer}
             >
-              <LinearGradient
-                colors={['#60A5FA', '#818CF8', '#A78BFA']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.centerButton}
-              >
+              <View style={[styles.centerButton, { backgroundColor: '#C46B02' }]}>
                 <EarnIcon size={28} />
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           );
         }
@@ -247,7 +242,7 @@ function CustomTabBar() {
             activeOpacity={0.7}
             style={styles.tabItem}
           >
-            <IconComponent color={active ? '#7C5DFA' : '#B0B6C5'} size={24} />
+            <IconComponent color={active ? '#7F0404' : '#a3a3a3'} size={24} />
             <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
               {tab.label}
             </Text>
@@ -356,11 +351,11 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#B0B6C5',
+    color: '#a3a3a3',
     marginTop: 6,
   },
   tabLabelActive: {
-    color: '#7C5DFA',
+    color: '#7F0404',
   },
   centerButtonContainer: {
     flex: 1,
@@ -374,7 +369,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#7C5DFA',
+    shadowColor: '#C46B02',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

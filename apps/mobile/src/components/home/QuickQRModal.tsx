@@ -10,7 +10,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import {
@@ -49,12 +49,7 @@ export function QuickQRModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <LinearGradient
-          colors={['#6366F1', '#8B5CF6', '#A855F7']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.container, { paddingTop: insets.top + 10 }]}
-        >
+        <View style={[styles.container, { paddingTop: insets.top + 10, backgroundColor: COLORS.primary }]}>
           {/* Close Button */}
           <TouchableOpacity
             onPress={onClose}
@@ -146,7 +141,7 @@ export function QuickQRModal({
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
       </View>
     </Modal>
   );
@@ -247,7 +242,7 @@ const styles = StyleSheet.create({
   pointsValue: {
     fontSize: FONT_SIZE.sm,
     fontWeight: '700',
-    color: COLORS.white,
+    color: COLORS.gray[900],
   },
   instructions: {
     marginTop: SPACING.lg,

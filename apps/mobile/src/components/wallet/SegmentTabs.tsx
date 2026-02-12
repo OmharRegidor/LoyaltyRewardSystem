@@ -6,9 +6,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, FONT_SIZE, SHADOWS } from '../../lib/constants';
 import type { WalletTab } from '../../types/wallet.types';
 
@@ -28,14 +26,9 @@ export function SegmentTabs({ activeTab, onTabChange }: SegmentTabsProps) {
           activeOpacity={0.8}
         >
           {activeTab === 'transactions' ? (
-            <LinearGradient
-              colors={['#6366F1', '#8B5CF6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.activeTab}
-            >
+            <View style={[styles.activeTab, { backgroundColor: COLORS.primary }]}>
               <Text style={styles.activeTabText}>Transactions</Text>
-            </LinearGradient>
+            </View>
           ) : (
             <View style={styles.inactiveTab}>
               <Text style={styles.inactiveTabText}>Transactions</Text>
@@ -50,14 +43,9 @@ export function SegmentTabs({ activeTab, onTabChange }: SegmentTabsProps) {
           activeOpacity={0.8}
         >
           {activeTab === 'rewards' ? (
-            <LinearGradient
-              colors={['#6366F1', '#8B5CF6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.activeTab}
-            >
+            <View style={[styles.activeTab, { backgroundColor: COLORS.primary }]}>
               <Text style={styles.activeTabText}>My Rewards</Text>
-            </LinearGradient>
+            </View>
           ) : (
             <View style={styles.inactiveTab}>
               <Text style={styles.inactiveTabText}>My Rewards</Text>
@@ -86,6 +74,8 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   activeTab: {
     paddingVertical: 14,

@@ -60,15 +60,17 @@ export default async function BusinessLayout({
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               <NavLink href={`/business/${slug}`}>About</NavLink>
-              <NavLink href={`/business/${slug}/my-bookings`}>
-                My Bookings
-              </NavLink>
+              {business.business_type !== 'retail' && (
+                <NavLink href={`/business/${slug}/my-bookings`}>
+                  My Bookings
+                </NavLink>
+              )}
               <NavLink href={`/business/${slug}/rewards`}>Rewards</NavLink>
               <NavLink href={`/business/${slug}/card`}>Get Card</NavLink>
             </nav>
 
             {/* Mobile Navigation */}
-            <MobileNav slug={slug} businessName={business.name} />
+            <MobileNav slug={slug} businessName={business.name} businessType={business.business_type} />
           </div>
         </div>
       </header>

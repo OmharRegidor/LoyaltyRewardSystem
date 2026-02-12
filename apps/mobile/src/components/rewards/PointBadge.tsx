@@ -45,10 +45,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   star: {
-    color: COLORS.white,
+    color: COLORS.gray[900],
   },
   points: {
-    color: COLORS.white,
+    color: COLORS.gray[900],
     fontWeight: '700',
   },
 });

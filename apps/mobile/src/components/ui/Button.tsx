@@ -10,7 +10,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -84,21 +84,19 @@ export function Button({
         activeOpacity={0.8}
         style={[fullWidth && styles.fullWidth, style]}
       >
-        <LinearGradient
-          colors={isDisabled ? [COLORS.gray[300], COLORS.gray[400]] : [COLORS.primary, COLORS.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+        <View
           style={[
             styles.base,
             {
               height: currentSize.height,
               paddingHorizontal: currentSize.paddingHorizontal,
+              backgroundColor: isDisabled ? COLORS.gray[300] : COLORS.primary,
             },
             SHADOWS.md,
           ]}
         >
           {renderContent()}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   }

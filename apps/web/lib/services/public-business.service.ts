@@ -483,14 +483,19 @@ export async function createSelfSignupCustomer(
     let cardToken = existingCustomer.card_token;
 
     if (!cardToken) {
-      cardToken = generateCardToken(existingCustomer.id);
-      await supabase
-        .from('customers')
-        .update({
-          card_token: cardToken,
-          card_token_created_at: new Date().toISOString(),
-        })
-        .eq('id', existingCustomer.id);
+      try {
+        cardToken = generateCardToken(existingCustomer.id);
+        await supabase
+          .from('customers')
+          .update({
+            card_token: cardToken,
+            card_token_created_at: new Date().toISOString(),
+          })
+          .eq('id', existingCustomer.id);
+      } catch (tokenErr) {
+        console.error('Failed to generate card token for existing customer:', existingCustomer.id, tokenErr);
+        cardToken = '';
+      }
     }
 
     // Update email if provided and customer doesn't have one
@@ -547,11 +552,16 @@ export async function createSelfSignupCustomer(
 
     let fallbackCardToken = existing.card_token;
     if (!fallbackCardToken) {
-      fallbackCardToken = generateCardToken(existing.id);
-      await supabase
-        .from('customers')
-        .update({ card_token: fallbackCardToken, card_token_created_at: new Date().toISOString() })
-        .eq('id', existing.id);
+      try {
+        fallbackCardToken = generateCardToken(existing.id);
+        await supabase
+          .from('customers')
+          .update({ card_token: fallbackCardToken, card_token_created_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } catch (tokenErr) {
+        console.error('Failed to generate card token for race-condition customer:', existing.id, tokenErr);
+        fallbackCardToken = '';
+      }
     }
 
     return {
@@ -563,16 +573,19 @@ export async function createSelfSignupCustomer(
     };
   }
 
-  const cardToken = generateCardToken(newCustomer.id);
-
-  // Update with card token
-  await supabase
-    .from('customers')
-    .update({
-      card_token: cardToken,
-      card_token_created_at: new Date().toISOString(),
-    })
-    .eq('id', newCustomer.id);
+  let cardToken = '';
+  try {
+    cardToken = generateCardToken(newCustomer.id);
+    await supabase
+      .from('customers')
+      .update({
+        card_token: cardToken,
+        card_token_created_at: new Date().toISOString(),
+      })
+      .eq('id', newCustomer.id);
+  } catch (tokenErr) {
+    console.error('Failed to generate card token for new customer:', newCustomer.id, tokenErr);
+  }
 
   return {
     customerId: newCustomer.id,

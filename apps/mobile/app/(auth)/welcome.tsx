@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   SafeAreaView,
   Alert,
-  Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
 import { GoogleSignInButton } from '../../src/components/auth/GoogleSignInButton';
@@ -45,27 +45,21 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={[COLORS.gray[50], COLORS.white]}
-      style={styles.gradient}
-    >
+    <View style={[styles.gradient, { backgroundColor: COLORS.white }]}>
       <SafeAreaView style={styles.container}>
         {/* Header Section */}
         <View style={styles.header}>
-          {/* Logo/Icon Area */}
+          {/* Logo */}
           <View style={styles.logoContainer}>
-            <LinearGradient
-              colors={[COLORS.primary, COLORS.secondary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.logoGradient}
-            >
-              <Text style={styles.logoText}>✦</Text>
-            </LinearGradient>
+            <Image
+              source={require('../../assets/images/logoloyalty.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Welcome Text */}
-          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.title}>Welcome to NoxaLoyalty</Text>
           <Text style={styles.subtitle}>
             Earn rewards with every purchase.{'\n'}
             Scan, collect, and redeem.
@@ -96,7 +90,7 @@ export default function WelcomeScreen() {
           </Text>
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -125,21 +119,9 @@ const styles = StyleSheet.create({
   logoContainer: {
     marginBottom: SPACING.xl,
   },
-  logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: BORDER_RADIUS.xl,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  logoText: {
-    fontSize: 40,
-    color: COLORS.white,
+  logoImage: {
+    width: 90,
+    height: 90,
   },
   title: {
     fontSize: FONT_SIZE['2xl'],

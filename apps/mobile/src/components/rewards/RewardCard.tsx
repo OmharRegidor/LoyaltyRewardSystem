@@ -9,7 +9,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { Ionicons } from '@expo/vector-icons';
 import {
   COLORS,
@@ -108,12 +108,9 @@ function RewardCardComponent({
             resizeMode="cover"
           />
         ) : (
-          <LinearGradient
-            colors={[COLORS.primary, COLORS.primaryDark]}
-            style={styles.imagePlaceholder}
-          >
+          <View style={[styles.imagePlaceholder, { backgroundColor: COLORS.primary }]}>
             <Ionicons name="gift" size={40} color={COLORS.white} />
-          </LinearGradient>
+          </View>
         )}
 
         {/* Tier Badge (top-left) */}

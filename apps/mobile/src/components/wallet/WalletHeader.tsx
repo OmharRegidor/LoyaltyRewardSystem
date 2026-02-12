@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -50,12 +50,7 @@ export function WalletHeader({
   const router = useRouter();
 
   return (
-    <LinearGradient
-      colors={['#9B6AFF', '#6EBDFF', '#21D4B7']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.container, { paddingTop: insets.top + 12 }]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top + 12, backgroundColor: COLORS.primary }]}>
       {/* Top Row - Back, Title, History */}
       <View style={styles.topRow}>
         <TouchableOpacity
@@ -81,7 +76,7 @@ export function WalletHeader({
           Lifetime earned: {lifetimePoints.toLocaleString()} pts
         </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 

@@ -37,6 +37,7 @@ interface SignupFormProps {
 
 interface CardData {
   customerName: string;
+  phone: string;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
@@ -85,6 +86,7 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
       // Show card modal with returned data
       setCardData({
         customerName: json.data.customerName,
+        phone: data.phone,
         qrCodeUrl: json.data.qrCodeUrl,
         tier: json.data.tier,
         totalPoints: json.data.totalPoints,
@@ -187,6 +189,7 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
           onClose={handleCloseModal}
           customerName={cardData.customerName}
           businessName={businessName}
+          phone={cardData.phone}
           qrCodeUrl={cardData.qrCodeUrl}
           tier={cardData.tier}
           totalPoints={cardData.totalPoints}

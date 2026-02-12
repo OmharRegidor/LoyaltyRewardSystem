@@ -12,7 +12,7 @@ export default async function MyBookingsPage({ params }: MyBookingsPageProps) {
   const { slug } = await params;
   const business = await getBusinessBySlug(slug);
 
-  if (!business) {
+  if (!business || business.business_type === 'retail') {
     notFound();
   }
 

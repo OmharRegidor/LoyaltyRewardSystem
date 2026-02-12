@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SHADOWS } from '../../lib/constants';
 
 interface RedeemButtonProps {
@@ -42,18 +42,13 @@ export function RedeemButton({
       disabled={isDisabled}
       activeOpacity={0.8}
     >
-      <LinearGradient
-        colors={['#F59E0B', '#D97706']} // Amber/orange gradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.button, styles.buttonEnabled]}
-      >
+      <View style={[styles.button, styles.buttonEnabled, { backgroundColor: COLORS.primary }]}>
         {loading ? (
           <ActivityIndicator size="small" color={COLORS.white} />
         ) : (
           <Text style={styles.text}>Redeem Now</Text>
         )}
-      </LinearGradient>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -67,7 +62,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   buttonEnabled: {
-    shadowColor: '#F59E0B',
+    shadowColor: '#7F0404',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

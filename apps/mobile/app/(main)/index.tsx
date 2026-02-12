@@ -8,7 +8,7 @@ import {
   StatusBar,
   RefreshControl,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -64,17 +64,8 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Gradient Header Background */}
-        <LinearGradient
-          colors={[
-            COLORS.gradient.start,
-            COLORS.gradient.middle,
-            COLORS.gradient.end,
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.gradientHeader, { paddingTop: insets.top }]}
-        >
+        {/* Header Background */}
+        <View style={[styles.gradientHeader, { paddingTop: insets.top, backgroundColor: COLORS.primary }]}>
           {/* Header with Welcome + Avatar */}
           <HeaderSection
             name={displayName}
@@ -84,7 +75,7 @@ export default function HomeScreen() {
 
           {/* Points Balance + Tier Progress */}
           <BalanceCard points={points} lifetimePoints={lifetimePoints} />
-        </LinearGradient>
+        </View>
 
         {/* White Content Area */}
         <View style={styles.contentArea}>

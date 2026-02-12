@@ -27,7 +27,7 @@ const ACTIONS: ActionItem[] = [
     label: 'Find Stores',
     sublabel: 'Map View',
     route: '/stores',
-    color: '#6366F1',
+    color: '#7F0404',
   },
   {
     id: 'rewards',
@@ -43,7 +43,7 @@ const ACTIONS: ActionItem[] = [
     label: 'Referral',
     sublabel: 'Invite Friends',
     route: '/referral',
-    color: '#F59E0B',
+    color: '#C46B02',
   },
 ];
 
