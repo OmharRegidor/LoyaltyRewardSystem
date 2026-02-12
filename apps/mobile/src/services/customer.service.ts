@@ -33,6 +33,7 @@ interface UserProfile {
   id: string;
   email?: string;
   fullName?: string;
+  phone?: string;
 }
 
 // ============================================
@@ -78,6 +79,26 @@ export const customerService = {
   },
 
   /**
+   * Link OAuth user to existing customer by phone
+   * Returns the linked customer ID or null if no match found
+   */
+  async linkByPhone(userId: string, phone: string): Promise<string | null> {
+    const { data, error } = await supabase.rpc(
+      'link_oauth_to_customer_by_phone',
+      {
+        p_user_id: userId,
+        p_phone: phone,
+      },
+    );
+
+    if (error) {
+      return null;
+    }
+
+    return data as string | null;
+  },
+
+  /**
    * Create new customer with profile data
    */
   async create(profile: UserProfile): Promise<Customer> {
@@ -91,7 +112,7 @@ export const customerService = {
         total_points: 0,
         lifetime_points: 0,
         tier: 'bronze',
-        qr_code_url: `NoxaLoyalty://customer/${nanoid(12)}`,
+        qr_code_url: `NoxaLoyalty://customer/${nanoid(16)}`,
       })
       .select(CUSTOMER_COLUMNS)
       .single();
@@ -171,6 +192,24 @@ export const customerService = {
           });
 
           return linkedCustomer;
+        }
+      }
+    }
+
+    // Step 2b: Try to link by phone (for self-signup customers without email)
+    if (profile.phone) {
+      const phoneLinkedId = await this.linkByPhone(profile.id, profile.phone);
+
+      if (phoneLinkedId) {
+        const phoneLinkedCustomer = await this.getByUserId(profile.id);
+
+        if (phoneLinkedCustomer) {
+          await this.updateProfile(phoneLinkedCustomer.id, {
+            fullName: phoneLinkedCustomer.full_name || profile.fullName,
+            email: phoneLinkedCustomer.email || profile.email,
+          });
+
+          return phoneLinkedCustomer;
         }
       }
     }

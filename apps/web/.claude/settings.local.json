@@ -5,7 +5,9 @@
       "Bash(git diff:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: redesign loyalty card as flippable card with realistic styling\n\nFront face shows business name and tier banner; back face features\nmagnetic stripe with realistic spacing, initials avatar, customer\ndetails, and QR code in a side-by-side layout.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git show:*)"
     ]
   }
 }

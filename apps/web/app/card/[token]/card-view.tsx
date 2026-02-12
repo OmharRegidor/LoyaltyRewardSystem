@@ -53,6 +53,7 @@ interface CardViewProps {
   token: string;
   rewards: Reward[];
   transactions: Transaction[];
+  businessPoints: number;
 }
 
 type TabType = 'card' | 'rewards' | 'history';
@@ -89,7 +90,7 @@ const TIER_STYLES: Record<string, { bg: string; text: string; badge: string }> =
 // COMPONENT
 // ============================================
 
-export function CardView({ customer, token, rewards, transactions }: CardViewProps) {
+export function CardView({ customer, token, rewards, transactions, businessPoints }: CardViewProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('card');
   const tierStyle = TIER_STYLES[customer.tier] || TIER_STYLES.bronze;
@@ -178,8 +179,13 @@ export function CardView({ customer, token, rewards, transactions }: CardViewPro
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-white">
                 <Star className="w-3 h-3 inline mr-1" />
-                {customer.totalPoints.toLocaleString()} pts
+                {customer.business ? `${businessPoints.toLocaleString()} pts at ${customer.business.name}` : `${customer.totalPoints.toLocaleString()} pts`}
               </span>
+              {customer.business && customer.totalPoints !== businessPoints && (
+                <span className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-white/70">
+                  {customer.totalPoints.toLocaleString()} pts total
+                </span>
+              )}
             </div>
           </div>
 

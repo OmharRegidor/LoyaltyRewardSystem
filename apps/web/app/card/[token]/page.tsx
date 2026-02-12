@@ -40,6 +40,7 @@ interface CardPageData {
   customer: CustomerData;
   rewards: PublicReward[];
   transactions: PublicTransaction[];
+  businessPoints: number;
 }
 
 // ============================================
@@ -134,7 +135,18 @@ async function getCardPageData(token: string): Promise<CardPageData | null> {
     transactions = transactionsResult;
   }
 
-  return { customer, rewards, transactions };
+  // Compute business-scoped points from transactions
+  let businessPoints = 0;
+  for (const tx of transactions) {
+    if (tx.type === 'earn' || tx.type === 'adjust') {
+      businessPoints += tx.points;
+    } else if (tx.type === 'redeem' || tx.type === 'expire') {
+      businessPoints -= Math.abs(tx.points);
+    }
+  }
+  businessPoints = Math.max(0, businessPoints);
+
+  return { customer, rewards, transactions, businessPoints };
 }
 
 // ============================================
@@ -161,6 +173,7 @@ export default async function CardPage({ params }: PageProps) {
       token={token}
       rewards={data.rewards}
       transactions={data.transactions}
+      businessPoints={data.businessPoints}
     />
   );
 }

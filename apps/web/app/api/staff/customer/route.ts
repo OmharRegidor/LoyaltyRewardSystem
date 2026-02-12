@@ -289,6 +289,17 @@ export async function POST(request: NextRequest) {
         .eq('id', customerId);
     }
 
+    // 5b. Link customer to business
+    await serviceClient
+      .from('customer_businesses')
+      .upsert(
+        {
+          customer_id: customerId,
+          business_id: staffInfo.business.id,
+        },
+        { onConflict: 'customer_id,business_id' },
+      );
+
     // 6. Generate QR code image
     const qrCodeDataUrl = await generateQRCodeDataUrl(qrCodeUrl);
 

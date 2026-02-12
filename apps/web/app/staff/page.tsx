@@ -41,6 +41,7 @@ interface CustomerData {
   currentPoints: number;
   lifetimePoints: number;
   tier: TierKey;
+  isFirstVisit: boolean;
 }
 
 interface ScanResult {
@@ -318,7 +319,7 @@ export default function StaffScannerPage() {
       const { data: exactMatch } = await supabase
         .from('customers')
         .select(
-          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
+          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email, card_token, created_by_business_id',
         )
         .eq('qr_code_url', fullUrl)
         .maybeSingle();
@@ -327,29 +328,12 @@ export default function StaffScannerPage() {
         customerData = exactMatch;
       }
 
-      // Method 2: Partial match
-      if (!customerData) {
-        const shortCode = scannedCode.startsWith('NoxaLoyalty://customer/')
-          ? scannedCode.replace('NoxaLoyalty://customer/', '')
-          : scannedCode;
-
-        const { data: partialMatch } = await supabase
-          .from('customers')
-          .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
-          )
-          .ilike('qr_code_url', `%${shortCode}%`)
-          .maybeSingle();
-
-        if (partialMatch) customerData = partialMatch;
-      }
-
-      // Method 3: UUID match
+      // Method 2: UUID match (fallback for direct ID scans)
       if (!customerData && scannedCode.length === 36) {
         const { data: idMatch } = await supabase
           .from('customers')
           .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email',
+            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email, card_token, created_by_business_id',
           )
           .eq('id', scannedCode)
           .maybeSingle();
@@ -361,6 +345,53 @@ export default function StaffScannerPage() {
         setError('Customer not found. Please try again.');
         setScannerState('error');
         return;
+      }
+
+      // Lazy card token generation for mobile-created customers
+      if (!customerData.card_token && staffData) {
+        try {
+          const response = await fetch('/api/staff/customer/card-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customerId: customerData.id }),
+          });
+          if (response.ok) {
+            const result = await response.json();
+            customerData.card_token = result.cardToken;
+          }
+        } catch {
+          // Non-critical — card token can be generated later
+        }
+      }
+
+      // Set created_by_business_id if null (mobile-created customers)
+      if (!customerData.created_by_business_id && staffData) {
+        await supabase
+          .from('customers')
+          .update({ created_by_business_id: staffData.businessId })
+          .eq('id', customerData.id)
+          .is('created_by_business_id', null);
+      }
+
+      // Auto-link customer to business + detect first visit
+      let isFirstVisit = false;
+      if (staffData) {
+        const { data: existingLink } = await supabase
+          .from('customer_businesses')
+          .select('id')
+          .eq('customer_id', customerData.id)
+          .eq('business_id', staffData.businessId)
+          .maybeSingle();
+
+        if (!existingLink) {
+          isFirstVisit = true;
+          await supabase
+            .from('customer_businesses')
+            .insert({
+              customer_id: customerData.id,
+              business_id: staffData.businessId,
+            });
+        }
       }
 
       // Get customer name - prefer full_name from staff-created, then try user metadata
@@ -393,6 +424,7 @@ export default function StaffScannerPage() {
         currentPoints: customerData.total_points || 0,
         lifetimePoints: customerData.lifetime_points || 0,
         tier,
+        isFirstVisit,
       });
 
       setScannerState('customer-found');
@@ -935,6 +967,16 @@ export default function StaffScannerPage() {
                   </span>
                 </div>
               </div>
+
+              {/* First Visit Badge */}
+              {customer.isFirstVisit && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200 mb-2">
+                  <Sparkles className="w-5 h-5 text-green-600" />
+                  <span className="text-green-700 font-medium">
+                    First visit!
+                  </span>
+                </div>
+              )}
 
               {/* Tier Multiplier Info */}
               {tierInfo.multiplier > 1 && (

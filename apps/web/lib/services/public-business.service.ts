@@ -506,6 +506,14 @@ export async function createSelfSignupCustomer(
         .eq('id', existingCustomer.id);
     }
 
+    // Link customer to business
+    await supabase
+      .from('customer_businesses')
+      .upsert(
+        { customer_id: existingCustomer.id, business_id: businessId },
+        { onConflict: 'customer_id,business_id' },
+      );
+
     return {
       customerId: existingCustomer.id,
       isNewCustomer: false,
@@ -564,6 +572,14 @@ export async function createSelfSignupCustomer(
       }
     }
 
+    // Link customer to business (race-condition path)
+    await supabase
+      .from('customer_businesses')
+      .upsert(
+        { customer_id: existing.id, business_id: businessId },
+        { onConflict: 'customer_id,business_id' },
+      );
+
     return {
       customerId: existing.id,
       isNewCustomer: false,
@@ -586,6 +602,14 @@ export async function createSelfSignupCustomer(
   } catch (tokenErr) {
     console.error('Failed to generate card token for new customer:', newCustomer.id, tokenErr);
   }
+
+  // Link new customer to business
+  await supabase
+    .from('customer_businesses')
+    .upsert(
+      { customer_id: newCustomer.id, business_id: businessId },
+      { onConflict: 'customer_id,business_id' },
+    );
 
   return {
     customerId: newCustomer.id,
