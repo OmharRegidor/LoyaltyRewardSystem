@@ -4,30 +4,35 @@
 // BUSINESS TYPE ENUMS
 // ============================================
 
-export type BusinessType = 'retail' | 'restaurant' | 'salon' | 'hotel';
+export type BusinessType = "retail" | "restaurant" | "salon" | "hotel";
 
-export type PricingType = 'fixed' | 'per_hour' | 'per_session' | 'per_night' | 'starting_at';
+export type PricingType =
+  | "fixed"
+  | "per_hour"
+  | "per_session"
+  | "per_night"
+  | "starting_at";
 
-export type QuestionType = 'text' | 'select' | 'checkbox' | 'number';
+export type QuestionType = "text" | "select" | "checkbox" | "number";
 
 // ============================================
 // SERVICE CONFIG BY BUSINESS TYPE
 // ============================================
 
-export interface RetailConfig {
-  service_type: 'appointment' | 'pickup' | 'reservation';
-}
+export type RetailConfig = {
+  service_type: "appointment" | "pickup" | "reservation";
+};
 
-export interface RestaurantConfig {
-  service_type: 'table' | 'private_dining' | 'event';
+export type RestaurantConfig = {
+  service_type: "table" | "private_dining" | "event";
   party_size_min: number;
   party_size_max: number;
   slot_duration_minutes: number;
   time_interval_minutes: number;
-}
+};
 
-export interface HotelConfig {
-  service_type: 'accommodation' | 'tour' | 'activity';
+export type HotelConfig = {
+  service_type: "accommodation" | "tour" | "activity";
   extra_person_fee_centavos: number;
   capacity_base: number;
   capacity_max: number;
@@ -39,9 +44,13 @@ export interface HotelConfig {
   advance_booking_days: number;
   cutoff_hours: number;
   enable_diving_addons?: boolean;
-}
+};
 
-export type ServiceConfig = RetailConfig | RestaurantConfig | HotelConfig | Record<string, unknown>;
+export type ServiceConfig =
+  | RetailConfig
+  | RestaurantConfig
+  | HotelConfig
+  | Record<string, unknown>;
 
 // ============================================
 // PRICE VARIANTS
@@ -161,7 +170,12 @@ export interface AvailabilityFormData {
 // BOOKING TYPES
 // ============================================
 
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "no_show";
 
 export interface Booking {
   id: string;

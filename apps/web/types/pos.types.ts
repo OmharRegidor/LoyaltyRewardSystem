@@ -4,11 +4,11 @@
 // PAYMENT METHOD
 // ============================================
 
-export type PaymentMethod = 'cash';
+export type PaymentMethod = "cash" | "gcash" | "maya" | "card";
 
-export type DiscountType = 'percentage' | 'fixed';
+export type DiscountType = "percentage" | "fixed";
 
-export type SaleStatus = 'completed' | 'voided';
+export type SaleStatus = "completed" | "voided";
 
 // ============================================
 // PRODUCT TYPES
