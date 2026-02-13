@@ -78,6 +78,11 @@ export function TransactionCard({
         <Text style={styles.title} numberOfLines={1}>
           {transaction.title}
         </Text>
+        {transaction.description != null && (
+          <Text style={styles.description} numberOfLines={1}>
+            {transaction.description}
+          </Text>
+        )}
         <Text style={styles.timestamp}>
           {formatTime(transaction.created_at)}
         </Text>
@@ -138,6 +143,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.base,
     fontWeight: '600',
     color: COLORS.gray[900],
+  },
+  description: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.gray[500],
+    marginTop: 2,
   },
   timestamp: {
     fontSize: FONT_SIZE.xs,

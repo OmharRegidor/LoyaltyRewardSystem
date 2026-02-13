@@ -45,6 +45,7 @@ interface Transaction {
   type: 'earn' | 'redeem';
   points: number;
   description: string | null;
+  amountSpent: number | null;
   createdAt: string;
 }
 
@@ -148,7 +149,7 @@ export function CustomerDetailModal({
 
         const { data, error } = await supabase
           .from('transactions')
-          .select('id, type, points, description, created_at')
+          .select('id, type, points, description, created_at, amount_spent')
           .eq('customer_id', customerId)
           .order('created_at', { ascending: false })
           .range(offset, offset + ITEMS_PER_PAGE - 1);
@@ -168,6 +169,7 @@ export function CustomerDetailModal({
                 type: tx.type as 'earn' | 'redeem',
                 points: tx.points,
                 description: tx.description,
+                amountSpent: tx.amount_spent,
                 createdAt: tx.created_at,
               }))
           );
@@ -206,6 +208,7 @@ export function CustomerDetailModal({
               type: payload.new.type as 'earn' | 'redeem',
               points: payload.new.points as number,
               description: payload.new.description as string | null,
+              amountSpent: payload.new.amount_spent as number | null,
               createdAt: payload.new.created_at as string,
             };
 
@@ -356,6 +359,11 @@ export function CustomerDetailModal({
                                 ? 'Points earned'
                                 : 'Points redeemed')}
                           </p>
+                          {tx.amountSpent != null && tx.type === 'earn' && (
+                            <p className="text-xs text-gray-500">
+                              ₱{tx.amountSpent.toLocaleString()} purchase
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500">
                             {formatRelativeDate(tx.createdAt)}
                           </p>
