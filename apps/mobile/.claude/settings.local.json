@@ -26,7 +26,11 @@
       "Bash(git diff:*)",
       "Bash(git commit:*)",
       "Bash(find:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(~/.bashrc)",
+      "Bash(source ~/.bashrc)",
+      "Bash(adb reverse:*)",
+      "Bash(npm start)"
     ]
   }
 }

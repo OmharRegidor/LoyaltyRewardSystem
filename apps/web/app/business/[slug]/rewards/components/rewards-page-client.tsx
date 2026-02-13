@@ -96,7 +96,7 @@ export function RewardsPageClient({
           variants={containerVariants}
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-linear-to-br from-primary to-secondary text-white shadow-lg">
               <Gift className="h-7 w-7" />
             </div>
             <div>
@@ -119,7 +119,7 @@ export function RewardsPageClient({
             {rewards.map((reward) => (
               <motion.div key={reward.id} variants={cardVariants}>
                 <Card className="overflow-hidden flex flex-col h-full group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-primary rounded-2xl bg-white shadow-md border border-gray-100">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
 
                   {/* Reward Image */}
                   <div className="relative aspect-square bg-muted">
@@ -131,8 +131,8 @@ export function RewardsPageClient({
                         className="object-cover"
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                        <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10">
+                      <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-muted to-muted/50">
+                        <div className="p-4 rounded-2xl bg-linear-to-br from-primary/10 to-secondary/10">
                           <Gift className="h-12 w-12 text-primary/50" />
                         </div>
                       </div>
@@ -140,7 +140,7 @@ export function RewardsPageClient({
 
                     {/* Category Badge */}
                     {reward.category && (
-                      <Badge className="absolute top-3 left-3 capitalize bg-gradient-to-r from-primary/90 to-secondary/90 text-white border-0 shadow-md">
+                      <Badge className="absolute top-3 left-3 capitalize bg-linear-to-r from-primary/90 to-secondary/90 text-white border-0 shadow-md">
                         {reward.category}
                       </Badge>
                     )}
@@ -168,7 +168,7 @@ export function RewardsPageClient({
                   </CardHeader>
 
                   <CardContent className="pt-0 mt-auto relative">
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-linear-to-r from-primary/10 to-secondary/10 border border-primary/20">
                       <Star className="h-5 w-5 fill-primary text-primary" />
                       <span className="font-bold text-primary">
                         {reward.points_cost.toLocaleString()}
@@ -190,7 +190,7 @@ export function RewardsPageClient({
           >
             <Card className="bg-white text-center py-12 border-border/50 rounded-2xl">
               <CardContent>
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 mb-4">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/10 to-secondary/10 mb-4">
                   <Sparkles className="h-10 w-10 text-primary/60" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-gray-900">
@@ -212,10 +212,10 @@ export function RewardsPageClient({
           transition={{ delay: 0.4 }}
         >
           <Card className="mt-10 overflow-hidden border-t-4 border-t-primary border-border/50 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl bg-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-r from-primary/5 to-secondary/5 pointer-events-none" />
             <CardContent className="py-6 relative">
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+                <div className="p-3 sm:p-4 rounded-2xl bg-linear-to-br from-primary to-secondary text-white shadow-lg">
                   <Star className="h-7 w-7" />
                 </div>
                 <div className="text-center sm:text-left">
@@ -226,7 +226,7 @@ export function RewardsPageClient({
                     {business.points_per_purchase ? (
                       <>
                         Earn{' '}
-                        <span className="font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        <span className="font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                           {business.points_per_purchase} points
                         </span>{' '}
                         with every purchase
@@ -254,10 +254,10 @@ export function RewardsPageClient({
           transition={{ delay: 0.5 }}
         >
           <Card className="mt-4 overflow-hidden border-t-4 border-t-secondary border-border/50 group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-2xl bg-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-secondary/5 to-primary/5 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-r from-secondary/5 to-primary/5 pointer-events-none" />
             <CardContent className="py-6 relative">
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-secondary to-primary text-white shadow-lg">
+                <div className="p-3 sm:p-4 rounded-2xl bg-linear-to-br from-secondary to-primary text-white shadow-lg">
                   <Gift className="h-7 w-7" />
                 </div>
                 <div className="text-center sm:text-left">
