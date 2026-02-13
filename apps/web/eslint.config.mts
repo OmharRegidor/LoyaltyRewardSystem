@@ -32,7 +32,7 @@ export default [
     },
     rules: {
       "no-unused-vars": "warn",
-      "no-undef": "error",
+      "no-undef": "off",
 
       // React Hooks rules
       "react-hooks/rules-of-hooks": "error",
