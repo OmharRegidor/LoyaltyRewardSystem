@@ -76,6 +76,17 @@ export async function getOrCreateDefaultService(
   return await createServiceWithConfig(newServiceData);
 }
 
+// Normalize a raw service record from the DB so its `config` has the correct
+// Type (ServiceConfig | undefined) instead of the Supabase Json|null type.
+function normalizeServiceRecord(serviceRecord: any): Service {
+  if (!serviceRecord) return serviceRecord;
+
+  return {
+    ...serviceRecord,
+    config: serviceRecord.config === null ? undefined : (serviceRecord.config as ServiceConfig),
+  } as Service;
+}
+
 function getDefaultServiceName(businessType: BusinessType | null): string {
   switch (businessType) {
     case 'hotel':
@@ -176,7 +187,7 @@ export async function getServices(businessId: string): Promise<Service[]> {
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(normalizeServiceRecord) as Service[];
 }
 
 // ============================================
@@ -197,7 +208,7 @@ export async function getServiceById(id: string): Promise<Service | null> {
     return null;
   }
 
-  return data;
+  return data ? normalizeServiceRecord(data) : null;
 }
 
 // ============================================
@@ -229,7 +240,7 @@ export async function createService(
     throw error;
   }
 
-  return service;
+  return normalizeServiceRecord(service);
 }
 
 // ============================================
@@ -267,7 +278,7 @@ export async function updateService(
     throw error;
   }
 
-  return service;
+  return normalizeServiceRecord(service);
 }
 
 // ============================================
