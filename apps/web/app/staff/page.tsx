@@ -512,6 +512,13 @@ export default function StaffScannerPage() {
         description,
       });
 
+      // Update per-business points balance
+      await supabase.rpc('add_business_points', {
+        p_customer_id: customer.id,
+        p_business_id: staffData.businessId,
+        p_points: calculatedPoints.total,
+      });
+
       // Update stats
       setStats((prev) => ({
         scansToday: prev.scansToday + 1,

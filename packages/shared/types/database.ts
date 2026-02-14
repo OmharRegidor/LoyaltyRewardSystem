@@ -547,18 +547,21 @@ export type Database = {
           customer_id: string
           followed_at: string | null
           id: string
+          points: number
         }
         Insert: {
           business_id: string
           customer_id: string
           followed_at?: string | null
           id?: string
+          points?: number
         }
         Update: {
           business_id?: string
           customer_id?: string
           followed_at?: string | null
           id?: string
+          points?: number
         }
         Relationships: [
           {
@@ -952,6 +955,59 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          business_id: string
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price_centavos: number
+          sku: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price_centavos: number
+          sku?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price_centavos?: number
+          sku?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           action: string
@@ -1110,6 +1166,184 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          product_id: string | null
+          quantity: number
+          sale_id: string
+          total_centavos: number
+          unit_price_centavos: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          product_id?: string | null
+          quantity?: number
+          sale_id: string
+          total_centavos: number
+          unit_price_centavos: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          product_id?: string | null
+          quantity?: number
+          sale_id?: string
+          total_centavos?: number
+          unit_price_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          amount_tendered_centavos: number | null
+          branch_id: string | null
+          business_id: string
+          change_centavos: number | null
+          created_at: string | null
+          customer_id: string | null
+          discount_centavos: number
+          discount_reason: string | null
+          discount_type: string | null
+          id: string
+          notes: string | null
+          payment_method: string
+          payment_reference: string | null
+          points_earned: number | null
+          points_redeemed: number | null
+          reward_id: string | null
+          sale_number: string
+          staff_id: string | null
+          status: string
+          subtotal_centavos: number
+          total_centavos: number
+          updated_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_tendered_centavos?: number | null
+          branch_id?: string | null
+          business_id: string
+          change_centavos?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          discount_centavos?: number
+          discount_reason?: string | null
+          discount_type?: string | null
+          id?: string
+          notes?: string | null
+          payment_method: string
+          payment_reference?: string | null
+          points_earned?: number | null
+          points_redeemed?: number | null
+          reward_id?: string | null
+          sale_number: string
+          staff_id?: string | null
+          status?: string
+          subtotal_centavos?: number
+          total_centavos: number
+          updated_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_tendered_centavos?: number | null
+          branch_id?: string | null
+          business_id?: string
+          change_centavos?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          discount_centavos?: number
+          discount_reason?: string | null
+          discount_type?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          points_earned?: number | null
+          points_redeemed?: number | null
+          reward_id?: string | null
+          sale_number?: string
+          staff_id?: string | null
+          status?: string
+          subtotal_centavos?: number
+          total_centavos?: number
+          updated_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_voided_by_fkey"
+            columns: ["voided_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
@@ -1775,6 +2009,10 @@ export type Database = {
         Args: { p_token: string; p_user_id: string }
         Returns: Json
       }
+      add_business_points: {
+        Args: { p_business_id: string; p_customer_id: string; p_points: number }
+        Returns: undefined
+      }
       add_customer_points: {
         Args: { p_customer_id: string; p_points: number }
         Returns: undefined
@@ -1809,6 +2047,10 @@ export type Database = {
         Args: { p_business_id: string; p_column: string }
         Returns: undefined
       }
+      deduct_business_points: {
+        Args: { p_business_id: string; p_customer_id: string; p_points: number }
+        Returns: undefined
+      }
       deduct_customer_points: {
         Args: { p_customer_id: string; p_points: number }
         Returns: undefined
@@ -1833,6 +2075,7 @@ export type Database = {
         Args: { business_name: string }
         Returns: string
       }
+      generate_sale_number: { Args: { p_business_id: string }; Returns: string }
       generate_slug: { Args: { name: string }; Returns: string }
       get_customer_tier: {
         Args: { p_lifetime_points: number }
@@ -1880,6 +2123,10 @@ export type Database = {
       }
       link_oauth_to_customer: {
         Args: { p_email: string; p_user_id: string }
+        Returns: string
+      }
+      link_oauth_to_customer_by_phone: {
+        Args: { p_phone: string; p_user_id: string }
         Returns: string
       }
       recalculate_usage_counts: {

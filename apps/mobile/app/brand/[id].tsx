@@ -42,6 +42,7 @@ export default function BrandDetailScreen() {
     redeemingId,
     isLocked,
     userPoints,
+    businessPoints,
     userTier,
     refresh,
   } = useBrandRewards(id);
@@ -158,6 +159,14 @@ export default function BrandDetailScreen() {
             {brand.description ? (
               <Text style={styles.description}>{brand.description}</Text>
             ) : null}
+
+            {/* Per-business points balance */}
+            <View style={styles.pointsBadge}>
+              <Ionicons name="wallet-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.pointsBadgeText}>
+                You have {businessPoints.toLocaleString()} pts at this store
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -273,6 +282,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: SPACING.sm,
     paddingHorizontal: SPACING.lg,
+  },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.primary + '10',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    marginTop: SPACING.sm,
+  },
+  pointsBadgeText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   section: {
     paddingHorizontal: SPACING.lg,

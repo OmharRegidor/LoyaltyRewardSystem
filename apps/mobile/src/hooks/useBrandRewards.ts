@@ -31,14 +31,14 @@ export function useBrandRewards(businessId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [businessPoints, setBusinessPoints] = useState<number>(0);
 
   const fetchBrandData = useCallback(async (): Promise<void> => {
     try {
-      const [brandResult, rewardsResult] = await Promise.all([
-        supabase
-          .from('businesses')
-          .select(
-            `
+      const brandQuery = supabase
+        .from('businesses')
+        .select(
+          `
             id,
             name,
             logo_url,
@@ -46,13 +46,14 @@ export function useBrandRewards(businessId: string) {
             points_per_purchase,
             branches (id, name, address, city, phone, is_active)
           `,
-          )
-          .eq('id', businessId)
-          .single(),
-        supabase
-          .from('rewards')
-          .select(
-            `
+        )
+        .eq('id', businessId)
+        .single();
+
+      const rewardsQuery = supabase
+        .from('rewards')
+        .select(
+          `
             id,
             business_id,
             title,
@@ -69,12 +70,28 @@ export function useBrandRewards(businessId: string) {
             created_at,
             businesses (id, name, logo_url, branches (id, name, address, city))
           `,
-          )
-          .eq('business_id', businessId)
-          .eq('is_active', true)
-          .eq('is_visible', true)
-          .order('points_cost', { ascending: true }),
+        )
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .eq('is_visible', true)
+        .order('points_cost', { ascending: true });
+
+      const [brandResult, rewardsResult] = await Promise.all([
+        brandQuery,
+        rewardsQuery,
       ]);
+
+      // Fetch per-business points balance
+      if (customer?.id) {
+        const { data: cbRow } = await supabase
+          .from('customer_businesses')
+          .select('points')
+          .eq('customer_id', customer.id)
+          .eq('business_id', businessId)
+          .maybeSingle();
+
+        setBusinessPoints(cbRow?.points ?? 0);
+      }
 
       if (brandResult.error) throw new Error(brandResult.error.message);
       if (rewardsResult.error) throw new Error(rewardsResult.error.message);
@@ -102,7 +119,7 @@ export function useBrandRewards(businessId: string) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [businessId]);
+  }, [businessId, customer?.id]);
 
   useEffect(() => {
     fetchBrandData();
@@ -128,12 +145,12 @@ export function useBrandRewards(businessId: string) {
 
   const canRedeem = useCallback(
     (reward: Reward): boolean => {
-      const hasPoints = points >= reward.points_cost;
+      const hasPoints = businessPoints >= reward.points_cost;
       const inStock = reward.stock === -1 || reward.stock > 0;
       const hasTier = canAccessReward(userTier, reward.tier_required);
       return hasPoints && inStock && hasTier;
     },
-    [points, userTier],
+    [businessPoints, userTier],
   );
 
   const isLocked = useCallback(
@@ -146,7 +163,7 @@ export function useBrandRewards(businessId: string) {
   const redeemReward = useCallback(
     async (reward: Reward) => {
       if (!customer) throw new Error('Not logged in');
-      if (!canRedeem(reward)) throw new Error('Cannot redeem this reward');
+      if (!canRedeem(reward)) throw new Error('Not enough points at this business');
 
       try {
         setRedeemingId(reward.id);
@@ -164,6 +181,13 @@ export function useBrandRewards(businessId: string) {
         const result = data as RedeemResult;
         if (!result.success)
           throw new Error(result.error ?? 'Redemption failed');
+
+        // Deduct from per-business balance
+        await supabase.rpc('deduct_business_points', {
+          p_customer_id: customer.id,
+          p_business_id: businessId,
+          p_points: result.points_used,
+        });
 
         await Promise.all([refreshCustomer(), fetchBrandData()]);
 
@@ -183,7 +207,7 @@ export function useBrandRewards(businessId: string) {
         setRedeemingId(null);
       }
     },
-    [customer, canRedeem, refreshCustomer, fetchBrandData],
+    [customer, canRedeem, refreshCustomer, fetchBrandData, businessId],
   );
 
   const refresh = useCallback(async (): Promise<void> => {
@@ -201,6 +225,7 @@ export function useBrandRewards(businessId: string) {
     canRedeem,
     isLocked,
     userPoints: points,
+    businessPoints,
     userTier,
     refresh,
   };

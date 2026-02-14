@@ -118,7 +118,7 @@ export const rewardsService = {
 
     if (redemptionError) throw redemptionError;
 
-    // 2. Deduct points from customer
+    // 2. Deduct points from customer (global balance)
     const { error: pointsError } = await supabase.rpc('deduct_customer_points', {
       p_customer_id: customerId,
       p_points: pointsCost,
@@ -128,6 +128,17 @@ export const rewardsService = {
       // Rollback: Delete the redemption if points deduction fails
       await supabase.from('redemptions').delete().eq('id', redemption.id);
       throw pointsError;
+    }
+
+    // 2b. Deduct from per-business balance
+    const { error: bizPointsError } = await supabase.rpc('deduct_business_points', {
+      p_customer_id: customerId,
+      p_business_id: businessId,
+      p_points: pointsCost,
+    });
+
+    if (bizPointsError) {
+      console.error('Per-business points deduction error:', bizPointsError);
     }
 
     // 3. Decrease reward stock
