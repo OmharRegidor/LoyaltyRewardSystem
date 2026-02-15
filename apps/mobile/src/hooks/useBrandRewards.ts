@@ -182,12 +182,8 @@ export function useBrandRewards(businessId: string) {
         if (!result.success)
           throw new Error(result.error ?? 'Redemption failed');
 
-        // Deduct from per-business balance
-        await supabase.rpc('deduct_business_points', {
-          p_customer_id: customer.id,
-          p_business_id: businessId,
-          p_points: result.points_used,
-        });
+        // Note: per-business points are deducted automatically by
+        // the trg_auto_link_customer_business trigger when redeem_reward inserts a transaction
 
         await Promise.all([refreshCustomer(), fetchBrandData()]);
 

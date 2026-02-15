@@ -156,8 +156,7 @@ export async function middleware(request: NextRequest) {
     return response;
   } catch (err) {
     console.error('[Middleware] Unexpected error:', err);
-    // On unexpected error, allow through - let page handle it
-    return NextResponse.next();
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 }
 

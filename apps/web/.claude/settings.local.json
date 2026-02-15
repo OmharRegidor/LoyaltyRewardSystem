@@ -7,7 +7,15 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: redesign loyalty card as flippable card with realistic styling\n\nFront face shows business name and tier banner; back face features\nmagnetic stripe with realistic spacing, initials avatar, customer\ndetails, and QR code in a side-by-side layout.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push:*)",
       "Bash(git commit:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(npx next build)",
+      "Bash(npm ls:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:www.answeroverflow.com)"
     ]
   }
 }

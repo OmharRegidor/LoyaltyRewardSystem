@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 export default function BusinessNotFound() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex-1 flex items-center justify-center py-32 px-4">
       <div className="text-center max-w-md">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-6">
           <Building2 className="h-10 w-10 text-muted-foreground" />

@@ -491,12 +491,8 @@ export default function StaffScannerPage() {
         description,
       });
 
-      // Update per-business points balance
-      await supabase.rpc('add_business_points', {
-        p_customer_id: customer.id,
-        p_business_id: staffData.businessId,
-        p_points: calculatedPoints.total,
-      });
+      // Note: per-business points are updated automatically by
+      // the trg_auto_link_customer_business trigger on transaction insert
 
       // Update stats
       setStats((prev) => ({
@@ -552,74 +548,53 @@ export default function StaffScannerPage() {
     const supabase = createClient();
 
     try {
-      // Find redemption by code
-      const { data: redemption, error: fetchError } = await supabase
-        .from('redemptions')
-        .select(
-          `
-        id,
-        redemption_code,
-        points_used,
-        status,
-        expires_at,
-        created_at,
-        customer_id,
-        reward_id,
-        customers (full_name, email),
-        rewards (title)
-      `,
-        )
-        .eq('redemption_code', redemptionCode.toUpperCase().trim())
-        .eq('business_id', staffData.businessId)
-        .maybeSingle();
+      // Use SECURITY DEFINER RPC to bypass RLS restrictions
+      const { data: result, error: rpcError } = await supabase.rpc(
+        'verify_redemption_code',
+        {
+          p_code: redemptionCode.trim(),
+          p_business_id: staffData.businessId,
+        },
+      );
 
-      if (fetchError) throw fetchError;
+      if (rpcError) throw rpcError;
 
-      if (!redemption) {
+      if (!result || !result.found) {
         setError('Redemption code not found');
         setIsVerifying(false);
         return;
       }
 
       // Check if already completed
-      if (redemption.status === 'completed') {
+      if (result.status === 'completed') {
         setError('This code has already been used');
         setIsVerifying(false);
         return;
       }
 
       // Check if expired
-      if (
-        redemption.expires_at &&
-        new Date(redemption.expires_at) < new Date()
-      ) {
+      if (result.expires_at && new Date(result.expires_at) < new Date()) {
         setError('This code has expired');
         setIsVerifying(false);
         return;
       }
 
       // Check if cancelled
-      if (redemption.status === 'cancelled') {
+      if (result.status === 'cancelled') {
         setError('This redemption was cancelled');
         setIsVerifying(false);
         return;
       }
 
-      const customer = redemption.customers as {
-        full_name: string | null;
-        email: string | null;
-      } | null;
-      const reward = redemption.rewards as { title: string } | null;
-
       setRedemptionData({
-        id: redemption.id,
-        code: redemption.redemption_code,
-        rewardTitle: reward?.title || 'Unknown Reward',
-        pointsUsed: redemption.points_used,
-        customerName: customer?.full_name || customer?.email || 'Customer',
-        status: redemption.status || 'pending',
-        expiresAt: redemption.expires_at,
-        createdAt: redemption.created_at || new Date().toISOString(),
+        id: result.id,
+        code: result.redemption_code,
+        rewardTitle: result.reward_title || 'Unknown Reward',
+        pointsUsed: result.points_used,
+        customerName: result.customer_name || 'Customer',
+        status: result.status || 'pending',
+        expiresAt: result.expires_at,
+        createdAt: result.created_at || new Date().toISOString(),
       });
     } catch (err) {
       console.error('Verify error:', err);
@@ -640,16 +615,22 @@ export default function StaffScannerPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      const { error: updateError } = await supabase
-        .from('redemptions')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          completed_by_user_id: user?.id,
-        })
-        .eq('id', redemptionData.id);
+      // Use SECURITY DEFINER RPC to bypass RLS restrictions
+      const { data: result, error: rpcError } = await supabase.rpc(
+        'complete_redemption',
+        {
+          p_redemption_id: redemptionData.id,
+          p_completed_by: user?.id,
+        },
+      );
 
-      if (updateError) throw updateError;
+      if (rpcError) throw rpcError;
+
+      if (!result?.success) {
+        setError('Redemption could not be completed (may already be used)');
+        setIsVerifying(false);
+        return;
+      }
 
       // Show success
       setScanResult({
@@ -765,19 +746,19 @@ export default function StaffScannerPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter 6-digit code
+                    Enter 8-digit code
                   </label>
                   <input
                     type="text"
                     value={redemptionCode}
                     onChange={(e) =>
                       setRedemptionCode(
-                        e.target.value.toUpperCase().slice(0, 6),
+                        e.target.value.toUpperCase().slice(0, 8),
                       )
                     }
                     placeholder="ABC123"
                     className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                    maxLength={6}
+                    maxLength={8}
                     autoFocus
                   />
                 </div>
@@ -797,7 +778,7 @@ export default function StaffScannerPage() {
                   </button>
                   <button
                     onClick={verifyRedemptionCode}
-                    disabled={redemptionCode.length < 6 || isVerifying}
+                    disabled={redemptionCode.length < 8 || isVerifying}
                     className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-900 border border-gray-900"
                   >
                     {isVerifying ? (
@@ -987,7 +968,11 @@ export default function StaffScannerPage() {
                 <input
                   type="number"
                   value={transactionAmount}
-                  onChange={(e) => setTransactionAmount(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || parseFloat(val) >= 0) setTransactionAmount(val);
+                  }}
+                  min="0"
                   placeholder="0.00"
                   className="w-full pl-10 pr-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-xl font-semibold placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
                   autoFocus

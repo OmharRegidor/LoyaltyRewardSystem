@@ -28,6 +28,7 @@ export function useRewards() {
   const [activeCategory, setActiveCategory] = useState<RewardCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [businessPointsMap, setBusinessPointsMap] = useState<Record<string, number>>({});
 
   // ============================================
   // FETCH REWARDS
@@ -69,6 +70,22 @@ export function useRewards() {
         .filter((reward): reward is Reward => reward !== null);
 
       setRewards(transformedRewards);
+
+      // Fetch per-business point balances for canRedeem filtering
+      if (customer?.id) {
+        const { data: cbRows } = await supabase
+          .from('customer_businesses')
+          .select('business_id, points')
+          .eq('customer_id', customer.id);
+
+        if (cbRows) {
+          const map: Record<string, number> = {};
+          for (const row of cbRows) {
+            map[row.business_id] = row.points ?? 0;
+          }
+          setBusinessPointsMap(map);
+        }
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch rewards';
@@ -78,7 +95,7 @@ export function useRewards() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [customer?.id]);
 
   // ============================================
   // EFFECTS
@@ -142,12 +159,13 @@ export function useRewards() {
 
   const canRedeem = useCallback(
     (reward: Reward): boolean => {
-      const hasPoints = points >= reward.points_cost;
+      const bizPoints = businessPointsMap[reward.business_id] ?? 0;
+      const hasPoints = bizPoints >= reward.points_cost;
       const inStock = reward.stock === -1 || reward.stock > 0;
       const hasTier = canAccessReward(userTier, reward.tier_required);
       return hasPoints && inStock && hasTier;
     },
-    [points, userTier],
+    [businessPointsMap, userTier],
   );
 
   const isLocked = useCallback(
@@ -158,8 +176,11 @@ export function useRewards() {
   );
 
   const pointsNeeded = useCallback(
-    (reward: Reward): number => Math.max(0, reward.points_cost - points),
-    [points],
+    (reward: Reward): number => {
+      const bizPoints = businessPointsMap[reward.business_id] ?? 0;
+      return Math.max(0, reward.points_cost - bizPoints);
+    },
+    [businessPointsMap],
   );
 
   // ============================================

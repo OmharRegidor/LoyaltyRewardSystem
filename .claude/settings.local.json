@@ -32,7 +32,17 @@
       "mcp__context7__query-docs",
       "Bash(git fetch:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(done)",
+      "Bash(for file in supabase/migrations/*.sql)",
+      "Bash(do grep -l \"scan_logs\" \"$file\")",
+      "Bash(echo:*)",
+      "Bash(while read f)",
+      "Bash(do if grep -q \"CREATE TABLE.*redemptions\" \"$f\")",
+      "Bash(then echo \"$f\")",
+      "Bash(fi)"
     ]
   }
 }

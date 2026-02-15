@@ -162,7 +162,11 @@ export default function BrandDetailScreen() {
 
             {/* Per-business points balance */}
             <View style={styles.pointsBadge}>
-              <Ionicons name="wallet-outline" size={16} color={COLORS.primary} />
+              <Ionicons
+                name="wallet-outline"
+                size={16}
+                color={COLORS.primary}
+              />
               <Text style={styles.pointsBadgeText}>
                 You have {businessPoints.toLocaleString()} pts at this store
               </Text>
@@ -200,7 +204,7 @@ export default function BrandDetailScreen() {
               <RewardCard
                 key={reward.id}
                 reward={reward}
-                userPoints={userPoints}
+                userPoints={businessPoints}
                 userTier={userTier}
                 onRedeem={handleRedeem}
                 isRedeeming={redeemingId === reward.id}
