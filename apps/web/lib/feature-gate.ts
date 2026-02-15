@@ -76,12 +76,14 @@ export async function checkModuleAccess(
 ): Promise<ModuleCheckResult> {
   const supabase = getServiceClient();
 
-  // Get subscription and plan module flags
+  // Get subscription with module overrides and plan module flags
   const { data: subscription } = await supabase
     .from('subscriptions')
     .select(
       `
       status,
+      module_booking_override,
+      module_pos_override,
       plans (
         has_loyalty,
         has_booking,
@@ -118,6 +120,13 @@ export async function checkModuleAccess(
     has_pos: 'has_pos' in planData ? (planData.has_pos as boolean | null) : null,
   };
 
+  // Per-business overrides: NULL = use plan default, true/false = override
+  const overrideMap: Record<ModuleName, boolean | null> = {
+    loyalty: null, // loyalty has no override, always use plan default
+    booking: subscription.module_booking_override ?? null,
+    pos: subscription.module_pos_override ?? null,
+  };
+
   const moduleColumnMap: Record<ModuleName, keyof PlanModuleFlags> = {
     loyalty: 'has_loyalty',
     booking: 'has_booking',
@@ -125,7 +134,8 @@ export async function checkModuleAccess(
   };
 
   const columnName = moduleColumnMap[module];
-  const hasAccess = plan[columnName] === true;
+  const override = overrideMap[module];
+  const hasAccess = override !== null ? override : plan[columnName] === true;
 
   return {
     allowed: hasAccess,

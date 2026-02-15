@@ -120,6 +120,8 @@ export interface EnterpriseAccount {
   ownerEmail: string | null;
   upgradedAt: string;
   planName: string;
+  hasBooking: boolean;
+  hasPos: boolean;
 }
 
 export interface ActivityDataPoint {

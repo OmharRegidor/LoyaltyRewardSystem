@@ -58,6 +58,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         business_type, phone, city, address, logo_url, points_per_purchase,
         subscriptions (
           id, plan_id, status, billing_interval, current_period_end,
+          module_booking_override, module_pos_override,
           plans ( id, display_name, has_booking, has_pos, has_loyalty )
         )
       `,
@@ -189,8 +190,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       billing_interval: sub?.billing_interval ?? null,
       current_period_end: sub?.current_period_end ?? null,
       current_plan_id: sub?.plan_id ?? null,
-      has_booking: (planData as Record<string, unknown>)?.has_booking === true,
-      has_pos: (planData as Record<string, unknown>)?.has_pos === true,
+      has_booking: ((sub as Record<string, unknown>)?.module_booking_override as boolean | null) ??
+        (planData as Record<string, unknown>)?.has_booking === true,
+      has_pos: ((sub as Record<string, unknown>)?.module_pos_override as boolean | null) ??
+        (planData as Record<string, unknown>)?.has_pos === true,
       has_loyalty: (planData as Record<string, unknown>)?.has_loyalty !== false,
     },
     stats: {

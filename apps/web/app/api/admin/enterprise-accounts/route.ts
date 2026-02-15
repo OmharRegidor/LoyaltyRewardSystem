@@ -21,7 +21,7 @@ export async function GET() {
   // Find the enterprise plan
   const { data: enterprisePlan } = await service
     .from('plans')
-    .select('id, display_name')
+    .select('id, display_name, has_booking, has_pos')
     .eq('name', 'enterprise')
     .maybeSingle();
 
@@ -29,10 +29,10 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  // Get all subscriptions on the enterprise plan
+  // Get all subscriptions on the enterprise plan (include module overrides)
   const { data: subs, error } = await service
     .from('subscriptions')
-    .select('id, business_id, updated_at')
+    .select('id, business_id, updated_at, module_booking_override, module_pos_override')
     .eq('plan_id', enterprisePlan.id)
     .eq('status', 'active');
 
@@ -73,6 +73,10 @@ export async function GET() {
     }
   }
 
+  // Resolve effective modules: override ?? plan default
+  const planHasBooking = enterprisePlan.has_booking === true;
+  const planHasPos = enterprisePlan.has_pos === true;
+
   const accounts: EnterpriseAccount[] = subs.map((sub) => {
     const biz = businessMap.get(sub.business_id);
     return {
@@ -82,6 +86,8 @@ export async function GET() {
       ownerEmail: biz?.ownerEmail ?? null,
       upgradedAt: upgradeDateMap.get(sub.business_id) ?? sub.updated_at ?? '',
       planName: enterprisePlan.display_name,
+      hasBooking: sub.module_booking_override ?? planHasBooking,
+      hasPos: sub.module_pos_override ?? planHasPos,
     };
   });
 

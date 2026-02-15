@@ -12,6 +12,8 @@ interface RouteParams {
 interface PlanChangeBody {
   newPlanId: string;
   reason?: string;
+  moduleBooking?: boolean;
+  modulePos?: boolean;
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
@@ -26,7 +28,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const body = (await request.json()) as PlanChangeBody;
-  const { newPlanId, reason } = body;
+  const { newPlanId, reason, moduleBooking, modulePos } = body;
 
   if (!newPlanId || typeof newPlanId !== 'string') {
     return NextResponse.json(
@@ -40,7 +42,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   // Validate plan exists
   const { data: plan } = await service
     .from('plans')
-    .select('id, display_name')
+    .select('id, name, display_name')
     .eq('id', newPlanId)
     .maybeSingle();
 
@@ -57,11 +59,26 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const oldPlanId = currentSub?.plan_id ?? null;
 
+  // Determine module overrides based on target plan
+  const isEnterprise = plan.name === 'enterprise';
+  const moduleOverrides = isEnterprise
+    ? {
+        module_booking_override: moduleBooking ?? true,
+        module_pos_override: modulePos ?? true,
+      }
+    : {
+        module_booking_override: null as boolean | null,
+        module_pos_override: null as boolean | null,
+      };
+
   if (currentSub) {
     // Update existing subscription
     const { error: updateErr } = await service
       .from('subscriptions')
-      .update({ plan_id: newPlanId })
+      .update({
+        plan_id: newPlanId,
+        ...moduleOverrides,
+      })
       .eq('id', currentSub.id);
 
     if (updateErr) {
@@ -77,6 +94,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       plan_id: newPlanId,
       status: 'active',
       billing_interval: 'monthly',
+      ...moduleOverrides,
     });
 
     if (insertErr) {

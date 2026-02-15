@@ -1809,6 +1809,8 @@ export type Database = {
           current_period_start: string | null
           id: string
           is_free_forever: boolean | null
+          module_booking_override: boolean | null
+          module_pos_override: boolean | null
           plan_id: string | null
           status: string
           trial_ends_at: string | null
@@ -1828,6 +1830,8 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
+          module_booking_override?: boolean | null
+          module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
           trial_ends_at?: string | null
@@ -1847,6 +1851,8 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
+          module_booking_override?: boolean | null
+          module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
           trial_ends_at?: string | null

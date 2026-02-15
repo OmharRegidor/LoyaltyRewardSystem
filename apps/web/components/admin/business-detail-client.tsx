@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   ArrowLeft,
   Building2,
@@ -125,6 +126,8 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [planChangeReason, setPlanChangeReason] = useState('');
+  const [planModuleBooking, setPlanModuleBooking] = useState(true);
+  const [planModulePos, setPlanModulePos] = useState(true);
   const [submittingPlan, setSubmittingPlan] = useState(false);
 
   const [copied, setCopied] = useState(false);
@@ -187,11 +190,25 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
 
   async function handleChangePlan() {
     if (!selectedPlanId || submittingPlan) return;
+    const targetPlan = data?.availablePlans.find((p) => p.id === selectedPlanId);
+    const isTargetEnterprise = targetPlan?.name === 'enterprise';
     setSubmittingPlan(true);
     try {
-      const res = await fetch(`/api/admin/businesses/${businessId}/plan`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newPlanId: selectedPlanId, reason: planChangeReason.trim() || undefined }) });
+      const res = await fetch(`/api/admin/businesses/${businessId}/plan`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newPlanId: selectedPlanId,
+          reason: planChangeReason.trim() || undefined,
+          ...(isTargetEnterprise && {
+            moduleBooking: planModuleBooking,
+            modulePos: planModulePos,
+          }),
+        }),
+      });
       if (!res.ok) throw new Error('Failed to change plan');
       setPlanModalOpen(false); setSelectedPlanId(''); setPlanChangeReason('');
+      setPlanModuleBooking(true); setPlanModulePos(true);
       await fetchData();
     } catch { /* Keep modal open */ } finally { setSubmittingPlan(false); }
   }
@@ -429,6 +446,33 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
                 </SelectContent>
               </Select>
             </div>
+            {selectedPlanId && availablePlans.find((p) => p.id === selectedPlanId)?.name === 'enterprise' && (
+              <div>
+                <label className="text-sm text-gray-500 mb-2 block">Modules to enable</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="plan-mod-loyalty" checked disabled />
+                    <label htmlFor="plan-mod-loyalty" className="text-sm text-gray-500">Loyalty (always included)</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="plan-mod-booking"
+                      checked={planModuleBooking}
+                      onCheckedChange={(v) => setPlanModuleBooking(v === true)}
+                    />
+                    <label htmlFor="plan-mod-booking" className="text-sm text-gray-900">Booking System</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="plan-mod-pos"
+                      checked={planModulePos}
+                      onCheckedChange={(v) => setPlanModulePos(v === true)}
+                    />
+                    <label htmlFor="plan-mod-pos" className="text-sm text-gray-900">POS System</label>
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
               <label className="text-sm text-gray-500 mb-1.5 block">Reason (optional)</label>
               <Textarea placeholder="Why is this plan being changed?" value={planChangeReason} onChange={(e) => setPlanChangeReason(e.target.value)} className="!bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 resize-none" />

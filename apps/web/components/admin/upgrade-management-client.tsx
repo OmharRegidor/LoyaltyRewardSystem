@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Search,
   ArrowUpCircle,
@@ -81,6 +82,8 @@ export function UpgradeManagementClient() {
   const [dialogAction, setDialogAction] = useState<'upgrade' | 'downgrade'>('upgrade');
   const [dialogBusiness, setDialogBusiness] = useState<{ id: string; name: string } | null>(null);
   const [dialogReason, setDialogReason] = useState('');
+  const [dialogModuleBooking, setDialogModuleBooking] = useState(true);
+  const [dialogModulePos, setDialogModulePos] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // Derived: find free and enterprise plan IDs
@@ -150,6 +153,8 @@ export function UpgradeManagementClient() {
     setDialogAction('upgrade');
     setDialogBusiness({ id: businessId, name: businessName });
     setDialogReason('');
+    setDialogModuleBooking(true);
+    setDialogModulePos(true);
     setDialogOpen(true);
   }
 
@@ -176,6 +181,10 @@ export function UpgradeManagementClient() {
         body: JSON.stringify({
           newPlanId: targetPlanId,
           reason: dialogReason.trim() || undefined,
+          ...(dialogAction === 'upgrade' && {
+            moduleBooking: dialogModuleBooking,
+            modulePos: dialogModulePos,
+          }),
         }),
       });
 
@@ -251,6 +260,34 @@ export function UpgradeManagementClient() {
                 : `Downgrade "${dialogBusiness?.name}" to the Free plan?`}
             </DialogDescription>
           </DialogHeader>
+
+          {dialogAction === 'upgrade' && (
+            <div className="py-2">
+              <label className="text-sm text-gray-500 mb-2 block">Modules to enable</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="mod-loyalty" checked disabled />
+                  <label htmlFor="mod-loyalty" className="text-sm text-gray-500">Loyalty (always included)</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="mod-booking"
+                    checked={dialogModuleBooking}
+                    onCheckedChange={(v) => setDialogModuleBooking(v === true)}
+                  />
+                  <label htmlFor="mod-booking" className="text-sm text-gray-900">Booking System</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="mod-pos"
+                    checked={dialogModulePos}
+                    onCheckedChange={(v) => setDialogModulePos(v === true)}
+                  />
+                  <label htmlFor="mod-pos" className="text-sm text-gray-900">POS System</label>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="py-2">
             <label className="text-sm text-gray-500 mb-1.5 block">
@@ -441,6 +478,9 @@ function EnterpriseAccountsTable({ accounts, onDowngrade }: EnterpriseAccountsTa
                   Owner
                 </th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-3 pr-4">
+                  Modules
+                </th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-3 pr-4">
                   Upgraded
                 </th>
                 <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">
@@ -456,6 +496,13 @@ function EnterpriseAccountsTable({ accounts, onDowngrade }: EnterpriseAccountsTa
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm text-gray-500">{account.ownerEmail ?? '—'}</span>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300 bg-emerald-50">Loyalty</Badge>
+                      {account.hasBooking && <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50">Booking</Badge>}
+                      {account.hasPos && <Badge variant="outline" className="text-xs text-purple-600 border-purple-300 bg-purple-50">POS</Badge>}
+                    </div>
                   </td>
                   <td className="py-3 pr-4">
                     <span className="text-sm text-gray-500">
