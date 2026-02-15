@@ -77,7 +77,11 @@ const StockBadge = memo(({ stock }: { stock: number }) => {
       </View>
     );
   }
-  return null;
+  return (
+    <View style={[styles.stockBadge, styles.inStock]}>
+      <Text style={styles.stockTextIn}>{stock} left</Text>
+    </View>
+  );
 });
 
 // ============================================
@@ -310,6 +314,9 @@ const styles = StyleSheet.create({
   outOfStock: {
     backgroundColor: COLORS.error + '20',
   },
+  inStock: {
+    backgroundColor: COLORS.success + '20',
+  },
   stockTextLow: {
     fontSize: FONT_SIZE.xs,
     fontWeight: '600',
@@ -319,6 +326,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.xs,
     fontWeight: '600',
     color: COLORS.error,
+  },
+  stockTextIn: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    color: COLORS.success,
   },
   lockOverlay: {
     ...StyleSheet.absoluteFillObject,

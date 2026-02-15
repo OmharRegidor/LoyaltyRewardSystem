@@ -30,7 +30,7 @@ export function StockBadge({ stock }: StockBadgeProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.text, styles.inStock]}>In Stock</Text>
+      <Text style={[styles.text, styles.inStock]}>{stock} left</Text>
     </View>
   );
 }
