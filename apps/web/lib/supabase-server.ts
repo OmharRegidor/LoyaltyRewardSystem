@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import type { Database } from '../../../packages/shared/types/database';
+import type { AdminDatabase } from './admin-database';
 
 // ============================================
 // SERVICE ROLE CLIENT (for server-side operations)
@@ -23,6 +24,31 @@ export function createServiceClient() {
   }
 
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+// ============================================
+// ADMIN SERVICE CLIENT (typed for admin views/tables)
+// ============================================
+
+/**
+ * Supabase Admin client typed with AdminDatabase
+ * Includes admin views and tables not in the auto-generated types
+ * USE ONLY in admin API routes
+ */
+export function createAdminServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
+  }
+
+  return createClient<AdminDatabase>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

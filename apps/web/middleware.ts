@@ -130,6 +130,33 @@ export async function middleware(request: NextRequest) {
     const isOwner = !!business;
     const isStaff = !!staff;
 
+    // Admin routes
+    if (pathname.startsWith('/admin')) {
+      const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      const userEmail = user.email?.toLowerCase() ?? '';
+
+      // Must be in admin email list
+      if (!adminEmails.includes(userEmail)) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+
+      // /admin/verify is accessible without PIN cookie (it's where you enter PIN)
+      if (pathname === '/admin/verify') {
+        return response;
+      }
+
+      // Check PIN verification cookie
+      const adminCookie = request.cookies.get('admin_verified')?.value;
+      if (!adminCookie) {
+        return NextResponse.redirect(new URL('/admin/verify', request.url));
+      }
+
+      return response;
+    }
+
     // Dashboard routes - owners only
     if (pathname.startsWith('/dashboard')) {
       if (!isOwner) {
