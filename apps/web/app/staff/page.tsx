@@ -311,34 +311,13 @@ export default function StaffScannerPage() {
     try {
       let customerData = null;
 
-      // Method 1: Try exact match on qr_code_url
-      const fullUrl = scannedCode.startsWith('NoxaLoyalty://')
-        ? scannedCode
-        : `NoxaLoyalty://customer/${scannedCode}`;
+      // Use SECURITY DEFINER RPC to bypass RLS restrictions
+      const { data: rpcResult } = await supabase.rpc('lookup_customer_by_qr', {
+        p_scanned_code: scannedCode,
+      });
 
-      const { data: exactMatch } = await supabase
-        .from('customers')
-        .select(
-          'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email, card_token, created_by_business_id',
-        )
-        .eq('qr_code_url', fullUrl)
-        .maybeSingle();
-
-      if (exactMatch) {
-        customerData = exactMatch;
-      }
-
-      // Method 2: UUID match (fallback for direct ID scans)
-      if (!customerData && scannedCode.length === 36) {
-        const { data: idMatch } = await supabase
-          .from('customers')
-          .select(
-            'id, user_id, total_points, lifetime_points, tier, qr_code_url, full_name, email, card_token, created_by_business_id',
-          )
-          .eq('id', scannedCode)
-          .maybeSingle();
-
-        if (idMatch) customerData = idMatch;
+      if (rpcResult && rpcResult.length > 0) {
+        customerData = rpcResult[0];
       }
 
       if (!customerData) {

@@ -2129,6 +2129,21 @@ export type Database = {
         Args: { p_phone: string; p_user_id: string }
         Returns: string
       }
+      lookup_customer_by_qr: {
+        Args: { p_scanned_code: string }
+        Returns: {
+          card_token: string
+          created_by_business_id: string
+          email: string
+          full_name: string
+          id: string
+          lifetime_points: number
+          qr_code_url: string
+          tier: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       recalculate_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined
