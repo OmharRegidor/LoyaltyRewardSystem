@@ -1,35 +1,35 @@
-import type React from 'react';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/next';
-import type { Viewport } from 'next';
-import './globals.css';
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import type { Viewport } from "next";
+import "./globals.css";
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: 'NoxaLoyalty',
+  title: "NoxaLoyalty",
   description:
-    'A modern loyalty rewards platform designed for small businesses in the Philippines. QR code points, digital rewards, and customer insights all in one place.',
+    "A modern loyalty rewards platform designed for small businesses in the Philippines. QR code points, digital rewards, and customer insights all in one place.",
   icons: {
     icon: [
       {
-        url: '/logoloyalty.png',
-        type: 'image/png',
+        url: "/logoloyalty.png",
+        type: "image/png",
       },
     ],
-    apple: '/apple-icon.png',
+    apple: "/logoloyalty.png",
   },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#7F0404' },
-    { media: '(prefers-color-scheme: dark)', color: '#A52A2A' },
+    { media: "(prefers-color-scheme: light)", color: "#7F0404" },
+    { media: "(prefers-color-scheme: dark)", color: "#A52A2A" },
   ],
 };
 
