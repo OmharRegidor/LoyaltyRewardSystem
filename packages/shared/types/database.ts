@@ -2045,6 +2045,10 @@ export type Database = {
         Args: { p_business_id: string; p_limit_type: string }
         Returns: boolean
       }
+      complete_redemption: {
+        Args: { p_redemption_id: string; p_completed_by: string }
+        Returns: Json
+      }
       decrease_reward_stock: {
         Args: { p_reward_id: string }
         Returns: undefined
@@ -2174,6 +2178,10 @@ export type Database = {
       update_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined
+      }
+      verify_redemption_code: {
+        Args: { p_code: string; p_business_id: string }
+        Returns: Json
       }
     }
     Enums: {

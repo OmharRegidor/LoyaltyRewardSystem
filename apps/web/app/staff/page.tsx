@@ -75,6 +75,19 @@ interface RedemptionData {
   createdAt: string;
 }
 
+interface VerifyRedemptionResult {
+  found: boolean;
+  id?: string;
+  redemption_code?: string;
+  points_used?: number;
+  status?: string;
+  expires_at?: string;
+  created_at?: string;
+  customer_name?: string;
+  customer_email?: string;
+  reward_title?: string;
+}
+
 // ============================================
 // TIER CONFIGURATION
 // ============================================
@@ -549,7 +562,7 @@ export default function StaffScannerPage() {
 
     try {
       // Use SECURITY DEFINER RPC to bypass RLS restrictions
-      const { data: result, error: rpcError } = await supabase.rpc(
+      const { data, error: rpcError } = await supabase.rpc(
         'verify_redemption_code',
         {
           p_code: redemptionCode.trim(),
@@ -558,6 +571,8 @@ export default function StaffScannerPage() {
       );
 
       if (rpcError) throw rpcError;
+
+      const result = data as unknown as VerifyRedemptionResult | null;
 
       if (!result || !result.found) {
         setError('Redemption code not found');
@@ -587,13 +602,13 @@ export default function StaffScannerPage() {
       }
 
       setRedemptionData({
-        id: result.id,
-        code: result.redemption_code,
+        id: result.id || '',
+        code: result.redemption_code || '',
         rewardTitle: result.reward_title || 'Unknown Reward',
-        pointsUsed: result.points_used,
+        pointsUsed: result.points_used || 0,
         customerName: result.customer_name || 'Customer',
         status: result.status || 'pending',
-        expiresAt: result.expires_at,
+        expiresAt: result.expires_at || '',
         createdAt: result.created_at || new Date().toISOString(),
       });
     } catch (err) {
@@ -620,13 +635,15 @@ export default function StaffScannerPage() {
         'complete_redemption',
         {
           p_redemption_id: redemptionData.id,
-          p_completed_by: user?.id,
+          p_completed_by: user?.id || '',
         },
       );
 
       if (rpcError) throw rpcError;
 
-      if (!result?.success) {
+      const completeResult = result as unknown as { success: boolean } | null;
+
+      if (!completeResult?.success) {
         setError('Redemption could not be completed (may already be used)');
         setIsVerifying(false);
         return;
