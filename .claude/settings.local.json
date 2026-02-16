@@ -42,7 +42,10 @@
       "Bash(while read f)",
       "Bash(do if grep -q \"CREATE TABLE.*redemptions\" \"$f\")",
       "Bash(then echo \"$f\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

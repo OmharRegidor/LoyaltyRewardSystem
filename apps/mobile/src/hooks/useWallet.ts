@@ -383,12 +383,28 @@ export function useWallet() {
   );
 
   const activeRedemptions = useMemo(
-    () => redemptions.filter((r) => r.status === 'pending'),
+    () =>
+      redemptions.filter(
+        (r) => r.status === 'pending' && new Date(r.expires_at) > new Date()
+      ),
+    [redemptions]
+  );
+
+  const expiredRedemptions = useMemo(
+    () =>
+      redemptions.filter(
+        (r) =>
+          r.status === 'expired' ||
+          (r.status === 'pending' && new Date(r.expires_at) <= new Date())
+      ),
     [redemptions]
   );
 
   const pastRedemptions = useMemo(
-    () => redemptions.filter((r) => r.status !== 'pending'),
+    () =>
+      redemptions.filter(
+        (r) => r.status === 'completed' || r.status === 'cancelled'
+      ),
     [redemptions]
   );
 
@@ -406,6 +422,7 @@ export function useWallet() {
     groupedTransactions,
     redemptions,
     activeRedemptions,
+    expiredRedemptions,
     pastRedemptions,
 
     // Points

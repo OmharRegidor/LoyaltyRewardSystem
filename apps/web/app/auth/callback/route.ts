@@ -284,22 +284,24 @@ async function getRedirectPath(userId: string): Promise<string> {
   );
 
   try {
-    const { data: staff } = await supabase
-      .from('staff')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .maybeSingle();
+    const { data: profile } = await supabase
+      .from('users')
+      .select('roles(name)')
+      .eq('id', userId)
+      .single();
 
-    if (staff) return '/staff';
+    const role = (profile?.roles as unknown as { name: string } | null)?.name;
 
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', userId)
-      .maybeSingle();
-
-    if (business) return '/dashboard?welcome=true';
+    switch (role) {
+      case 'admin':
+        return '/admin';
+      case 'business_owner':
+        return '/dashboard?welcome=true';
+      case 'staff':
+        return '/staff';
+      default:
+        return '/';
+    }
   } catch (err) {
     console.error('[Auth Callback] Redirect error:', err);
   }

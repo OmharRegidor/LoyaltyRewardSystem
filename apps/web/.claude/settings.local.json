@@ -15,7 +15,10 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:supabase.com)",
-      "WebFetch(domain:www.answeroverflow.com)"
+      "WebFetch(domain:www.answeroverflow.com)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

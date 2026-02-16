@@ -1,11 +1,9 @@
 // apps/web/app/api/admin/businesses/tags/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createServerSupabaseClient,
-  createAdminServiceClient,
-} from '@/lib/supabase-server';
-import { isAdminEmail } from '@/lib/admin';
+import { createAdminServiceClient } from '@/lib/supabase-server';
+import { getApiUser } from '@/lib/server-auth';
+import { isAdmin } from '@/lib/rbac';
 
 interface TagRequestBody {
   businessIds: string[];
@@ -13,13 +11,9 @@ interface TagRequestBody {
 }
 
 export async function POST(request: NextRequest) {
-  // Auth check
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiUser();
 
-  if (!user?.email || !isAdminEmail(user.email)) {
+  if (!user || !isAdmin(user.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

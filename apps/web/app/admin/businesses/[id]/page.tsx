@@ -1,6 +1,6 @@
 // apps/web/app/admin/businesses/[id]/page.tsx
 
-import { requireAdmin } from '@/lib/admin';
+import { requireAdmin } from '@/lib/server-auth';
 import { AdminLayout } from '@/components/admin/admin-layout';
 import { BusinessDetailClient } from '@/components/admin/business-detail-client';
 

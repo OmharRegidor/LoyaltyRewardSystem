@@ -30,6 +30,7 @@ export default function WalletScreen() {
     setActiveTab,
     groupedTransactions,
     activeRedemptions,
+    expiredRedemptions,
     pastRedemptions,
     currentPoints,
     lifetimePoints,
@@ -72,6 +73,7 @@ export default function WalletScreen() {
       ) : (
         <RewardsTab
           activeRedemptions={activeRedemptions}
+          expiredRedemptions={expiredRedemptions}
           pastRedemptions={pastRedemptions}
           isRefreshing={isRefreshing}
           onRefresh={refresh}
@@ -129,6 +131,7 @@ function TransactionsTab({
 // Rewards Tab Component
 interface RewardsTabProps {
   activeRedemptions: CustomerRedemption[];
+  expiredRedemptions: CustomerRedemption[];
   pastRedemptions: CustomerRedemption[];
   isRefreshing: boolean;
   onRefresh: () => void;
@@ -137,6 +140,7 @@ interface RewardsTabProps {
 
 function RewardsTab({
   activeRedemptions,
+  expiredRedemptions,
   pastRedemptions,
   isRefreshing,
   onRefresh,
@@ -145,6 +149,9 @@ function RewardsTab({
   const allRedemptions = [
     ...(activeRedemptions.length > 0
       ? [{ title: 'ACTIVE', data: activeRedemptions }]
+      : []),
+    ...(expiredRedemptions.length > 0
+      ? [{ title: 'EXPIRED', data: expiredRedemptions }]
       : []),
     ...(pastRedemptions.length > 0
       ? [{ title: 'HISTORY', data: pastRedemptions }]

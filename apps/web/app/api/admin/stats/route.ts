@@ -1,11 +1,9 @@
 // apps/web/app/api/admin/stats/route.ts
 
 import { NextResponse } from 'next/server';
-import {
-  createServerSupabaseClient,
-  createAdminServiceClient,
-} from '@/lib/supabase-server';
-import { isAdminEmail } from '@/lib/admin';
+import { createAdminServiceClient } from '@/lib/supabase-server';
+import { getApiUser } from '@/lib/server-auth';
+import { isAdmin } from '@/lib/rbac';
 import type { AdminPlatformStats, AdminBusinessStats } from '@/lib/admin';
 
 interface AdminStatsResponse {
@@ -16,13 +14,9 @@ interface AdminStatsResponse {
 }
 
 export async function GET() {
-  // Auth check: get current user and verify admin
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiUser();
 
-  if (!user?.email || !isAdminEmail(user.email)) {
+  if (!user || !isAdmin(user.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

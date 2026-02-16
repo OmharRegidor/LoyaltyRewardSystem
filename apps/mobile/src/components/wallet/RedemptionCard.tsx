@@ -72,9 +72,14 @@ function getTimeRemaining(expiresAt: string): string | null {
 }
 
 export function RedemptionCard({ redemption, onPress }: RedemptionCardProps) {
-  const statusConfig = getStatusConfig(redemption.status);
+  const isExpiredPending =
+    redemption.status === 'pending' &&
+    new Date(redemption.expires_at) <= new Date();
+  const statusConfig = isExpiredPending
+    ? getStatusConfig('expired')
+    : getStatusConfig(redemption.status);
   const timeRemaining =
-    redemption.status === 'pending'
+    redemption.status === 'pending' && !isExpiredPending
       ? getTimeRemaining(redemption.expires_at)
       : null;
 
@@ -119,7 +124,7 @@ export function RedemptionCard({ redemption, onPress }: RedemptionCardProps) {
         </Text>
 
         {/* Code or Time Remaining */}
-        {redemption.status === 'pending' && (
+        {redemption.status === 'pending' && !isExpiredPending && (
           <View style={styles.codeRow}>
             <Text style={styles.codeLabel}>Code:</Text>
             <Text style={styles.codeValue}>{redemption.redemption_code}</Text>

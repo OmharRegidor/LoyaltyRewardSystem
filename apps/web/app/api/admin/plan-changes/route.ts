@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server';
-import {
-  createServerSupabaseClient,
-  createAdminServiceClient,
-} from '@/lib/supabase-server';
-import { isAdminEmail } from '@/lib/admin';
+import { createAdminServiceClient } from '@/lib/supabase-server';
+import { getApiUser } from '@/lib/server-auth';
+import { isAdmin } from '@/lib/rbac';
 import type { PlanChangeRow, PlanChangesResponse, PlanOption } from '@/lib/admin';
 
 export async function GET() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiUser();
 
-  if (!user?.email || !isAdminEmail(user.email)) {
+  if (!user || !isAdmin(user.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

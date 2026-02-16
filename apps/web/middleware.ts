@@ -2,6 +2,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { type AppRole, getAllowedRolesForPath } from './lib/rbac';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -15,6 +16,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/privacy',
   '/book-call',
+  '/access-denied',
 ];
 
 const PUBLIC_PREFIXES = [
@@ -80,7 +82,6 @@ export async function middleware(request: NextRequest) {
       },
     );
 
-    // Use getUser instead of getSession - more reliable
     const {
       data: { user },
       error,
@@ -90,94 +91,54 @@ export async function middleware(request: NextRequest) {
     if (error) {
       console.log('[Middleware] Auth error:', error.message);
 
-      // Clear invalid cookies and redirect to login
-      const loginUrl = new URL('/login', request.url);
-      const redirectResponse = NextResponse.redirect(loginUrl);
+      // Only redirect to login for routes that explicitly require auth
+      const allowedRoles = getAllowedRolesForPath(pathname);
+      if (allowedRoles) {
+        const loginUrl = new URL('/login', request.url);
+        const redirectResponse = NextResponse.redirect(loginUrl);
+        request.cookies.getAll().forEach((cookie) => {
+          if (cookie.name.startsWith('sb-')) {
+            redirectResponse.cookies.delete(cookie.name);
+          }
+        });
+        return redirectResponse;
+      }
 
-      // Clear all Supabase cookies
+      // For other routes, clean up bad cookies but let the request through
       request.cookies.getAll().forEach((cookie) => {
         if (cookie.name.startsWith('sb-')) {
-          redirectResponse.cookies.delete(cookie.name);
+          response.cookies.delete(cookie.name);
         }
       });
-
-      return redirectResponse;
+      return response;
     }
 
-    // No user - redirect to login
+    // No user — only redirect to login for routes that explicitly require auth
     if (!user) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // User authenticated - check permissions
-    const userId = user.id;
-
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', userId)
-      .maybeSingle();
-
-    const { data: staff } = await supabase
-      .from('staff')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    const isOwner = !!business;
-    const isStaff = !!staff;
-
-    // Admin routes
-    if (pathname.startsWith('/admin')) {
-      const adminEmails = (process.env.ADMIN_EMAILS ?? '')
-        .split(',')
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean);
-      const userEmail = user.email?.toLowerCase() ?? '';
-
-      // Must be in admin email list
-      if (!adminEmails.includes(userEmail)) {
-        return NextResponse.redirect(new URL('/', request.url));
-      }
-
-      // /admin/verify is accessible without PIN cookie (it's where you enter PIN)
-      if (pathname === '/admin/verify') {
-        return response;
-      }
-
-      // Check PIN verification cookie
-      const adminCookie = request.cookies.get('admin_verified')?.value;
-      if (!adminCookie) {
-        return NextResponse.redirect(new URL('/admin/verify', request.url));
-      }
-
-      return response;
-    }
-
-    // Dashboard routes - owners only
-    if (pathname.startsWith('/dashboard')) {
-      if (!isOwner) {
-        if (isStaff) {
-          return NextResponse.redirect(new URL('/staff', request.url));
-        }
-        return NextResponse.redirect(
-          new URL('/login?error=unauthorized', request.url),
-        );
+      const allowedRoles = getAllowedRolesForPath(pathname);
+      if (allowedRoles) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
       }
       return response;
     }
 
-    // Staff routes
-    if (pathname.startsWith('/staff') && pathname !== '/staff/login') {
-      if (isOwner || isStaff) {
-        return response;
-      }
-      return NextResponse.redirect(
-        new URL('/login?error=unauthorized', request.url),
-      );
+    // Fetch user role from public.users joined with roles
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role_id, roles(name)')
+      .eq('id', user.id)
+      .single();
+
+    const userRole: AppRole =
+      (profile?.roles as unknown as { name: AppRole } | null)?.name ?? 'customer';
+
+    // Check route permissions
+    const allowedRoles = getAllowedRolesForPath(pathname);
+
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
+      return NextResponse.redirect(new URL('/access-denied', request.url));
     }
 
     return response;
