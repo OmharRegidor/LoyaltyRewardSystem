@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
@@ -316,10 +316,93 @@ function LoginFormSkeleton() {
 }
 
 // ============================================
+// AUTH REDIRECT GUARD (checks session before showing login)
+// ============================================
+
+function AuthRedirectGuard({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      // Check if business owner
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (business) {
+        router.replace(redirectTo || '/dashboard');
+        return;
+      }
+
+      // Check if active staff
+      const { data: staff } = await supabase
+        .from('staff')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (staff) {
+        router.replace('/staff');
+        return;
+      }
+
+      // Customer on web — stay on login page
+      setIsCheckingAuth(false);
+    };
+
+    checkExistingSession();
+  }, [router, redirectTo]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+// ============================================
 // MAIN PAGE COMPONENT
 // ============================================
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <AuthRedirectGuard>
+        <LoginPageContent />
+      </AuthRedirectGuard>
+    </Suspense>
+  );
+}
+
+// ============================================
+// LOGIN PAGE CONTENT (brand panel + form)
+// ============================================
+
+function LoginPageContent() {
   const features = [
     {
       icon: <TrendingUp className="w-6 h-6" />,

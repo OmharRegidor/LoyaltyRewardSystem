@@ -1,11 +1,16 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileQuestion, Home } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { FileQuestion, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col" style={{ colorScheme: 'light' }}>
       {/* Header */}
       <header className="bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,15 +32,6 @@ export default function NotFound() {
                 </div>
               </div>
             </Link>
-
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                className="font-bold text-sm px-4 text-white/90 hover:text-white hover:bg-white/10"
-              >
-                Log in
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -43,30 +39,37 @@ export default function NotFound() {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-6">
-            <FileQuestion className="h-10 w-10 text-muted-foreground" />
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 mb-6">
+            <FileQuestion className="h-10 w-10 text-gray-500" />
           </div>
 
-          <h1 className="text-2xl font-bold mb-2">Page Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h1>
 
-          <p className="text-muted-foreground mb-8">
+          <p className="text-gray-500 mb-8">
             The page you&apos;re looking for doesn&apos;t exist or may have been
             moved.
           </p>
 
-          <Button asChild>
-            <Link href="/">
-              <Home className="mr-2 h-4 w-4" />
-              Back to Homepage
-            </Link>
-          </Button>
+          <div className="flex items-center justify-center gap-3">
+            <Button variant="outline" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Button>
+
+            <Button asChild>
+              <Link href="/">
+                <Home className="mr-2 h-4 w-4" />
+                Back to Homepage
+              </Link>
+            </Button>
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-6">
+      <footer className="border-t border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-gray-500">
             &copy; {new Date().getFullYear()} NoxaLoyalty. All rights reserved.
           </p>
         </div>
