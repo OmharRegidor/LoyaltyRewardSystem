@@ -13,12 +13,9 @@ export const metadata: Metadata = {
     "A modern loyalty rewards platform designed for small businesses in the Philippines. QR code points, digital rewards, and customer insights all in one place.",
   icons: {
     icon: [
-      {
-        url: "/logoloyalty.png",
-        type: "image/png",
-      },
+      { url: "/logoloyalty.png", type: "image/png", sizes: "500x500" },
     ],
-    apple: "/logoloyalty.png",
+    apple: "/apple-icon.png",
   },
 };
 
