@@ -1,15 +1,13 @@
-// apps/web/app/dashboard/layout.tsx
-
 import ServerRestricted from '@/components/auth/ServerRestricted';
 import AccessDenied from '@/components/auth/AccessDenied';
 
-export default function DashboardRootLayout({
+export default function StaffLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <ServerRestricted allowedRoles={['business_owner', 'admin']} fallback={<AccessDenied />}>
+    <ServerRestricted allowedRoles={['staff']} fallback={<AccessDenied />}>
       {children}
     </ServerRestricted>
   );
