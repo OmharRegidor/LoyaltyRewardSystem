@@ -1,11 +1,11 @@
 // apps/web/app/staff/page.tsx
 
-'use client';
+"use client";
 
-import { UserPlus } from 'lucide-react';
-import { AddCustomerModal } from '@/components/staff/add-customer-modal';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { UserPlus } from "lucide-react";
+import { AddCustomerModal } from "@/components/staff/add-customer-modal";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   QrCode,
   LogOut,
@@ -18,9 +18,9 @@ import {
   Coins,
   Sparkles,
   TrendingUp,
-} from 'lucide-react';
-import { createClient } from '@/lib/supabase';
-import { Html5Qrcode } from 'html5-qrcode';
+} from "lucide-react";
+import { createClient } from "@/lib/supabase";
+import { Html5Qrcode } from "html5-qrcode";
 
 // ============================================
 // TYPES
@@ -56,13 +56,13 @@ interface ScanResult {
 }
 
 type ScannerState =
-  | 'idle'
-  | 'scanning'
-  | 'customer-found'
-  | 'awarding'
-  | 'success'
-  | 'error'
-  | 'verify-redemption';
+  | "idle"
+  | "scanning"
+  | "customer-found"
+  | "awarding"
+  | "success"
+  | "error"
+  | "verify-redemption";
 
 interface RedemptionData {
   id: string;
@@ -92,20 +92,20 @@ interface VerifyRedemptionResult {
 // TIER CONFIGURATION
 // ============================================
 
-type TierKey = 'bronze' | 'silver' | 'gold' | 'platinum';
+type TierKey = "bronze" | "silver" | "gold" | "platinum";
 
 const TIERS: Record<
   TierKey,
   { name: string; multiplier: number; color: string; emoji: string }
 > = {
-  bronze: { name: 'Bronze', multiplier: 1.0, color: '#CD7F32', emoji: '🥉' },
-  silver: { name: 'Silver', multiplier: 1.25, color: '#C0C0C0', emoji: '🥈' },
-  gold: { name: 'Gold', multiplier: 1.5, color: '#FFD700', emoji: '🥇' },
+  bronze: { name: "Bronze", multiplier: 1.0, color: "#CD7F32", emoji: "🥉" },
+  silver: { name: "Silver", multiplier: 1.25, color: "#C0C0C0", emoji: "🥈" },
+  gold: { name: "Gold", multiplier: 1.5, color: "#FFD700", emoji: "🥇" },
   platinum: {
-    name: 'Platinum',
+    name: "Platinum",
     multiplier: 2.0,
-    color: '#E5E4E2',
-    emoji: '💎',
+    color: "#E5E4E2",
+    emoji: "💎",
   },
 };
 
@@ -121,20 +121,20 @@ export default function StaffScannerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [staffData, setStaffData] = useState<StaffData | null>(null);
   const [stats, setStats] = useState({ scansToday: 0, pointsAwardedToday: 0 });
-  const [scannerState, setScannerState] = useState<ScannerState>('idle');
+  const [scannerState, setScannerState] = useState<ScannerState>("idle");
   const [customer, setCustomer] = useState<CustomerData | null>(null);
-  const [transactionAmount, setTransactionAmount] = useState('');
+  const [transactionAmount, setTransactionAmount] = useState("");
   const [calculatedPoints, setCalculatedPoints] = useState({
     base: 0,
     bonus: 0,
     total: 0,
   });
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>(
-    'environment',
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">(
+    "environment",
   );
-  const [error, setError] = useState('');
-  const [redemptionCode, setRedemptionCode] = useState('');
+  const [error, setError] = useState("");
+  const [redemptionCode, setRedemptionCode] = useState("");
   const [redemptionData, setRedemptionData] = useState<RedemptionData | null>(
     null,
   );
@@ -142,7 +142,7 @@ export default function StaffScannerPage() {
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerId = 'qr-scanner-container';
+  const scannerContainerId = "qr-scanner-container";
 
   // ============================================
   // INITIALIZATION
@@ -164,24 +164,24 @@ export default function StaffScannerPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/staff/login');
+        router.push("/staff/login");
         return;
       }
 
       // Check if user is staff
       const { data: staffRecord } = await supabase
-        .from('staff')
-        .select('id, business_id, role, name, is_active')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
+        .from("staff")
+        .select("id, business_id, role, name, is_active")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
         .maybeSingle();
 
       if (!staffRecord) {
         // Check if owner
         const { data: business } = await supabase
-          .from('businesses')
-          .select('id, name, pesos_per_point')
-          .eq('owner_id', user.id)
+          .from("businesses")
+          .select("id, name, pesos_per_point")
+          .eq("owner_id", user.id)
           .maybeSingle();
 
         if (business) {
@@ -191,50 +191,50 @@ export default function StaffScannerPage() {
             businessName: business.name,
             userName:
               user.user_metadata?.full_name ||
-              user.email?.split('@')[0] ||
-              'Owner',
+              user.email?.split("@")[0] ||
+              "Owner",
             pesosPerPoint: business.pesos_per_point || 10,
           });
           setIsLoading(false);
           return;
         }
 
-        router.push('/staff/login');
+        router.push("/staff/login");
         return;
       }
 
       // Get business info
       const { data: business } = await supabase
-        .from('businesses')
-        .select('name, pesos_per_point')
-        .eq('id', staffRecord.business_id)
+        .from("businesses")
+        .select("name, pesos_per_point")
+        .eq("id", staffRecord.business_id)
         .single();
 
       setStaffData({
         staffId: staffRecord.id,
         businessId: staffRecord.business_id,
-        businessName: business?.name || 'Business',
-        userName: staffRecord.name || user.user_metadata?.full_name || 'Staff',
+        businessName: business?.name || "Business",
+        userName: staffRecord.name || user.user_metadata?.full_name || "Staff",
         pesosPerPoint: business?.pesos_per_point || 10,
       });
 
       await loadTodayStats(staffRecord.id);
       setIsLoading(false);
     } catch (err) {
-      console.error('Access check error:', err);
-      router.push('/staff/login');
+      console.error("Access check error:", err);
+      router.push("/staff/login");
     }
   };
 
   const loadTodayStats = async (staffId: string) => {
     const supabase = createClient();
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { data } = await supabase
-      .from('scan_logs')
-      .select('points_awarded')
-      .eq('staff_id', staffId)
-      .gte('scanned_at', today);
+      .from("scan_logs")
+      .select("points_awarded")
+      .eq("staff_id", staffId)
+      .gte("scanned_at", today);
 
     if (data) {
       setStats({
@@ -252,8 +252,8 @@ export default function StaffScannerPage() {
   // ============================================
 
   const startScanner = async () => {
-    setScannerState('scanning');
-    setError('');
+    setScannerState("scanning");
+    setError("");
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -269,9 +269,9 @@ export default function StaffScannerPage() {
       );
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to start camera';
+        err instanceof Error ? err.message : "Failed to start camera";
       setError(message);
-      setScannerState('error');
+      setScannerState("error");
     }
   };
 
@@ -281,19 +281,19 @@ export default function StaffScannerPage() {
         await scannerRef.current.stop();
         scannerRef.current = null;
       } catch (err) {
-        console.error('Scanner stop error:', err);
+        console.error("Scanner stop error:", err);
       }
     }
   };
 
   const switchCamera = async () => {
     await stopScanner();
-    const newFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    const newFacing = cameraFacing === "environment" ? "user" : "environment";
     setCameraFacing(newFacing);
     setTimeout(() => startScannerWithFacing(newFacing), 300);
   };
 
-  const startScannerWithFacing = async (facing: 'environment' | 'user') => {
+  const startScannerWithFacing = async (facing: "environment" | "user") => {
     try {
       const html5QrCode = new Html5Qrcode(scannerContainerId);
       scannerRef.current = html5QrCode;
@@ -305,7 +305,7 @@ export default function StaffScannerPage() {
         () => {},
       );
     } catch (err) {
-      console.error('Scanner restart error:', err);
+      console.error("Scanner restart error:", err);
     }
   };
 
@@ -325,7 +325,7 @@ export default function StaffScannerPage() {
       let customerData = null;
 
       // Use SECURITY DEFINER RPC to bypass RLS restrictions
-      const { data: rpcResult } = await supabase.rpc('lookup_customer_by_qr', {
+      const { data: rpcResult } = await supabase.rpc("lookup_customer_by_qr", {
         p_scanned_code: scannedCode,
       });
 
@@ -334,17 +334,17 @@ export default function StaffScannerPage() {
       }
 
       if (!customerData) {
-        setError('Customer not found. Please try again.');
-        setScannerState('error');
+        setError("Customer not found. Please try again.");
+        setScannerState("error");
         return;
       }
 
       // Lazy card token generation for mobile-created customers
       if (!customerData.card_token && staffData) {
         try {
-          const response = await fetch('/api/staff/customer/card-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/staff/customer/card-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ customerId: customerData.id }),
           });
           if (response.ok) {
@@ -359,35 +359,33 @@ export default function StaffScannerPage() {
       // Set created_by_business_id if null (mobile-created customers)
       if (!customerData.created_by_business_id && staffData) {
         await supabase
-          .from('customers')
+          .from("customers")
           .update({ created_by_business_id: staffData.businessId })
-          .eq('id', customerData.id)
-          .is('created_by_business_id', null);
+          .eq("id", customerData.id)
+          .is("created_by_business_id", null);
       }
 
       // Auto-link customer to business + detect first visit
       let isFirstVisit = false;
       if (staffData) {
         const { data: existingLink } = await supabase
-          .from('customer_businesses')
-          .select('id')
-          .eq('customer_id', customerData.id)
-          .eq('business_id', staffData.businessId)
+          .from("customer_businesses")
+          .select("id")
+          .eq("customer_id", customerData.id)
+          .eq("business_id", staffData.businessId)
           .maybeSingle();
 
         if (!existingLink) {
           isFirstVisit = true;
-          await supabase
-            .from('customer_businesses')
-            .insert({
-              customer_id: customerData.id,
-              business_id: staffData.businessId,
-            });
+          await supabase.from("customer_businesses").insert({
+            customer_id: customerData.id,
+            business_id: staffData.businessId,
+          });
         }
       }
 
       // Get customer name - prefer full_name from staff-created, then try user metadata
-      let customerName = customerData.full_name || '';
+      let customerName = customerData.full_name || "";
 
       if (!customerName && customerData.user_id) {
         try {
@@ -407,23 +405,23 @@ export default function StaffScannerPage() {
         customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
       }
 
-      const tier = (customerData.tier as TierKey) || 'bronze';
+      const tier = (customerData.tier as TierKey) || "bronze";
 
       setCustomer({
         id: customerData.id,
         name: customerName,
-        email: customerData.email || '',
+        email: customerData.email || "",
         currentPoints: customerData.total_points || 0,
         lifetimePoints: customerData.lifetime_points || 0,
         tier,
         isFirstVisit,
       });
 
-      setScannerState('customer-found');
+      setScannerState("customer-found");
     } catch (err) {
-      console.error('Customer lookup error:', err);
-      setError('Failed to find customer. Please try again.');
-      setScannerState('error');
+      console.error("Customer lookup error:", err);
+      setError("Failed to find customer. Please try again.");
+      setScannerState("error");
     }
   };
 
@@ -456,7 +454,7 @@ export default function StaffScannerPage() {
   const awardPoints = async () => {
     if (!customer || !staffData || calculatedPoints.total <= 0) return;
 
-    setScannerState('awarding');
+    setScannerState("awarding");
     const supabase = createClient();
 
     try {
@@ -464,7 +462,7 @@ export default function StaffScannerPage() {
       const multiplier = TIERS[customer.tier].multiplier;
 
       // Record scan log
-      await supabase.from('scan_logs').insert({
+      await supabase.from("scan_logs").insert({
         staff_id: staffData.staffId,
         business_id: staffData.businessId,
         customer_id: customer.id,
@@ -479,13 +477,13 @@ export default function StaffScannerPage() {
 
       // Update customer
       await supabase
-        .from('customers')
+        .from("customers")
         .update({
           total_points: newTotalPoints,
           lifetime_points: newLifetimePoints,
           last_visit: new Date().toISOString(),
         })
-        .eq('id', customer.id);
+        .eq("id", customer.id);
 
       // Record transaction with tier bonus info
       const description =
@@ -495,10 +493,10 @@ export default function StaffScannerPage() {
             } ${multiplier}x bonus)`
           : `Purchase at ${staffData.businessName}`;
 
-      await supabase.from('transactions').insert({
+      await supabase.from("transactions").insert({
         customer_id: customer.id,
         business_id: staffData.businessId,
-        type: 'earn',
+        type: "earn",
         points: calculatedPoints.total,
         amount_spent: amount,
         description,
@@ -523,14 +521,14 @@ export default function StaffScannerPage() {
         newTotal: newTotalPoints,
       });
 
-      setScannerState('success');
+      setScannerState("success");
     } catch (err) {
-      console.error('Award points error:', err);
+      console.error("Award points error:", err);
       setScanResult({
         success: false,
-        error: err instanceof Error ? err.message : 'Failed to award points',
+        error: err instanceof Error ? err.message : "Failed to award points",
       });
-      setScannerState('error');
+      setScannerState("error");
     }
   };
 
@@ -540,12 +538,12 @@ export default function StaffScannerPage() {
 
   const resetScanner = () => {
     setCustomer(null);
-    setTransactionAmount('');
+    setTransactionAmount("");
     setCalculatedPoints({ base: 0, bonus: 0, total: 0 });
     setScanResult(null);
-    setError('');
-    setScannerState('idle');
-    setRedemptionCode('');
+    setError("");
+    setScannerState("idle");
+    setRedemptionCode("");
     setRedemptionData(null);
   };
 
@@ -557,13 +555,13 @@ export default function StaffScannerPage() {
     if (!redemptionCode.trim() || !staffData) return;
 
     setIsVerifying(true);
-    setError('');
+    setError("");
     const supabase = createClient();
 
     try {
       // Use SECURITY DEFINER RPC to bypass RLS restrictions
       const { data, error: rpcError } = await supabase.rpc(
-        'verify_redemption_code',
+        "verify_redemption_code",
         {
           p_code: redemptionCode.trim(),
           p_business_id: staffData.businessId,
@@ -575,45 +573,45 @@ export default function StaffScannerPage() {
       const result = data as unknown as VerifyRedemptionResult | null;
 
       if (!result || !result.found) {
-        setError('Redemption code not found');
+        setError("Redemption code not found");
         setIsVerifying(false);
         return;
       }
 
       // Check if already completed
-      if (result.status === 'completed') {
-        setError('This code has already been used');
+      if (result.status === "completed") {
+        setError("This code has already been used");
         setIsVerifying(false);
         return;
       }
 
       // Check if expired
       if (result.expires_at && new Date(result.expires_at) < new Date()) {
-        setError('This code has expired');
+        setError("This code has expired");
         setIsVerifying(false);
         return;
       }
 
       // Check if cancelled
-      if (result.status === 'cancelled') {
-        setError('This redemption was cancelled');
+      if (result.status === "cancelled") {
+        setError("This redemption was cancelled");
         setIsVerifying(false);
         return;
       }
 
       setRedemptionData({
-        id: result.id || '',
-        code: result.redemption_code || '',
-        rewardTitle: result.reward_title || 'Unknown Reward',
+        id: result.id || "",
+        code: result.redemption_code || "",
+        rewardTitle: result.reward_title || "Unknown Reward",
         pointsUsed: result.points_used || 0,
-        customerName: result.customer_name || 'Customer',
-        status: result.status || 'pending',
-        expiresAt: result.expires_at || '',
+        customerName: result.customer_name || "Customer",
+        status: result.status || "pending",
+        expiresAt: result.expires_at || "",
         createdAt: result.created_at || new Date().toISOString(),
       });
     } catch (err) {
-      console.error('Verify error:', err);
-      setError('Failed to verify code. Please try again.');
+      console.error("Verify error:", err);
+      setError("Failed to verify code. Please try again.");
     } finally {
       setIsVerifying(false);
     }
@@ -632,10 +630,10 @@ export default function StaffScannerPage() {
 
       // Use SECURITY DEFINER RPC to bypass RLS restrictions
       const { data: result, error: rpcError } = await supabase.rpc(
-        'complete_redemption',
+        "complete_redemption",
         {
           p_redemption_id: redemptionData.id,
-          p_completed_by: user?.id || '',
+          p_completed_by: user?.id || "",
         },
       );
 
@@ -644,7 +642,7 @@ export default function StaffScannerPage() {
       const completeResult = result as unknown as { success: boolean } | null;
 
       if (!completeResult?.success) {
-        setError('Redemption could not be completed (may already be used)');
+        setError("Redemption could not be completed (may already be used)");
         setIsVerifying(false);
         return;
       }
@@ -655,12 +653,12 @@ export default function StaffScannerPage() {
         customerName: redemptionData.customerName,
         totalPointsAwarded: redemptionData.pointsUsed,
       });
-      setScannerState('success');
+      setScannerState("success");
       setRedemptionData(null);
-      setRedemptionCode('');
+      setRedemptionCode("");
     } catch (err) {
-      console.error('Complete redemption error:', err);
-      setError('Failed to complete redemption');
+      console.error("Complete redemption error:", err);
+      setError("Failed to complete redemption");
     } finally {
       setIsVerifying(false);
     }
@@ -670,7 +668,7 @@ export default function StaffScannerPage() {
     await stopScanner();
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.replace('/staff/login');
+    window.location.replace("/login");
   };
 
   // ============================================
@@ -715,7 +713,7 @@ export default function StaffScannerPage() {
       {/* Main Content */}
       <main className="p-4 pb-32">
         {/* IDLE STATE */}
-        {scannerState === 'idle' && (
+        {scannerState === "idle" && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <button
               onClick={startScanner}
@@ -738,7 +736,7 @@ export default function StaffScannerPage() {
                 <span className="text-gray-700 text-sm">Add Customer</span>
               </button>
               <button
-                onClick={() => setScannerState('verify-redemption')}
+                onClick={() => setScannerState("verify-redemption")}
                 className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors"
               >
                 <CheckCircle className="w-5 h-5 text-green-600" />
@@ -752,7 +750,7 @@ export default function StaffScannerPage() {
         )}
 
         {/* VERIFY REDEMPTION STATE */}
-        {scannerState === 'verify-redemption' && (
+        {scannerState === "verify-redemption" && (
           <div className="max-w-sm mx-auto">
             <h2 className="text-xl font-bold text-center mb-6 text-gray-900">
               Verify Redemption
@@ -801,7 +799,7 @@ export default function StaffScannerPage() {
                     {isVerifying ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
-                      'Verify'
+                      "Verify"
                     )}
                   </button>
                 </div>
@@ -886,7 +884,7 @@ export default function StaffScannerPage() {
         )}
 
         {/* SCANNING STATE */}
-        {scannerState === 'scanning' && (
+        {scannerState === "scanning" && (
           <div className="flex flex-col items-center">
             <div className="relative w-full max-w-sm aspect-square bg-gray-900 rounded-2xl overflow-hidden mb-4 border border-gray-200">
               <div id={scannerContainerId} className="w-full h-full" />
@@ -913,7 +911,7 @@ export default function StaffScannerPage() {
             <button
               onClick={() => {
                 stopScanner();
-                setScannerState('idle');
+                setScannerState("idle");
               }}
               className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-700 border border-gray-300"
             >
@@ -923,7 +921,7 @@ export default function StaffScannerPage() {
         )}
 
         {/* CUSTOMER FOUND STATE */}
-        {scannerState === 'customer-found' && customer && tierInfo && (
+        {scannerState === "customer-found" && customer && tierInfo && (
           <div className="max-w-sm mx-auto">
             {/* Customer Info */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
@@ -932,7 +930,9 @@ export default function StaffScannerPage() {
                   <User className="w-7 h-7 text-yellow-600" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-900">{customer.name}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {customer.name}
+                  </h2>
                   <p className="text-gray-500 text-sm">
                     {customer.currentPoints.toLocaleString()} points
                   </p>
@@ -940,7 +940,7 @@ export default function StaffScannerPage() {
                 {/* Tier Badge */}
                 <div
                   className="px-3 py-1.5 rounded-full flex items-center gap-1.5"
-                  style={{ backgroundColor: tierInfo.color + '20' }}
+                  style={{ backgroundColor: tierInfo.color + "20" }}
                 >
                   <span>{tierInfo.emoji}</span>
                   <span
@@ -987,7 +987,8 @@ export default function StaffScannerPage() {
                   value={transactionAmount}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '' || parseFloat(val) >= 0) setTransactionAmount(val);
+                    if (val === "" || parseFloat(val) >= 0)
+                      setTransactionAmount(val);
                   }}
                   min="0"
                   placeholder="0.00"
@@ -1055,7 +1056,7 @@ export default function StaffScannerPage() {
         )}
 
         {/* AWARDING STATE */}
-        {scannerState === 'awarding' && (
+        {scannerState === "awarding" && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mb-4" />
             <p className="text-gray-500">Awarding points...</p>
@@ -1063,12 +1064,14 @@ export default function StaffScannerPage() {
         )}
 
         {/* SUCCESS STATE */}
-        {scannerState === 'success' && scanResult?.success && (
+        {scannerState === "success" && scanResult?.success && (
           <div className="max-w-sm mx-auto text-center">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-2 text-gray-900">Points Awarded!</h2>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900">
+              Points Awarded!
+            </h2>
             <p className="text-gray-500 mb-6">{scanResult.customerName}</p>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
@@ -1115,18 +1118,18 @@ export default function StaffScannerPage() {
         )}
 
         {/* ERROR STATE */}
-        {scannerState === 'error' && (
+        {scannerState === "error" && (
           <div className="max-w-sm mx-auto text-center">
             <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-12 h-12 text-red-600" />
             </div>
             <h2 className="text-2xl font-bold mb-2 text-red-600">
-              {scanResult?.error ? 'Award Failed' : 'Scan Error'}
+              {scanResult?.error ? "Award Failed" : "Scan Error"}
             </h2>
             <p className="text-gray-500 mb-6">
               {scanResult?.error ||
                 error ||
-                'Something went wrong. Please try again.'}
+                "Something went wrong. Please try again."}
             </p>
             <button
               onClick={resetScanner}
@@ -1141,7 +1144,7 @@ export default function StaffScannerPage() {
         <AddCustomerModal
           isOpen={isAddCustomerModalOpen}
           onClose={() => setIsAddCustomerModalOpen(false)}
-          businessName={staffData?.businessName || 'Business'}
+          businessName={staffData?.businessName || "Business"}
         />
       </main>
 
@@ -1155,7 +1158,9 @@ export default function StaffScannerPage() {
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <User className="w-4 h-4 text-yellow-600" />
-                <span className="text-xl font-bold text-gray-900">{stats.scansToday}</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {stats.scansToday}
+                </span>
               </div>
               <p className="text-xs text-gray-500">Customers Scanned</p>
             </div>
