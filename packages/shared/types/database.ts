@@ -39,6 +39,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notes: {
+        Row: {
+          author_email: string
+          business_id: string
+          content: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_email: string
+          business_id: string
+          content: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_email?: string
+          business_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_plan_changes: {
+        Row: {
+          business_id: string
+          changed_by_email: string
+          created_at: string
+          id: string
+          new_plan_id: string | null
+          old_plan_id: string | null
+          reason: string | null
+        }
+        Insert: {
+          business_id: string
+          changed_by_email: string
+          created_at?: string
+          id?: string
+          new_plan_id?: string | null
+          old_plan_id?: string | null
+          reason?: string | null
+        }
+        Update: {
+          business_id?: string
+          changed_by_email?: string
+          created_at?: string
+          id?: string
+          new_plan_id?: string | null
+          old_plan_id?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_plan_changes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_plan_changes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_plan_changes_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_plan_changes_old_plan_id_fkey"
+            columns: ["old_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_tags: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          tag: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          tag: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_tags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           business_id: string | null
@@ -68,6 +202,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_logs_business_id_fkey"
             columns: ["business_id"]
@@ -120,6 +261,13 @@ export type Database = {
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
             referencedColumns: ["id"]
           },
           {
@@ -269,6 +417,13 @@ export type Database = {
             foreignKeyName: "booking_addons_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -383,6 +538,13 @@ export type Database = {
             foreignKeyName: "bookings_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -454,6 +616,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "branches_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "branches_business_id_fkey"
             columns: ["business_id"]
@@ -568,6 +737,13 @@ export type Database = {
             foreignKeyName: "customer_businesses_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_businesses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -642,6 +818,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_created_by_business_id_fkey"
+            columns: ["created_by_business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customers_created_by_business_id_fkey"
             columns: ["created_by_business_id"]
@@ -784,6 +967,13 @@ export type Database = {
             foreignKeyName: "invoices_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -827,6 +1017,13 @@ export type Database = {
           xendit_subscription_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_history_business_id_fkey"
             columns: ["business_id"]
@@ -889,6 +1086,13 @@ export type Database = {
           subscription_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_business_id_fkey"
             columns: ["business_id"]
@@ -1003,6 +1207,13 @@ export type Database = {
             foreignKeyName: "products_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1076,6 +1287,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["redemption_status"] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "redemptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "redemptions_business_id_fkey"
             columns: ["business_id"]
@@ -1165,10 +1383,38 @@ export type Database = {
             foreignKeyName: "rewards_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rewards_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
       }
       sale_items: {
         Row: {
@@ -1315,6 +1561,13 @@ export type Database = {
             foreignKeyName: "sales_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1381,6 +1634,13 @@ export type Database = {
             foreignKeyName: "scan_logs_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1441,6 +1701,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "service_addons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_addons_business_id_fkey"
             columns: ["business_id"]
@@ -1627,6 +1894,13 @@ export type Database = {
             foreignKeyName: "services_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1702,6 +1976,13 @@ export type Database = {
             foreignKeyName: "staff_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1751,6 +2032,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_invites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_invites_business_id_fkey"
             columns: ["business_id"]
@@ -1865,6 +2153,13 @@ export type Database = {
             foreignKeyName: "subscriptions_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: true
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -1943,6 +2238,13 @@ export type Database = {
             foreignKeyName: "transactions_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -2001,14 +2303,94 @@ export type Database = {
             foreignKeyName: "usage_tracking_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: true
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_tracking_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      admin_business_stats: {
+        Row: {
+          branch_count: number | null
+          business_type: string | null
+          created_at: string | null
+          customer_count: number | null
+          id: string | null
+          last_active_at: string | null
+          name: string | null
+          owner_email: string | null
+          phone: string | null
+          plan_name: string | null
+          points_issued: number | null
+          slug: string | null
+          staff_count: number | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          transaction_count: number | null
+          transactions_30d: number | null
+        }
+        Relationships: []
+      }
+      admin_platform_stats: {
+        Row: {
+          active_subscriptions: number | null
+          bookings_30d: number | null
+          businesses_30d: number | null
+          businesses_7d: number | null
+          customers_30d: number | null
+          enterprise_count: number | null
+          free_count: number | null
+          points_issued_30d: number | null
+          total_bookings: number | null
+          total_businesses: number | null
+          total_customers: number | null
+          total_points_issued: number | null
+          total_transactions: number | null
+          transactions_30d: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_staff_invite: {
@@ -2046,7 +2428,7 @@ export type Database = {
         Returns: boolean
       }
       complete_redemption: {
-        Args: { p_redemption_id: string; p_completed_by: string }
+        Args: { p_completed_by: string; p_redemption_id: string }
         Returns: Json
       }
       decrease_reward_stock: {
@@ -2087,6 +2469,15 @@ export type Database = {
       }
       generate_sale_number: { Args: { p_business_id: string }; Returns: string }
       generate_slug: { Args: { name: string }; Returns: string }
+      get_business_activity_trend: {
+        Args: { p_business_id: string; p_days?: number }
+        Returns: {
+          day: string
+          new_customers: number
+          points_earned: number
+          transactions: number
+        }[]
+      }
       get_customer_tier: {
         Args: { p_lifetime_points: number }
         Returns: string
@@ -2107,6 +2498,10 @@ export type Database = {
       }
       get_staff_today_stats: { Args: { p_staff_id: string }; Returns: Json }
       get_tier_multiplier: { Args: { p_tier: string }; Returns: number }
+      get_user_role: {
+        Args: { p_user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_user_staff_info: {
         Args: { p_user_id: string }
         Returns: {
@@ -2180,11 +2575,12 @@ export type Database = {
         Returns: undefined
       }
       verify_redemption_code: {
-        Args: { p_code: string; p_business_id: string }
+        Args: { p_business_id: string; p_code: string }
         Returns: Json
       }
     }
     Enums: {
+      app_role: "admin" | "business_owner" | "staff" | "customer"
       billing_interval: "monthly" | "annual"
       booking_status:
         | "pending"
@@ -2341,6 +2737,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      app_role: ["admin", "business_owner", "staff", "customer"],
       billing_interval: ["monthly", "annual"],
       booking_status: [
         "pending",
