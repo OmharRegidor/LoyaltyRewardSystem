@@ -60,6 +60,8 @@ const defaultFormData: ProductFormData = {
   sku: '',
   image_url: '',
   is_active: true,
+  stock_quantity: 0,
+  low_stock_threshold: 5,
 };
 
 export default function POSProductsPage() {
@@ -112,6 +114,7 @@ export default function POSProductsPage() {
         sku: product.sku || '',
         image_url: product.image_url || '',
         is_active: product.is_active,
+        low_stock_threshold: product.low_stock_threshold,
       });
       setImagePreview(product.image_url || null);
     } else {
@@ -293,7 +296,7 @@ export default function POSProductsPage() {
     <DashboardLayout>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">Products</h1>
             <p className="text-muted-foreground">Manage your product catalog for POS</p>
@@ -465,6 +468,36 @@ export default function POSProductsPage() {
                 value={formData.sku}
                 onChange={(e) => setFormData((prev) => ({ ...prev, sku: e.target.value }))}
                 placeholder="Optional SKU"
+              />
+            </div>
+
+            {!selectedProduct && (
+              <div className="space-y-2">
+                <Label htmlFor="stock_quantity">Initial Stock</Label>
+                <Input
+                  id="stock_quantity"
+                  type="number"
+                  value={formData.stock_quantity ?? 0}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))
+                  }
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="low_stock_threshold">Low Stock Threshold</Label>
+              <Input
+                id="low_stock_threshold"
+                type="number"
+                value={formData.low_stock_threshold ?? 5}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, low_stock_threshold: parseInt(e.target.value) || 0 }))
+                }
+                placeholder="5"
+                min="0"
               />
             </div>
 

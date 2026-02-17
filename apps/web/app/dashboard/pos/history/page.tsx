@@ -191,7 +191,7 @@ export default function POSHistoryPage() {
     <DashboardLayout>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">Sales History</h1>
             <p className="text-muted-foreground">View and manage your sales transactions</p>
@@ -258,22 +258,23 @@ export default function POSHistoryPage() {
                 <p>No sales found</p>
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Sale #</TableHead>
+                    <TableHead className="hidden sm:table-cell">Sale #</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Payment</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Points</TableHead>
+                    <TableHead className="hidden sm:table-cell">Points</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sales.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell className="font-medium">{sale.sale_number}</TableCell>
+                      <TableCell className="font-medium hidden sm:table-cell">{sale.sale_number}</TableCell>
                       <TableCell>{formatDate(sale.created_at)}</TableCell>
                       <TableCell>{formatPrice(sale.total_centavos)}</TableCell>
                       <TableCell>{paymentMethodLabels[sale.payment_method]}</TableCell>
@@ -284,7 +285,7 @@ export default function POSHistoryPage() {
                           {sale.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {sale.points_earned > 0 ? `+${sale.points_earned}` : '-'}
                       </TableCell>
                       <TableCell className="text-right">
@@ -312,6 +313,7 @@ export default function POSHistoryPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

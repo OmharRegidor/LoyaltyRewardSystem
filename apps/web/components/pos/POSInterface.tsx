@@ -220,9 +220,9 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
   const canCompleteSale = items.length > 0 && amountTenderedCentavos >= totalCentavos;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-[calc(100vh-8rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-auto lg:h-[calc(100vh-8rem)]">
       {/* Left Panel - Products & Quick Entry */}
-      <div className="lg:col-span-3 flex flex-col gap-4 overflow-hidden">
+      <div className="lg:col-span-3 flex flex-col gap-4 overflow-visible lg:overflow-hidden">
         {/* Customer Search */}
         <Card>
           <CardContent className="pt-4">
@@ -271,7 +271,7 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
       </div>
 
       {/* Right Panel - Cart & Payment */}
-      <div className="lg:col-span-2 flex flex-col gap-4 overflow-hidden">
+      <div className="lg:col-span-2 flex flex-col gap-4 overflow-visible lg:overflow-hidden">
         {/* Current Sale */}
         <Card className="flex-1 overflow-hidden flex flex-col">
           <CardHeader className="py-3 border-b">
