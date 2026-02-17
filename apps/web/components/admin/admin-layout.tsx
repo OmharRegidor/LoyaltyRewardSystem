@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Building2,
   ArrowUpCircle,
+  ScrollText,
   LogOut,
   Menu,
   X,
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
   { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
   { name: 'Upgrades', href: '/admin/upgrades', icon: ArrowUpCircle },
+  { name: 'Audit Logs', href: '/admin/audit-logs', icon: ScrollText },
 ];
 
 export function AdminLayout({ children, adminEmail }: AdminLayoutProps) {

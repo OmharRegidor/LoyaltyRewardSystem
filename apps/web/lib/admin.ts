@@ -121,6 +121,25 @@ export interface EnterpriseAccount {
   hasPos: boolean;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  eventType: string;
+  severity: string;
+  businessId: string | null;
+  businessName: string | null;
+  userId: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLogEntry[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  eventTypes: string[];
+}
+
 export interface ActivityDataPoint {
   day: string;
   transactions: number;

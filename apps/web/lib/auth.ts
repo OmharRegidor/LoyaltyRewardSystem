@@ -59,6 +59,7 @@ export interface AuthResponse {
   success: boolean;
   error?: string;
   needsEmailConfirmation?: boolean;
+  emailSendFailed?: boolean;
   data?: {
     user?: any;
     session?: any;
@@ -167,8 +168,6 @@ export async function signupBusinessOwner(
     });
 
     if (authError) {
-      console.error('Auth signup error:', authError);
-
       // Handle specific errors
       if (authError.message.includes('already registered')) {
         return {
@@ -177,6 +176,18 @@ export async function signupBusinessOwner(
         };
       }
 
+      // Email send failed but account was likely created — treat as partial success
+      if (authError.message.toLowerCase().includes('sending confirmation email')) {
+        console.warn('Auth signup: email send failed, treating as partial success');
+        return {
+          success: true,
+          needsEmailConfirmation: true,
+          emailSendFailed: true,
+          data: { redirectTo: '/verify-email' },
+        };
+      }
+
+      console.error('Auth signup error:', authError);
       return { success: false, error: authError.message };
     }
 

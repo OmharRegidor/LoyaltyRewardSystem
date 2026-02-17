@@ -82,8 +82,8 @@ export function UpgradeManagementClient() {
   const [dialogAction, setDialogAction] = useState<'upgrade' | 'downgrade'>('upgrade');
   const [dialogBusiness, setDialogBusiness] = useState<{ id: string; name: string } | null>(null);
   const [dialogReason, setDialogReason] = useState('');
-  const [dialogModuleBooking, setDialogModuleBooking] = useState(true);
-  const [dialogModulePos, setDialogModulePos] = useState(true);
+  const [dialogModuleBooking, setDialogModuleBooking] = useState(false);
+  const [dialogModulePos, setDialogModulePos] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Derived: find free and enterprise plan IDs
@@ -153,8 +153,8 @@ export function UpgradeManagementClient() {
     setDialogAction('upgrade');
     setDialogBusiness({ id: businessId, name: businessName });
     setDialogReason('');
-    setDialogModuleBooking(true);
-    setDialogModulePos(true);
+    setDialogModuleBooking(false);
+    setDialogModulePos(false);
     setDialogOpen(true);
   }
 

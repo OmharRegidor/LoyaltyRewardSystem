@@ -126,8 +126,8 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [planChangeReason, setPlanChangeReason] = useState('');
-  const [planModuleBooking, setPlanModuleBooking] = useState(true);
-  const [planModulePos, setPlanModulePos] = useState(true);
+  const [planModuleBooking, setPlanModuleBooking] = useState(false);
+  const [planModulePos, setPlanModulePos] = useState(false);
   const [submittingPlan, setSubmittingPlan] = useState(false);
 
   const [copied, setCopied] = useState(false);
@@ -208,7 +208,7 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
       });
       if (!res.ok) throw new Error('Failed to change plan');
       setPlanModalOpen(false); setSelectedPlanId(''); setPlanChangeReason('');
-      setPlanModuleBooking(true); setPlanModulePos(true);
+      setPlanModuleBooking(false); setPlanModulePos(false);
       await fetchData();
     } catch { /* Keep modal open */ } finally { setSubmittingPlan(false); }
   }
@@ -298,7 +298,7 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
           <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
             {business.plan_name}
           </Badge>
-          <Button size="sm" variant="outline" onClick={() => { setPlanModalOpen(true); setSelectedPlanId(''); setPlanChangeReason(''); }} className="gap-1.5 h-7 text-xs">
+          <Button size="sm" variant="outline" onClick={() => { setPlanModalOpen(true); setSelectedPlanId(''); setPlanChangeReason(''); setPlanModuleBooking(false); setPlanModulePos(false); }} className="gap-1.5 h-7 text-xs">
             <ArrowUpDown className="w-3 h-3" /> Change Plan
           </Button>
         </div>

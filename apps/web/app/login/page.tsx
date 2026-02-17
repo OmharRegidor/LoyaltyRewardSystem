@@ -85,6 +85,8 @@ function LoginForm() {
         .maybeSingle();
 
       if (business) {
+        // Track login (fire-and-forget)
+        fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
         // Business owner - go to dashboard (or requested redirect)
         const destination = redirectTo || '/dashboard';
         window.location.replace(destination);
@@ -100,6 +102,8 @@ function LoginForm() {
         .maybeSingle();
 
       if (staff) {
+        // Track login (fire-and-forget)
+        fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
         // Staff member - go to staff page
         window.location.replace('/staff');
         return;
@@ -171,7 +175,7 @@ function LoginForm() {
         <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+            <p className="text-sm font-semibold text-red-800 dark:text-black-200">
               {displayError}
             </p>
           </div>

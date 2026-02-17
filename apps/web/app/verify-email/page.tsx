@@ -22,11 +22,13 @@ function VerifyEmailContent() {
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [emailFailed, setEmailFailed] = useState(false);
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
     const storedEmail = localStorage.getItem('pendingVerificationEmail');
     setEmail(emailParam || storedEmail || '');
+    setEmailFailed(searchParams.get('emailFailed') === '1');
   }, [searchParams]);
 
   useEffect(() => {
@@ -115,6 +117,17 @@ function VerifyEmailContent() {
               {maskedEmail}
             </span>
           </p>
+
+          {/* Email send failed warning */}
+          {emailFailed && !resendSuccess && (
+            <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 text-left">
+                Your account was created, but the initial email failed to send.
+                Please click &quot;Resend verification email&quot; below.
+              </p>
+            </div>
+          )}
 
           {/* Success */}
           {resendSuccess && (

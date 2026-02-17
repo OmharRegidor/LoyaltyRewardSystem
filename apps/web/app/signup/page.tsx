@@ -227,7 +227,9 @@ export default function SignupPage() {
       }
 
       // Redirect to verify email page with email param
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      const params = new URLSearchParams({ email });
+      if (response.emailSendFailed) params.set('emailFailed', '1');
+      router.push(`/verify-email?${params.toString()}`);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : 'An unexpected error occurred';
