@@ -19,6 +19,8 @@ const CreateProductSchema = z.object({
   image_url: z.string().url().optional(),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().nonnegative().optional(),
+  stock_quantity: z.number().int().nonnegative().optional(),
+  low_stock_threshold: z.number().int().nonnegative().optional(),
 });
 
 // ============================================

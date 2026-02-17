@@ -1,6 +1,10 @@
 // apps/web/lib/services/pos.service.ts
 
 import { createServiceClient } from "@/lib/supabase-server";
+import {
+  deductStockForSale,
+  restoreStockForVoid,
+} from "@/lib/services/inventory.service";
 import type {
   Product,
   ProductFormData,
@@ -110,6 +114,8 @@ export async function createProduct(
       image_url: input.image_url || null,
       is_active: input.is_active,
       sort_order: input.sort_order || 0,
+      stock_quantity: input.stock_quantity ?? 0,
+      low_stock_threshold: input.low_stock_threshold ?? 5,
     })
     .select()
     .single();
@@ -142,6 +148,8 @@ export async function updateProduct(
     updateData.image_url = input.image_url || null;
   if (input.is_active !== undefined) updateData.is_active = input.is_active;
   if (input.sort_order !== undefined) updateData.sort_order = input.sort_order;
+  if (input.low_stock_threshold !== undefined)
+    updateData.low_stock_threshold = input.low_stock_threshold;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
@@ -307,6 +315,19 @@ export async function createSale(
   if (itemsError) {
     console.error("Error creating sale items:", itemsError);
     // Sale was created but items failed - log but don't throw
+  }
+
+  // Deduct stock for sold items (non-blocking)
+  try {
+    await deductStockForSale(
+      input.business_id,
+      input.items,
+      sale.id,
+      input.staff_id || "",
+      "POS Sale",
+    );
+  } catch (stockError) {
+    console.error("Stock deduction error:", stockError);
   }
 
   // Award points to customer if applicable
@@ -484,6 +505,17 @@ export async function voidSale(input: VoidSaleInput): Promise<Sale> {
   if (voidError || !sale) {
     console.error("Error voiding sale:", voidError);
     throw voidError || new Error("Failed to void sale");
+  }
+
+  // Restore stock for voided items (non-blocking)
+  try {
+    await restoreStockForVoid(
+      input.sale_id,
+      input.voided_by,
+      "Void Restore",
+    );
+  } catch (stockError) {
+    console.error("Stock restore error:", stockError);
   }
 
   // Reverse points if customer was linked and points were earned

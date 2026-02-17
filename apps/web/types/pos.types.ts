@@ -25,6 +25,8 @@ export interface Product {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  stock_quantity: number;
+  low_stock_threshold: number;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +40,8 @@ export interface ProductFormData {
   image_url?: string;
   is_active: boolean;
   sort_order?: number;
+  stock_quantity?: number;
+  low_stock_threshold?: number;
 }
 
 // ============================================
@@ -226,4 +230,62 @@ export interface SalesAnalytics {
   };
   daily_revenue: DailyRevenueDataPoint[];
   top_products: TopProductItem[];
+}
+
+// ============================================
+// INVENTORY TYPES
+// ============================================
+
+export type StockMovementType =
+  | "sale"
+  | "void_restore"
+  | "receiving"
+  | "adjustment";
+
+export interface StockMovement {
+  id: string;
+  business_id: string;
+  product_id: string;
+  movement_type: StockMovementType;
+  quantity: number;
+  stock_before: number;
+  stock_after: number;
+  performed_by: string | null;
+  performer_name: string | null;
+  reason: string | null;
+  reference_id: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface StockMovementWithProduct extends StockMovement {
+  product_name: string;
+}
+
+export interface StockReceivingInput {
+  product_id: string;
+  quantity: number;
+  notes?: string;
+}
+
+export interface StockAdjustmentInput {
+  product_id: string;
+  new_quantity: number;
+  reason: string;
+}
+
+export interface StockMovementFilter {
+  product_id?: string;
+  movement_type?: StockMovementType;
+  start_date?: string;
+  end_date?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface InventorySummary {
+  total_products: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  recent_movements: StockMovementWithProduct[];
 }

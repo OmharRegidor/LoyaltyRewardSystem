@@ -31,6 +31,7 @@ const UpdateProductSchema = z.object({
     .transform((val) => val ?? undefined),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().nonnegative().optional(),
+  low_stock_threshold: z.number().int().nonnegative().optional(),
 });
 
 // ============================================
