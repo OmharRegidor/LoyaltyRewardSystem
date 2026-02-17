@@ -157,6 +157,36 @@ export default function StaffScannerPage() {
     };
   }, []);
 
+  // Real-time staff deactivation detection
+  useEffect(() => {
+    if (!staffData) return;
+
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`staff-status-${staffData.staffId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "staff",
+          filter: `id=eq.${staffData.staffId}`,
+        },
+        (payload) => {
+          if (payload.new.is_active === false) {
+            stopScanner();
+            setIsDeactivated(true);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [staffData]);
+
   const checkAccess = async () => {
     const supabase = createClient();
 
