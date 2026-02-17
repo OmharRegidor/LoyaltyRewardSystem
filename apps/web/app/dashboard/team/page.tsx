@@ -59,7 +59,7 @@ export default function TeamManagementPage() {
 
     const supabase = createClient();
 
-    // Subscribe to real-time transaction updates to refresh staff stats
+    // Subscribe to real-time scan log updates to refresh staff stats
     const channel = supabase
       .channel('team-realtime')
       .on(
@@ -67,11 +67,11 @@ export default function TeamManagementPage() {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'transactions',
+          table: 'scan_logs',
           filter: `business_id=eq.${businessId}`,
         },
         () => {
-          // Reload team data when new transaction comes in
+          // Reload team data when new scan comes in
           loadData();
         },
       )
@@ -104,38 +104,41 @@ export default function TeamManagementPage() {
 
     setBusinessId(business.id);
 
-    const [members, invites] = await Promise.all([
-      getTeamMembers(business.id),
-      getPendingInvites(business.id),
-    ]);
-
-    // Fetch today's stats for each staff member
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const membersWithStats = await Promise.all(
-      members.map(async (member) => {
-        if (member.role === 'owner') return member;
+    const [members, invites, { data: todayScans }] = await Promise.all([
+      getTeamMembers(business.id),
+      getPendingInvites(business.id),
+      supabase
+        .from('scan_logs')
+        .select('staff_id, points_awarded, scanned_at')
+        .eq('business_id', business.id)
+        .gte('scanned_at', today.toISOString()),
+    ]);
 
-        // Get today's transactions for this staff member
-        const { data: todayTx } = await supabase
-          .from('transactions')
-          .select('points')
-          .eq('business_id', business.id)
-          .eq('staff_id', member.id)
-          .gte('created_at', today.toISOString());
+    // Compute today's stats per staff member from scan_logs
+    const statsMap = new Map<string, { scans: number; points: number; lastScan: string | null }>();
+    for (const scan of todayScans ?? []) {
+      const existing = statsMap.get(scan.staff_id) ?? { scans: 0, points: 0, lastScan: null };
+      existing.scans += 1;
+      existing.points += scan.points_awarded || 0;
+      if (!existing.lastScan || (scan.scanned_at && scan.scanned_at > existing.lastScan)) {
+        existing.lastScan = scan.scanned_at;
+      }
+      statsMap.set(scan.staff_id, existing);
+    }
 
-        const scansToday = todayTx?.length || 0;
-        const pointsToday =
-          todayTx?.reduce((sum, tx) => sum + (tx.points || 0), 0) || 0;
-
-        return {
-          ...member,
-          scansToday,
-          pointsToday,
-        };
-      }),
-    );
+    const membersWithStats = members.map((member) => {
+      const stats = statsMap.get(member.id);
+      if (!stats) return member;
+      return {
+        ...member,
+        scans_today: stats.scans,
+        points_awarded_today: stats.points,
+        last_scan_at: stats.lastScan || member.last_scan_at,
+      };
+    });
 
     setTeamMembers(membersWithStats);
     setPendingInvites(invites);
@@ -323,7 +326,7 @@ export default function TeamManagementPage() {
         )}
 
         {/* Team Members Section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
           <div className="p-4 sm:p-6 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Users className="w-5 h-5" />

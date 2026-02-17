@@ -99,12 +99,12 @@ export function CardModal({
   tier,
   totalPoints,
 }: CardModalProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(true);
   const tierStyle = TIER_STYLES[tier] || TIER_STYLES.bronze;
 
-  // Reset flip state when modal opens
+  // Reset flip state when modal opens (show back face with QR first)
   useEffect(() => {
-    if (isOpen) setIsFlipped(false);
+    if (isOpen) setIsFlipped(true);
   }, [isOpen]);
 
   // Lock body scroll when modal is open
