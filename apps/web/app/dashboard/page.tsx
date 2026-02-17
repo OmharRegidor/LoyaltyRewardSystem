@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
@@ -15,11 +15,39 @@ import {
   ArrowDownRight,
   Star,
   ChevronRight,
+  ChevronLeft,
   X,
   Calendar,
+  Search,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ============================================
 // TYPES
@@ -175,6 +203,283 @@ function WelcomeModalHandler() {
 }
 
 // ============================================
+// TRANSACTIONS MODAL
+// ============================================
+
+interface FullTransaction {
+  id: string;
+  type: string;
+  points: number;
+  description: string | null;
+  created_at: string;
+  customer: { full_name: string } | null;
+}
+
+type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
+
+const MODAL_PAGE_SIZE = 20;
+
+function TransactionsModal({
+  open,
+  onOpenChange,
+  businessId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  businessId: string | null;
+}) {
+  const [allTx, setAllTx] = useState<FullTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [sort, setSort] = useState<SortOption>('newest');
+  const [page, setPage] = useState(0);
+
+  // Fetch transactions when modal opens
+  useEffect(() => {
+    if (!open || !businessId) return;
+
+    setIsLoading(true);
+    const fetchAll = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('transactions')
+        .select(
+          'id, type, points, description, created_at, customer:customers(full_name)',
+        )
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+      if (data) setAllTx(data as FullTransaction[]);
+      setIsLoading(false);
+    };
+
+    fetchAll();
+  }, [open, businessId]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [search, typeFilter, sort]);
+
+  const filtered = useMemo(() => {
+    let result = [...allTx];
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((tx) =>
+        (tx.customer?.full_name || '').toLowerCase().includes(q),
+      );
+    }
+
+    if (typeFilter !== 'all') {
+      result = result.filter((tx) => tx.type === typeFilter);
+    }
+
+    switch (sort) {
+      case 'newest':
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'oldest':
+        result.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case 'highest':
+        result.sort((a, b) => b.points - a.points);
+        break;
+      case 'lowest':
+        result.sort((a, b) => a.points - b.points);
+        break;
+    }
+
+    return result;
+  }, [allTx, search, typeFilter, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
+  const paged = filtered.slice(page * MODAL_PAGE_SIZE, (page + 1) * MODAL_PAGE_SIZE);
+
+  const getInitials = (name: string) =>
+    name.split(' ').map((n) => n[0]).join('');
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+  const typeBadge = (type: string) => {
+    if (type === 'earn') {
+      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Earn</span>;
+    }
+    if (type === 'redeem') {
+      return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">Redeem</span>;
+    }
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{type}</span>;
+  };
+
+  const formatPoints = (type: string, points: number) => {
+    const value = type === 'earn' ? points : -points;
+    return (
+      <span className={`font-semibold ${value >= 0 ? 'text-green-600' : 'text-gray-900'}`}>
+        {value >= 0 ? '+' : ''}{value.toLocaleString()}
+      </span>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">Transaction History</DialogTitle>
+          <DialogDescription>View and filter all transactions for your business.</DialogDescription>
+        </DialogHeader>
+
+        {/* Search + Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search by customer..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="earn">Earn</SelectItem>
+              <SelectItem value="redeem">Redeem</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Most Recent</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="highest">Highest Points</SelectItem>
+              <SelectItem value="lowest">Lowest Points</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {isLoading ? (
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-16 text-center">
+              <ArrowLeftRight className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No transactions found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                {search || typeFilter !== 'all'
+                  ? 'Try adjusting your filters.'
+                  : 'Transactions will appear here once customers earn or redeem points.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Points</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead className="text-right">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paged.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs shrink-0">
+                              {getInitials(tx.customer?.full_name || '?')}
+                            </div>
+                            <span className="font-medium text-gray-900">
+                              {tx.customer?.full_name || 'Unknown'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{typeBadge(tx.type)}</TableCell>
+                        <TableCell className="text-right">{formatPoints(tx.type, tx.points)}</TableCell>
+                        <TableCell className="text-gray-500 max-w-[180px] truncate">{tx.description || '-'}</TableCell>
+                        <TableCell className="text-right text-sm text-gray-500">{formatDate(tx.created_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-3 py-2">
+                {paged.map((tx) => (
+                  <div key={tx.id} className="rounded-xl border border-gray-100 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                        {getInitials(tx.customer?.full_name || '?')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 truncate">{tx.customer?.full_name || 'Unknown'}</span>
+                          {formatPoints(tx.type, tx.points)}
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          {typeBadge(tx.type)}
+                          <span className="text-xs text-gray-400 shrink-0">{formatDate(tx.created_at)}</span>
+                        </div>
+                        {tx.description && (
+                          <p className="text-xs text-gray-500 mt-2 truncate">{tx.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <p className="text-sm text-gray-500">
+              {page * MODAL_PAGE_SIZE + 1}–{Math.min((page + 1) * MODAL_PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
@@ -200,6 +505,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -519,13 +825,16 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-gray-900">
                 Recent Transactions
               </h2>
-              <button className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+              <button
+                onClick={() => setShowAllTransactions(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
                 View All <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            {/* Table Header - hidden on mobile */}
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <div className="col-span-4">Customer</div>
               <div className="col-span-3">Action</div>
               <div className="col-span-2 text-right">Points</div>
@@ -548,34 +857,70 @@ export default function DashboardPage() {
                 transactions.map((tx) => (
                   <div
                     key={tx.id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-colors"
+                    className="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="col-span-4 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm">
+                    {/* Mobile layout */}
+                    <div className="flex sm:hidden items-center gap-3">
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm">
                         {tx.customer
                           .split(' ')
                           .map((n) => n[0])
                           .join('')}
                       </div>
-                      <span className="font-medium text-gray-900">
-                        {tx.customer}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-900 truncate">
+                            {tx.customer}
+                          </span>
+                          <span
+                            className={`font-semibold shrink-0 ${
+                              tx.points >= 0
+                                ? 'text-green-600'
+                                : 'text-gray-900'
+                            }`}
+                          >
+                            {tx.points >= 0 ? '+' : ''}
+                            {tx.points.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-1">
+                          {getActionBadge(tx.type, tx.action)}
+                          <span className="text-xs text-gray-400 shrink-0">
+                            {tx.time}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-span-3">
-                      {getActionBadge(tx.type, tx.action)}
-                    </div>
-                    <div
-                      className={`col-span-2 text-right font-semibold ${
-                        tx.points >= 0
-                          ? 'text-green-600'
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {tx.points >= 0 ? '+' : ''}
-                      {tx.points.toLocaleString()}
-                    </div>
-                    <div className="col-span-3 text-right text-sm text-gray-500">
-                      {tx.time}
+
+                    {/* Desktop layout */}
+                    <div className="hidden sm:grid grid-cols-12 gap-4 items-center">
+                      <div className="col-span-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm">
+                          {tx.customer
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </div>
+                        <span className="font-medium text-gray-900">
+                          {tx.customer}
+                        </span>
+                      </div>
+                      <div className="col-span-3">
+                        {getActionBadge(tx.type, tx.action)}
+                      </div>
+                      <div
+                        className={`col-span-2 text-right font-semibold ${
+                          tx.points >= 0
+                            ? 'text-green-600'
+                            : 'text-gray-900'
+                        }`}
+                      >
+                        {tx.points >= 0 ? '+' : ''}
+                        {tx.points.toLocaleString()}
+                      </div>
+                      <div className="col-span-3 text-right text-sm text-gray-500">
+                        {tx.time}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -651,6 +996,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Transactions Modal */}
+      <TransactionsModal
+        open={showAllTransactions}
+        onOpenChange={setShowAllTransactions}
+        businessId={businessId}
+      />
     </DashboardLayout>
   );
 }
