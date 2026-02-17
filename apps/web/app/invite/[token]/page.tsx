@@ -112,7 +112,7 @@ export default function InvitePage() {
           business_name: businessName,
         });
         setError(
-          'This invite has already been accepted. Please use the Staff Login page.'
+          'This invite has already been accepted. Please log in to continue.'
         );
         setStatus('error');
         return;
@@ -219,10 +219,10 @@ export default function InvitePage() {
   // Loading State
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading invite...</p>
+          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading invite...</p>
         </div>
       </div>
     );
@@ -231,25 +231,25 @@ export default function InvitePage() {
   // Error State
   if (status === 'error') {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 text-center border border-gray-700/50 shadow-2xl">
-            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white rounded-2xl p-8 text-center border-2 border-gray-200 shadow-xl">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <XCircle className="w-8 h-8 text-red-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-3">
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">
               {invite?.status === 'accepted'
                 ? 'Already Accepted'
                 : 'Invalid Invite'}
             </h1>
-            <p className="text-gray-400 mb-6">{error}</p>
+            <p className="text-gray-600 mb-6">{error}</p>
 
             <Link
-              href="/staff/login"
-              className="inline-flex items-center justify-center gap-2 w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-medium transition-colors"
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium transition-colors shadow-lg shadow-primary/30"
             >
               <LogIn className="w-5 h-5" />
-              Go to Staff Login
+              Go to Login
             </Link>
           </div>
         </div>
@@ -260,18 +260,18 @@ export default function InvitePage() {
   // Success State
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 text-center border border-gray-700/50 shadow-2xl">
-            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="bg-white rounded-2xl p-8 text-center border-2 border-gray-200 shadow-xl">
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome to the Team! 🎉
             </h1>
-            <p className="text-gray-400 mb-2">
+            <p className="text-gray-600 mb-2">
               You've joined{' '}
-              <span className="text-cyan-400 font-semibold">
+              <span className="text-primary font-semibold">
                 {invite?.business_name}
               </span>
             </p>
@@ -280,8 +280,8 @@ export default function InvitePage() {
                 Branch: {invite.branch_name}
               </p>
             )}
-            <div className="flex items-center justify-center gap-2 text-gray-400">
-              <Loader2 className="w-5 h-5 animate-spin" />
+            <div className="flex items-center justify-center gap-2 text-gray-600">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
               <span>Opening scanner...</span>
             </div>
           </div>
@@ -292,48 +292,48 @@ export default function InvitePage() {
 
   // Ready State - Sign In Form
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-gray-800/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
+        <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-xl">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-linear-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/25">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/25">
               <LogIn className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               You're Invited!
             </h1>
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               Join the team at{' '}
-              <span className="text-cyan-400 font-medium">
+              <span className="text-primary font-medium">
                 {invite?.business_name}
               </span>
             </p>
           </div>
 
           {/* Invite Details */}
-          <div className="bg-gray-700/30 rounded-xl p-4 mb-6 space-y-3">
+          <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4 mb-6 space-y-3 border border-primary/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-600/50 rounded-lg flex items-center justify-center">
-                <Mail className="w-5 h-5 text-cyan-400" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Mail className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Name
                 </p>
-                <p className="text-white font-medium">{invite?.name}</p>
+                <p className="text-gray-900 font-medium">{invite?.name}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-600/50 rounded-lg flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-cyan-400" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Role
                 </p>
-                <p className="text-white font-medium capitalize">
+                <p className="text-gray-900 font-medium capitalize">
                   {invite?.role}
                 </p>
               </div>
@@ -341,14 +341,14 @@ export default function InvitePage() {
 
             {invite?.branch_name && (
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-600/50 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-cyan-400" />
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">
                     Branch
                   </p>
-                  <p className="text-white font-medium">{invite.branch_name}</p>
+                  <p className="text-gray-900 font-medium">{invite.branch_name}</p>
                 </div>
               </div>
             )}
@@ -356,17 +356,17 @@ export default function InvitePage() {
 
           {/* Email (read-only) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
-            <div className="px-4 py-3 bg-gray-700/50 rounded-xl text-gray-300 border border-gray-600/50">
+            <div className="px-4 py-3 bg-gray-50 rounded-xl text-gray-600 border-2 border-gray-200">
               {invite?.email}
             </div>
           </div>
 
           {/* Password Field */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Password{' '}
               <span className="text-gray-500">(given by your employer)</span>
             </label>
@@ -377,14 +377,14 @@ export default function InvitePage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full pl-12 pr-12 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                className="w-full pl-12 pr-12 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
                 disabled={status === 'submitting'}
                 onKeyDown={(e) => e.key === 'Enter' && handleSignInAndAccept()}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -397,8 +397,8 @@ export default function InvitePage() {
 
           {/* Error */}
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-xl">
+              <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
@@ -406,7 +406,7 @@ export default function InvitePage() {
           <button
             onClick={handleSignInAndAccept}
             disabled={status === 'submitting' || !password}
-            className="w-full py-4 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-cyan-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg shadow-lg shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {status === 'submitting' ? (
               <>
@@ -422,16 +422,16 @@ export default function InvitePage() {
           </button>
 
           {/* Footer */}
-          <div className="mt-6 pt-6 border-t border-gray-700/50 text-center">
+          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-500 text-sm mb-2">
               Already accepted your invite?
             </p>
             <Link
-              href="/staff/login"
-              className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-medium"
+              href="/login"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
             >
               <LogIn className="w-4 h-4" />
-              Go to Staff Login
+              Go to Login
             </Link>
           </div>
         </div>

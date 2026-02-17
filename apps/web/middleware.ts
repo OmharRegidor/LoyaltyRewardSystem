@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/verify-email',
   '/auth/callback',
-  '/staff/login',
   '/terms',
   '/privacy',
   '/book-call',

@@ -196,7 +196,7 @@ export default function StaffScannerPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/staff/login");
+        router.push("/login");
         return;
       }
 
@@ -245,7 +245,7 @@ export default function StaffScannerPage() {
           return;
         }
 
-        router.push("/staff/login");
+        router.push("/login");
         return;
       }
 
@@ -268,7 +268,7 @@ export default function StaffScannerPage() {
       setIsLoading(false);
     } catch (err) {
       console.error("Access check error:", err);
-      router.push("/staff/login");
+      router.push("/login");
     }
   };
 
