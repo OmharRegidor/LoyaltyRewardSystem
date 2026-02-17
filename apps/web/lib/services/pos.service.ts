@@ -20,6 +20,8 @@ import type {
   DailyRevenueDataPoint,
   TopProductItem,
 } from "@/types/pos.types";
+import type { StaffSaleInput, StaffSaleResult } from "@/types/staff-pos.types";
+import { TIERS } from "@/types/staff-pos.types";
 
 // ============================================
 // PRODUCT FUNCTIONS
@@ -661,6 +663,195 @@ export async function lookupCustomerByPhone(
     phone: data.phone || "",
     totalPoints: data.total_points || 0,
     tier: data.tier || "bronze",
+  };
+}
+
+// ============================================
+// STAFF SALE (POS + LOYALTY + EXCHANGE)
+// ============================================
+
+export async function createStaffSale(
+  businessId: string,
+  staffId: string,
+  staffName: string,
+  input: StaffSaleInput,
+): Promise<StaffSaleResult> {
+  const supabase = createServiceClient();
+
+  // 1. Calculate totals
+  const subtotalCentavos = input.items.reduce(
+    (sum, item) => sum + item.unit_price_centavos * item.quantity,
+    0,
+  );
+  const discountCentavos = input.discount_centavos || 0;
+  const afterDiscountCentavos = Math.max(0, subtotalCentavos - discountCentavos);
+
+  // 2. Calculate exchange
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("pesos_per_point, min_purchase_for_points, max_points_per_transaction")
+    .eq("id", businessId)
+    .single();
+
+  const pesosPerPoint = business?.pesos_per_point || 10;
+  const exchangePoints = input.exchange_points || 0;
+  const exchangeCentavos = exchangePoints * pesosPerPoint * 100;
+  const totalCentavos = Math.max(0, afterDiscountCentavos - exchangeCentavos);
+
+  // 3. Validate exchange against customer balance
+  if (exchangePoints > 0) {
+    const { data: customerData } = await supabase
+      .from("customers")
+      .select("total_points")
+      .eq("id", input.customer_id)
+      .single();
+
+    if (!customerData || (customerData.total_points ?? 0) < exchangePoints) {
+      throw new Error("Insufficient points for exchange");
+    }
+  }
+
+  // 4. Calculate points earned (on final amount, with tier multiplier)
+  const tierMultiplier = TIERS[input.tier]?.multiplier || 1;
+  const basePoints = business
+    ? calculatePointsEarned(totalCentavos, business)
+    : 0;
+  const pointsEarned = Math.floor(basePoints * tierMultiplier);
+
+  // 5. Generate sale number
+  let saleNumber = `SALE-${Date.now()}`;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: saleNumberData } = await (supabase as any).rpc(
+      "generate_sale_number",
+      { p_business_id: businessId },
+    );
+    if (saleNumberData) saleNumber = saleNumberData;
+  } catch {
+    // Fallback used
+  }
+
+  // 6. Create the sale record
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: sale, error: saleError } = await (supabase as any)
+    .from("sales")
+    .insert({
+      business_id: businessId,
+      customer_id: input.customer_id,
+      staff_id: staffId,
+      sale_number: saleNumber,
+      subtotal_centavos: subtotalCentavos,
+      discount_centavos: discountCentavos,
+      discount_type: input.discount_type || null,
+      discount_reason: input.discount_reason || null,
+      total_centavos: totalCentavos,
+      payment_method: "cash" as PaymentMethod,
+      points_earned: pointsEarned,
+      points_redeemed: exchangePoints,
+      status: "completed",
+    })
+    .select()
+    .single();
+
+  if (saleError || !sale) {
+    console.error("Error creating staff sale:", saleError);
+    throw saleError || new Error("Failed to create sale");
+  }
+
+  // 7. Create sale items
+  const itemsToInsert = input.items.map((item) => ({
+    sale_id: sale.id,
+    product_id: item.product_id || null,
+    name: item.name,
+    description: item.description || null,
+    quantity: item.quantity,
+    unit_price_centavos: item.unit_price_centavos,
+    total_centavos: item.unit_price_centavos * item.quantity,
+  }));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from("sale_items").insert(itemsToInsert);
+
+  // 8. Deduct stock for product-based items
+  try {
+    await deductStockForSale(
+      businessId,
+      input.items,
+      sale.id,
+      staffId,
+      staffName,
+    );
+  } catch (stockError) {
+    console.error("Stock deduction error:", stockError);
+  }
+
+  // 9. Exchange points (deduct from customer)
+  if (exchangePoints > 0) {
+    await supabase.rpc("deduct_customer_points", {
+      p_customer_id: input.customer_id,
+      p_points: exchangePoints,
+    });
+
+    await supabase.from("transactions").insert({
+      customer_id: input.customer_id,
+      business_id: businessId,
+      type: "redeem",
+      points: exchangePoints,
+      description: `Points payment on Sale #${saleNumber} (-₱${(exchangeCentavos / 100).toFixed(2)})`,
+    });
+  }
+
+  // 10. Award earned points
+  if (pointsEarned > 0) {
+    await supabase.rpc("add_customer_points", {
+      p_customer_id: input.customer_id,
+      p_points: pointsEarned,
+    });
+
+    const tierName = TIERS[input.tier]?.name || "Bronze";
+    const description =
+      tierMultiplier > 1
+        ? `POS Sale #${saleNumber} (${tierName} ${tierMultiplier}x bonus)`
+        : `POS Sale #${saleNumber}`;
+
+    await supabase.from("transactions").insert({
+      customer_id: input.customer_id,
+      business_id: businessId,
+      type: "earn",
+      points: pointsEarned,
+      amount_spent: totalCentavos / 100,
+      description,
+    });
+  }
+
+  // 11. Create scan log for staff daily stats
+  await supabase.from("scan_logs").insert({
+    staff_id: staffId,
+    business_id: businessId,
+    customer_id: input.customer_id,
+    points_awarded: pointsEarned,
+    transaction_amount: totalCentavos / 100,
+  });
+
+  // 12. Get updated customer balance
+  const { data: updatedCustomer } = await supabase
+    .from("customers")
+    .select("total_points")
+    .eq("id", input.customer_id)
+    .single();
+
+  return {
+    sale_id: sale.id,
+    sale_number: saleNumber,
+    subtotal_centavos: subtotalCentavos,
+    discount_centavos: discountCentavos,
+    exchange_centavos: exchangeCentavos,
+    total_centavos: totalCentavos,
+    points_earned: pointsEarned,
+    points_redeemed: exchangePoints,
+    new_points_balance: updatedCustomer?.total_points || 0,
+    tier_multiplier: tierMultiplier,
+    base_points: basePoints,
   };
 }
 

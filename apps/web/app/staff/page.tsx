@@ -2,26 +2,33 @@
 
 "use client";
 
-import { UserPlus } from "lucide-react";
-import { AddCustomerModal } from "@/components/staff/add-customer-modal";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
-  QrCode,
   LogOut,
   CheckCircle,
   AlertCircle,
   Loader2,
   User,
   Award,
-  SwitchCamera,
-  Coins,
-  Sparkles,
-  TrendingUp,
   ShieldOff,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Html5Qrcode } from "html5-qrcode";
+import type { TierKey, StaffSaleResult } from "@/types/staff-pos.types";
+import { useStaffPOS } from "@/hooks/useStaffPOS";
+
+// Components
+import { AddCustomerModal } from "@/components/staff/add-customer-modal";
+import { IdleView } from "@/components/staff/idle-view";
+import { ScannerView } from "@/components/staff/scanner-view";
+import { VerifyRedemptionView } from "@/components/staff/verify-redemption-view";
+import { CustomerInfoBar } from "@/components/staff/pos/customer-info-bar";
+import { ProductSelector } from "@/components/staff/pos/product-selector";
+import { CartSection } from "@/components/staff/pos/cart-section";
+import { DiscountSection } from "@/components/staff/pos/discount-section";
+import { ExchangeSection } from "@/components/staff/pos/exchange-section";
+import { OrderSummary } from "@/components/staff/pos/order-summary";
 
 // ============================================
 // TYPES
@@ -45,70 +52,14 @@ interface CustomerData {
   isFirstVisit: boolean;
 }
 
-interface ScanResult {
-  success: boolean;
-  customerName?: string;
-  basePoints?: number;
-  bonusPoints?: number;
-  totalPointsAwarded?: number;
-  multiplier?: number;
-  newTotal?: number;
-  error?: string;
-}
-
 type ScannerState =
   | "idle"
   | "scanning"
   | "customer-found"
-  | "awarding"
+  | "processing"
   | "success"
   | "error"
   | "verify-redemption";
-
-interface RedemptionData {
-  id: string;
-  code: string;
-  rewardTitle: string;
-  pointsUsed: number;
-  customerName: string;
-  status: string;
-  expiresAt: string;
-  createdAt: string;
-}
-
-interface VerifyRedemptionResult {
-  found: boolean;
-  id?: string;
-  redemption_code?: string;
-  points_used?: number;
-  status?: string;
-  expires_at?: string;
-  created_at?: string;
-  customer_name?: string;
-  customer_email?: string;
-  reward_title?: string;
-}
-
-// ============================================
-// TIER CONFIGURATION
-// ============================================
-
-type TierKey = "bronze" | "silver" | "gold" | "platinum";
-
-const TIERS: Record<
-  TierKey,
-  { name: string; multiplier: number; color: string; emoji: string }
-> = {
-  bronze: { name: "Bronze", multiplier: 1.0, color: "#CD7F32", emoji: "🥉" },
-  silver: { name: "Silver", multiplier: 1.25, color: "#C0C0C0", emoji: "🥈" },
-  gold: { name: "Gold", multiplier: 1.5, color: "#FFD700", emoji: "🥇" },
-  platinum: {
-    name: "Platinum",
-    multiplier: 2.0,
-    color: "#E5E4E2",
-    emoji: "💎",
-  },
-};
 
 // ============================================
 // MAIN COMPONENT
@@ -124,27 +75,24 @@ export default function StaffScannerPage() {
   const [stats, setStats] = useState({ scansToday: 0, pointsAwardedToday: 0 });
   const [scannerState, setScannerState] = useState<ScannerState>("idle");
   const [customer, setCustomer] = useState<CustomerData | null>(null);
-  const [transactionAmount, setTransactionAmount] = useState("");
-  const [calculatedPoints, setCalculatedPoints] = useState({
-    base: 0,
-    bonus: 0,
-    total: 0,
-  });
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [saleResult, setSaleResult] = useState<StaffSaleResult | null>(null);
   const [cameraFacing, setCameraFacing] = useState<"environment" | "user">(
     "environment",
   );
   const [error, setError] = useState("");
-  const [redemptionCode, setRedemptionCode] = useState("");
-  const [redemptionData, setRedemptionData] = useState<RedemptionData | null>(
-    null,
-  );
-  const [isVerifying, setIsVerifying] = useState(false);
   const [isDeactivated, setIsDeactivated] = useState(false);
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-scanner-container";
+
+  // POS hook (initialized with defaults, updated when customer is found)
+  const pos = useStaffPOS({
+    pesosPerPoint: staffData?.pesosPerPoint || 10,
+    customerPoints: customer?.currentPoints || 0,
+    customerTier: customer?.tier || "bronze",
+    customerId: customer?.id || "",
+  });
 
   // ============================================
   // INITIALIZATION
@@ -155,6 +103,7 @@ export default function StaffScannerPage() {
     return () => {
       stopScanner();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Real-time staff deactivation detection
@@ -358,6 +307,7 @@ export default function StaffScannerPage() {
   const onScanSuccess = useCallback(async (decodedText: string) => {
     await stopScanner();
     await lookupCustomer(decodedText);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================================
@@ -368,16 +318,12 @@ export default function StaffScannerPage() {
     const supabase = createClient();
 
     try {
-      let customerData = null;
-
-      // Use SECURITY DEFINER RPC to bypass RLS restrictions
       const { data: rpcResult } = await supabase.rpc("lookup_customer_by_qr", {
         p_scanned_code: scannedCode,
       });
 
-      if (rpcResult && rpcResult.length > 0) {
-        customerData = rpcResult[0];
-      }
+      let customerData =
+        rpcResult && rpcResult.length > 0 ? rpcResult[0] : null;
 
       if (!customerData) {
         setError("Customer not found. Please try again.");
@@ -398,7 +344,7 @@ export default function StaffScannerPage() {
             customerData.card_token = result.cardToken;
           }
         } catch {
-          // Non-critical — card token can be generated later
+          // Non-critical
         }
       }
 
@@ -430,7 +376,7 @@ export default function StaffScannerPage() {
         }
       }
 
-      // Get customer name - prefer full_name from staff-created, then try user metadata
+      // Get customer name
       let customerName = customerData.full_name || "";
 
       if (!customerName && customerData.user_id) {
@@ -472,108 +418,27 @@ export default function StaffScannerPage() {
   };
 
   // ============================================
-  // POINTS CALCULATION WITH TIER MULTIPLIER
+  // COMPLETE SALE
   // ============================================
 
-  useEffect(() => {
-    if (transactionAmount && staffData && customer) {
-      const amount = parseFloat(transactionAmount) || 0;
-      const basePoints = Math.floor(amount / staffData.pesosPerPoint);
-      const multiplier = TIERS[customer.tier].multiplier;
-      const totalPoints = Math.floor(basePoints * multiplier);
-      const bonusPoints = totalPoints - basePoints;
+  const handleCompleteSale = async () => {
+    if (!customer || !staffData) return;
 
-      setCalculatedPoints({
-        base: basePoints,
-        bonus: bonusPoints,
-        total: totalPoints,
-      });
-    } else {
-      setCalculatedPoints({ base: 0, bonus: 0, total: 0 });
-    }
-  }, [transactionAmount, staffData, customer]);
-
-  // ============================================
-  // AWARD POINTS
-  // ============================================
-
-  const awardPoints = async () => {
-    if (!customer || !staffData || calculatedPoints.total <= 0) return;
-
-    setScannerState("awarding");
-    const supabase = createClient();
-
+    setScannerState("processing");
     try {
-      const amount = parseFloat(transactionAmount) || 0;
-      const multiplier = TIERS[customer.tier].multiplier;
-
-      // Record scan log
-      await supabase.from("scan_logs").insert({
-        staff_id: staffData.staffId,
-        business_id: staffData.businessId,
-        customer_id: customer.id,
-        points_awarded: calculatedPoints.total,
-        transaction_amount: amount,
-      });
-
-      // Calculate new values
-      const newTotalPoints = customer.currentPoints + calculatedPoints.total;
-      const newLifetimePoints =
-        customer.lifetimePoints + calculatedPoints.total;
-
-      // Update customer
-      await supabase
-        .from("customers")
-        .update({
-          total_points: newTotalPoints,
-          lifetime_points: newLifetimePoints,
-          last_visit: new Date().toISOString(),
-        })
-        .eq("id", customer.id);
-
-      // Record transaction with tier bonus info
-      const description =
-        multiplier > 1
-          ? `Purchase at ${staffData.businessName} (${
-              TIERS[customer.tier].name
-            } ${multiplier}x bonus)`
-          : `Purchase at ${staffData.businessName}`;
-
-      await supabase.from("transactions").insert({
-        customer_id: customer.id,
-        business_id: staffData.businessId,
-        type: "earn",
-        points: calculatedPoints.total,
-        amount_spent: amount,
-        description,
-      });
-
-      // Note: per-business points are updated automatically by
-      // the trg_auto_link_customer_business trigger on transaction insert
+      const result = await pos.completeSale();
+      setSaleResult(result);
 
       // Update stats
       setStats((prev) => ({
         scansToday: prev.scansToday + 1,
-        pointsAwardedToday: prev.pointsAwardedToday + calculatedPoints.total,
+        pointsAwardedToday: prev.pointsAwardedToday + result.points_earned,
       }));
-
-      setScanResult({
-        success: true,
-        customerName: customer.name,
-        basePoints: calculatedPoints.base,
-        bonusPoints: calculatedPoints.bonus,
-        totalPointsAwarded: calculatedPoints.total,
-        multiplier,
-        newTotal: newTotalPoints,
-      });
 
       setScannerState("success");
     } catch (err) {
-      console.error("Award points error:", err);
-      setScanResult({
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to award points",
-      });
+      console.error("Complete sale error:", err);
+      setError(err instanceof Error ? err.message : "Failed to complete sale");
       setScannerState("error");
     }
   };
@@ -584,130 +449,10 @@ export default function StaffScannerPage() {
 
   const resetScanner = () => {
     setCustomer(null);
-    setTransactionAmount("");
-    setCalculatedPoints({ base: 0, bonus: 0, total: 0 });
-    setScanResult(null);
+    setSaleResult(null);
     setError("");
     setScannerState("idle");
-    setRedemptionCode("");
-    setRedemptionData(null);
-  };
-
-  // ============================================
-  // VERIFY REDEMPTION
-  // ============================================
-
-  const verifyRedemptionCode = async () => {
-    if (!redemptionCode.trim() || !staffData) return;
-
-    setIsVerifying(true);
-    setError("");
-    const supabase = createClient();
-
-    try {
-      // Use SECURITY DEFINER RPC to bypass RLS restrictions
-      const { data, error: rpcError } = await supabase.rpc(
-        "verify_redemption_code",
-        {
-          p_code: redemptionCode.trim(),
-          p_business_id: staffData.businessId,
-        },
-      );
-
-      if (rpcError) throw rpcError;
-
-      const result = data as unknown as VerifyRedemptionResult | null;
-
-      if (!result || !result.found) {
-        setError("Redemption code not found");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Check if already completed
-      if (result.status === "completed") {
-        setError("This code has already been used");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Check if expired
-      if (result.expires_at && new Date(result.expires_at) < new Date()) {
-        setError("This code has expired");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Check if cancelled
-      if (result.status === "cancelled") {
-        setError("This redemption was cancelled");
-        setIsVerifying(false);
-        return;
-      }
-
-      setRedemptionData({
-        id: result.id || "",
-        code: result.redemption_code || "",
-        rewardTitle: result.reward_title || "Unknown Reward",
-        pointsUsed: result.points_used || 0,
-        customerName: result.customer_name || "Customer",
-        status: result.status || "pending",
-        expiresAt: result.expires_at || "",
-        createdAt: result.created_at || new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error("Verify error:", err);
-      setError("Failed to verify code. Please try again.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const completeRedemption = async () => {
-    if (!redemptionData || !staffData) return;
-
-    setIsVerifying(true);
-    const supabase = createClient();
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      // Use SECURITY DEFINER RPC to bypass RLS restrictions
-      const { data: result, error: rpcError } = await supabase.rpc(
-        "complete_redemption",
-        {
-          p_redemption_id: redemptionData.id,
-          p_completed_by: user?.id || "",
-        },
-      );
-
-      if (rpcError) throw rpcError;
-
-      const completeResult = result as unknown as { success: boolean } | null;
-
-      if (!completeResult?.success) {
-        setError("Redemption could not be completed (may already be used)");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Show success
-      setScanResult({
-        success: true,
-        customerName: redemptionData.customerName,
-        totalPointsAwarded: redemptionData.pointsUsed,
-      });
-      setScannerState("success");
-      setRedemptionData(null);
-      setRedemptionCode("");
-    } catch (err) {
-      console.error("Complete redemption error:", err);
-      setError("Failed to complete redemption");
-    } finally {
-      setIsVerifying(false);
-    }
+    pos.reset();
   };
 
   const handleLogout = async () => {
@@ -715,6 +460,26 @@ export default function StaffScannerPage() {
     const supabase = createClient();
     await supabase.auth.signOut();
     window.location.replace("/login");
+  };
+
+  const handleRedemptionCompleted = (
+    customerName: string,
+    pointsUsed: number,
+  ) => {
+    setSaleResult({
+      sale_id: "",
+      sale_number: "",
+      subtotal_centavos: 0,
+      discount_centavos: 0,
+      exchange_centavos: 0,
+      total_centavos: 0,
+      points_earned: pointsUsed,
+      points_redeemed: 0,
+      new_points_balance: 0,
+      tier_multiplier: 1,
+      base_points: pointsUsed,
+    });
+    setScannerState("success");
   };
 
   // ============================================
@@ -759,8 +524,6 @@ export default function StaffScannerPage() {
     );
   }
 
-  const tierInfo = customer ? TIERS[customer.tier] : null;
-
   // ============================================
   // RENDER: MAIN
   // ============================================
@@ -790,398 +553,197 @@ export default function StaffScannerPage() {
       <main className="p-4 pb-32">
         {/* IDLE STATE */}
         {scannerState === "idle" && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <button
-              onClick={startScanner}
-              className="w-40 h-40 bg-yellow-400 hover:bg-yellow-500 rounded-full flex flex-col items-center justify-center mb-6 hover:shadow-2xl hover:shadow-yellow-400/30 hover:scale-105 transition-all active:scale-95 border border-gray-900 text-gray-900"
-            >
-              <QrCode className="w-14 h-14 mb-2" />
-              <span className="font-semibold text-sm">Scan Customer</span>
-            </button>
-            <p className="text-gray-500 text-sm mb-8">
-              Tap to scan customer QR code
-            </p>
-
-            {/* Action Buttons Row */}
-            <div className="flex gap-3 mb-4">
-              <button
-                onClick={() => setIsAddCustomerModalOpen(true)}
-                className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors"
-              >
-                <UserPlus className="w-5 h-5 text-yellow-600" />
-                <span className="text-gray-700 text-sm">Add Customer</span>
-              </button>
-              <button
-                onClick={() => setScannerState("verify-redemption")}
-                className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors"
-              >
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700 text-sm">Verify Code</span>
-              </button>
-            </div>
-            <p className="text-gray-500 text-xs">
-              Add customers or verify redemption codes
-            </p>
-          </div>
+          <IdleView
+            onStartScanner={startScanner}
+            onAddCustomer={() => setIsAddCustomerModalOpen(true)}
+            onVerifyCode={() => setScannerState("verify-redemption")}
+          />
         )}
 
         {/* VERIFY REDEMPTION STATE */}
-        {scannerState === "verify-redemption" && (
-          <div className="max-w-sm mx-auto">
-            <h2 className="text-xl font-bold text-center mb-6 text-gray-900">
-              Verify Redemption
-            </h2>
-
-            {/* Code Input */}
-            {!redemptionData && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter 8-digit code
-                  </label>
-                  <input
-                    type="text"
-                    value={redemptionCode}
-                    onChange={(e) =>
-                      setRedemptionCode(
-                        e.target.value.toUpperCase().slice(0, 8),
-                      )
-                    }
-                    placeholder="ABC123"
-                    className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                    maxLength={8}
-                    autoFocus
-                  />
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-                    <p className="text-red-600 text-sm text-center">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={resetScanner}
-                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={verifyRedemptionCode}
-                    disabled={redemptionCode.length < 8 || isVerifying}
-                    className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-900 border border-gray-900"
-                  >
-                    {isVerifying ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      "Verify"
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Redemption Found */}
-            {redemptionData && (
-              <div className="space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-green-700 mb-1">
-                    Valid Code
-                  </h3>
-                  <p className="text-gray-500 text-sm">Ready to complete</p>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Code</span>
-                    <span className="font-mono font-bold text-yellow-600">
-                      {redemptionData.code}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Reward</span>
-                    <span className="font-medium text-gray-900">
-                      {redemptionData.rewardTitle}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Customer</span>
-                    <span className="text-gray-900">
-                      {redemptionData.customerName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Points Used</span>
-                    <span className="text-gray-900">
-                      {redemptionData.pointsUsed.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Expires</span>
-                    <span className="text-gray-900">
-                      {new Date(redemptionData.expiresAt).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-                    <p className="text-red-600 text-sm text-center">{error}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={resetScanner}
-                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={completeRedemption}
-                    disabled={isVerifying}
-                    className="flex-1 py-4 bg-green-500 hover:bg-green-600 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-white"
-                  >
-                    {isVerifying ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle className="w-5 h-5" />
-                        Complete
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        {scannerState === "verify-redemption" && staffData && (
+          <VerifyRedemptionView
+            businessId={staffData.businessId}
+            onCancel={resetScanner}
+            onRedemptionCompleted={handleRedemptionCompleted}
+          />
         )}
 
         {/* SCANNING STATE */}
         {scannerState === "scanning" && (
-          <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-sm aspect-square bg-gray-900 rounded-2xl overflow-hidden mb-4 border border-gray-200">
-              <div id={scannerContainerId} className="w-full h-full" />
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-64 border-2 border-yellow-400 rounded-xl relative">
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-yellow-400 rounded-tl-lg" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-yellow-400 rounded-tr-lg" />
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-yellow-400 rounded-bl-lg" />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-yellow-400 rounded-br-lg" />
-                  </div>
-                </div>
+          <ScannerView
+            scannerContainerId={scannerContainerId}
+            onSwitchCamera={switchCamera}
+            onCancel={() => {
+              stopScanner();
+              setScannerState("idle");
+            }}
+          />
+        )}
+
+        {/* CUSTOMER FOUND STATE — Full POS */}
+        {scannerState === "customer-found" && customer && staffData && (
+          <div className="max-w-sm mx-auto">
+            <CustomerInfoBar
+              name={customer.name}
+              currentPoints={customer.currentPoints}
+              tier={customer.tier}
+              isFirstVisit={customer.isFirstVisit}
+            />
+
+            {/* Product Selector (hidden if no POS module) */}
+            {pos.hasPOSModule && !pos.isLoadingProducts && (
+              <ProductSelector
+                products={pos.products}
+                onAddToCart={pos.addProduct}
+                disabled={pos.isProcessing}
+              />
+            )}
+
+            {pos.isLoadingProducts && pos.hasPOSModule && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                <span className="text-sm text-gray-500">
+                  Loading products...
+                </span>
               </div>
-              <button
-                onClick={switchCamera}
-                className="absolute top-4 right-4 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors z-10"
-              >
-                <SwitchCamera className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <p className="text-gray-500 mb-4">
-              Point camera at customer's QR code
-            </p>
+            )}
+
+            <CartSection
+              items={pos.cartItems}
+              onUpdateQuantity={pos.updateQuantity}
+              onRemoveItem={pos.removeItem}
+              onAddManualItem={pos.addManualItem}
+              subtotalCentavos={pos.subtotalCentavos}
+            />
+
+            {pos.subtotalCentavos > 0 && (
+              <>
+                <DiscountSection
+                  subtotalCentavos={pos.subtotalCentavos}
+                  discount={pos.discount}
+                  onDiscountChange={pos.setDiscount}
+                />
+
+                <ExchangeSection
+                  customerPoints={customer.currentPoints}
+                  pesosPerPoint={staffData.pesosPerPoint}
+                  maxExchangePoints={pos.maxExchangePoints}
+                  currentExchangePoints={pos.exchange?.pointsUsed || 0}
+                  onExchangeChange={pos.setExchange}
+                />
+
+                <OrderSummary
+                  subtotalCentavos={pos.subtotalCentavos}
+                  discountCentavos={pos.discountCentavos}
+                  exchangeCentavos={pos.exchangeCentavos}
+                  totalDueCentavos={pos.totalDueCentavos}
+                  basePointsToEarn={pos.basePointsToEarn}
+                  pointsToEarn={pos.pointsToEarn}
+                  tierMultiplier={pos.tierMultiplier}
+                  customerTier={customer.tier}
+                  pesosPerPoint={staffData.pesosPerPoint}
+                  cartItemCount={pos.cartItems.length}
+                  isProcessing={pos.isProcessing}
+                  onComplete={handleCompleteSale}
+                />
+              </>
+            )}
+
+            {/* Cancel button */}
             <button
-              onClick={() => {
-                stopScanner();
-                setScannerState("idle");
-              }}
-              className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-gray-700 border border-gray-300"
+              onClick={resetScanner}
+              className="w-full mt-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
             >
               Cancel
             </button>
           </div>
         )}
 
-        {/* CUSTOMER FOUND STATE */}
-        {scannerState === "customer-found" && customer && tierInfo && (
-          <div className="max-w-sm mx-auto">
-            {/* Customer Info */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <User className="w-7 h-7 text-yellow-600" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {customer.name}
-                  </h2>
-                  <p className="text-gray-500 text-sm">
-                    {customer.currentPoints.toLocaleString()} points
-                  </p>
-                </div>
-                {/* Tier Badge */}
-                <div
-                  className="px-3 py-1.5 rounded-full flex items-center gap-1.5"
-                  style={{ backgroundColor: tierInfo.color + "20" }}
-                >
-                  <span>{tierInfo.emoji}</span>
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: tierInfo.color }}
-                  >
-                    {tierInfo.name}
-                  </span>
-                </div>
-              </div>
-
-              {/* First Visit Badge */}
-              {customer.isFirstVisit && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200 mb-2">
-                  <Sparkles className="w-5 h-5 text-green-600" />
-                  <span className="text-green-700 font-medium">
-                    First visit!
-                  </span>
-                </div>
-              )}
-
-              {/* Tier Multiplier Info */}
-              {tierInfo.multiplier > 1 && (
-                <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-xl border border-yellow-200">
-                  <Sparkles className="w-5 h-5 text-yellow-600" />
-                  <span className="text-yellow-700 font-medium">
-                    {tierInfo.multiplier}x Points Bonus Active!
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Transaction Amount */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Transaction Amount (₱)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">
-                  ₱
-                </span>
-                <input
-                  type="number"
-                  value={transactionAmount}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || parseFloat(val) >= 0)
-                      setTransactionAmount(val);
-                  }}
-                  min="0"
-                  placeholder="0.00"
-                  className="w-full pl-10 pr-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-xl font-semibold placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            {/* Points Calculation */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-yellow-600" />
-                  <span className="text-gray-700">Points to Award</span>
-                </div>
-                <span className="text-2xl font-bold text-yellow-600">
-                  +{calculatedPoints.total.toLocaleString()}
-                </span>
-              </div>
-
-              {/* Breakdown */}
-              <div className="space-y-1 pt-3 border-t border-yellow-200">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Base points</span>
-                  <span className="text-gray-700">
-                    {calculatedPoints.base.toLocaleString()}
-                  </span>
-                </div>
-                {calculatedPoints.bonus > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-amber-600 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {tierInfo.name} bonus ({tierInfo.multiplier}x)
-                    </span>
-                    <span className="text-amber-600">
-                      +{calculatedPoints.bonus.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-xs text-gray-500 mt-3">
-                Rate: ₱{staffData?.pesosPerPoint} = 1 base point
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={resetScanner}
-                className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={awardPoints}
-                disabled={calculatedPoints.total <= 0}
-                className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 border border-gray-900"
-              >
-                Award Points
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* AWARDING STATE */}
-        {scannerState === "awarding" && (
+        {/* PROCESSING STATE */}
+        {scannerState === "processing" && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mb-4" />
-            <p className="text-gray-500">Awarding points...</p>
+            <p className="text-gray-500">Processing sale...</p>
           </div>
         )}
 
         {/* SUCCESS STATE */}
-        {scannerState === "success" && scanResult?.success && (
+        {scannerState === "success" && saleResult && (
           <div className="max-w-sm mx-auto text-center">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-12 h-12 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold mb-2 text-gray-900">
-              Points Awarded!
+              {saleResult.points_redeemed > 0 ? "Sale Complete!" : "Points Awarded!"}
             </h2>
-            <p className="text-gray-500 mb-6">{scanResult.customerName}</p>
+            {customer && (
+              <p className="text-gray-500 mb-6">{customer.name}</p>
+            )}
 
             <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-              <p className="text-5xl font-bold text-yellow-600 mb-2">
-                +{scanResult.totalPointsAwarded?.toLocaleString()}
-              </p>
-              <p className="text-gray-500">points added</p>
-
-              {/* Bonus breakdown */}
-              {scanResult.bonusPoints && scanResult.bonusPoints > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">Base points</span>
-                    <span className="text-gray-700">
-                      {scanResult.basePoints?.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-amber-600">
-                      Tier bonus ({scanResult.multiplier}x)
-                    </span>
-                    <span className="text-amber-600">
-                      +{scanResult.bonusPoints.toLocaleString()}
+              {/* Sale total (if actual sale) */}
+              {saleResult.subtotal_centavos > 0 && (
+                <div className="mb-4 pb-4 border-b border-gray-200 space-y-1">
+                  {saleResult.discount_centavos > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Discount</span>
+                      <span className="text-green-600">
+                        -₱{(saleResult.discount_centavos / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {saleResult.exchange_centavos > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Points Payment</span>
+                      <span className="text-yellow-600">
+                        -₱{(saleResult.exchange_centavos / 100).toFixed(2)} ({saleResult.points_redeemed} pts)
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold">
+                    <span className="text-gray-900">Total Due</span>
+                    <span className="text-gray-900">
+                      ₱{(saleResult.total_centavos / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>
               )}
 
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-500">New Balance</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {scanResult.newTotal?.toLocaleString()} points
-                </p>
-              </div>
+              {/* Points earned */}
+              <p className="text-5xl font-bold text-yellow-600 mb-2">
+                +{saleResult.points_earned.toLocaleString()}
+              </p>
+              <p className="text-gray-500">points earned</p>
+
+              {/* Tier bonus breakdown */}
+              {saleResult.tier_multiplier > 1 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-500">Base points</span>
+                    <span className="text-gray-700">
+                      {saleResult.base_points.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-amber-600">
+                      Tier bonus ({saleResult.tier_multiplier}x)
+                    </span>
+                    <span className="text-amber-600">
+                      +{(saleResult.points_earned - saleResult.base_points).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {saleResult.new_points_balance > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-500">New Balance</p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {saleResult.new_points_balance.toLocaleString()} points
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
@@ -1199,13 +761,9 @@ export default function StaffScannerPage() {
             <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-12 h-12 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-2 text-red-600">
-              {scanResult?.error ? "Award Failed" : "Scan Error"}
-            </h2>
+            <h2 className="text-2xl font-bold mb-2 text-red-600">Error</h2>
             <p className="text-gray-500 mb-6">
-              {scanResult?.error ||
-                error ||
-                "Something went wrong. Please try again."}
+              {error || "Something went wrong. Please try again."}
             </p>
             <button
               onClick={resetScanner}
@@ -1228,7 +786,7 @@ export default function StaffScannerPage() {
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4">
         <div className="max-w-sm mx-auto">
           <p className="text-xs text-gray-500 text-center mb-2">
-            Today's Activity
+            Today&apos;s Activity
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">

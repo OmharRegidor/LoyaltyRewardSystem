@@ -66,9 +66,11 @@ function extractUserProfile(user: User): {
   const metadata = user.user_metadata;
   if (metadata) {
     profile.fullName =
-      metadata.full_name || metadata.name || metadata.given_name
-        ? `${metadata.given_name || ''} ${metadata.family_name || ''}`.trim()
-        : undefined;
+      metadata.full_name ||
+      metadata.name ||
+      (metadata.given_name
+        ? `${metadata.given_name} ${metadata.family_name || ''}`.trim()
+        : undefined);
   }
 
   return profile;

@@ -14,7 +14,7 @@ interface ScanLog {
   scanned_at: string;
   customer: {
     id: string;
-    name: string;
+    full_name: string;
   } | null;
 }
 
@@ -51,9 +51,14 @@ export function TeamMemberActivity({
     if (dateRange === 'today') {
       startDate.setHours(0, 0, 0, 0);
     } else if (dateRange === 'week') {
-      startDate.setDate(startDate.getDate() - 7);
+      const day = startDate.getDay();
+      // getDay(): 0=Sun, 1=Mon ... 6=Sat → offset to Monday
+      const diffToMonday = day === 0 ? 6 : day - 1;
+      startDate.setDate(startDate.getDate() - diffToMonday);
+      startDate.setHours(0, 0, 0, 0);
     } else {
-      startDate.setMonth(startDate.getMonth() - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
     }
 
     const { data: logs, error } = await supabase
@@ -66,7 +71,7 @@ export function TeamMemberActivity({
         scanned_at,
         customers (
           id,
-          name
+          full_name
         )
       `
       )
@@ -83,7 +88,7 @@ export function TeamMemberActivity({
 
     const formattedLogs = (logs || []).map((log) => ({
       ...log,
-      customer: String(log.customers),
+      customer: log.customers as { id: string; full_name: string } | null,
     }));
 
     setScanLogs(formattedLogs as any);
@@ -213,7 +218,7 @@ export function TeamMemberActivity({
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white text-sm">
-                          {log.customer?.name || 'Unknown Customer'}
+                          {log.customer?.full_name || 'Unknown Customer'}
                         </p>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <Clock className="w-3 h-3" />

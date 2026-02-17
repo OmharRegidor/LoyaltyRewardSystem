@@ -406,14 +406,14 @@ export default function POSProductsPage() {
 
       {/* Product Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {selectedProduct ? 'Edit Product' : 'Add Product'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1 -mx-6 px-6">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -564,7 +564,7 @@ export default function POSProductsPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={handleCloseDialog}>
               Cancel
             </Button>

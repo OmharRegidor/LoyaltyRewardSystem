@@ -3,17 +3,19 @@
 'use client';
 
 import { memo, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Star, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MoreVertical, Star, Loader2, Trash2, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BulkDeleteDialog } from '@/components/customers/bulk-delete-dialog';
 import type { Customer, TierLevel } from '@/hooks/useCustomers';
 
 // ============================================
@@ -63,12 +65,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-function generateAvatarUrl(name: string): string {
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-    name
-  )}`;
-}
-
 // ============================================
 // TYPES
 // ============================================
@@ -82,6 +78,7 @@ interface CustomersTableProps {
   pointsRange: [number, number];
   sortBy: string;
   onSelectCustomer: (customer: Customer) => void;
+  onBulkDelete?: (customerIds: string[]) => Promise<void>;
 }
 
 // ============================================
@@ -103,9 +100,11 @@ export const CustomersTable = memo(function CustomersTable({
   pointsRange,
   sortBy,
   onSelectCustomer,
+  onBulkDelete,
 }: CustomersTableProps) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -158,20 +157,55 @@ export const CustomersTable = memo(function CustomersTable({
     startIndex + ITEMS_PER_PAGE
   );
 
+  const paginatedIds = paginatedCustomers.map((c) => c.id);
+  const allPageSelected =
+    paginatedCustomers.length > 0 &&
+    paginatedCustomers.every((c) => selectedRows.includes(c.id));
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows((prev) => {
+        const set = new Set(prev);
+        paginatedIds.forEach((id) => set.add(id));
+        return Array.from(set);
+      });
+    } else {
+      setSelectedRows((prev) => prev.filter((id) => !paginatedIds.includes(id)));
+    }
+  };
+
+  const handleToggleRow = (customerId: string) => {
+    setSelectedRows((prev) =>
+      prev.includes(customerId)
+        ? prev.filter((id) => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+      setSelectedRows([]);
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+      setSelectedRows([]);
     }
   };
 
   const handlePageClick = (page: number) => {
     setCurrentPage(page);
+    setSelectedRows([]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (onBulkDelete && selectedRows.length > 0) {
+      await onBulkDelete(selectedRows);
+      setSelectedRows([]);
+    }
   };
 
   // Loading state
@@ -200,12 +234,18 @@ export const CustomersTable = memo(function CustomersTable({
       transition={{ duration: 0.3, delay: 0.2 }}
     >
       <Card className="bg-white">
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-gray-200 bg-gray-50">
               <tr className="text-left text-sm font-semibold text-gray-500">
                 <th className="px-6 py-4 w-8">
-                  <input type="checkbox" className="rounded" />
+                  <Checkbox
+                    checked={allPageSelected}
+                    onCheckedChange={(checked) =>
+                      handleSelectAll(checked === true)
+                    }
+                  />
                 </th>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Tier</th>
@@ -237,19 +277,9 @@ export const CustomersTable = memo(function CustomersTable({
                   onClick={() => onSelectCustomer(customer)}
                 >
                   <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      className="rounded"
+                    <Checkbox
                       checked={selectedRows.includes(customer.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRows([...selectedRows, customer.id]);
-                        } else {
-                          setSelectedRows(
-                            selectedRows.filter((id) => id !== customer.id)
-                          );
-                        }
-                      }}
+                      onCheckedChange={() => handleToggleRow(customer.id)}
                       onClick={(e) => e.stopPropagation()}
                     />
                   </td>
@@ -324,6 +354,66 @@ export const CustomersTable = memo(function CustomersTable({
           </table>
         </div>
 
+        {/* Mobile Card Layout */}
+        <div className="sm:hidden divide-y divide-gray-200">
+          {paginatedCustomers.map((customer) => (
+            <div
+              key={customer.id}
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-gray-50 ${
+                customer.isNew
+                  ? 'bg-green-500/10 ring-1 ring-green-500/30 ring-inset'
+                  : ''
+              }`}
+              onClick={() => onSelectCustomer(customer)}
+            >
+              <Checkbox
+                checked={selectedRows.includes(customer.id)}
+                onCheckedChange={() => handleToggleRow(customer.id)}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                  {getInitials(customer.fullName)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-sm truncate">
+                    {customer.fullName}
+                  </p>
+                  {customer.isNew && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-500/20 text-green-600 text-xs shrink-0"
+                    >
+                      NEW
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 truncate">
+                  {customer.phone || customer.email || 'No contact info'}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <Badge
+                  variant="secondary"
+                  className={`${TIER_CONFIG[customer.tier].bgColor} ${
+                    TIER_CONFIG[customer.tier].color
+                  } font-medium text-xs`}
+                >
+                  {TIER_CONFIG[customer.tier].label}
+                </Badge>
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-500" />
+                  <span className="text-xs font-semibold">
+                    {customer.totalPoints.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {sortedCustomers.length === 0 && !isLoading && (
           <div className="px-6 py-12 text-center">
             <p className="text-gray-500">
@@ -335,7 +425,7 @@ export const CustomersTable = memo(function CustomersTable({
         )}
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-sm text-gray-500">
             Showing {paginatedCustomers.length > 0 ? startIndex + 1 : 0}-
             {Math.min(startIndex + ITEMS_PER_PAGE, sortedCustomers.length)} of{' '}
@@ -386,6 +476,46 @@ export const CustomersTable = memo(function CustomersTable({
           )}
         </div>
       </Card>
+
+      {/* Floating Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedRows.length > 0 && onBulkDelete && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg">
+              <span className="text-sm font-medium">
+                {selectedRows.length} selected
+              </span>
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition"
+              >
+                <Trash2 className="w-4 h-4" />
+                Remove
+              </button>
+              <button
+                onClick={() => setSelectedRows([])}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"
+              >
+                <X className="w-4 h-4" />
+                Clear
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <BulkDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleBulkDelete}
+        count={selectedRows.length}
+      />
     </motion.div>
   );
 });

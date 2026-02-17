@@ -37,6 +37,7 @@ interface UseCustomersReturn {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  removeCustomers: (ids: string[]) => void;
   totalCount: number;
 }
 
@@ -357,11 +358,18 @@ export function useCustomers({
     };
   }, [businessId, onNewCustomer]);
 
+  const removeCustomers = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    setCustomers((prev) => prev.filter((c) => !idSet.has(c.id)));
+    setTotalCount((prev) => Math.max(0, prev - ids.length));
+  }, []);
+
   return {
     customers,
     isLoading,
     error,
     refetch: fetchCustomers,
+    removeCustomers,
     totalCount,
   };
 }

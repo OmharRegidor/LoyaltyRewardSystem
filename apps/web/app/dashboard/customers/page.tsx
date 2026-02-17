@@ -25,10 +25,30 @@ export default function CustomersPage() {
   const { business, isLoading: isLoadingBusiness } = useBusinessContext();
 
   // Customers data with realtime
-  const { customers, isLoading, error, totalCount } = useCustomers({
-    businessId: business?.id ?? null,
-    onNewCustomer: useCallback((customer: Customer) => {}, []),
-  });
+  const { customers, isLoading, error, totalCount, removeCustomers } =
+    useCustomers({
+      businessId: business?.id ?? null,
+      onNewCustomer: useCallback((customer: Customer) => {}, []),
+    });
+
+  // Bulk delete handler
+  const handleBulkDelete = useCallback(
+    async (customerIds: string[]) => {
+      const res = await fetch('/api/dashboard/customers/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerIds }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to remove customers');
+      }
+
+      removeCustomers(customerIds);
+    },
+    [removeCustomers],
+  );
 
   // UI State
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
@@ -104,6 +124,7 @@ export default function CustomersPage() {
           pointsRange={pointsRange}
           sortBy={sortBy}
           onSelectCustomer={setSelectedCustomer}
+          onBulkDelete={handleBulkDelete}
         />
 
         {/* Customer Detail Modal */}
