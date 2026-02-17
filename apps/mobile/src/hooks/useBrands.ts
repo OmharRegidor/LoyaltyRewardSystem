@@ -64,6 +64,11 @@ export function useBrands() {
         { event: '*', schema: 'public', table: 'rewards' },
         () => fetchBrands(),
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'businesses' },
+        () => fetchBrands(),
+      )
       .subscribe();
 
     return () => {

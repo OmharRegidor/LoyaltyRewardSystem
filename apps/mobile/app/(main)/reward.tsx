@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { SearchBar } from '../../src/components/rewards';
 import { BrandCard, BrandSkeletonList } from '../../src/components/brands';
 import { EmptyState } from '../../src/components/rewards';
@@ -28,6 +29,12 @@ export default function BrandsScreen() {
     setSearchQuery,
     refresh,
   } = useBrands();
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const [searchDebounce, setSearchDebounce] = useState('');
 

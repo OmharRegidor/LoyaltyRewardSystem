@@ -8,18 +8,16 @@ import { useCustomer } from '../../src/hooks/useCustomer';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
-import { COLORS, SPACING, FONT_SIZE, getTier } from '../../src/lib/constants';
+import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut, isLoading } = useAuth();
-  const { points } = useCustomer();
+  const { currentTier } = useCustomer();
 
   const displayName = user?.user_metadata?.full_name || 'User';
   const email = user?.email || '';
   const avatarUrl = user?.user_metadata?.avatar_url || null;
-  const currentTier = getTier(points);
-
   const handleSignOut = async () => {
     try {
       await signOut();
