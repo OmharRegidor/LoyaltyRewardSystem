@@ -58,8 +58,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const isEnterprise = plan.name === 'enterprise';
   const moduleOverrides = isEnterprise
     ? {
-        module_booking_override: moduleBooking ?? true,
-        module_pos_override: modulePos ?? true,
+        module_booking_override: moduleBooking ?? null,
+        module_pos_override: modulePos ?? null,
       }
     : {
         module_booking_override: null as boolean | null,

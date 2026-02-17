@@ -76,9 +76,6 @@ export function useSubscription() {
       if (subscription.isFreeForever) return true;
       if (!subscription.hasAccess) return false;
 
-      // Enterprise has all features
-      if (subscription.plan?.name === 'enterprise') return true;
-
       // Core plan features
       const coreFeatures = [
         'qr_loyalty',
