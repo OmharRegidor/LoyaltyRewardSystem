@@ -18,6 +18,7 @@ import {
   Coins,
   Sparkles,
   TrendingUp,
+  ShieldOff,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Html5Qrcode } from "html5-qrcode";
@@ -139,6 +140,7 @@ export default function StaffScannerPage() {
     null,
   );
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isDeactivated, setIsDeactivated] = useState(false);
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -177,6 +179,20 @@ export default function StaffScannerPage() {
         .maybeSingle();
 
       if (!staffRecord) {
+        // Check if staff exists but is deactivated
+        const { data: inactiveRecord } = await supabase
+          .from("staff")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .eq("is_active", false)
+          .maybeSingle();
+
+        if (inactiveRecord) {
+          setIsDeactivated(true);
+          setIsLoading(false);
+          return;
+        }
+
         // Check if owner
         const { data: business } = await supabase
           .from("businesses")
@@ -679,6 +695,36 @@ export default function StaffScannerPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-gray-900 animate-spin" />
+      </div>
+    );
+  }
+
+  // ============================================
+  // RENDER: DEACTIVATED
+  // ============================================
+
+  if (isDeactivated) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldOff className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Account Deactivated
+          </h2>
+          <p className="text-gray-500 mb-6">
+            Your account has been deactivated by the business owner. You can no
+            longer scan customers.
+          </p>
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </button>
+        </div>
       </div>
     );
   }
