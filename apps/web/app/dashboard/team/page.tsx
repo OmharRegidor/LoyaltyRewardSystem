@@ -20,6 +20,7 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
+  UserX,
 } from 'lucide-react';
 import {
   getTeamMembers,
@@ -45,6 +46,8 @@ export default function TeamManagementPage() {
     useState<StaffMember | null>(null);
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<StaffMember | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -146,20 +149,21 @@ export default function TeamManagementPage() {
     }
   };
 
-  const handleDeactivate = async (staffId: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to deactivate this team member? They will no longer be able to scan customers.',
-      )
-    ) {
-      return;
-    }
+  const handleDeactivate = (staffId: string) => {
+    const member = teamMembers.find((m) => m.id === staffId) || null;
+    setDeactivateTarget(member);
+  };
 
-    const result = await deactivateStaff(staffId);
+  const confirmDeactivate = async () => {
+    if (!deactivateTarget) return;
+    setIsDeactivating(true);
+
+    const result = await deactivateStaff(deactivateTarget.id);
+    setIsDeactivating(false);
+    setDeactivateTarget(null);
+
     if (result.success) {
       loadData();
-    } else {
-      alert(result.error || 'Failed to deactivate staff member');
     }
   };
 
@@ -400,6 +404,49 @@ export default function TeamManagementPage() {
           member={selectedMemberForActivity}
           onClose={() => setSelectedMemberForActivity(null)}
         />
+      )}
+
+      {/* Deactivate Confirmation Modal */}
+      {deactivateTarget && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                <UserX className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Deactivate Member
+              </h3>
+            </div>
+            <p className="text-gray-500 mb-6">
+              Are you sure you want to deactivate{' '}
+              <span className="font-medium text-gray-900">
+                {deactivateTarget.name}
+              </span>
+              ? They will no longer be able to scan customers.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeactivateTarget(null)}
+                disabled={isDeactivating}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeactivate}
+                disabled={isDeactivating}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isDeactivating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Deactivate'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Upgrade Modal */}
