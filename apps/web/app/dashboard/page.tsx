@@ -17,7 +17,9 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Calendar,
+  Package,
+  Copy,
+  Check,
   Search,
   ArrowLeftRight,
 } from 'lucide-react';
@@ -128,7 +130,18 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 // WELCOME MODAL COMPONENT
 // ============================================
 
-function WelcomeModalContent({ onClose }: { onClose: () => void }) {
+function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  const publicUrl = slug ? `noxaloyalty.com/business/${slug}` : null;
+
+  const handleCopy = async () => {
+    if (!publicUrl) return;
+    await navigator.clipboard.writeText(`https://${publicUrl}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
@@ -153,12 +166,37 @@ function WelcomeModalContent({ onClose }: { onClose: () => void }) {
             You have access to our full loyalty and rewards system.
           </p>
 
+          {/* Public business link */}
+          {publicUrl && (
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200 text-left">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Your public business page</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-sm bg-white rounded-lg px-3 py-2 border border-gray-200 text-gray-800 truncate">
+                  {publicUrl}
+                </code>
+                <button
+                  onClick={handleCopy}
+                  className="shrink-0 p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 transition-colors"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Share this link on your socials so customers can view your loyalty rewards!
+              </p>
+            </div>
+          )}
+
           {/* Upsell */}
           <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/10">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-primary" />
+              <Package className="w-4 h-4 text-primary" />
               <p className="text-sm text-gray-700">
-                Want Booking System & POS?
+                Want POS + Inventory Management?
               </p>
             </div>
             <p className="text-sm text-gray-600 mb-2">
@@ -185,7 +223,7 @@ function WelcomeModalContent({ onClose }: { onClose: () => void }) {
 }
 
 // Component that handles welcome param detection (uses useSearchParams)
-function WelcomeModalHandler() {
+function WelcomeModalHandler({ businessSlug }: { businessSlug: string | null }) {
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -199,7 +237,7 @@ function WelcomeModalHandler() {
 
   if (!showWelcome) return null;
 
-  return <WelcomeModalContent onClose={() => setShowWelcome(false)} />;
+  return <WelcomeModalContent onClose={() => setShowWelcome(false)} slug={businessSlug} />;
 }
 
 // ============================================
@@ -505,6 +543,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessSlug, setBusinessSlug] = useState<string | null>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
@@ -530,12 +569,13 @@ export default function DashboardPage() {
         const metadata = user.user_metadata || {};
         const { data: business } = await supabase
           .from('businesses')
-          .select('id, name, subscription_status')
+          .select('id, name, slug, subscription_status')
           .eq('owner_id', user.id)
           .maybeSingle();
 
         if (business) {
           setBusinessId(business.id);
+          setBusinessSlug(business.slug);
           setUserName(
             business.name || metadata.business_name || 'Your Business',
           );
@@ -761,7 +801,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       {/* Welcome Modal for new signups (wrapped in Suspense for useSearchParams) */}
       <Suspense fallback={null}>
-        <WelcomeModalHandler />
+        <WelcomeModalHandler businessSlug={businessSlug} />
       </Suspense>
 
       <div className="space-y-8">
