@@ -64,8 +64,8 @@ function validateForm(data: FormData): FormErrors {
 
   if (!data.phone.trim()) {
     errors.phone = 'Phone number is required';
-  } else if (!/^[\d\s\-+()]{10,20}$/.test(data.phone)) {
-    errors.phone = 'Invalid phone number';
+  } else if (!/^\d{11}$/.test(data.phone)) {
+    errors.phone = 'Phone number must be exactly 11 digits';
   }
 
   if (data.age) {
@@ -99,6 +99,9 @@ export function AddCustomerModal({
   const [isNewCustomer, setIsNewCustomer] = useState(false);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
+    if (field === 'phone') {
+      value = value.replace(/\D/g, '').slice(0, 11);
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user types
     if (errors[field]) {
@@ -304,6 +307,7 @@ export function AddCustomerModal({
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="09123456789"
+                    maxLength={11}
                     className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
                       errors.phone
                         ? 'border-red-500'
