@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Package, Plus } from "lucide-react";
+import { Search, Package } from "lucide-react";
 import type { Product } from "@/types/pos.types";
 
 interface ProductSelectorProps {
@@ -10,42 +10,142 @@ interface ProductSelectorProps {
   disabled?: boolean;
 }
 
+// Deterministic color from category string hash
+const CATEGORY_COLORS = [
+  { bg: "bg-rose-100", text: "text-rose-700", activeBg: "bg-rose-600" },
+  { bg: "bg-sky-100", text: "text-sky-700", activeBg: "bg-sky-600" },
+  { bg: "bg-emerald-100", text: "text-emerald-700", activeBg: "bg-emerald-600" },
+  { bg: "bg-violet-100", text: "text-violet-700", activeBg: "bg-violet-600" },
+  { bg: "bg-amber-100", text: "text-amber-700", activeBg: "bg-amber-600" },
+  { bg: "bg-teal-100", text: "text-teal-700", activeBg: "bg-teal-600" },
+  { bg: "bg-pink-100", text: "text-pink-700", activeBg: "bg-pink-600" },
+  { bg: "bg-indigo-100", text: "text-indigo-700", activeBg: "bg-indigo-600" },
+];
+
+function getCategoryColor(category: string) {
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return CATEGORY_COLORS[Math.abs(hash) % CATEGORY_COLORS.length];
+}
+
+function ProductCard({
+  product,
+  onAdd,
+  disabled,
+}: {
+  product: Product;
+  onAdd: () => void;
+  disabled?: boolean;
+}) {
+  const outOfStock = product.stock_quantity <= 0;
+  const lowStock =
+    !outOfStock && product.stock_quantity <= product.low_stock_threshold;
+  const color = getCategoryColor(product.category || "Other");
+
+  return (
+    <button
+      onClick={onAdd}
+      disabled={disabled || outOfStock}
+      className={`relative flex flex-col rounded-xl border overflow-hidden transition-all text-left ${
+        outOfStock
+          ? "border-gray-200 opacity-70 cursor-not-allowed"
+          : "border-gray-200 hover:border-yellow-400 hover:shadow-md active:scale-[0.97]"
+      }`}
+    >
+      {/* Image area */}
+      <div className="aspect-square relative w-full bg-gray-100 overflow-hidden">
+        {product.image_url ? (
+          <img
+            src={product.image_url}
+            alt={product.name}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className={`w-full h-full flex items-center justify-center ${color.bg}`}
+          >
+            <span className={`text-3xl font-bold ${color.text} opacity-60`}>
+              {product.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+
+        {/* Out of stock overlay */}
+        {outOfStock && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white text-xs font-bold tracking-wide bg-black/60 px-2 py-1 rounded">
+              OUT OF STOCK
+            </span>
+          </div>
+        )}
+
+        {/* Low stock badge */}
+        {lowStock && (
+          <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full">
+            {product.stock_quantity} left
+          </span>
+        )}
+      </div>
+
+      {/* Info area */}
+      <div className="p-2">
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {product.name}
+        </p>
+        <p className="text-sm font-semibold text-yellow-700">
+          ₱{(product.price_centavos / 100).toFixed(2)}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export function ProductSelector({
   products,
   onAddToCart,
   disabled,
 }: ProductSelectorProps) {
-  const [activeTab, setActiveTab] = useState<"categories" | "search">(
-    "categories",
-  );
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // Group products by category
+  // Extract unique categories
   const categories = useMemo(() => {
-    const map = new Map<string, Product[]>();
+    const cats = new Set<string>();
     for (const p of products) {
-      const cat = p.category || "Other";
-      if (!map.has(cat)) map.set(cat, []);
-      map.get(cat)!.push(p);
+      cats.add(p.category || "Other");
     }
-    return map;
+    return ["All", ...Array.from(cats).sort()];
   }, [products]);
 
-  // Filter products by search
+  // Filter products by search + category
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
-    const q = searchQuery.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.sku && p.sku.toLowerCase().includes(q)),
-    );
-  }, [products, searchQuery]);
+    let result = products;
+
+    if (selectedCategory !== "All") {
+      result = result.filter(
+        (p) => (p.category || "Other") === selectedCategory,
+      );
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.category && p.category.toLowerCase().includes(q)) ||
+          (p.sku && p.sku.toLowerCase().includes(q)),
+      );
+    }
+
+    return result;
+  }, [products, searchQuery, selectedCategory]);
 
   if (products.length === 0) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-4 text-center">
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
         <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
         <p className="text-gray-500 text-sm">
           No products configured yet. Use manual amount entry below.
@@ -55,137 +155,66 @@ export function ProductSelector({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl mb-4 overflow-hidden">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("categories")}
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === "categories"
-              ? "text-yellow-700 border-b-2 border-yellow-500 bg-yellow-50/50"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Categories
-        </button>
-        <button
-          onClick={() => setActiveTab("search")}
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === "search"
-              ? "text-yellow-700 border-b-2 border-yellow-500 bg-yellow-50/50"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Search
-        </button>
+    <div className="flex flex-col h-full">
+      {/* Search Bar */}
+      <div className="relative mb-3">
+        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search products..."
+          className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+        />
       </div>
 
-      {/* Categories Tab */}
-      {activeTab === "categories" && (
-        <div className="p-3 max-h-64 overflow-y-auto">
-          {Array.from(categories.entries()).map(([category, prods]) => (
-            <div key={category} className="mb-3 last:mb-0">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-1">
-                {category}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {prods.map((product) => {
-                  const outOfStock = product.stock_quantity <= 0;
-                  return (
-                    <button
-                      key={product.id}
-                      onClick={() => onAddToCart(product)}
-                      disabled={disabled}
-                      className={`p-3 rounded-xl text-left transition-all border ${
-                        outOfStock
-                          ? "bg-gray-50 border-gray-200 opacity-60"
-                          : "bg-white border-gray-200 hover:border-yellow-400 hover:shadow-sm active:scale-[0.98]"
-                      }`}
-                    >
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {product.name}
-                      </p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-sm text-yellow-700 font-semibold">
-                          ₱{(product.price_centavos / 100).toFixed(2)}
-                        </span>
-                        {outOfStock ? (
-                          <span className="text-[10px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                            OUT
-                          </span>
-                        ) : product.stock_quantity <=
-                          product.low_stock_threshold ? (
-                          <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                            LOW: {product.stock_quantity}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-gray-400">
-                            {product.stock_quantity} left
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+      {/* Category Chips */}
+      {categories.length > 2 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+          {categories.map((cat) => {
+            const isActive = selectedCategory === cat;
+            const color = cat === "All" ? null : getCategoryColor(cat);
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive
+                    ? cat === "All"
+                      ? "bg-gray-900 text-white"
+                      : `${color!.activeBg} text-white`
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* Search Tab */}
-      {activeTab === "search" && (
-        <div className="p-3">
-          <div className="relative mb-3">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
-              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
-              autoFocus
-            />
+      {/* Product Grid */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-400">
+              {searchQuery ? "No products found" : "No products in this category"}
+            </p>
           </div>
-          <div className="max-h-52 overflow-y-auto space-y-1">
-            {filteredProducts.map((product) => {
-              const outOfStock = product.stock_quantity <= 0;
-              return (
-                <div
-                  key={product.id}
-                  className={`flex items-center justify-between p-2.5 rounded-lg ${
-                    outOfStock ? "opacity-60" : "hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 mr-3">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {product.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      ₱{(product.price_centavos / 100).toFixed(2)}
-                      {outOfStock && (
-                        <span className="text-red-500 ml-1">(Out of stock)</span>
-                      )}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => onAddToCart(product)}
-                    disabled={disabled}
-                    className="w-8 h-8 flex items-center justify-center bg-yellow-100 hover:bg-yellow-200 rounded-lg transition-colors shrink-0"
-                  >
-                    <Plus className="w-4 h-4 text-yellow-700" />
-                  </button>
-                </div>
-              );
-            })}
-            {filteredProducts.length === 0 && searchQuery && (
-              <p className="text-sm text-gray-400 text-center py-4">
-                No products found
-              </p>
-            )}
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAdd={() => onAddToCart(product)}
+                disabled={disabled}
+              />
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -12,6 +12,8 @@ import {
   User,
   Award,
   ShieldOff,
+  ShoppingCart,
+  LayoutGrid,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { Html5Qrcode } from "html5-qrcode";
@@ -81,6 +83,7 @@ export default function StaffScannerPage() {
   );
   const [error, setError] = useState("");
   const [isDeactivated, setIsDeactivated] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -452,6 +455,7 @@ export default function StaffScannerPage() {
     setSaleResult(null);
     setError("");
     setScannerState("idle");
+    setMobileTab("products");
     pos.reset();
   };
 
@@ -583,7 +587,8 @@ export default function StaffScannerPage() {
 
         {/* CUSTOMER FOUND STATE — Full POS */}
         {scannerState === "customer-found" && customer && staffData && (
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-screen-xl mx-auto">
+            {/* Customer info bar — full width */}
             <CustomerInfoBar
               name={customer.name}
               currentPoints={customer.currentPoints}
@@ -591,72 +596,137 @@ export default function StaffScannerPage() {
               isFirstVisit={customer.isFirstVisit}
             />
 
-            {/* Product Selector (hidden if no POS module) */}
-            {pos.hasPOSModule && !pos.isLoadingProducts && (
-              <ProductSelector
-                products={pos.products}
-                onAddToCart={pos.addProduct}
-                disabled={pos.isProcessing}
-              />
-            )}
+            {/* Mobile Tab Switcher — hidden on md+ */}
+            <div className="flex md:hidden border border-gray-200 rounded-xl overflow-hidden mb-4">
+              <button
+                onClick={() => setMobileTab("products")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                  mobileTab === "products"
+                    ? "bg-gray-900 text-white"
+                    : "bg-white text-gray-500"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Products
+              </button>
+              <button
+                onClick={() => setMobileTab("cart")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                  mobileTab === "cart"
+                    ? "bg-gray-900 text-white"
+                    : "bg-white text-gray-500"
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Cart
+                {pos.cartItems.length > 0 && (
+                  <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    {pos.cartItems.length}
+                  </span>
+                )}
+              </button>
+            </div>
 
-            {pos.isLoadingProducts && pos.hasPOSModule && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                <span className="text-sm text-gray-500">
-                  Loading products...
-                </span>
+            {/* Split Panel Layout */}
+            <div className="flex flex-col md:flex-row md:gap-4 lg:gap-6">
+              {/* LEFT PANEL — Cart & Order (mobile: hidden when Products tab active) */}
+              <div
+                className={`md:w-[38%] lg:w-[35%] md:block ${
+                  mobileTab === "cart" ? "block" : "hidden"
+                }`}
+              >
+                <div className="md:sticky md:top-4 md:max-h-[calc(100vh-220px)] md:overflow-y-auto md:pr-1 space-y-4">
+                  <CartSection
+                    items={pos.cartItems}
+                    onUpdateQuantity={pos.updateQuantity}
+                    onRemoveItem={pos.removeItem}
+                    onAddManualItem={pos.addManualItem}
+                    subtotalCentavos={pos.subtotalCentavos}
+                  />
+
+                  {pos.subtotalCentavos > 0 && (
+                    <>
+                      <DiscountSection
+                        subtotalCentavos={pos.subtotalCentavos}
+                        discount={pos.discount}
+                        onDiscountChange={pos.setDiscount}
+                      />
+
+                      <ExchangeSection
+                        customerPoints={customer.currentPoints}
+                        pesosPerPoint={staffData.pesosPerPoint}
+                        maxExchangePoints={pos.maxExchangePoints}
+                        currentExchangePoints={pos.exchange?.pointsUsed || 0}
+                        onExchangeChange={pos.setExchange}
+                      />
+
+                      <OrderSummary
+                        subtotalCentavos={pos.subtotalCentavos}
+                        discountCentavos={pos.discountCentavos}
+                        exchangeCentavos={pos.exchangeCentavos}
+                        totalDueCentavos={pos.totalDueCentavos}
+                        basePointsToEarn={pos.basePointsToEarn}
+                        pointsToEarn={pos.pointsToEarn}
+                        tierMultiplier={pos.tierMultiplier}
+                        customerTier={customer.tier}
+                        pesosPerPoint={staffData.pesosPerPoint}
+                        cartItemCount={pos.cartItems.length}
+                        isProcessing={pos.isProcessing}
+                        onComplete={handleCompleteSale}
+                      />
+                    </>
+                  )}
+
+                  {/* Cancel button */}
+                  <button
+                    onClick={resetScanner}
+                    className="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            )}
 
-            <CartSection
-              items={pos.cartItems}
-              onUpdateQuantity={pos.updateQuantity}
-              onRemoveItem={pos.removeItem}
-              onAddManualItem={pos.addManualItem}
-              subtotalCentavos={pos.subtotalCentavos}
-            />
+              {/* RIGHT PANEL — Products (mobile: hidden when Cart tab active) */}
+              <div
+                className={`md:flex-1 md:block ${
+                  mobileTab === "products" ? "block" : "hidden"
+                }`}
+              >
+                <div className="md:max-h-[calc(100vh-220px)] md:overflow-y-auto md:pl-1">
+                  {pos.hasPOSModule && !pos.isLoadingProducts && (
+                    <ProductSelector
+                      products={pos.products}
+                      onAddToCart={(product) => {
+                        pos.addProduct(product);
+                        // On mobile, switch to cart tab after adding
+                        if (window.innerWidth < 768) {
+                          setMobileTab("cart");
+                        }
+                      }}
+                      disabled={pos.isProcessing}
+                    />
+                  )}
 
-            {pos.subtotalCentavos > 0 && (
-              <>
-                <DiscountSection
-                  subtotalCentavos={pos.subtotalCentavos}
-                  discount={pos.discount}
-                  onDiscountChange={pos.setDiscount}
-                />
+                  {pos.isLoadingProducts && pos.hasPOSModule && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <span className="text-sm text-gray-500">
+                        Loading products...
+                      </span>
+                    </div>
+                  )}
 
-                <ExchangeSection
-                  customerPoints={customer.currentPoints}
-                  pesosPerPoint={staffData.pesosPerPoint}
-                  maxExchangePoints={pos.maxExchangePoints}
-                  currentExchangePoints={pos.exchange?.pointsUsed || 0}
-                  onExchangeChange={pos.setExchange}
-                />
-
-                <OrderSummary
-                  subtotalCentavos={pos.subtotalCentavos}
-                  discountCentavos={pos.discountCentavos}
-                  exchangeCentavos={pos.exchangeCentavos}
-                  totalDueCentavos={pos.totalDueCentavos}
-                  basePointsToEarn={pos.basePointsToEarn}
-                  pointsToEarn={pos.pointsToEarn}
-                  tierMultiplier={pos.tierMultiplier}
-                  customerTier={customer.tier}
-                  pesosPerPoint={staffData.pesosPerPoint}
-                  cartItemCount={pos.cartItems.length}
-                  isProcessing={pos.isProcessing}
-                  onComplete={handleCompleteSale}
-                />
-              </>
-            )}
-
-            {/* Cancel button */}
-            <button
-              onClick={resetScanner}
-              className="w-full mt-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
-            >
-              Cancel
-            </button>
+                  {!pos.hasPOSModule && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+                      <p className="text-gray-500 text-sm">
+                        POS module not enabled. Use manual amount entry in the Cart.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -784,7 +854,7 @@ export default function StaffScannerPage() {
 
       {/* Footer Stats */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4">
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-screen-xl mx-auto">
           <p className="text-xs text-gray-500 text-center mb-2">
             Today&apos;s Activity
           </p>

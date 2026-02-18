@@ -50,7 +50,7 @@ export function CartSection({
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100 max-h-48 overflow-y-auto">
+        <div className="divide-y divide-gray-100 max-h-48 md:max-h-64 lg:max-h-80 overflow-y-auto">
           {items.map((item) => (
             <div key={item.id} className="p-3 flex items-center gap-2">
               <div className="flex-1 min-w-0">
