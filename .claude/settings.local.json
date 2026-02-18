@@ -45,7 +45,10 @@
       "Bash(fi)",
       "Bash(npm run lint:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(node -e:*)",
+      "Bash(sqlite3:*)",
+      "Bash(wc:*)"
     ]
   }
 }

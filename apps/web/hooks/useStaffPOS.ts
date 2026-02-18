@@ -41,6 +41,10 @@ interface UseStaffPOSReturn {
   tierMultiplier: number;
   maxExchangePoints: number;
 
+  // Cash tendered
+  amountTenderedCentavos: number;
+  setAmountTenderedCentavos: (amount: number) => void;
+
   // Processing state
   isProcessing: boolean;
   saleResult: StaffSaleResult | null;
@@ -68,6 +72,9 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
   const [cartItems, setCartItems] = useState<StaffCartItem[]>([]);
   const [discount, setDiscount] = useState<DiscountInfo | null>(null);
   const [exchange, setExchange] = useState<ExchangeInfo | null>(null);
+
+  // Cash tendered state
+  const [amountTenderedCentavos, setAmountTenderedCentavos] = useState(0);
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState(false);
@@ -253,6 +260,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         discount_centavos: discountCentavos > 0 ? discountCentavos : undefined,
         discount_reason: discount?.reason,
         exchange_points: exchange?.pointsUsed,
+        ...(amountTenderedCentavos > 0 && { amount_tendered_centavos: amountTenderedCentavos }),
         tier: customerTier,
       };
 
@@ -288,12 +296,14 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     discountCentavos,
     exchange,
     customerTier,
+    amountTenderedCentavos,
   ]);
 
   const reset = useCallback(() => {
     setCartItems([]);
     setDiscount(null);
     setExchange(null);
+    setAmountTenderedCentavos(0);
     setSaleResult(null);
     setIsProcessing(false);
   }, []);
@@ -314,6 +324,8 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     pointsToEarn,
     tierMultiplier,
     maxExchangePoints,
+    amountTenderedCentavos,
+    setAmountTenderedCentavos,
     isProcessing,
     saleResult,
     addProduct,

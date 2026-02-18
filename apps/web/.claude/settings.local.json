@@ -18,7 +18,23 @@
       "WebFetch(domain:www.answeroverflow.com)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run lint:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(grep:*)",
+      "Bash(Deactivated\" modal appears automatically when the business owner\ndeactivates a staff member — no page refresh needed.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx eslint:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(git status:*)",
+      "WebFetch(domain:lp.storehub.com)",
+      "WebFetch(domain:www.storehub.com)",
+      "WebFetch(domain:www.hashmicro.com)",
+      "WebFetch(domain:agentestudio.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:storehub-ios.soft112.com)",
+      "WebFetch(domain:hashmato.com)",
+      "WebFetch(domain:www.shopify.com)"
     ]
   }
 }

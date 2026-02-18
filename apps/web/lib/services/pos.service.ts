@@ -746,6 +746,10 @@ export async function createStaffSale(
       discount_reason: input.discount_reason || null,
       total_centavos: totalCentavos,
       payment_method: "cash" as PaymentMethod,
+      amount_tendered_centavos: input.amount_tendered_centavos || null,
+      change_centavos: input.amount_tendered_centavos
+        ? input.amount_tendered_centavos - totalCentavos
+        : null,
       points_earned: pointsEarned,
       points_redeemed: exchangePoints,
       status: "completed",

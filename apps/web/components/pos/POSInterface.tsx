@@ -271,38 +271,38 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
       </div>
 
       {/* Right Panel - Cart & Payment */}
-      <div className="lg:col-span-2 flex flex-col gap-4 overflow-visible lg:overflow-hidden">
+      <div className="lg:col-span-2 flex flex-col gap-4 overflow-visible lg:overflow-y-auto">
         {/* Current Sale */}
         <Card className="flex-1 overflow-hidden flex flex-col">
           <CardHeader className="py-3 border-b">
             <CardTitle className="text-base">Current Sale</CardTitle>
           </CardHeader>
-          <ScrollArea className="flex-1">
-            <CardContent className="py-4">
+          <ScrollArea className="flex-1 min-h-0">
+            <CardContent className="py-4 space-y-4">
               <SaleItemList
                 items={items}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
                 disabled={isProcessing}
               />
+
+              {items.length > 0 && (
+                <div className="border-t pt-4 space-y-4">
+                  <DiscountInput
+                    subtotalCentavos={subtotalCentavos}
+                    onDiscountChange={handleDiscountChange}
+                    disabled={isProcessing}
+                  />
+                  <SaleSummary
+                    items={items}
+                    discountCentavos={discountCentavos}
+                    pointsEarned={pointsEarned}
+                    hasCustomer={linkedCustomer !== null}
+                  />
+                </div>
+              )}
             </CardContent>
           </ScrollArea>
-
-          {items.length > 0 && (
-            <div className="border-t p-4 space-y-4">
-              <DiscountInput
-                subtotalCentavos={subtotalCentavos}
-                onDiscountChange={handleDiscountChange}
-                disabled={isProcessing}
-              />
-              <SaleSummary
-                items={items}
-                discountCentavos={discountCentavos}
-                pointsEarned={pointsEarned}
-                hasCustomer={linkedCustomer !== null}
-              />
-            </div>
-          )}
         </Card>
 
         {/* Payment (Cash Only) */}

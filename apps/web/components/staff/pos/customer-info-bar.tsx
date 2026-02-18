@@ -20,7 +20,7 @@ export function CustomerInfoBar({
   const tierInfo = TIERS[tier];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+    <div>
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center shrink-0">
           <User className="w-6 h-6 text-yellow-600" />

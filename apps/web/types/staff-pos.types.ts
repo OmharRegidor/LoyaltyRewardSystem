@@ -66,6 +66,7 @@ export interface StaffSaleInput {
   discount_centavos?: number;
   discount_reason?: string;
   exchange_points?: number;
+  amount_tendered_centavos?: number;
   tier: TierKey;
 }
 

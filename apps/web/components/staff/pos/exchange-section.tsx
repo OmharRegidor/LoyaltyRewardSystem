@@ -44,7 +44,7 @@ export function ExchangeSection({
   if (customerPoints <= 0) return null;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl mb-4 overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-3 flex items-center justify-between hover:bg-gray-50 transition-colors"

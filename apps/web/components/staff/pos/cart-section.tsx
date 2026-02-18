@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Minus, Plus, PlusCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { StaffCartItem } from "@/types/staff-pos.types";
 
 interface CartSectionProps {
@@ -34,7 +35,7 @@ export function CartSection({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl mb-4 overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
       <div className="p-3 border-b border-gray-100 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">Cart</h3>
         <span className="text-xs text-gray-400">
@@ -51,58 +52,67 @@ export function CartSection({
         </div>
       ) : (
         <div className="divide-y divide-gray-100 max-h-48 md:max-h-64 lg:max-h-80 overflow-y-auto">
-          {items.map((item) => (
-            <div key={item.id} className="p-3 flex items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {item.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  ₱{(item.unit_price_centavos / 100).toFixed(2)} each
-                </p>
-              </div>
-
-              {/* Quantity controls */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() =>
-                    onUpdateQuantity(item.id, item.quantity - 1)
-                  }
-                  className="w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <Minus className="w-3 h-3 text-gray-600" />
-                </button>
-                <span className="w-7 text-center text-sm font-medium text-gray-900">
-                  {item.quantity}
-                </span>
-                <button
-                  onClick={() =>
-                    onUpdateQuantity(item.id, item.quantity + 1)
-                  }
-                  className="w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <Plus className="w-3 h-3 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Line total */}
-              <span className="text-sm font-semibold text-gray-900 w-20 text-right">
-                ₱
-                {(
-                  (item.unit_price_centavos * item.quantity) /
-                  100
-                ).toFixed(2)}
-              </span>
-
-              {/* Remove */}
-              <button
-                onClick={() => onRemoveItem(item.id)}
-                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+          <AnimatePresence initial={false}>
+            {items.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: 30, height: 0 }}
+                animate={{ opacity: 1, x: 0, height: "auto" }}
+                exit={{ opacity: 0, x: -30, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="p-3 flex items-center gap-2"
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    ₱{(item.unit_price_centavos / 100).toFixed(2)} each
+                  </p>
+                </div>
+
+                {/* Quantity controls */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() =>
+                      onUpdateQuantity(item.id, item.quantity - 1)
+                    }
+                    className="w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <Minus className="w-3 h-3 text-gray-600" />
+                  </button>
+                  <span className="w-7 text-center text-sm font-medium text-gray-900">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      onUpdateQuantity(item.id, item.quantity + 1)
+                    }
+                    className="w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-3 h-3 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Line total */}
+                <span className="text-sm font-semibold text-gray-900 w-20 text-right">
+                  ₱
+                  {(
+                    (item.unit_price_centavos * item.quantity) /
+                    100
+                  ).toFixed(2)}
+                </span>
+
+                {/* Remove */}
+                <button
+                  onClick={() => onRemoveItem(item.id)}
+                  className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 

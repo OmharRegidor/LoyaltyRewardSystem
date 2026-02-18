@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Search, Package } from "lucide-react";
+import { motion } from "framer-motion";
 import type { Product } from "@/types/pos.types";
 
 interface ProductSelectorProps {
@@ -34,10 +35,12 @@ function ProductCard({
   product,
   onAdd,
   disabled,
+  index,
 }: {
   product: Product;
   onAdd: () => void;
   disabled?: boolean;
+  index: number;
 }) {
   const outOfStock = product.stock_quantity <= 0;
   const lowStock =
@@ -45,61 +48,70 @@ function ProductCard({
   const color = getCategoryColor(product.category || "Other");
 
   return (
-    <button
-      onClick={onAdd}
-      disabled={disabled || outOfStock}
-      className={`relative flex flex-col rounded-xl border overflow-hidden transition-all text-left ${
-        outOfStock
-          ? "border-gray-200 opacity-70 cursor-not-allowed"
-          : "border-gray-200 hover:border-yellow-400 hover:shadow-md active:scale-[0.97]"
-      }`}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, delay: index * 0.03 }}
     >
-      {/* Image area */}
-      <div className="aspect-square relative w-full bg-gray-100 overflow-hidden">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt={product.name}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center ${color.bg}`}
-          >
-            <span className={`text-3xl font-bold ${color.text} opacity-60`}>
-              {product.name.charAt(0).toUpperCase()}
+      <motion.button
+        onClick={onAdd}
+        disabled={disabled || outOfStock}
+        whileHover={!outOfStock && !disabled ? { y: -2 } : undefined}
+        whileTap={!outOfStock && !disabled ? { scale: 0.97 } : undefined}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        className={`relative flex flex-col rounded-xl overflow-hidden transition-shadow text-left w-full ${
+          outOfStock
+            ? "bg-white border border-gray-200 opacity-70 cursor-not-allowed"
+            : "bg-white shadow-sm hover:shadow-lg border border-gray-200 hover:border-yellow-400"
+        }`}
+      >
+        {/* Image area */}
+        <div className="aspect-square relative w-full bg-gray-100 overflow-hidden">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className={`w-full h-full flex items-center justify-center ${color.bg}`}
+            >
+              <span className={`text-3xl font-bold ${color.text} opacity-60`}>
+                {product.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+
+          {/* Out of stock overlay */}
+          {outOfStock && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="text-white text-xs font-bold tracking-wide bg-black/60 px-2 py-1 rounded">
+                OUT OF STOCK
+              </span>
+            </div>
+          )}
+
+          {/* Low stock badge */}
+          {lowStock && (
+            <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full">
+              {product.stock_quantity} left
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Out of stock overlay */}
-        {outOfStock && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white text-xs font-bold tracking-wide bg-black/60 px-2 py-1 rounded">
-              OUT OF STOCK
-            </span>
-          </div>
-        )}
-
-        {/* Low stock badge */}
-        {lowStock && (
-          <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full">
-            {product.stock_quantity} left
-          </span>
-        )}
-      </div>
-
-      {/* Info area */}
-      <div className="p-2">
-        <p className="text-sm font-medium text-gray-900 truncate">
-          {product.name}
-        </p>
-        <p className="text-sm font-semibold text-yellow-700">
-          ₱{(product.price_centavos / 100).toFixed(2)}
-        </p>
-      </div>
-    </button>
+        {/* Info area */}
+        <div className="p-2">
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {product.name}
+          </p>
+          <p className="text-sm font-semibold text-yellow-700">
+            ₱{(product.price_centavos / 100).toFixed(2)}
+          </p>
+        </div>
+      </motion.button>
+    </motion.div>
   );
 }
 
@@ -204,12 +216,13 @@ export function ProductSelector({
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onAdd={() => onAddToCart(product)}
                 disabled={disabled}
+                index={index}
               />
             ))}
           </div>
