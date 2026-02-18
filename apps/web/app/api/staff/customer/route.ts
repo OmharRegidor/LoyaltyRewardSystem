@@ -32,9 +32,7 @@ const AddCustomerSchema = z.object({
     .transform((e) => e.toLowerCase().trim()),
   phone: z
     .string()
-    .min(10, 'Phone must be at least 10 digits')
-    .max(20, 'Phone too long')
-    .regex(/^[\d\s\-+()]+$/, 'Invalid phone format'),
+    .regex(/^\d{11}$/, 'Phone number must be exactly 11 digits'),
   age: z
     .number()
     .int()
@@ -50,7 +48,7 @@ type AddCustomerInput = z.infer<typeof AddCustomerSchema>;
 // ============================================
 
 const RATE_LIMIT = {
-  maxRequests: 20,
+  maxRequests: 100,
   windowSeconds: 3600, // 1 hour
 };
 
@@ -73,7 +71,7 @@ async function verifyStaffAndGetBusiness(
   if (staffRecord) {
     const { data: business } = await supabase
       .from('businesses')
-      .select('id, name, logo_url, address, city')
+      .select('id, name, slug, logo_url, address, city')
       .eq('id', staffRecord.business_id)
       .single();
 
@@ -88,7 +86,7 @@ async function verifyStaffAndGetBusiness(
   // Check if user is business owner
   const { data: business } = await supabase
     .from('businesses')
-    .select('id, name, logo_url, address, city')
+    .select('id, name, slug, logo_url, address, city')
     .eq('owner_id', userId)
     .maybeSingle();
 
@@ -110,7 +108,7 @@ async function checkRateLimit(
 ): Promise<boolean> {
   const { data } = await supabase.rpc('check_rate_limit', {
     p_identifier: staffId,
-    p_identifier_type: 'staff_id',
+    p_identifier_type: 'user_id',
     p_action: 'add_customer',
     p_max_requests: RATE_LIMIT.maxRequests,
     p_window_seconds: RATE_LIMIT.windowSeconds,
@@ -304,7 +302,7 @@ export async function POST(request: NextRequest) {
     const qrCodeDataUrl = await generateQRCodeDataUrl(qrCodeUrl);
 
     // 7. Send welcome email
-    const cardViewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/card/${cardToken}`;
+    const cardViewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/business/${staffInfo.business.slug}/card?token=${cardToken}`;
 
     const emailResult = await sendWelcomeEmail({
       to: input.email,

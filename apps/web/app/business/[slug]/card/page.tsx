@@ -2,8 +2,11 @@
 
 import { notFound } from 'next/navigation';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
+import { verifyCardToken } from '@/lib/qr-code';
+import { createServiceClient } from '@/lib/supabase-server';
 import { SignupForm } from './signup-form';
 import { LookupForm } from './lookup-form';
+import { CardPageClient } from './card-page-client';
 import { Gift, Star, CreditCard } from 'lucide-react';
 
 // ============================================
@@ -12,18 +15,63 @@ import { Gift, Star, CreditCard } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ token?: string }>;
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+async function getCustomerByCardToken(token: string) {
+  const payload = verifyCardToken(token);
+  if (!payload) return null;
+
+  const supabase = createServiceClient();
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('id, full_name, phone, qr_code_url, tier, total_points, card_token')
+    .eq('id', payload.customerId)
+    .single();
+
+  if (!customer || customer.card_token !== token) return null;
+
+  return {
+    customerName: customer.full_name || 'Valued Customer',
+    phone: customer.phone || '',
+    qrCodeUrl: customer.qr_code_url || '',
+    tier: customer.tier || 'bronze',
+    totalPoints: customer.total_points || 0,
+  };
 }
 
 // ============================================
 // PAGE COMPONENT
 // ============================================
 
-export default async function CardSignupPage({ params }: PageProps) {
+export default async function CardSignupPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { token } = await searchParams;
   const business = await getBusinessBySlug(slug);
 
   if (!business) {
     notFound();
+  }
+
+  // If token is present, verify and fetch customer data for auto-open modal
+  if (token) {
+    const cardData = await getCustomerByCardToken(token);
+
+    return (
+      <CardPageClient
+        slug={slug}
+        businessName={business.name}
+        business={{
+          points_per_purchase: business.points_per_purchase,
+          pesos_per_point: business.pesos_per_point,
+        }}
+        initialCardData={cardData}
+      />
+    );
   }
 
   return (

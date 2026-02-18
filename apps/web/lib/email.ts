@@ -72,7 +72,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
           
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%); padding: 32px 40px; text-align: center;">
+            <td style="background: linear-gradient(135deg, #5A171E 0%, #751E26 50%, #8B2A33 100%); padding: 32px 40px; text-align: center;">
               ${
                 businessLogo
                   ? `<img src="${businessLogo}" alt="${businessName}" style="max-height: 60px; margin-bottom: 16px;" />`
@@ -95,7 +95,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
               
               <!-- View Card Button -->
               <div style="margin-top: 24px;">
-                <a href="${cardViewUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+                <a href="${cardViewUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #751E26 0%, #8B2A33 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(117, 30, 38, 0.4);">
                   View Your Card
                 </a>
               </div>
@@ -121,23 +121,20 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
                 </ul>
               </div>
               
-              <p style="margin: 24px 0 0 0; color: #4b5563; font-size: 14px; line-height: 1.6;">
-                Click "View Your Card" above to see your digital loyalty card and download it as a PDF.
-              </p>
             </td>
           </tr>
           
           <!-- App Download CTA -->
           <tr>
             <td style="padding: 0 40px 40px 40px; text-align: center;">
-              <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1px solid #86efac; border-radius: 12px; padding: 24px;">
-                <p style="margin: 0 0 8px 0; color: #166534; font-size: 14px; font-weight: 600;">
+              <div style="background: linear-gradient(135deg, #FFF9E0 0%, #FEF3C7 100%); border: 1px solid #FDDE54; border-radius: 12px; padding: 24px;">
+                <p style="margin: 0 0 8px 0; color: #5A171E; font-size: 14px; font-weight: 600;">
                   📱 Get the NoxaLoyalty App
                 </p>
-                <p style="margin: 0 0 16px 0; color: #15803d; font-size: 13px;">
+                <p style="margin: 0 0 16px 0; color: #751E26; font-size: 13px;">
                   Track points in real-time, browse rewards, and never miss a deal!
                 </p>
-                <a href="https://NoxaLoyalty.app/download" target="_blank" style="display: inline-block; padding: 10px 24px; background-color: #22c55e; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px;">
+                <a href="https://NoxaLoyalty.app/download" target="_blank" style="display: inline-block; padding: 10px 24px; background-color: #751E26; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px;">
                   Download Now
                 </a>
               </div>
@@ -148,7 +145,7 @@ function generateWelcomeEmailHtml(params: SendWelcomeEmailParams): string {
           <tr>
             <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
               <p style="margin: 0 0 8px 0; color: #9ca3af; font-size: 12px;">
-                Powered by <strong style="color: #6366f1;">NoxaLoyalty</strong>
+                Powered by <strong style="color: #751E26;">NoxaLoyalty</strong>
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                 This email was sent by ${businessName}. If you didn't sign up for this, please ignore this email.
