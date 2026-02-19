@@ -477,7 +477,7 @@ export default function POSProductsPage() {
                 <Input
                   id="stock_quantity"
                   type="number"
-                  value={formData.stock_quantity ?? 0}
+                  value={formData.stock_quantity || ''}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))
                   }
@@ -492,7 +492,7 @@ export default function POSProductsPage() {
               <Input
                 id="low_stock_threshold"
                 type="number"
-                value={formData.low_stock_threshold ?? 5}
+                value={formData.low_stock_threshold || ''}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, low_stock_threshold: parseInt(e.target.value) || 0 }))
                 }
