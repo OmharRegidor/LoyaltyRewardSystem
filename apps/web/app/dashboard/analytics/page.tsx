@@ -5,7 +5,6 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card } from '@/components/ui/card';
-import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { createClient } from '@/lib/supabase';
 import {
   BarChart,
@@ -58,8 +57,6 @@ interface RewardPerformanceItem {
 }
 
 export default function AnalyticsPage() {
-  const { isLoading: isLoadingSubscription } = useSubscriptionGate();
-
   const [isLoading, setIsLoading] = useState(true);
   const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
   const [customerSegments, setCustomerSegments] = useState<CustomerSegment[]>([]);
@@ -242,7 +239,7 @@ export default function AnalyticsPage() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
-  if (isLoading || isLoadingSubscription) {
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">

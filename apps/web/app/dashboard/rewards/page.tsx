@@ -8,8 +8,6 @@ import { RewardsGrid } from '@/components/rewards/grid';
 import { CreateRewardModal } from '@/components/rewards/create-modal';
 import { EditRewardModal } from '@/components/rewards/edit-modal';
 import { ViewRewardModal } from '@/components/rewards/view-modal';
-import { UpgradeModal } from '@/components/upgrade-modal';
-import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
@@ -66,9 +64,6 @@ export interface UpdateRewardData extends CreateRewardData {
 // ============================================
 
 export default function RewardsPage() {
-  const { isPreview, checkAndGate, showUpgradeModal, setShowUpgradeModal } =
-    useSubscriptionGate();
-
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -148,10 +143,7 @@ export default function RewardsPage() {
   // ============================================
 
   const handleCreateClick = () => {
-    if (checkAndGate('Add Reward')) {
-      setIsCreateOpen(true);
-    }
-    // If gated, checkAndGate will show the upgrade modal
+    setIsCreateOpen(true);
   };
 
   // ============================================
@@ -418,12 +410,6 @@ export default function RewardsPage() {
           </>
         )}
 
-        {/* Upgrade Modal */}
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          feature="Add Reward"
-        />
       </motion.div>
     </DashboardLayout>
   );

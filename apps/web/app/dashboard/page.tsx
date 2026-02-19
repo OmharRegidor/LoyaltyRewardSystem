@@ -5,7 +5,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
-import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import {
   Users,
   TrendingUp,
@@ -534,8 +533,6 @@ const DEFAULT_STATS: Stats = {
 };
 
 export default function DashboardPage() {
-  const { isLoading: isLoadingSubscription } = useSubscriptionGate();
-
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [topRewards, setTopRewards] = useState<TopReward[]>([]);
@@ -779,7 +776,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (isLoading || isLoadingSubscription) {
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6 animate-pulse">

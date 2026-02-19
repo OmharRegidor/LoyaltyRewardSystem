@@ -23,8 +23,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UpgradeModal } from '@/components/upgrade-modal';
-import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import { createClient } from '@/lib/supabase';
 import {
   getServices,
@@ -122,9 +120,6 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 // ============================================
 
 export default function ServicesPage() {
-  const { checkAndGate, showUpgradeModal, setShowUpgradeModal } =
-    useSubscriptionGate();
-
   const [services, setServices] = useState<Service[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -183,9 +178,7 @@ export default function ServicesPage() {
   // ============================================
 
   const handleAddClick = () => {
-    if (checkAndGate('Add Service')) {
-      setIsCreateOpen(true);
-    }
+    setIsCreateOpen(true);
   };
 
   const handleEditClick = (service: Service) => {
@@ -372,12 +365,6 @@ export default function ServicesPage() {
           service={selectedService}
         />
 
-        {/* Upgrade Modal */}
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          feature="Add Service"
-        />
       </motion.div>
     </DashboardLayout>
   );

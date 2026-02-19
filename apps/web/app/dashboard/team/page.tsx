@@ -9,8 +9,6 @@ import {
   TeamMemberCard,
   TeamMemberActivity,
 } from '@/components/team';
-import { UpgradeModal } from '@/components/upgrade-modal';
-import { useSubscriptionGate } from '@/hooks/useSubscriptionGate';
 import {
   Users,
   Plus,
@@ -34,10 +32,6 @@ import {
 import { createClient } from '@/lib/supabase';
 
 export default function TeamManagementPage() {
-  // Subscription gate
-  const { checkAndGate, showUpgradeModal, setShowUpgradeModal } =
-    useSubscriptionGate();
-
   const [teamMembers, setTeamMembers] = useState<StaffMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<StaffInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,11 +139,8 @@ export default function TeamManagementPage() {
     setIsLoading(false);
   };
 
-  // Gated invite handler
   const handleInviteClick = () => {
-    if (checkAndGate('Invite Team Member')) {
-      setShowInviteModal(true);
-    }
+    setShowInviteModal(true);
   };
 
   const handleDeactivate = (staffId: string) => {
@@ -452,12 +443,6 @@ export default function TeamManagementPage() {
         </div>
       )}
 
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        feature="Invite Team Member"
-      />
     </DashboardLayout>
   );
 }
