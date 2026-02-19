@@ -197,6 +197,15 @@ export default function POSProductsPage() {
 
     setIsSaving(true);
     try {
+      // Strip empty strings from optional fields so Zod .optional() treats them as absent
+      const payload = {
+        ...formData,
+        description: formData.description || undefined,
+        category: formData.category || undefined,
+        sku: formData.sku || undefined,
+        image_url: formData.image_url || undefined,
+      };
+
       const url = selectedProduct
         ? `/api/dashboard/pos/products/${selectedProduct.id}`
         : '/api/dashboard/pos/products';
@@ -205,7 +214,7 @@ export default function POSProductsPage() {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {

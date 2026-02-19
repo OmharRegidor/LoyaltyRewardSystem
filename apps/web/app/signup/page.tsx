@@ -828,7 +828,7 @@ export default function SignupPage() {
               <button
                 onClick={handleBack}
                 disabled={isLoading}
-                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 hover:bg-gray-100 font-semibold text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-4 rounded-xl border-2 border-gray-300 hover:bg-gray-100 font-semibold text-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 Back
               </button>
@@ -838,9 +838,9 @@ export default function SignupPage() {
               <button
                 onClick={handleNext}
                 disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
-                className="flex-1 bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="flex-1 bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                Next <ArrowRight className="w-5 h-5" />
+                Next <ArrowRight className="w-5 h-5 shrink-0" />
               </button>
             )}
 
@@ -848,16 +848,16 @@ export default function SignupPage() {
               <button
                 onClick={handleSubmit}
                 disabled={!agreed || isLoading}
-                className="flex-1 bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-[2] bg-primary text-white rounded-xl py-4 font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-5 h-5 shrink-0 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Creating Account...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    Create Account <ArrowRight className="w-5 h-5" />
+                    Create Account <ArrowRight className="w-5 h-5 shrink-0" />
                   </span>
                 )}
               </button>
