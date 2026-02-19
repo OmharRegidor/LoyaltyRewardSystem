@@ -229,6 +229,42 @@ export default function AnalyticsPage() {
     }
   };
 
+  const handleExportCsv = () => {
+    const date = new Date().toISOString().split('T')[0];
+
+    const sections: string[] = [
+      'Analytics Report',
+      `Generated,${date}`,
+      '',
+      'KPI Summary',
+      'Metric,Value',
+      `Total Points Issued,"${kpi.totalPoints.toLocaleString()}"`,
+      `Avg Points/Transaction,${kpi.avgPointsPerTx.toLocaleString()}`,
+      `Customer Lifetime Value,${kpi.customerLTV.toLocaleString()} pts`,
+      `Repeat Customer Rate,${kpi.repeatRate}%`,
+      '',
+      'Monthly Points',
+      'Month,Points',
+      ...monthlyData.map((d) => `${d.month},${d.points}`),
+      '',
+      'Customer Segments',
+      'Segment,Percentage',
+      ...customerSegments.map((s) => `${s.name},${s.value}%`),
+      '',
+      'Top Rewards',
+      'Reward,Redemptions',
+      ...rewardPerformance.map((r) => `"${r.reward.replace(/"/g, '""')}",${r.redemptions}`),
+    ];
+
+    const blob = new Blob([sections.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-export-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -270,7 +306,7 @@ export default function AnalyticsPage() {
               Track your loyalty program performance
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+          <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
             <Download className="w-4 h-4" />
             Export
           </button>
