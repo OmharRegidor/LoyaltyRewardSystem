@@ -192,7 +192,7 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full px-6 py-3 bg-linear-to-r from-primary to-secondary text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>

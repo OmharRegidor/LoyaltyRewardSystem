@@ -54,7 +54,7 @@ export function RewardsHeader({
         </div>
 
         <Button
-          className="gradient-primary text-primary-foreground gap-2 cursor-pointer"
+          className="bg-primary text-primary-foreground gap-2 cursor-pointer"
           onClick={onCreateClick}
         >
           <Plus className="w-4 h-4" />

@@ -174,7 +174,7 @@ export function ViewRewardModal({
               Close
             </Button>
             <Button
-              className="flex-1 gradient-primary text-primary-foreground gap-2"
+              className="flex-1 bg-primary text-primary-foreground gap-2"
               onClick={onEdit}
             >
               <Edit className="w-4 h-4" />
