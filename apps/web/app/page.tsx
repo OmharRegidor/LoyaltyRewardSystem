@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Award,
   Zap,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
@@ -465,7 +466,12 @@ function PricingSection({
 // MAIN PAGE COMPONENT
 // ============================================
 
-const ROTATING_WORDS = ['Loyal Fans', 'Repeat Buyers', 'Brand Advocates', 'Raving Regulars'];
+const ROTATING_WORDS = [
+  'Loyal Fans',
+  'Repeat Buyers',
+  'Brand Advocates',
+  'Raving Regulars',
+];
 const TYPING_SPEED = 55;
 const DELETING_SPEED = 35;
 const HOLD_DURATION = 2000;
@@ -815,33 +821,37 @@ export default function Home() {
             {[0, 1].map((setIndex) => (
               <div key={setIndex} className="flex shrink-0 gap-32 px-16">
                 {Array.from({ length: 3 }, () => [
-                  { name: 'BiNuKboK VieW PoiNt ReSoRT', src: '/binukbok-logo.png' },
+                  {
+                    name: 'BiNuKboK VieW PoiNt ReSoRT',
+                    src: '/binukbok-logo.png',
+                  },
                   { name: 'Jaza Media', src: '/Jaza-Media-logo.jpg' },
                   { name: 'Noxa', src: '/noxa-tech-company.jpg' },
                   { name: 'Evolvia', src: '/evolvia-logo.png' },
-                ]).flat().map((partner, i) => (
-                  <div
-                    key={`${setIndex}-${i}`}
-                    className="group flex flex-col items-center justify-center bg-white rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
-                    style={{
-                      width: '140px',
-                      height: '140px',
-                      boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-                    }}
-                  >
-                    <Image
-                      src={partner.src}
-                      alt={partner.name}
-                      width={80}
-                      height={80}
-                      className="object-contain"
-                      style={{ maxWidth: '80px', maxHeight: '80px' }}
-                    />
-                    <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      {partner.name}
-                    </span>
-                  </div>
-                ))}
+                ])
+                  .flat()
+                  .map((partner, i) => (
+                    <div
+                      key={`${setIndex}-${i}`}
+                      className="group flex flex-col items-center justify-center bg-white rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
+                      style={{
+                        width: '140px',
+                        height: '140px',
+                      }}
+                    >
+                      <Image
+                        src={partner.src}
+                        alt={partner.name}
+                        width={80}
+                        height={80}
+                        className="object-contain"
+                        style={{ maxWidth: '80px', maxHeight: '80px' }}
+                      />
+                      <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {partner.name}
+                      </span>
+                    </div>
+                  ))}
               </div>
             ))}
           </div>
@@ -863,59 +873,140 @@ export default function Home() {
             variants={containerVariants}
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-              Everything You Need to Succeed
+              Your <span className="text-secondary">Customer Loyalty</span> Secret Weapon
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Powerful features designed specifically for small businesses
+              More than just a rewards system — tools to truly know and grow your customers.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: QrCode,
-                title: 'QR Code Points',
-                description:
-                  'Just scan and go, customers earn points with every purchase.',
-              },
-              {
-                icon: Gift,
-                title: 'Digital Rewards',
-                description:
-                  'Create custom rewards that keep customers coming back for more.',
-              },
-              {
-                icon: BarChart3,
-                title: 'Customer Insights',
-                description:
-                  'Understand buying patterns, track customer growth, and make data-driven decisions.',
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="group relative p-8 rounded-2xl border border-gray-200 bg-white hover:border-primary/30 hover:shadow-xl transition-all duration-300 shadow-md"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.5, delay: index * 0.1 },
-                  },
-                }}
-              >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <feature.icon className="w-12 h-12 text-primary mb-4 relative z-10" />
-                <h3 className="text-xl font-semibold mb-3 relative z-10 text-gray-900">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 relative z-10">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left — Phone Mockup */}
+            <motion.div
+              className="relative flex justify-center"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="relative w-[280px] sm:w-[300px]">
+                {/* Phone frame */}
+                <div className="rounded-[2.5rem] border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
+                  {/* Notch */}
+                  <div className="flex justify-center pt-2 pb-1 bg-gray-900">
+                    <div className="w-24 h-5 bg-gray-900 rounded-b-2xl" />
+                  </div>
+
+                  {/* App header */}
+                  <div className="bg-primary px-5 py-4 flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold text-sm">NoxaLoyalty</span>
+                  </div>
+
+                  {/* Customer profile */}
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-gray-900">Maria Santos</p>
+                        <p className="text-xs text-gray-500">1,250 points</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* QR code area */}
+                  <div className="px-5 py-5 flex flex-col items-center">
+                    <p className="text-xs text-gray-500 mb-3 font-medium">Scan to Earn Points</p>
+                    <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                      <QrCode className="w-16 h-16 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* My Rewards card */}
+                  <div className="px-5 pb-5">
+                    <div className="bg-secondary/10 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="w-4 h-4 text-secondary" />
+                        <span className="text-sm font-semibold text-gray-900">My Rewards</span>
+                      </div>
+                      <p className="text-xs text-gray-600">Free Coffee — 200 pts away</p>
+                      <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full w-3/4 bg-secondary rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Home indicator */}
+                  <div className="flex justify-center pb-2">
+                    <div className="w-28 h-1 bg-gray-300 rounded-full" />
+                  </div>
+                </div>
+
+                {/* Floating accent card */}
+                <div className="hidden lg:flex absolute -right-8 top-1/3 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-3 items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">+150 pts</p>
+                    <p className="text-xs text-gray-500">Just earned!</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right — Feature Stack */}
+            <motion.div
+              className="space-y-0"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {[
+                {
+                  icon: QrCode,
+                  title: 'QR Code Points',
+                  description:
+                    'Scan and earn. Customers collect points with every purchase, no app download needed.',
+                },
+                {
+                  icon: Gift,
+                  title: 'Digital Rewards',
+                  description:
+                    'Create custom rewards that keep customers excited to come back.',
+                },
+                {
+                  icon: BarChart3,
+                  title: 'Customer Insights',
+                  description:
+                    'Track buying patterns, measure loyalty, and make data-driven decisions.',
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className={`flex items-start gap-5 py-6 ${index < 2 ? 'border-b border-gray-200' : ''}`}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.15 }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1 text-gray-900">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </section>
