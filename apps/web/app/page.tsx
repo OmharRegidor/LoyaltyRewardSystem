@@ -10,6 +10,13 @@ import {
   Menu,
   X,
   ChevronRight,
+  Play,
+  Star,
+  Users,
+  Store,
+  TrendingUp,
+  Award,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
@@ -458,7 +465,54 @@ function PricingSection({
 // MAIN PAGE COMPONENT
 // ============================================
 
+const ROTATING_WORDS = ['Loyal Fans', 'Repeat Buyers', 'Brand Advocates', 'Raving Regulars'];
+const TYPING_SPEED = 55;
+const DELETING_SPEED = 35;
+const HOLD_DURATION = 2000;
+const PAUSE_BETWEEN = 200;
+
 export default function Home() {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const currentWord = ROTATING_WORDS[wordIndex];
+
+    if (isPaused) {
+      const timeout = setTimeout(() => {
+        setIsPaused(false);
+        setIsDeleting(true);
+      }, HOLD_DURATION);
+      return () => clearTimeout(timeout);
+    }
+
+    if (isDeleting) {
+      if (displayText.length === 0) {
+        const timeout = setTimeout(() => {
+          setIsDeleting(false);
+          setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+        }, PAUSE_BETWEEN);
+        return () => clearTimeout(timeout);
+      }
+      const timeout = setTimeout(() => {
+        setDisplayText((prev) => prev.slice(0, -1));
+      }, DELETING_SPEED);
+      return () => clearTimeout(timeout);
+    }
+
+    if (displayText.length === currentWord.length) {
+      setIsPaused(true);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setDisplayText(currentWord.slice(0, displayText.length + 1));
+    }, TYPING_SPEED);
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, isPaused, wordIndex]);
+
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -473,58 +527,326 @@ export default function Home() {
       {/* Header/Navbar */}
       <Header />
 
-      {/* Hero Section - White Background */}
-      <motion.section
+      {/* Hero Section - Split Layout */}
+      <section
         id="home"
-        className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8 pt-24"
-        style={{ backgroundColor: '#ffffff' }}
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
+        className="relative overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8"
       >
-        {/* Subtle Decorative Background Elements */}
+        {/* Background gradient */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-1/4 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl animate-blob" />
-          <div className="absolute top-40 right-1/4 w-80 h-80 bg-secondary/15 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-gray-100 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-white to-secondary/10" />
+          <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+          <div className="absolute top-40 right-1/3 w-72 h-72 bg-secondary/8 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
         </div>
 
-        <div className="max-w-5xl mx-auto text-center z-10">
-          <motion.h1
-            className="text-4xl sm:text-5xl lg:text-7xl font-bold text-balance mb-6 text-primary"
-            variants={containerVariants}
-          >
-            Turn First-Time Customers Into{' '}
-            <span className="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent drop-shadow-sm">
-              Loyal Fans
-            </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 text-balance max-w-3xl mx-auto leading-relaxed"
-            variants={containerVariants}
-          >
-            Help your small business in the Philippines grow with a modern
-            loyalty rewards platform. QR code points, digital rewards, and
-            actionable customer insights—all in one place.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            variants={containerVariants}
-          >
-            <Link href="#pricing">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold"
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-[1fr_0.85fr] gap-12 lg:gap-16 items-center">
+            {/* Left Column - Text */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
+              <motion.h1
+                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
               >
-                View Pricing
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-          </motion.div>
+                <span className="text-gray-900">Turn First-Time</span>
+                <br />
+                <span className="text-gray-900">Customers Into</span>
+                <br />
+                <span className="text-secondary inline-flex items-baseline min-w-[280px] sm:min-w-[380px] lg:min-w-[460px]">
+                  {displayText}
+                  <span
+                    className={`inline-block w-[3px] h-[0.85em] bg-secondary ml-0.5 rounded-sm ${
+                      isPaused && !isDeleting ? 'animate-blink' : ''
+                    }`}
+                  />
+                </span>
+              </motion.h1>
+
+              <motion.p
+                className="text-lg sm:text-xl text-gray-600 mb-8 max-w-lg leading-relaxed"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                The all-in-one loyalty platform for Philippine small businesses.
+                QR code points, digital rewards, and customer insights — free
+                forever.
+              </motion.p>
+
+              {/* Dual CTAs */}
+              <motion.div
+                className="flex flex-col sm:flex-row gap-3 mb-10"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Link href="/signup">
+                  <Button
+                    size="lg"
+                    className="bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+                  >
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/book-call">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary transition-all font-bold text-base gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Book a Demo
+                  </Button>
+                </Link>
+              </motion.div>
+
+              {/* Trust Indicators */}
+              <motion.div
+                className="flex flex-wrap gap-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                {[
+                  { icon: Store, label: '10,000+ Businesses' },
+                  { icon: Star, label: '4.8 Rating' },
+                  { icon: Zap, label: 'Free Forever' },
+                ].map((badge) => (
+                  <div
+                    key={badge.label}
+                    className="flex items-center gap-2 text-sm text-gray-500"
+                  >
+                    <badge.icon className="w-4 h-4 text-primary/70" />
+                    <span className="font-medium">{badge.label}</span>
+                  </div>
+                ))}
+              </motion.div>
+            </motion.div>
+
+            {/* Right Column - Dashboard Mockup */}
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+            >
+              <div className="relative lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-500">
+                {/* Main dashboard card */}
+                <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                  {/* Dashboard header */}
+                  <div className="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                    </div>
+                    <span className="text-white/80 text-xs font-medium">
+                      NoxaLoyalty Dashboard
+                    </span>
+                    <div className="w-16" />
+                  </div>
+
+                  {/* Dashboard content */}
+                  <div className="p-5 sm:p-6 space-y-5">
+                    {/* Stat cards row */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        {
+                          label: 'Total Customers',
+                          value: '2,847',
+                          change: '+12%',
+                          icon: Users,
+                        },
+                        {
+                          label: 'Points Issued',
+                          value: '45.2K',
+                          change: '+8%',
+                          icon: Award,
+                        },
+                        {
+                          label: 'Active Rewards',
+                          value: '18',
+                          change: '+3',
+                          icon: Gift,
+                        },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="bg-gray-50 rounded-xl p-3 sm:p-4"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <stat.icon className="w-4 h-4 text-primary/60" />
+                            <span className="text-xs text-green-600 font-medium">
+                              {stat.change}
+                            </span>
+                          </div>
+                          <p className="text-lg sm:text-xl font-bold text-gray-900">
+                            {stat.value}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Chart placeholder */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold text-gray-700">
+                          Customer Growth
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Last 7 days
+                        </span>
+                      </div>
+                      <div className="flex items-end gap-1.5 h-16">
+                        {[40, 55, 45, 65, 50, 75, 85].map((h, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
+                            style={{ height: `${h}%` }}
+                          >
+                            <div
+                              className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                              style={{ height: `${h * 0.7}%` }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent activity */}
+                    <div>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Recent Activity
+                      </span>
+                      <div className="mt-2 space-y-2">
+                        {[
+                          {
+                            name: 'Maria S.',
+                            action: 'earned 150 points',
+                            time: '2m ago',
+                          },
+                          {
+                            name: 'Juan D.',
+                            action: 'redeemed Free Coffee',
+                            time: '5m ago',
+                          },
+                          {
+                            name: 'Ana L.',
+                            action: 'joined loyalty program',
+                            time: '12m ago',
+                          },
+                        ].map((activity) => (
+                          <div
+                            key={activity.name}
+                            className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-xs font-bold text-primary">
+                                  {activity.name[0]}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-800">
+                                  {activity.name}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {' '}
+                                  {activity.action}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {activity.time}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating accent card */}
+                <motion.div
+                  className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-3 hidden lg:flex items-center gap-3"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
+                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">+27%</p>
+                    <p className="text-xs text-gray-500">Return visits</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </motion.section>
+      </section>
+
+      {/* Partner Logos */}
+      <section className="py-16">
+        <h2 className="text-center text-3xl sm:text-4xl font-bold text-gray-900 mb-12">
+          Who We Work With
+        </h2>
+
+        <div
+          className="relative overflow-hidden"
+          style={{
+            maskImage:
+              'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+          }}
+        >
+          <div className="flex w-max animate-marquee">
+            {[0, 1].map((setIndex) => (
+              <div key={setIndex} className="flex shrink-0 gap-32 px-16">
+                {Array.from({ length: 3 }, () => [
+                  { name: 'BiNuKboK VieW PoiNt ReSoRT', src: '/binukbok-logo.png' },
+                  { name: 'Jaza Media', src: '/Jaza-Media-logo.jpg' },
+                  { name: 'Noxa', src: '/noxa-tech-company.jpg' },
+                  { name: 'Evolvia', src: '/evolvia-logo.png' },
+                ]).flat().map((partner, i) => (
+                  <div
+                    key={`${setIndex}-${i}`}
+                    className="group flex flex-col items-center justify-center bg-white rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
+                    style={{
+                      width: '140px',
+                      height: '140px',
+                      boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+                    }}
+                  >
+                    <Image
+                      src={partner.src}
+                      alt={partner.name}
+                      width={80}
+                      height={80}
+                      className="object-contain"
+                      style={{ maxWidth: '80px', maxHeight: '80px' }}
+                    />
+                    <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      {partner.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Features Section - White Background */}
       <section
