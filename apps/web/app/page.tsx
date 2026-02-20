@@ -9,6 +9,7 @@ import {
   Check,
   Menu,
   X,
+  ChevronLeft,
   ChevronRight,
   Play,
   Star,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -81,6 +82,44 @@ const PLANS: Plan[] = [
     cta: 'Schedule a Demo',
     href: '/book-call',
     filled: false,
+  },
+];
+
+// ============================================
+// TESTIMONIALS DATA
+// ============================================
+
+interface Testimonial {
+  name: string;
+  rating: number;
+  text: string;
+}
+
+const TESTIMONIALS: Testimonial[] = [
+  {
+    name: 'Maria Santos',
+    rating: 5,
+    text: '"The QR code system is so easy — my customers just scan and earn points. We saw repeat visits jump within the first month of using NoxaLoyalty."',
+  },
+  {
+    name: 'Jose Reyes',
+    rating: 5,
+    text: '"I love the analytics dashboard. I can finally see which rewards actually bring people back. It changed how I run promotions for my café."',
+  },
+  {
+    name: 'Angela Cruz',
+    rating: 5,
+    text: '"The fact that the free plan includes unlimited customers is unheard of. We started with zero budget and NoxaLoyalty made it possible."',
+  },
+  {
+    name: 'Ricardo Dela Cruz',
+    rating: 4,
+    text: '"Managing three branches used to be a headache. Now my staff just log in, scan customers, and everything syncs automatically. Super convenient."',
+  },
+  {
+    name: 'Patricia Lim',
+    rating: 5,
+    text: '"We switched from paper punch cards to NoxaLoyalty and our customers actually prefer it. Setup took less than 10 minutes — highly recommended!"',
   },
 ];
 
@@ -373,7 +412,9 @@ function PricingSection({
     <section
       id="pricing"
       className="py-20 px-4 sm:px-6 lg:px-8"
-      style={{ backgroundColor: '#ffffff' }}
+      style={{
+        background: 'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+      }}
     >
       <div className="max-w-5xl mx-auto">
         <motion.div
@@ -459,6 +500,175 @@ function PricingSection({
         <p className="text-sm text-gray-500 mt-8 text-center">
           No credit card required for free plan
         </p>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// TESTIMONIALS SECTION COMPONENT
+// ============================================
+
+function TestimonialsSection({
+  containerVariants,
+}: {
+  containerVariants: Variants;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.firstElementChild
+      ? (el.firstElementChild as HTMLElement).offsetWidth + 16 // gap-4 = 16px
+      : 1;
+    const index = Math.round(el.scrollLeft / cardWidth);
+    setActiveIndex(Math.min(index, TESTIMONIALS.length - 1));
+  }, []);
+
+  const scrollTo = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.firstElementChild
+      ? (el.firstElementChild as HTMLElement).offsetWidth + 16
+      : 1;
+    el.scrollTo({ left: cardWidth * index, behavior: 'smooth' });
+  }, []);
+
+  const prev = useCallback(() => {
+    scrollTo(Math.max(0, activeIndex - 1));
+  }, [activeIndex, scrollTo]);
+
+  const next = useCallback(() => {
+    scrollTo(Math.min(TESTIMONIALS.length - 1, activeIndex + 1));
+  }, [activeIndex, scrollTo]);
+
+  return (
+    <section
+      className="py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #ffffff 0%, #fdf2e9 10%, #fce8d5 50%, #f9dcc4 90%, #ffffff 100%)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Header row */}
+        <motion.div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={containerVariants}
+        >
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900">
+            Real Stories, Real Results
+          </h2>
+          <Link href="/book-call">
+            <Button
+              variant="outline"
+              className="rounded-full px-6 h-10 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-sm transition-all"
+            >
+              Request a demo
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </Link>
+        </motion.div>
+
+        {/* Subtitle */}
+        <motion.p
+          className="text-gray-600 text-base sm:text-lg mb-10 max-w-2xl"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          Here&apos;s what NoxaLoyalty customers say about us compared to other
+          customer loyalty companies.
+        </motion.p>
+
+        {/* Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div
+            ref={scrollRef}
+            onScroll={onScroll}
+            className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+            style={{ scrollSnapType: 'x mandatory' }}
+          >
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={i}
+                className="w-[320px] sm:w-[360px] shrink-0 snap-start bg-white rounded-2xl border-2 border-primary/15 p-6 flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.1 * i }}
+              >
+                <p className="font-semibold text-primary text-base mb-2">
+                  {t.name}
+                </p>
+                <div className="flex gap-0.5 mb-3">
+                  {Array.from({ length: 5 }, (_, s) => (
+                    <Star
+                      key={s}
+                      className={`w-4 h-4 ${
+                        s < t.rating
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'fill-gray-200 text-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {t.text}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Bottom controls */}
+        <div className="flex items-center justify-between mt-6">
+          {/* Pagination dots */}
+          <div className="flex gap-2">
+            {TESTIMONIALS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i === activeIndex
+                    ? 'bg-primary w-6'
+                    : 'bg-gray-400/40 hover:bg-gray-400/60'
+                }`}
+                aria-label={`Go to testimonial ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Arrow buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={prev}
+              disabled={activeIndex === 0}
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={next}
+              disabled={activeIndex === TESTIMONIALS.length - 1}
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -810,7 +1020,12 @@ export default function Home() {
       </section>
 
       {/* Partner Logos */}
-      <section className="py-16">
+      <section
+        className="py-16"
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8f6f3 12%, #f8f6f3 88%, #ffffff 100%)',
+        }}
+      >
         <h2 className="text-center text-3xl sm:text-4xl font-bold text-gray-900 mb-12">
           Who We Work With
         </h2>
@@ -840,7 +1055,7 @@ export default function Home() {
                   .map((partner, i) => (
                     <div
                       key={`${setIndex}-${i}`}
-                      className="group flex flex-col items-center justify-center bg-white rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
+                      className="group flex flex-col items-center justify-center rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
                       style={{
                         width: '140px',
                         height: '140px',
@@ -865,11 +1080,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section - White Background */}
+      {/* Features Section */}
       <section
         id="features"
         className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#ffffff' }}
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -1022,7 +1239,9 @@ export default function Home() {
       <section
         id="how-it-works"
         className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
-        style={{ backgroundColor: '#faf9f7' }}
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #f5f3f0 10%, #f5f3f0 90%, #ffffff 100%)',
+        }}
       >
         <div className="absolute inset-0 dot-pattern opacity-[0.03]" />
         <div className="max-w-6xl mx-auto relative">
@@ -1282,10 +1501,15 @@ export default function Home() {
       {/* Pricing Section */}
       <PricingSection containerVariants={containerVariants} />
 
+      {/* Testimonials Section */}
+      <TestimonialsSection containerVariants={containerVariants} />
+
       {/* CTA Section - Primary Gradient for Brand Impact */}
       <section
         className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#f9fafb' }}
+        style={{
+          background: 'linear-gradient(180deg, #ffffff 0%, #f5f3f0 12%, #f5f3f0 88%, #ffffff 100%)',
+        }}
       >
         <motion.div
           className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary via-primary to-primary/80 rounded-3xl p-12 sm:p-16 text-white relative overflow-hidden shadow-2xl"
@@ -1317,10 +1541,12 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer - White Background */}
+      {/* Footer */}
       <footer
-        className="border-t border-gray-200 py-12 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#ffffff' }}
+        className="py-12 px-4 sm:px-6 lg:px-8"
+        style={{
+          background: 'linear-gradient(180deg, #f5f3f0 0%, #ffffff 15%, #ffffff 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
