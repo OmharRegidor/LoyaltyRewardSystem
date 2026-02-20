@@ -32,45 +32,44 @@ import Image from 'next/image';
 interface Plan {
   id: string;
   name: string;
-  description: string;
-  priceLabel: string;
-  period: string;
+  price: string;
+  accentText?: string;
+  subtitle: string;
+  featuresLabel: string;
   features: string[];
   cta: string;
   href: string;
-  highlighted: boolean;
-  primaryButton: boolean;
+  filled: boolean;
 }
 
 const PLANS: Plan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    description: 'Perfect for small businesses getting started',
-    priceLabel: '₱0',
-    period: 'from ₱5000/month',
+    id: 'express',
+    name: 'Loyalty Express',
+    price: 'Free',
+    accentText: 'Limited time offer',
+    subtitle: 'Best for small businesses getting started',
+    featuresLabel: 'Includes:',
     features: [
-      'Loyalty & Rewards System',
+      'Earn and Redeem Points',
       'Unlimited Customers',
-      'Staff Management (up to 5 per branch)',
+      'Staff Management (up to 5)',
       'Up to 3 Branches',
       'Analytics Dashboard',
       'QR Code System',
       'Email Support',
     ],
-    cta: 'Sign Up Free',
+    cta: 'Create Free Account',
     href: '/signup',
-    highlighted: false,
-    primaryButton: true,
+    filled: true,
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    description: 'For growing businesses',
-    priceLabel: 'Contact for Pricing',
-    period: '',
+    id: 'premium',
+    name: 'Loyalty Premium',
+    price: 'Contact for Pricing',
+    subtitle: 'Best for growing multi-location businesses',
+    featuresLabel: 'Includes everything in Express, plus:',
     features: [
-      'Everything in Free, plus:',
       'Booking System',
       'POS System',
       'Unlimited Branches',
@@ -79,10 +78,9 @@ const PLANS: Plan[] = [
       'Custom Integrations',
       'Dedicated Account Manager',
     ],
-    cta: 'Book a Call',
+    cta: 'Schedule a Demo',
     href: '/book-call',
-    highlighted: true,
-    primaryButton: false,
+    filled: false,
   },
 ];
 
@@ -355,108 +353,82 @@ function PricingSection({
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
-            Simple, Transparent Pricing
+          <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900">
+            Pricing Plans
           </h2>
-          <p className="text-lg text-gray-600">
-            Choose the plan that fits your business
-          </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row items-stretch gap-8 max-w-4xl mx-auto">
           {PLANS.map((plan, index) => (
             <motion.div
               key={plan.id}
-              className={`relative rounded-2xl p-8 border transition-all duration-300 bg-white shadow-md ${
-                plan.highlighted
-                  ? 'border-primary shadow-2xl md:scale-105'
-                  : 'border-gray-200 hover:border-primary/30'
+              className={`flex-1 flex flex-col rounded-2xl shadow-md border border-gray-200 bg-white p-8 ${
+                plan.id === 'express' ? 'border-t-[3px] border-t-primary' : ''
               }`}
-              initial="hidden"
-              whileInView="visible"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              variants={{
-                hidden: { opacity: 0, scale: 0.95 },
-                visible: {
-                  opacity: 1,
-                  scale: plan.highlighted ? 1.05 : 1,
-                  transition: { duration: 0.5, delay: index * 0.1 },
-                },
-              }}
+              transition={{ duration: 0.5, delay: index * 0.15, ease: 'easeOut' }}
             >
-              {plan.highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-full">
-                  Most Popular
+              {/* Header row: plan name left, price right */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">{plan.subtitle}</p>
                 </div>
-              )}
-
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                {plan.name}
-              </h3>
-              <p className="text-gray-600 mb-6">{plan.description}</p>
-
-              <div className="mb-6">
-                <span className="text-5xl font-bold text-gray-900">
-                  {plan.priceLabel}
-                </span>
-                {plan.period && (
-                  <span className="text-gray-500 ml-2">/{plan.period}</span>
-                )}
+                <div className="text-right shrink-0">
+                  <p className={`font-bold ${plan.id === 'express' ? 'text-2xl' : 'text-lg font-semibold'} text-gray-900`}>
+                    {plan.price}
+                  </p>
+                  {plan.accentText && (
+                    <p className="text-sm font-medium text-primary mt-0.5">
+                      {plan.accentText}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <Link href={plan.href}>
-                <Button
-                  className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
-                    plan.primaryButton
-                      ? 'bg-primary text-white hover:bg-primary/90'
-                      : 'border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-white'
-                  }`}
-                  variant={plan.primaryButton ? 'default' : 'ghost'}
-                >
-                  {plan.cta}
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+              <hr className="border-gray-200 my-6" />
 
-              <div className="space-y-3">
+              {/* Features */}
+              <p className="text-sm font-semibold text-gray-900 mb-4">
+                {plan.featuresLabel}
+              </p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-8">
                 {plan.features.map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-green-500 shrink-0" />
                     <span className="text-sm text-gray-700">{feature}</span>
                   </div>
                 ))}
               </div>
+
+              {/* CTA pushed to bottom */}
+              <div className="mt-auto">
+                <Link href={plan.href}>
+                  {plan.filled ? (
+                    <Button className="w-full h-12 rounded-lg font-semibold text-base bg-primary text-white hover:bg-primary/90">
+                      {plan.cta}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 rounded-lg font-semibold text-base border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      {plan.cta}
+                    </Button>
+                  )}
+                </Link>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Target Markets */}
-        <motion.div
-          className="mt-16 text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={containerVariants}
-        >
-          <p className="text-gray-600 mb-6">
-            Trusted by businesses across the Philippines
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[
-              'Retail Stores',
-              'Restaurants & Cafés',
-              'Salons & Spas',
-              'Hotels & Travel',
-            ].map((market) => (
-              <span
-                key={market}
-                className="px-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-600"
-              >
-                {market}
-              </span>
-            ))}
-          </div>
-        </motion.div>
+        <p className="text-sm text-gray-500 mt-8 text-center">
+          No credit card required for free plan
+        </p>
       </div>
     </section>
   );
@@ -622,7 +594,7 @@ export default function Home() {
                 {[
                   { icon: Store, label: '10,000+ Businesses' },
                   { icon: Star, label: '4.8 Rating' },
-                  { icon: Zap, label: 'Free Forever' },
+                  { icon: Zap, label: 'Limited Time Offer' },
                 ].map((badge) => (
                   <div
                     key={badge.label}
