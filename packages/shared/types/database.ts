@@ -641,6 +641,7 @@ export type Database = {
           description: string | null
           id: string
           is_free_forever: boolean
+          join_code: string | null
           logo_url: string | null
           max_points_per_transaction: number | null
           min_purchase_for_points: number | null
@@ -666,6 +667,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_free_forever?: boolean
+          join_code?: string | null
           logo_url?: string | null
           max_points_per_transaction?: number | null
           min_purchase_for_points?: number | null
@@ -691,6 +693,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_free_forever?: boolean
+          join_code?: string | null
           logo_url?: string | null
           max_points_per_transaction?: number | null
           min_purchase_for_points?: number | null
@@ -769,6 +772,7 @@ export type Database = {
           email_sent_count: number | null
           full_name: string | null
           id: string
+          is_verified: boolean
           last_visit: string | null
           lifetime_points: number | null
           phone: string | null
@@ -776,6 +780,8 @@ export type Database = {
           tier: string | null
           total_points: number | null
           user_id: string | null
+          verification_method: string | null
+          verified_at: string | null
         }
         Insert: {
           age?: number | null
@@ -789,6 +795,7 @@ export type Database = {
           email_sent_count?: number | null
           full_name?: string | null
           id?: string
+          is_verified?: boolean
           last_visit?: string | null
           lifetime_points?: number | null
           phone?: string | null
@@ -796,6 +803,8 @@ export type Database = {
           tier?: string | null
           total_points?: number | null
           user_id?: string | null
+          verification_method?: string | null
+          verified_at?: string | null
         }
         Update: {
           age?: number | null
@@ -809,6 +818,7 @@ export type Database = {
           email_sent_count?: number | null
           full_name?: string | null
           id?: string
+          is_verified?: boolean
           last_visit?: string | null
           lifetime_points?: number | null
           phone?: string | null
@@ -816,6 +826,8 @@ export type Database = {
           tier?: string | null
           total_points?: number | null
           user_id?: string | null
+          verification_method?: string | null
+          verified_at?: string | null
         }
         Relationships: [
           {
@@ -1168,10 +1180,12 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          low_stock_threshold: number
           name: string
           price_centavos: number
           sku: string | null
           sort_order: number | null
+          stock_quantity: number
           updated_at: string | null
         }
         Insert: {
@@ -1182,10 +1196,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          low_stock_threshold?: number
           name: string
           price_centavos: number
           sku?: string | null
           sort_order?: number | null
+          stock_quantity?: number
           updated_at?: string | null
         }
         Update: {
@@ -1196,10 +1212,12 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          low_stock_threshold?: number
           name?: string
           price_centavos?: number
           sku?: string | null
           sort_order?: number | null
+          stock_quantity?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -2084,6 +2102,76 @@ export type Database = {
           },
         ]
       }
+      stock_movements: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          performed_by: string | null
+          performer_name: string | null
+          product_id: string
+          quantity: number
+          reason: string | null
+          reference_id: string | null
+          stock_after: number
+          stock_before: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          performed_by?: string | null
+          performer_name?: string | null
+          product_id: string
+          quantity: number
+          reason?: string | null
+          reference_id?: string | null
+          stock_after: number
+          stock_before: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          performed_by?: string | null
+          performer_name?: string | null
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          reference_id?: string | null
+          stock_after?: number
+          stock_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           billing_interval: string
@@ -2347,6 +2435,70 @@ export type Database = {
           },
         ]
       }
+      verification_codes: {
+        Row: {
+          attempts: number
+          business_id: string
+          code: string
+          created_at: string
+          customer_id: string | null
+          email: string
+          expires_at: string
+          id: string
+          max_attempts: number
+          purpose: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          business_id: string
+          code: string
+          created_at?: string
+          customer_id?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          max_attempts?: number
+          purpose?: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          business_id?: string
+          code?: string
+          created_at?: string
+          customer_id?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          max_attempts?: number
+          purpose?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       admin_business_stats: {
@@ -2427,6 +2579,7 @@ export type Database = {
         Args: { p_business_id: string; p_limit_type: string }
         Returns: boolean
       }
+      cleanup_expired_verification_codes: { Args: never; Returns: number }
       complete_redemption: {
         Args: { p_completed_by: string; p_redemption_id: string }
         Returns: Json
@@ -2573,6 +2726,10 @@ export type Database = {
       update_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined
+      }
+      verify_customer_otp: {
+        Args: { p_business_id: string; p_code: string; p_email: string }
+        Returns: Json
       }
       verify_redemption_code: {
         Args: { p_business_id: string; p_code: string }

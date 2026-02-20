@@ -6,6 +6,7 @@ import {
   getBusinessBySlug,
   createSelfSignupCustomer,
 } from '@/lib/services/public-business.service';
+import { hasVerifiedCode } from '@/lib/services/verification.service';
 import { z } from 'zod';
 import type { Json } from '../../../../../../../../packages/shared/types/database';
 
@@ -142,6 +143,15 @@ export async function POST(
     }
 
     const { fullName, phone, email } = validation.data;
+
+    // 3b. Require email verification (lockdown: no unverified signups)
+    const isVerified = await hasVerifiedCode(email, business.id);
+    if (!isVerified) {
+      return NextResponse.json(
+        { error: 'Registration requires email verification. Please use the join link provided by the business.' },
+        { status: 403 }
+      );
+    }
 
     // 4. Create or find customer
     const result = await createSelfSignupCustomer(

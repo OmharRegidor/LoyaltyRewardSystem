@@ -51,7 +51,7 @@ export default function NotFound() {
           </p>
 
           <div className="flex items-center justify-center gap-3">
-            <Button variant="outline" onClick={() => router.back()}>
+            <Button className='text-black' variant="outline" onClick={() => router.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>

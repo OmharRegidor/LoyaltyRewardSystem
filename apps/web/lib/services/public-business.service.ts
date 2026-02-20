@@ -112,7 +112,58 @@ export async function getBusinessBySlug(
     `
     )
     .eq('slug', slug)
-    .in('subscription_status', ['active', 'trialing'])
+    .in('subscription_status', ['active', 'trialing', 'free_forever'])
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    description: data.description,
+    logo_url: data.logo_url,
+    business_type: data.business_type,
+    address: data.address,
+    city: data.city,
+    phone: data.phone,
+    points_per_purchase: data.points_per_purchase,
+    pesos_per_point: data.pesos_per_point,
+  };
+}
+
+// ============================================
+// GET BUSINESS BY JOIN CODE
+// ============================================
+
+export async function getBusinessByJoinCode(
+  joinCode: string,
+): Promise<PublicBusiness | null> {
+  const supabase = createServiceClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('businesses')
+    .select(
+      `
+      id,
+      name,
+      slug,
+      description,
+      logo_url,
+      business_type,
+      address,
+      city,
+      phone,
+      points_per_purchase,
+      pesos_per_point,
+      subscription_status
+    `,
+    )
+    .eq('join_code', joinCode.toUpperCase())
+    .in('subscription_status', ['active', 'trialing', 'free_forever'])
     .single();
 
   if (error || !data) {
