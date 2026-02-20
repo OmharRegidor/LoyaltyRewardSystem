@@ -970,7 +970,7 @@ export default function Home() {
                   icon: QrCode,
                   title: 'QR Code Points',
                   description:
-                    'Scan and earn. Customers collect points with every purchase, no app download needed.',
+                    'Scan and earn. Customers collect points with every purchase via our mobile app.',
                 },
                 {
                   icon: Gift,
@@ -1011,13 +1011,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works Section - Light Gray Background */}
+      {/* How It Works Section */}
       <section
         id="how-it-works"
-        className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#f9fafb' }}
+        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        style={{ backgroundColor: '#faf9f7' }}
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="absolute inset-0 dot-pattern opacity-[0.03]" />
+        <div className="max-w-6xl mx-auto relative">
           <motion.div
             className="text-center mb-16"
             initial="hidden"
@@ -1026,66 +1027,248 @@ export default function Home() {
             variants={containerVariants}
           >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-              How It Works
+              How <span className="text-secondary">NoxaLoyalty</span> Works
             </h2>
-            <p className="text-lg text-gray-600">
-              Three simple steps to start building customer loyalty
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Start building customer loyalty in minutes — no complex setup, easy to get started.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting Line - Desktop Only */}
-            <div className="absolute top-24 left-0 right-0 h-1 bg-primary hidden md:block" />
-
-            {[
-              {
-                number: 1,
-                title: 'Customer Scans QR',
-                description:
-                  'Customers makes a purchase and shows their QR code from the app or card.',
-              },
-              {
-                number: 2,
-                title: 'Earns Points',
-                description:
-                  'Your team scans the QR code, enter the amount, and points are added instantly.',
-              },
-              {
-                number: 3,
-                title: 'Redeems & Enjoy',
-                description:
-                  'Customer picks a reward, shows their redemptions code, and gets their prize!.',
-              },
-            ].map((step, index) => (
-              <motion.div
-                key={index}
-                className="relative"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.5, delay: index * 0.15 },
-                  },
-                }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-6 relative z-10 shadow-lg">
-                    <span className="text-2xl font-bold text-white drop-shadow-sm">
-                      {step.number}
-                    </span>
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
+            {/* Step 1 — Set Up Your Program */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0 }}
+            >
+              {/* Dashboard mockup */}
+              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
+                <div className="w-full max-w-[260px]">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                    <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                      </div>
+                      <span className="text-white/80 text-[10px] font-medium">Create Reward</span>
+                      <div className="w-12" />
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">Reward Name</label>
+                        <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
+                          Free Coffee
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">Points Required</label>
+                        <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
+                          500 pts
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Available to all customers</span>
+                        <div className="w-8 h-4.5 bg-primary rounded-full relative">
+                          <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Send notification</span>
+                        <div className="w-8 h-4.5 bg-primary rounded-full relative">
+                          <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
+                        </div>
+                      </div>
+                      <button className="w-full bg-primary text-white text-sm font-semibold py-2.5 rounded-lg">
+                        Create Reward
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-900">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600">{step.description}</p>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">1</div>
+                <h3 className="text-lg font-semibold text-gray-900">Set Up Your Program</h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Create your loyalty program in minutes. Set point rules, design rewards, and invite your staff.
+              </p>
+            </motion.div>
+
+            {/* Step 2 — Customers Earn Points */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              {/* Phone mockup */}
+              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
+              <div className="w-[180px]">
+                <div className="rounded-[2.5rem] border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
+                  <div className="flex justify-center pt-2 pb-1 bg-gray-900">
+                    <div className="w-20 h-4 bg-gray-900 rounded-b-2xl" />
+                  </div>
+                  <div className="bg-primary px-4 py-3 flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-white" />
+                    <span className="text-white font-semibold text-xs">NoxaLoyalty</span>
+                  </div>
+                  {/* Customer profile bar */}
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-xs text-gray-900">Maria Santos</p>
+                        <p className="text-[10px] text-gray-500">1,250 points</p>
+                      </div>
+                    </div>
+                  </div>
+                  {/* QR code */}
+                  <div className="px-4 py-4 flex flex-col items-center">
+                    <p className="text-[10px] text-gray-500 mb-2.5 font-medium">Scan to Earn Points</p>
+                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                      <QrCode className="w-12 h-12 text-gray-400" />
+                    </div>
+                  </div>
+                  {/* Success badge */}
+                  <div className="px-4 pb-4">
+                    <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-green-800">Scan Successful!</p>
+                        <p className="text-[10px] text-green-600">+100 points</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-center pb-2">
+                    <div className="w-24 h-1 bg-gray-300 rounded-full" />
+                  </div>
+                </div>
+              </div>
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">2</div>
+                <h3 className="text-lg font-semibold text-gray-900">Customers Earn Points</h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Customers scan a QR code at checkout via the mobile app. Points are added instantly.
+              </p>
+            </motion.div>
+
+            {/* Step 3 — Watch Your Business Grow */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              {/* Dashboard mockup */}
+              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
+                <div className="w-full max-w-[260px]">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                    <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                      </div>
+                      <span className="text-white/80 text-[10px] font-medium">Analytics</span>
+                      <div className="w-12" />
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Stat cards */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <Users className="w-3.5 h-3.5 text-primary/60" />
+                            <span className="text-[10px] text-green-600 font-medium">+18%</span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900">73%</p>
+                          <p className="text-[10px] text-gray-500">Returning</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
+                            <span className="text-[10px] text-green-600 font-medium">+24%</span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900">+₱42K</p>
+                          <p className="text-[10px] text-gray-500">Revenue Impact</p>
+                        </div>
+                      </div>
+                      {/* Bar chart */}
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-semibold text-gray-700">Monthly Growth</span>
+                          <span className="text-[9px] text-gray-400">Last 12 months</span>
+                        </div>
+                        <div className="flex items-end gap-1 h-12">
+                          {[25, 32, 38, 35, 42, 48, 45, 55, 60, 58, 68, 80].map((h, i) => (
+                            <div
+                              key={i}
+                              className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
+                              style={{ height: `${h}%` }}
+                            >
+                              <div
+                                className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                                style={{ height: `${h * 0.7}%` }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Rewards redeemed */}
+                      <div className="bg-secondary/10 rounded-xl p-3 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                          <Gift className="w-4 h-4 text-secondary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">Rewards Redeemed</p>
+                          <p className="text-[10px] text-gray-600">1,847 this month</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">3</div>
+                <h3 className="text-lg font-semibold text-gray-900">Watch Your Business Grow</h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Track returning customers, measure reward redemptions, and see your loyalty program drive real results.
+              </p>
+            </motion.div>
           </div>
+
+          {/* CTA */}
+          <motion.div
+            className="text-center mt-14"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+              >
+                Get Started Free
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
