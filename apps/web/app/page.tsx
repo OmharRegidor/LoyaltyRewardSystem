@@ -71,7 +71,6 @@ const PLANS: Plan[] = [
     subtitle: 'Best for growing multi-location businesses',
     featuresLabel: 'Includes everything in Express, plus:',
     features: [
-      'Booking System',
       'POS System',
       'Unlimited Branches',
       'Unlimited Staff',
@@ -175,7 +174,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
@@ -186,7 +185,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 35, stiffness: 400 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 dark:bg-gray-900/98 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
           >
             {/* Drag Handle */}
@@ -230,9 +229,9 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
               {NAV_LINKS.map((link, index) => (
                 <motion.button
                   key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
                   onClick={() => handleNavClick(link.href)}
                   className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
                 >
@@ -276,16 +275,19 @@ interface AnnouncementBarProps {
 
 function AnnouncementBar({ onClose }: AnnouncementBarProps) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-30 h-10 bg-primary/90 backdrop-blur-sm border-b border-white/10 flex items-center justify-center px-4">
-      <p className="text-white/90 text-sm text-center">
+    <div className="fixed top-0 left-0 right-0 z-30 h-auto min-h-[40px] sm:h-10 bg-white/90 backdrop-blur-sm border-b border-white/10 flex items-center justify-center px-10 sm:px-4">
+      <p className="text-primary/90 text-xs sm:text-sm text-center">
         Start a loyalty program for your business in minutes.{' '}
-        <Link href="/signup" className="text-secondary font-semibold underline hover:text-secondary/80 transition-colors">
+        <Link
+          href="/signup"
+          className="text-secondary font-semibold underline hover:text-secondary/80 transition-colors"
+        >
           Try NoxaLoyalty for free
         </Link>
       </p>
       <button
         onClick={onClose}
-        className="absolute right-3 p-1 text-white/70 hover:text-white transition-colors"
+        className="absolute right-2 sm:right-3 p-2 sm:p-1 text-white/70 hover:text-white transition-colors"
         aria-label="Dismiss announcement"
       >
         <X className="w-4 h-4" />
@@ -316,7 +318,9 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
   return (
     <>
       {showBanner && <AnnouncementBar onClose={onDismissBanner} />}
-      <header className={`fixed left-0 right-0 z-30 bg-primary transition-[top] duration-300 ${showBanner ? 'top-10' : 'top-0'}`}>
+      <header
+        className={`fixed left-0 right-0 z-30 bg-primary transition-[top] duration-300 ${showBanner ? 'top-10' : 'top-0'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* LEFT: Logo - Always Visible */}
@@ -411,9 +415,10 @@ function PricingSection({
   return (
     <section
       id="pricing"
-      className="py-20 px-4 sm:px-6 lg:px-8"
+      className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
       style={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
       }}
     >
       <div className="max-w-5xl mx-auto">
@@ -424,7 +429,7 @@ function PricingSection({
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
             Pricing Plans
           </h2>
         </motion.div>
@@ -439,7 +444,11 @@ function PricingSection({
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15, ease: 'easeOut' }}
+              transition={{
+                duration: 0.5,
+                delay: index * 0.15,
+                ease: 'easeOut',
+              }}
             >
               {/* Header row: plan name left, price right */}
               <div className="flex items-start justify-between gap-4">
@@ -450,7 +459,9 @@ function PricingSection({
                   <p className="text-sm text-gray-500 mt-1">{plan.subtitle}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`font-bold ${plan.id === 'express' ? 'text-2xl' : 'text-lg font-semibold'} text-gray-900`}>
+                  <p
+                    className={`font-bold ${plan.id === 'express' ? 'text-2xl' : 'text-lg font-semibold'} text-gray-900`}
+                  >
                     {plan.price}
                   </p>
                   {plan.accentText && (
@@ -546,9 +557,10 @@ function TestimonialsSection({
 
   return (
     <section
-      className="py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #fdf2e9 10%, #fce8d5 50%, #f9dcc4 90%, #ffffff 100%)',
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
       }}
     >
       <div className="max-w-7xl mx-auto">
@@ -560,13 +572,13 @@ function TestimonialsSection({
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
             Real Stories, Real Results
           </h2>
           <Link href="/book-call">
             <Button
               variant="outline"
-              className="rounded-full px-6 h-10 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-sm transition-all"
+              className="rounded-lg px-6 h-10 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-sm transition-all"
             >
               Request a demo
               <ArrowRight className="ml-2 w-4 h-4" />
@@ -602,19 +614,23 @@ function TestimonialsSection({
             {TESTIMONIALS.map((t, i) => (
               <motion.div
                 key={i}
-                className="w-[320px] sm:w-[360px] shrink-0 snap-start bg-white rounded-2xl border-2 border-primary/15 p-6 flex flex-col"
+                className="w-[280px] sm:w-[360px] shrink-0 snap-start bg-white rounded-2xl border-2 border-primary/15 p-6 flex flex-col"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 * i }}
+                transition={{ duration: 0.5, delay: 0.1 * i }}
               >
                 <p className="font-semibold text-primary text-base mb-2">
                   {t.name}
                 </p>
-                <div className="flex gap-0.5 mb-3">
+                <div
+                  className="flex gap-0.5 mb-3"
+                  aria-label={`Rating: ${t.rating} out of 5 stars`}
+                >
                   {Array.from({ length: 5 }, (_, s) => (
                     <Star
                       key={s}
+                      aria-hidden="true"
                       className={`w-4 h-4 ${
                         s < t.rating
                           ? 'fill-amber-400 text-amber-400'
@@ -744,15 +760,18 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
       {/* Header/Navbar */}
-      <Header showBanner={showBanner} onDismissBanner={() => setShowBanner(false)} />
+      <Header
+        showBanner={showBanner}
+        onDismissBanner={() => setShowBanner(false)}
+      />
 
       {/* Hero Section - Split Layout */}
       <section
         id="home"
-        className={`relative overflow-hidden pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8 transition-[padding] duration-300 ${
+        className={`relative overflow-hidden pb-20 lg:pb-24 px-5 sm:px-6 lg:px-8 transition-[padding] duration-300 ${
           showBanner
-            ? 'pt-[7.5rem] sm:pt-[8.5rem] lg:pt-[9.5rem]'
-            : 'pt-28 sm:pt-32 lg:pt-36'
+            ? 'pt-[9rem] sm:pt-[8.5rem] lg:pt-[9.5rem]'
+            : 'pt-32 sm:pt-32 lg:pt-36'
         }`}
       >
         {/* Background gradient */}
@@ -771,7 +790,7 @@ export default function Home() {
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
               <motion.h1
-                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6"
+                className="font-display text-[42px] sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center sm:text-left"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
@@ -780,10 +799,10 @@ export default function Home() {
                 <br />
                 <span className="text-gray-900">Customers Into</span>
                 <br />
-                <span className="text-secondary inline-flex items-baseline min-w-[280px] sm:min-w-[380px] lg:min-w-[460px]">
+                <span className="text-secondary text-[38px] sm:text-5xl lg:text-5xl xl:text-6xl block sm:inline lg:min-w-[530px]">
                   {displayText}
                   <span
-                    className={`inline-block w-[3px] h-[0.85em] bg-secondary ml-0.5 rounded-sm ${
+                    className={`inline-block w-[3px] h-[0.85em] bg-secondary ml-0.5 rounded-sm align-baseline ${
                       isPaused && !isDeleting ? 'animate-blink' : ''
                     }`}
                   />
@@ -791,7 +810,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p
-                className="text-lg sm:text-xl text-gray-600 mb-8 max-w-lg leading-relaxed"
+                className="text-md sm:text-xl text-gray-600 mb-10 sm:mb-8 max-w-lg leading-relaxed text-center sm:text-left mx-auto sm:mx-0"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -803,25 +822,25 @@ export default function Home() {
 
               {/* Dual CTAs */}
               <motion.div
-                className="flex flex-col sm:flex-row gap-3 mb-10"
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mb-10"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Link href="/signup">
+                <Link href="/signup" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
                   >
                     Get Started Free
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/book-call">
+                <Link href="/book-call" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary transition-all font-bold text-base gap-2"
+                    className="w-full sm:w-auto rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-bold text-base gap-2"
                   >
                     <Play className="w-4 h-4" />
                     Book a Demo
@@ -831,7 +850,7 @@ export default function Home() {
 
               {/* Trust Indicators */}
               <motion.div
-                className="flex flex-wrap gap-6"
+                className="flex flex-wrap gap-4 sm:gap-6 justify-center sm:justify-start"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
@@ -854,10 +873,10 @@ export default function Home() {
 
             {/* Right Column - Dashboard Mockup */}
             <motion.div
-              className="relative"
+              className="block relative"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+              transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
             >
               <div className="relative lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-500">
                 {/* Main dashboard card */}
@@ -1021,12 +1040,13 @@ export default function Home() {
 
       {/* Partner Logos */}
       <section
-        className="py-16"
+        className="py-14 md:py-20"
         style={{
-          background: 'linear-gradient(180deg, #ffffff 0%, #f8f6f3 12%, #f8f6f3 88%, #ffffff 100%)',
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
         }}
       >
-        <h2 className="text-center text-3xl sm:text-4xl font-bold text-gray-900 mb-12">
+        <h2 className="font-display text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-12">
           Who We Work With
         </h2>
 
@@ -1041,7 +1061,10 @@ export default function Home() {
         >
           <div className="flex w-max animate-marquee">
             {[0, 1].map((setIndex) => (
-              <div key={setIndex} className="flex shrink-0 gap-32 px-16">
+              <div
+                key={setIndex}
+                className="flex shrink-0 gap-12 px-6 sm:gap-32 sm:px-16"
+              >
                 {Array.from({ length: 3 }, () => [
                   {
                     name: 'BiNuKboK VieW PoiNt ReSoRT',
@@ -1055,19 +1078,14 @@ export default function Home() {
                   .map((partner, i) => (
                     <div
                       key={`${setIndex}-${i}`}
-                      className="group flex flex-col items-center justify-center rounded-2xl p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105"
-                      style={{
-                        width: '140px',
-                        height: '140px',
-                      }}
+                      className="group flex flex-col items-center justify-center rounded-2xl p-3 sm:p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 w-[100px] h-[100px] sm:w-[140px] sm:h-[140px]"
                     >
                       <Image
                         src={partner.src}
                         alt={partner.name}
                         width={80}
                         height={80}
-                        className="object-contain"
-                        style={{ maxWidth: '80px', maxHeight: '80px' }}
+                        className="object-contain max-w-[60px] max-h-[60px] sm:max-w-[80px] sm:max-h-[80px]"
                       />
                       <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         {partner.name}
@@ -1083,28 +1101,31 @@ export default function Home() {
       {/* Features Section */}
       <section
         id="features"
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
         style={{
-          background: 'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
         }}
       >
         <div className="max-w-7xl mx-auto">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={containerVariants}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-              Your <span className="text-secondary">Customer Loyalty</span> Secret Weapon
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
+              Your <span className="text-secondary">Customer Loyalty</span>{' '}
+              Secret Weapon
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              More than just a rewards system — tools to truly know and grow your customers.
+              More than just a rewards system — tools to truly know and grow
+              your customers.
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             {/* Left — Phone Mockup */}
             <motion.div
               className="relative flex justify-center"
@@ -1124,7 +1145,9 @@ export default function Home() {
                   {/* App header */}
                   <div className="bg-primary px-5 py-4 flex items-center gap-3">
                     <Smartphone className="w-5 h-5 text-white" />
-                    <span className="text-white font-semibold text-sm">NoxaLoyalty</span>
+                    <span className="text-white font-semibold text-sm">
+                      NoxaLoyalty
+                    </span>
                   </div>
 
                   {/* Customer profile */}
@@ -1134,7 +1157,9 @@ export default function Home() {
                         <Users className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm text-gray-900">Maria Santos</p>
+                        <p className="font-semibold text-sm text-gray-900">
+                          Maria Santos
+                        </p>
                         <p className="text-xs text-gray-500">1,250 points</p>
                       </div>
                     </div>
@@ -1142,7 +1167,9 @@ export default function Home() {
 
                   {/* QR code area */}
                   <div className="px-5 py-5 flex flex-col items-center">
-                    <p className="text-xs text-gray-500 mb-3 font-medium">Scan to Earn Points</p>
+                    <p className="text-xs text-gray-500 mb-3 font-medium">
+                      Scan to Earn Points
+                    </p>
                     <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                       <QrCode className="w-16 h-16 text-gray-400" />
                     </div>
@@ -1153,9 +1180,13 @@ export default function Home() {
                     <div className="bg-secondary/10 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Gift className="w-4 h-4 text-secondary" />
-                        <span className="text-sm font-semibold text-gray-900">My Rewards</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          My Rewards
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-600">Free Coffee — 200 pts away</p>
+                      <p className="text-xs text-gray-600">
+                        Free Coffee — 200 pts away
+                      </p>
                       <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full w-3/4 bg-secondary rounded-full" />
                       </div>
@@ -1238,29 +1269,31 @@ export default function Home() {
       {/* How It Works Section */}
       <section
         id="how-it-works"
-        className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, #ffffff 0%, #f5f3f0 10%, #f5f3f0 90%, #ffffff 100%)',
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
         }}
       >
         <div className="absolute inset-0 dot-pattern opacity-[0.03]" />
         <div className="max-w-6xl mx-auto relative">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={containerVariants}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
               How <span className="text-secondary">NoxaLoyalty</span> Works
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Start building customer loyalty in minutes — no complex setup, easy to get started.
+              Start building customer loyalty in minutes — no complex setup,
+              easy to get started.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-10">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
             {/* Step 1 — Set Up Your Program */}
             <motion.div
               className="flex flex-col items-center"
@@ -1270,7 +1303,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0 }}
             >
               {/* Dashboard mockup */}
-              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6">
                 <div className="w-full max-w-[260px]">
                   <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
                     <div className="bg-primary px-4 py-3 flex items-center justify-between">
@@ -1279,30 +1312,40 @@ export default function Home() {
                         <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
                         <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
                       </div>
-                      <span className="text-white/80 text-[10px] font-medium">Create Reward</span>
+                      <span className="text-white/80 text-[10px] font-medium">
+                        Create Reward
+                      </span>
                       <div className="w-12" />
                     </div>
                     <div className="p-4 space-y-3">
                       <div>
-                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">Reward Name</label>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">
+                          Reward Name
+                        </label>
                         <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
                           Free Coffee
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">Points Required</label>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">
+                          Points Required
+                        </label>
                         <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
                           500 pts
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">Available to all customers</span>
+                        <span className="text-xs text-gray-600">
+                          Available to all customers
+                        </span>
                         <div className="w-8 h-4.5 bg-primary rounded-full relative">
                           <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">Send notification</span>
+                        <span className="text-xs text-gray-600">
+                          Send notification
+                        </span>
                         <div className="w-8 h-4.5 bg-primary rounded-full relative">
                           <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
                         </div>
@@ -1316,11 +1359,16 @@ export default function Home() {
               </div>
               {/* Label */}
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">1</div>
-                <h3 className="text-lg font-semibold text-gray-900">Set Up Your Program</h3>
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  1
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Set Up Your Program
+                </h3>
               </div>
               <p className="text-gray-600 text-sm text-center max-w-[260px]">
-                Create your loyalty program in minutes. Set point rules, design rewards, and invite your staff.
+                Create your loyalty program in minutes. Set point rules, design
+                rewards, and invite your staff.
               </p>
             </motion.div>
 
@@ -1333,60 +1381,77 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               {/* Phone mockup */}
-              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
-              <div className="w-[180px]">
-                <div className="rounded-[2.5rem] border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
-                  <div className="flex justify-center pt-2 pb-1 bg-gray-900">
-                    <div className="w-20 h-4 bg-gray-900 rounded-b-2xl" />
-                  </div>
-                  <div className="bg-primary px-4 py-3 flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-white" />
-                    <span className="text-white font-semibold text-xs">NoxaLoyalty</span>
-                  </div>
-                  {/* Customer profile bar */}
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Users className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-xs text-gray-900">Maria Santos</p>
-                        <p className="text-[10px] text-gray-500">1,250 points</p>
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6 mb-6">
+                <div className="w-[140px] md:w-[180px]">
+                  <div className="rounded-[2rem] md:rounded-[2.5rem] border-[5px] md:border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
+                    <div className="flex justify-center pt-1.5 pb-0.5 md:pt-2 md:pb-1 bg-gray-900">
+                      <div className="w-16 md:w-20 h-3 md:h-4 bg-gray-900 rounded-b-2xl" />
+                    </div>
+                    <div className="bg-primary px-3 py-2 md:px-4 md:py-3 flex items-center gap-1.5 md:gap-2">
+                      <Smartphone className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                      <span className="text-white font-semibold text-[10px] md:text-xs">
+                        NoxaLoyalty
+                      </span>
+                    </div>
+                    {/* Customer profile bar */}
+                    <div className="px-3 py-2 md:px-4 md:py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[10px] md:text-xs text-gray-900">
+                            Maria Santos
+                          </p>
+                          <p className="text-[9px] md:text-[10px] text-gray-500">
+                            1,250 points
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  {/* QR code */}
-                  <div className="px-4 py-4 flex flex-col items-center">
-                    <p className="text-[10px] text-gray-500 mb-2.5 font-medium">Scan to Earn Points</p>
-                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                      <QrCode className="w-12 h-12 text-gray-400" />
-                    </div>
-                  </div>
-                  {/* Success badge */}
-                  <div className="px-4 pb-4">
-                    <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-green-800">Scan Successful!</p>
-                        <p className="text-[10px] text-green-600">+100 points</p>
+                    {/* QR code */}
+                    <div className="px-3 py-2.5 md:px-4 md:py-4 flex flex-col items-center">
+                      <p className="text-[9px] md:text-[10px] text-gray-500 mb-1.5 md:mb-2.5 font-medium">
+                        Scan to Earn Points
+                      </p>
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                        <QrCode className="w-8 h-8 md:w-12 md:h-12 text-gray-400" />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex justify-center pb-2">
-                    <div className="w-24 h-1 bg-gray-300 rounded-full" />
+                    {/* Success badge */}
+                    <div className="px-3 pb-2.5 md:px-4 md:pb-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg md:rounded-xl px-2 py-1.5 md:px-3 md:py-2.5 flex items-center gap-1.5 md:gap-2">
+                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 md:w-3.5 md:h-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] md:text-xs font-semibold text-green-800">
+                            Scan Successful!
+                          </p>
+                          <p className="text-[9px] md:text-[10px] text-green-600">
+                            +100 points
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-center pb-1.5 md:pb-2">
+                      <div className="w-16 md:w-24 h-1 bg-gray-300 rounded-full" />
+                    </div>
                   </div>
                 </div>
               </div>
-              </div>
               {/* Label */}
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">2</div>
-                <h3 className="text-lg font-semibold text-gray-900">Customers Earn Points</h3>
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  2
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Customers Earn Points
+                </h3>
               </div>
               <p className="text-gray-600 text-sm text-center max-w-[260px]">
-                Customers scan a QR code at checkout via the mobile app. Points are added instantly.
+                Customers scan a QR code at checkout via the mobile app. Points
+                are added instantly.
               </p>
             </motion.div>
 
@@ -1399,7 +1464,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.4 }}
             >
               {/* Dashboard mockup */}
-              <div className="w-full h-[300px] md:h-[340px] bg-[#f3f1ee] rounded-2xl flex items-center justify-center p-6 shadow-sm mb-6">
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6 mb-6">
                 <div className="w-full max-w-[260px]">
                   <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
                     <div className="bg-primary px-4 py-3 flex items-center justify-between">
@@ -1408,7 +1473,9 @@ export default function Home() {
                         <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
                         <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
                       </div>
-                      <span className="text-white/80 text-[10px] font-medium">Analytics</span>
+                      <span className="text-white/80 text-[10px] font-medium">
+                        Analytics
+                      </span>
                       <div className="w-12" />
                     </div>
                     <div className="p-4 space-y-3">
@@ -1417,39 +1484,55 @@ export default function Home() {
                         <div className="bg-gray-50 rounded-xl p-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <Users className="w-3.5 h-3.5 text-primary/60" />
-                            <span className="text-[10px] text-green-600 font-medium">+18%</span>
+                            <span className="text-[10px] text-green-600 font-medium">
+                              +18%
+                            </span>
                           </div>
-                          <p className="text-base font-bold text-gray-900">73%</p>
+                          <p className="text-base font-bold text-gray-900">
+                            73%
+                          </p>
                           <p className="text-[10px] text-gray-500">Returning</p>
                         </div>
                         <div className="bg-gray-50 rounded-xl p-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
-                            <span className="text-[10px] text-green-600 font-medium">+24%</span>
+                            <span className="text-[10px] text-green-600 font-medium">
+                              +24%
+                            </span>
                           </div>
-                          <p className="text-base font-bold text-gray-900">+₱42K</p>
-                          <p className="text-[10px] text-gray-500">Revenue Impact</p>
+                          <p className="text-base font-bold text-gray-900">
+                            +₱42K
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            Revenue Impact
+                          </p>
                         </div>
                       </div>
                       {/* Bar chart */}
                       <div className="bg-gray-50 rounded-xl p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-semibold text-gray-700">Monthly Growth</span>
-                          <span className="text-[9px] text-gray-400">Last 12 months</span>
+                          <span className="text-[10px] font-semibold text-gray-700">
+                            Monthly Growth
+                          </span>
+                          <span className="text-[9px] text-gray-400">
+                            Last 12 months
+                          </span>
                         </div>
                         <div className="flex items-end gap-1 h-12">
-                          {[25, 32, 38, 35, 42, 48, 45, 55, 60, 58, 68, 80].map((h, i) => (
-                            <div
-                              key={i}
-                              className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
-                              style={{ height: `${h}%` }}
-                            >
+                          {[25, 32, 38, 35, 42, 48, 45, 55, 60, 58, 68, 80].map(
+                            (h, i) => (
                               <div
-                                className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
-                                style={{ height: `${h * 0.7}%` }}
-                              />
-                            </div>
-                          ))}
+                                key={i}
+                                className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
+                                style={{ height: `${h}%` }}
+                              >
+                                <div
+                                  className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                                  style={{ height: `${h * 0.7}%` }}
+                                />
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                       {/* Rewards redeemed */}
@@ -1458,8 +1541,12 @@ export default function Home() {
                           <Gift className="w-4 h-4 text-secondary" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-gray-900">Rewards Redeemed</p>
-                          <p className="text-[10px] text-gray-600">1,847 this month</p>
+                          <p className="text-xs font-semibold text-gray-900">
+                            Rewards Redeemed
+                          </p>
+                          <p className="text-[10px] text-gray-600">
+                            1,847 this month
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1468,11 +1555,16 @@ export default function Home() {
               </div>
               {/* Label */}
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">3</div>
-                <h3 className="text-lg font-semibold text-gray-900">Watch Your Business Grow</h3>
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Watch Your Business Grow
+                </h3>
               </div>
               <p className="text-gray-600 text-sm text-center max-w-[260px]">
-                Track returning customers, measure reward redemptions, and see your loyalty program drive real results.
+                Track returning customers, measure reward redemptions, and see
+                your loyalty program drive real results.
               </p>
             </motion.div>
           </div>
@@ -1506,13 +1598,14 @@ export default function Home() {
 
       {/* CTA Section - Primary Gradient for Brand Impact */}
       <section
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
         style={{
-          background: 'linear-gradient(180deg, #ffffff 0%, #f5f3f0 12%, #f5f3f0 88%, #ffffff 100%)',
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
         }}
       >
         <motion.div
-          className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary via-primary to-primary/80 rounded-3xl p-12 sm:p-16 text-white relative overflow-hidden shadow-2xl"
+          className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary via-primary to-primary/80 rounded-3xl p-8 sm:p-12 lg:p-16 text-white relative overflow-hidden shadow-2xl"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
@@ -1522,7 +1615,7 @@ export default function Home() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/20 rounded-full blur-2xl" />
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 relative z-10">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 relative z-10">
             Ready to Transform Your Customer Relationships?
           </h2>
           <p className="text-lg mb-8 text-white/90 relative z-10">
@@ -1532,7 +1625,7 @@ export default function Home() {
           <Link href="#pricing">
             <Button
               size="lg"
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-full px-8 h-12 font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all relative z-10"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg px-8 h-12 font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all relative z-10"
             >
               Get Started Today
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -1549,7 +1642,7 @@ export default function Home() {
         }}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 mb-12">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 mb-10 sm:mb-12">
             {/* Brand column */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -1560,10 +1653,13 @@ export default function Home() {
                   height={32}
                   className="brightness-0 invert"
                 />
-                <span className="font-bold text-lg text-white">NoxaLoyalty</span>
+                <span className="font-bold text-lg text-white">
+                  NoxaLoyalty
+                </span>
               </div>
               <p className="text-white/60 text-sm mb-6 leading-relaxed">
-                The loyalty rewards platform built for Philippine small businesses.
+                The loyalty rewards platform built for Philippine small
+                businesses.
               </p>
               {/* Social icons */}
               <div className="flex items-center gap-3">
@@ -1573,7 +1669,13 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
                 </a>
                 <a
                   href="https://instagram.com"
@@ -1581,7 +1683,13 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                  </svg>
                 </a>
                 <a
                   href="https://x.com"
@@ -1589,27 +1697,44 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                 </a>
               </div>
             </div>
 
             {/* Product column */}
             <div>
-              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">Product</h5>
+              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">
+                Product
+              </h5>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/signup" className="text-white/60 hover:text-white transition-colors">
+                  <Link
+                    href="/signup"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Get Started
                   </Link>
                 </li>
                 <li>
-                  <Link href="/book-call" className="text-white/60 hover:text-white transition-colors">
+                  <Link
+                    href="/book-call"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Book a Demo
                   </Link>
                 </li>
                 <li>
-                  <Link href="/login" className="text-white/60 hover:text-white transition-colors">
+                  <Link
+                    href="/login"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Log In
                   </Link>
                 </li>
@@ -1618,20 +1743,31 @@ export default function Home() {
 
             {/* Company column */}
             <div>
-              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">Company</h5>
+              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">
+                Company
+              </h5>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a href="mailto:support@noxaloyalty.com" className="text-white/60 hover:text-white transition-colors">
+                  <a
+                    href="mailto:support@noxaloyalty.com"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-white/60 hover:text-white transition-colors">
+                  <Link
+                    href="/privacy"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-white/60 hover:text-white transition-colors">
+                  <Link
+                    href="/terms"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
                     Terms of Service
                   </Link>
                 </li>
