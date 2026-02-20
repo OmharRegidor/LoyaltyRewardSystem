@@ -142,39 +142,94 @@ export default function InvitePage() {
     const supabase = createClient();
 
     try {
-      // Step 1: Sign in with the password set by owner
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: invite.email,
-          password: password,
+      // Attempt to create a new user account with the invite email using
+      // the provided password. If the user already exists, fall back to
+      // signing in with the provided password.
+
+      // Try creating account via server route which uses the service role
+      // key (auto-confirmed). If creation succeeds, sign in afterwards.
+      let signedInUserId: string | null = null;
+
+      try {
+        const createResp = await fetch('/staff/create-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: invite.email,
+            password: password,
+            fullName: invite.name,
+          }),
         });
 
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError(
-            'Incorrect password. Please use the password given by your employer.'
-          );
+        const createResult = await createResp.json();
+
+        if (createResp.ok && createResult.success && createResult.userId) {
+          // Created successfully — sign in the new user
+          const { data: signInData, error: signInError } =
+            await supabase.auth.signInWithPassword({
+              email: invite.email,
+              password: password,
+            });
+
+          if (signInError || !signInData.user) {
+            // fallthrough to error handling below
+            console.error('Sign-in after create failed', signInError);
+            setError('Failed to sign in after account creation. Please try logging in.');
+            setStatus('ready');
+            return;
+          }
+
+          signedInUserId = signInData.user.id;
         } else {
-          setError(signInError.message);
+          // If user exists (409 / USER_EXISTS), fall back to sign in
+          if (createResult?.code === 'USER_EXISTS') {
+            const { data: signInData, error: signInError } =
+              await supabase.auth.signInWithPassword({
+                email: invite.email,
+                password: password,
+              });
+
+            if (signInError) {
+              if (signInError.message.includes('Invalid login credentials')) {
+                setError('Incorrect password. Please use the password you already have for this account.');
+              } else {
+                setError(signInError.message);
+              }
+              setStatus('ready');
+              return;
+            }
+
+            if (!signInData.user) {
+              setError('Login failed. Please try again.');
+              setStatus('ready');
+              return;
+            }
+
+            signedInUserId = signInData.user.id;
+          } else {
+            setError(createResult?.error || 'Failed to create account.');
+            setStatus('ready');
+            return;
+          }
         }
+      } catch (createErr) {
+        console.error('Account create error:', createErr);
+        setError('Failed to create account. Please try again.');
         setStatus('ready');
         return;
       }
 
-      if (!signInData.user) {
-        setError('Login failed. Please try again.');
+      if (!signedInUserId) {
+        setError('Authentication failed. Please try again.');
         setStatus('ready');
         return;
       }
 
-      // Step 2: Accept the invite
-      const { data, error: rpcError } = await supabase.rpc(
-        'accept_staff_invite',
-        {
-          p_token: token,
-          p_user_id: signInData.user.id,
-        }
-      );
+      // Step: Accept the invite using the signed-in user
+      const { data, error: rpcError } = await supabase.rpc('accept_staff_invite', {
+        p_token: token,
+        p_user_id: signedInUserId,
+      });
 
       if (rpcError) {
         console.error('Accept invite error:', rpcError);
@@ -312,7 +367,7 @@ export default function InvitePage() {
           </div>
 
           {/* Invite Details */}
-          <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4 mb-6 space-y-3 border border-primary/20">
+          <div className="bg-linear-to-br from-primary/5 to-secondary/5 rounded-xl p-4 mb-6 space-y-3 border border-primary/20">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Mail className="w-5 h-5 text-primary" />
@@ -367,9 +422,9 @@ export default function InvitePage() {
           {/* Password Field */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password{' '}
-              <span className="text-gray-500">(given by your employer)</span>
-            </label>
+                Password{' '}
+                <span className="text-gray-500">(create a password for your account)</span>
+              </label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -411,12 +466,12 @@ export default function InvitePage() {
             {status === 'submitting' ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Signing in...
+                Processing...
               </>
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                Sign In & Accept Invite
+                Create Account & Accept Invite
               </>
             )}
           </button>
