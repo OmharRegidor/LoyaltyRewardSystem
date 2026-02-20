@@ -9,11 +9,20 @@ import {
   Check,
   Menu,
   X,
+  ChevronLeft,
   ChevronRight,
+  Play,
+  Star,
+  Users,
+  Store,
+  TrendingUp,
+  Award,
+  Zap,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -24,46 +33,44 @@ import Image from 'next/image';
 interface Plan {
   id: string;
   name: string;
-  description: string;
-  priceLabel: string;
-  period: string;
+  price: string;
+  accentText?: string;
+  subtitle: string;
+  featuresLabel: string;
   features: string[];
   cta: string;
   href: string;
-  highlighted: boolean;
-  primaryButton: boolean;
+  filled: boolean;
 }
 
 const PLANS: Plan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    description: 'Perfect for small businesses getting started',
-    priceLabel: '₱0',
-    period: 'from ₱5000/month',
+    id: 'express',
+    name: 'Loyalty Express',
+    price: 'Free',
+    accentText: 'Limited time offer',
+    subtitle: 'Best for small businesses getting started',
+    featuresLabel: 'Includes:',
     features: [
-      'Loyalty & Rewards System',
+      'Earn and Redeem Points',
       'Unlimited Customers',
-      'Staff Management (up to 5 per branch)',
+      'Staff Management (up to 5)',
       'Up to 3 Branches',
       'Analytics Dashboard',
       'QR Code System',
       'Email Support',
     ],
-    cta: 'Sign Up Free',
+    cta: 'Create Free Account',
     href: '/signup',
-    highlighted: false,
-    primaryButton: true,
+    filled: true,
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    description: 'For growing businesses',
-    priceLabel: 'Contact for Pricing',
-    period: '',
+    id: 'premium',
+    name: 'Loyalty Premium',
+    price: 'Contact for Pricing',
+    subtitle: 'Best for growing multi-location businesses',
+    featuresLabel: 'Includes everything in Express, plus:',
     features: [
-      'Everything in Free, plus:',
-      'Booking System',
       'POS System',
       'Unlimited Branches',
       'Unlimited Staff',
@@ -71,10 +78,47 @@ const PLANS: Plan[] = [
       'Custom Integrations',
       'Dedicated Account Manager',
     ],
-    cta: 'Book a Call',
+    cta: 'Schedule a Demo',
     href: '/book-call',
-    highlighted: true,
-    primaryButton: false,
+    filled: false,
+  },
+];
+
+// ============================================
+// TESTIMONIALS DATA
+// ============================================
+
+interface Testimonial {
+  name: string;
+  rating: number;
+  text: string;
+}
+
+const TESTIMONIALS: Testimonial[] = [
+  {
+    name: 'Maria Santos',
+    rating: 5,
+    text: '"The QR code system is so easy — my customers just scan and earn points. We saw repeat visits jump within the first month of using NoxaLoyalty."',
+  },
+  {
+    name: 'Jose Reyes',
+    rating: 5,
+    text: '"I love the analytics dashboard. I can finally see which rewards actually bring people back. It changed how I run promotions for my café."',
+  },
+  {
+    name: 'Angela Cruz',
+    rating: 5,
+    text: '"The fact that the free plan includes unlimited customers is unheard of. We started with zero budget and NoxaLoyalty made it possible."',
+  },
+  {
+    name: 'Ricardo Dela Cruz',
+    rating: 4,
+    text: '"Managing three branches used to be a headache. Now my staff just log in, scan customers, and everything syncs automatically. Super convenient."',
+  },
+  {
+    name: 'Patricia Lim',
+    rating: 5,
+    text: '"We switched from paper punch cards to NoxaLoyalty and our customers actually prefer it. Setup took less than 10 minutes — highly recommended!"',
   },
 ];
 
@@ -130,7 +174,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
@@ -141,7 +185,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 35, stiffness: 400 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 dark:bg-gray-900/98 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
           >
             {/* Drag Handle */}
@@ -185,9 +229,9 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
               {NAV_LINKS.map((link, index) => (
                 <motion.button
                   key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
                   onClick={() => handleNavClick(link.href)}
                   className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
                 >
@@ -199,9 +243,9 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Auth Buttons */}
             <div className="px-6 pb-8 pt-4 border-t border-border space-y-3">
-              <Link href="/signup" onClick={onClose} className="block">
+              <Link href="#pricing" onClick={onClose} className="block">
                 <Button className="w-full h-14 text-base font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-xl shadow-lg">
-                  Sign Up - It's Free!
+                  Get Started
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -225,7 +269,39 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 // HEADER/NAVBAR COMPONENT
 // ============================================
 
-function Header() {
+interface AnnouncementBarProps {
+  onClose: () => void;
+}
+
+function AnnouncementBar({ onClose }: AnnouncementBarProps) {
+  return (
+    <div className="fixed top-0 left-0 right-0 z-30 h-auto min-h-[40px] sm:h-10 bg-white/90 backdrop-blur-sm border-b border-white/10 flex items-center justify-center px-10 sm:px-4">
+      <p className="text-primary/90 text-xs sm:text-sm text-center">
+        Start a loyalty program for your business in minutes.{' '}
+        <Link
+          href="/signup"
+          className="text-secondary font-semibold underline hover:text-secondary/80 transition-colors"
+        >
+          Try NoxaLoyalty for free
+        </Link>
+      </p>
+      <button
+        onClick={onClose}
+        className="absolute right-2 sm:right-3 p-2 sm:p-1 text-white/70 hover:text-white transition-colors"
+        aria-label="Dismiss announcement"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+interface HeaderProps {
+  showBanner: boolean;
+  onDismissBanner: () => void;
+}
+
+function Header({ showBanner, onDismissBanner }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleNavClick = (
@@ -241,7 +317,10 @@ function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-30 bg-primary">
+      {showBanner && <AnnouncementBar onClose={onDismissBanner} />}
+      <header
+        className={`fixed left-0 right-0 z-30 bg-primary transition-[top] duration-300 ${showBanner ? 'top-10' : 'top-0'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* LEFT: Logo - Always Visible */}
@@ -295,9 +374,9 @@ function Header() {
                     Log in
                   </Button>
                 </Link>
-                <Link href="/signup">
+                <Link href="#pricing">
                   <Button className="bg-secondary text-secondary-foreground rounded-lg px-6 h-10 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold text-sm">
-                    Sign Up - It's Free!
+                    Get Started
                   </Button>
                 </Link>
               </div>
@@ -336,8 +415,11 @@ function PricingSection({
   return (
     <section
       id="pricing"
-      className="py-20 px-4 sm:px-6 lg:px-8"
-      style={{ backgroundColor: '#ffffff' }}
+      className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
+      style={{
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+      }}
     >
       <div className="max-w-5xl mx-auto">
         <motion.div
@@ -347,108 +429,262 @@ function PricingSection({
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900">
-            Simple, Transparent Pricing
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
+            Pricing Plans
           </h2>
-          <p className="text-lg text-gray-600">
-            Choose the plan that fits your business
-          </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row items-stretch gap-8 max-w-4xl mx-auto">
           {PLANS.map((plan, index) => (
             <motion.div
               key={plan.id}
-              className={`relative rounded-2xl p-8 border transition-all duration-300 bg-white shadow-md ${
-                plan.highlighted
-                  ? 'border-primary shadow-2xl md:scale-105'
-                  : 'border-gray-200 hover:border-primary/30'
+              className={`flex-1 flex flex-col rounded-2xl shadow-md border border-gray-200 bg-white p-8 ${
+                plan.id === 'express' ? 'border-t-[3px] border-t-primary' : ''
               }`}
-              initial="hidden"
-              whileInView="visible"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              variants={{
-                hidden: { opacity: 0, scale: 0.95 },
-                visible: {
-                  opacity: 1,
-                  scale: plan.highlighted ? 1.05 : 1,
-                  transition: { duration: 0.5, delay: index * 0.1 },
-                },
+              transition={{
+                duration: 0.5,
+                delay: index * 0.15,
+                ease: 'easeOut',
               }}
             >
-              {plan.highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-full">
-                  Most Popular
+              {/* Header row: plan name left, price right */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {plan.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">{plan.subtitle}</p>
                 </div>
-              )}
-
-              <h3 className="text-2xl font-bold mb-2 text-gray-900">
-                {plan.name}
-              </h3>
-              <p className="text-gray-600 mb-6">{plan.description}</p>
-
-              <div className="mb-6">
-                <span className="text-5xl font-bold text-gray-900">
-                  {plan.priceLabel}
-                </span>
-                {plan.period && (
-                  <span className="text-gray-500 ml-2">/{plan.period}</span>
-                )}
+                <div className="text-right shrink-0">
+                  <p
+                    className={`font-bold ${plan.id === 'express' ? 'text-2xl' : 'text-lg font-semibold'} text-gray-900`}
+                  >
+                    {plan.price}
+                  </p>
+                  {plan.accentText && (
+                    <p className="text-sm font-medium text-primary mt-0.5">
+                      {plan.accentText}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <Link href={plan.href}>
-                <Button
-                  className={`w-full mb-8 rounded-lg h-12 text-base font-semibold ${
-                    plan.primaryButton
-                      ? 'bg-primary text-white hover:bg-primary/90'
-                      : 'border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-white'
-                  }`}
-                  variant={plan.primaryButton ? 'default' : 'ghost'}
-                >
-                  {plan.cta}
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+              <hr className="border-gray-200 my-6" />
 
-              <div className="space-y-3">
+              {/* Features */}
+              <p className="text-sm font-semibold text-gray-900 mb-4">
+                {plan.featuresLabel}
+              </p>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-8">
                 {plan.features.map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-green-500 shrink-0" />
                     <span className="text-sm text-gray-700">{feature}</span>
                   </div>
                 ))}
               </div>
+
+              {/* CTA pushed to bottom */}
+              <div className="mt-auto">
+                <Link href={plan.href}>
+                  {plan.filled ? (
+                    <Button className="w-full h-12 rounded-lg font-semibold text-base bg-primary text-white hover:bg-primary/90">
+                      {plan.cta}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 rounded-lg font-semibold text-base border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      {plan.cta}
+                    </Button>
+                  )}
+                </Link>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Target Markets */}
+        <p className="text-sm text-gray-500 mt-8 text-center">
+          No credit card required for free plan
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// TESTIMONIALS SECTION COMPONENT
+// ============================================
+
+function TestimonialsSection({
+  containerVariants,
+}: {
+  containerVariants: Variants;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.firstElementChild
+      ? (el.firstElementChild as HTMLElement).offsetWidth + 16 // gap-4 = 16px
+      : 1;
+    const index = Math.round(el.scrollLeft / cardWidth);
+    setActiveIndex(Math.min(index, TESTIMONIALS.length - 1));
+  }, []);
+
+  const scrollTo = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = el.firstElementChild
+      ? (el.firstElementChild as HTMLElement).offsetWidth + 16
+      : 1;
+    el.scrollTo({ left: cardWidth * index, behavior: 'smooth' });
+  }, []);
+
+  const prev = useCallback(() => {
+    scrollTo(Math.max(0, activeIndex - 1));
+  }, [activeIndex, scrollTo]);
+
+  const next = useCallback(() => {
+    scrollTo(Math.min(TESTIMONIALS.length - 1, activeIndex + 1));
+  }, [activeIndex, scrollTo]);
+
+  return (
+    <section
+      className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+      style={{
+        background:
+          'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto">
+        {/* Header row */}
         <motion.div
-          className="mt-16 text-center"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
         >
-          <p className="text-gray-600 mb-6">
-            Trusted by businesses across the Philippines
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[
-              'Retail Stores',
-              'Restaurants & Cafés',
-              'Salons & Spas',
-              'Hotels & Travel',
-            ].map((market) => (
-              <span
-                key={market}
-                className="px-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-600"
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
+            Real Stories, Real Results
+          </h2>
+          <Link href="/book-call">
+            <Button
+              variant="outline"
+              className="rounded-lg px-6 h-10 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-sm transition-all"
+            >
+              Request a demo
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </Link>
+        </motion.div>
+
+        {/* Subtitle */}
+        <motion.p
+          className="text-gray-600 text-base sm:text-lg mb-10 max-w-2xl"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          Here&apos;s what NoxaLoyalty customers say about us compared to other
+          customer loyalty companies.
+        </motion.p>
+
+        {/* Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div
+            ref={scrollRef}
+            onScroll={onScroll}
+            className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+            style={{ scrollSnapType: 'x mandatory' }}
+          >
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={i}
+                className="w-[280px] sm:w-[360px] shrink-0 snap-start bg-white rounded-2xl border-2 border-primary/15 p-6 flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 * i }}
               >
-                {market}
-              </span>
+                <p className="font-semibold text-primary text-base mb-2">
+                  {t.name}
+                </p>
+                <div
+                  className="flex gap-0.5 mb-3"
+                  aria-label={`Rating: ${t.rating} out of 5 stars`}
+                >
+                  {Array.from({ length: 5 }, (_, s) => (
+                    <Star
+                      key={s}
+                      aria-hidden="true"
+                      className={`w-4 h-4 ${
+                        s < t.rating
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'fill-gray-200 text-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {t.text}
+                </p>
+              </motion.div>
             ))}
           </div>
         </motion.div>
+
+        {/* Bottom controls */}
+        <div className="flex items-center justify-between mt-6">
+          {/* Pagination dots */}
+          <div className="flex gap-2">
+            {TESTIMONIALS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i === activeIndex
+                    ? 'bg-primary w-6'
+                    : 'bg-gray-400/40 hover:bg-gray-400/60'
+                }`}
+                aria-label={`Go to testimonial ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Arrow buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={prev}
+              disabled={activeIndex === 0}
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={next}
+              disabled={activeIndex === TESTIMONIALS.length - 1}
+              className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -458,7 +694,60 @@ function PricingSection({
 // MAIN PAGE COMPONENT
 // ============================================
 
+const ROTATING_WORDS = [
+  'Loyal Fans',
+  'Repeat Buyers',
+  'Brand Advocates',
+  'Raving Regulars',
+];
+const TYPING_SPEED = 55;
+const DELETING_SPEED = 35;
+const HOLD_DURATION = 2000;
+const PAUSE_BETWEEN = 200;
+
 export default function Home() {
+  const [showBanner, setShowBanner] = useState(true);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const currentWord = ROTATING_WORDS[wordIndex];
+
+    if (isPaused) {
+      const timeout = setTimeout(() => {
+        setIsPaused(false);
+        setIsDeleting(true);
+      }, HOLD_DURATION);
+      return () => clearTimeout(timeout);
+    }
+
+    if (isDeleting) {
+      if (displayText.length === 0) {
+        const timeout = setTimeout(() => {
+          setIsDeleting(false);
+          setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+        }, PAUSE_BETWEEN);
+        return () => clearTimeout(timeout);
+      }
+      const timeout = setTimeout(() => {
+        setDisplayText((prev) => prev.slice(0, -1));
+      }, DELETING_SPEED);
+      return () => clearTimeout(timeout);
+    }
+
+    if (displayText.length === currentWord.length) {
+      setIsPaused(true);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setDisplayText(currentWord.slice(0, displayText.length + 1));
+    }, TYPING_SPEED);
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, isPaused, wordIndex]);
+
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -471,221 +760,852 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
       {/* Header/Navbar */}
-      <Header />
+      <Header
+        showBanner={showBanner}
+        onDismissBanner={() => setShowBanner(false)}
+      />
 
-      {/* Hero Section - White Background */}
-      <motion.section
-        id="home"
-        className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8 pt-24"
-        style={{ backgroundColor: '#ffffff' }}
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        {/* Subtle Decorative Background Elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-1/4 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl animate-blob" />
-          <div className="absolute top-40 right-1/4 w-80 h-80 bg-secondary/15 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-20 left-1/2 w-96 h-96 bg-gray-100 rounded-full filter blur-3xl animate-blob animation-delay-4000" />
-        </div>
-
-        <div className="max-w-5xl mx-auto text-center z-10">
-          <motion.h1
-            className="text-4xl sm:text-5xl lg:text-7xl font-bold text-balance mb-6 text-primary"
-            variants={containerVariants}
-          >
-            Turn First-Time Customers Into{' '}
-            <span className="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent drop-shadow-sm">
-              Loyal Fans
-            </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-8 text-balance max-w-3xl mx-auto leading-relaxed"
-            variants={containerVariants}
-          >
-            Help your small business in the Philippines grow with a modern
-            loyalty rewards platform. QR code points, digital rewards, and
-            actionable customer insights—all in one place.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            variants={containerVariants}
-          >
-            <Link href="#pricing">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground rounded-full px-8 h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold"
-              >
-                View Pricing
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </motion.section>
-
-      {/* Features Section - White Background */}
+      {/* Hero Section - Split Layout */}
       <section
-        id="features"
-        className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#ffffff' }}
+        id="home"
+        className={`relative overflow-hidden pb-20 lg:pb-24 px-5 sm:px-6 lg:px-8 transition-[padding] duration-300 ${
+          showBanner
+            ? 'pt-[9rem] sm:pt-[8.5rem] lg:pt-[9.5rem]'
+            : 'pt-32 sm:pt-32 lg:pt-36'
+        }`}
       >
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={containerVariants}
-          >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-              Everything You Need to Succeed
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Powerful features designed specifically for small businesses
-            </p>
-          </motion.div>
+        {/* Background gradient */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-white to-secondary/10" />
+          <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/5 rounded-full filter blur-3xl animate-blob" />
+          <div className="absolute top-40 right-1/3 w-72 h-72 bg-secondary/8 rounded-full filter blur-3xl animate-blob animation-delay-2000" />
+        </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: QrCode,
-                title: 'QR Code Points',
-                description:
-                  'Just scan and go, customers earn points with every purchase.',
-              },
-              {
-                icon: Gift,
-                title: 'Digital Rewards',
-                description:
-                  'Create custom rewards that keep customers coming back for more.',
-              },
-              {
-                icon: BarChart3,
-                title: 'Customer Insights',
-                description:
-                  'Understand buying patterns, track customer growth, and make data-driven decisions.',
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="group relative p-8 rounded-2xl border border-gray-200 bg-white hover:border-primary/30 hover:shadow-xl transition-all duration-300 shadow-md"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.5, delay: index * 0.1 },
-                  },
-                }}
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-[1fr_0.85fr] gap-12 lg:gap-16 items-center">
+            {/* Left Column - Text */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
+              <motion.h1
+                className="font-display text-[42px] sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center sm:text-left"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
               >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <feature.icon className="w-12 h-12 text-primary mb-4 relative z-10" />
-                <h3 className="text-xl font-semibold mb-3 relative z-10 text-gray-900">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 relative z-10">
-                  {feature.description}
-                </p>
+                <span className="text-gray-900">Turn First-Time</span>
+                <br />
+                <span className="text-gray-900">Customers Into</span>
+                <br />
+                <span className="text-secondary text-[38px] sm:text-5xl lg:text-5xl xl:text-6xl block sm:inline lg:min-w-[530px]">
+                  {displayText}
+                  <span
+                    className={`inline-block w-[3px] h-[0.85em] bg-secondary ml-0.5 rounded-sm align-baseline ${
+                      isPaused && !isDeleting ? 'animate-blink' : ''
+                    }`}
+                  />
+                </span>
+              </motion.h1>
+
+              <motion.p
+                className="text-md sm:text-xl text-gray-600 mb-10 sm:mb-8 max-w-lg leading-relaxed text-center sm:text-left mx-auto sm:mx-0"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                The all-in-one loyalty platform for Philippine small businesses.
+                QR code points, digital rewards, and customer insights — free
+                forever.
+              </motion.p>
+
+              {/* Dual CTAs */}
+              <motion.div
+                className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mb-10"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Link href="/signup" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+                  >
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/book-call" className="w-full sm:w-auto">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-bold text-base gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Book a Demo
+                  </Button>
+                </Link>
               </motion.div>
+
+              {/* Trust Indicators */}
+              <motion.div
+                className="flex flex-wrap gap-4 sm:gap-6 justify-center sm:justify-start"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                {[
+                  { icon: Store, label: '10,000+ Businesses' },
+                  { icon: Star, label: '4.8 Rating' },
+                  { icon: Zap, label: 'Limited Time Offer' },
+                ].map((badge) => (
+                  <div
+                    key={badge.label}
+                    className="flex items-center gap-2 text-sm text-gray-500"
+                  >
+                    <badge.icon className="w-4 h-4 text-primary/70" />
+                    <span className="font-medium">{badge.label}</span>
+                  </div>
+                ))}
+              </motion.div>
+            </motion.div>
+
+            {/* Right Column - Dashboard Mockup */}
+            <motion.div
+              className="block relative"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+            >
+              <div className="relative lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-500">
+                {/* Main dashboard card */}
+                <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                  {/* Dashboard header */}
+                  <div className="bg-primary px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                      <div className="w-3 h-3 rounded-full bg-white/30" />
+                    </div>
+                    <span className="text-white/80 text-xs font-medium">
+                      NoxaLoyalty Dashboard
+                    </span>
+                    <div className="w-16" />
+                  </div>
+
+                  {/* Dashboard content */}
+                  <div className="p-5 sm:p-6 space-y-5">
+                    {/* Stat cards row */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        {
+                          label: 'Total Customers',
+                          value: '2,847',
+                          change: '+12%',
+                          icon: Users,
+                        },
+                        {
+                          label: 'Points Issued',
+                          value: '45.2K',
+                          change: '+8%',
+                          icon: Award,
+                        },
+                        {
+                          label: 'Active Rewards',
+                          value: '18',
+                          change: '+3',
+                          icon: Gift,
+                        },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="bg-gray-50 rounded-xl p-3 sm:p-4"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <stat.icon className="w-4 h-4 text-primary/60" />
+                            <span className="text-xs text-green-600 font-medium">
+                              {stat.change}
+                            </span>
+                          </div>
+                          <p className="text-lg sm:text-xl font-bold text-gray-900">
+                            {stat.value}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Chart placeholder */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold text-gray-700">
+                          Customer Growth
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Last 7 days
+                        </span>
+                      </div>
+                      <div className="flex items-end gap-1.5 h-16">
+                        {[40, 55, 45, 65, 50, 75, 85].map((h, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
+                            style={{ height: `${h}%` }}
+                          >
+                            <div
+                              className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                              style={{ height: `${h * 0.7}%` }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent activity */}
+                    <div>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Recent Activity
+                      </span>
+                      <div className="mt-2 space-y-2">
+                        {[
+                          {
+                            name: 'Maria S.',
+                            action: 'earned 150 points',
+                            time: '2m ago',
+                          },
+                          {
+                            name: 'Juan D.',
+                            action: 'redeemed Free Coffee',
+                            time: '5m ago',
+                          },
+                          {
+                            name: 'Ana L.',
+                            action: 'joined loyalty program',
+                            time: '12m ago',
+                          },
+                        ].map((activity) => (
+                          <div
+                            key={activity.name}
+                            className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-xs font-bold text-primary">
+                                  {activity.name[0]}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-800">
+                                  {activity.name}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {' '}
+                                  {activity.action}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {activity.time}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating accent card */}
+                <motion.div
+                  className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-3 hidden lg:flex items-center gap-3"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
+                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">+27%</p>
+                    <p className="text-xs text-gray-500">Return visits</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partner Logos */}
+      <section
+        className="py-14 md:py-20"
+        style={{
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        }}
+      >
+        <h2 className="font-display text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-12">
+          Who We Work With
+        </h2>
+
+        <div
+          className="relative overflow-hidden"
+          style={{
+            maskImage:
+              'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            WebkitMaskImage:
+              'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+          }}
+        >
+          <div className="flex w-max animate-marquee">
+            {[0, 1].map((setIndex) => (
+              <div
+                key={setIndex}
+                className="flex shrink-0 gap-12 px-6 sm:gap-32 sm:px-16"
+              >
+                {Array.from({ length: 3 }, () => [
+                  {
+                    name: 'BiNuKboK VieW PoiNt ReSoRT',
+                    src: '/binukbok-logo.png',
+                  },
+                  { name: 'Jaza Media', src: '/Jaza-Media-logo.jpg' },
+                  { name: 'Noxa', src: '/noxa-tech-company.jpg' },
+                  { name: 'Evolvia', src: '/evolvia-logo.png' },
+                ])
+                  .flat()
+                  .map((partner, i) => (
+                    <div
+                      key={`${setIndex}-${i}`}
+                      className="group flex flex-col items-center justify-center rounded-2xl p-3 sm:p-6 shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 w-[100px] h-[100px] sm:w-[140px] sm:h-[140px]"
+                    >
+                      <Image
+                        src={partner.src}
+                        alt={partner.name}
+                        width={80}
+                        height={80}
+                        className="object-contain max-w-[60px] max-h-[60px] sm:max-w-[80px] sm:max-h-[80px]"
+                      />
+                      <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        {partner.name}
+                      </span>
+                    </div>
+                  ))}
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section - Light Gray Background */}
+      {/* Features Section */}
       <section
-        id="how-it-works"
-        className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#f9fafb' }}
+        id="features"
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
+        style={{
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        }}
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={containerVariants}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-              How It Works
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
+              Your <span className="text-secondary">Customer Loyalty</span>{' '}
+              Secret Weapon
             </h2>
-            <p className="text-lg text-gray-600">
-              Three simple steps to start building customer loyalty
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              More than just a rewards system — tools to truly know and grow
+              your customers.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting Line - Desktop Only */}
-            <div className="absolute top-24 left-0 right-0 h-1 bg-primary hidden md:block" />
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+            {/* Left — Phone Mockup */}
+            <motion.div
+              className="relative flex justify-center"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="relative w-[280px] sm:w-[300px]">
+                {/* Phone frame */}
+                <div className="rounded-[2.5rem] border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
+                  {/* Notch */}
+                  <div className="flex justify-center pt-2 pb-1 bg-gray-900">
+                    <div className="w-24 h-5 bg-gray-900 rounded-b-2xl" />
+                  </div>
 
-            {[
-              {
-                number: 1,
-                title: 'Customer Scans QR',
-                description:
-                  'Customers makes a purchase and shows their QR code from the app or card.',
-              },
-              {
-                number: 2,
-                title: 'Earns Points',
-                description:
-                  'Your team scans the QR code, enter the amount, and points are added instantly.',
-              },
-              {
-                number: 3,
-                title: 'Redeems & Enjoy',
-                description:
-                  'Customer picks a reward, shows their redemptions code, and gets their prize!.',
-              },
-            ].map((step, index) => (
-              <motion.div
-                key={index}
-                className="relative"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.5, delay: index * 0.15 },
-                  },
-                }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-6 relative z-10 shadow-lg">
-                    <span className="text-2xl font-bold text-white drop-shadow-sm">
-                      {step.number}
+                  {/* App header */}
+                  <div className="bg-primary px-5 py-4 flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold text-sm">
+                      NoxaLoyalty
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-900">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600">{step.description}</p>
+
+                  {/* Customer profile */}
+                  <div className="px-5 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-gray-900">
+                          Maria Santos
+                        </p>
+                        <p className="text-xs text-gray-500">1,250 points</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* QR code area */}
+                  <div className="px-5 py-5 flex flex-col items-center">
+                    <p className="text-xs text-gray-500 mb-3 font-medium">
+                      Scan to Earn Points
+                    </p>
+                    <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                      <QrCode className="w-16 h-16 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* My Rewards card */}
+                  <div className="px-5 pb-5">
+                    <div className="bg-secondary/10 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="w-4 h-4 text-secondary" />
+                        <span className="text-sm font-semibold text-gray-900">
+                          My Rewards
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Free Coffee — 200 pts away
+                      </p>
+                      <div className="mt-2 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full w-3/4 bg-secondary rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Home indicator */}
+                  <div className="flex justify-center pb-2">
+                    <div className="w-28 h-1 bg-gray-300 rounded-full" />
+                  </div>
                 </div>
-              </motion.div>
-            ))}
+
+                {/* Floating accent card */}
+                <div className="hidden lg:flex absolute -right-8 top-1/3 bg-white rounded-xl shadow-lg border border-gray-100 px-4 py-3 items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">+150 pts</p>
+                    <p className="text-xs text-gray-500">Just earned!</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right — Feature Stack */}
+            <motion.div
+              className="space-y-0"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {[
+                {
+                  icon: QrCode,
+                  title: 'QR Code Points',
+                  description:
+                    'Scan and earn. Customers collect points with every purchase via our mobile app.',
+                },
+                {
+                  icon: Gift,
+                  title: 'Digital Rewards',
+                  description:
+                    'Create custom rewards that keep customers excited to come back.',
+                },
+                {
+                  icon: BarChart3,
+                  title: 'Customer Insights',
+                  description:
+                    'Track buying patterns, measure loyalty, and make data-driven decisions.',
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className={`flex items-start gap-5 py-6 ${index < 2 ? 'border-b border-gray-200' : ''}`}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.15 }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1 text-gray-900">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section
+        id="how-it-works"
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        style={{
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        }}
+      >
+        <div className="absolute inset-0 dot-pattern opacity-[0.03]" />
+        <div className="max-w-6xl mx-auto relative">
+          <motion.div
+            className="text-center mb-10 sm:mb-16"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+          >
+            <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
+              How <span className="text-secondary">NoxaLoyalty</span> Works
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Start building customer loyalty in minutes — no complex setup,
+              easy to get started.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+            {/* Step 1 — Set Up Your Program */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0 }}
+            >
+              {/* Dashboard mockup */}
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6">
+                <div className="w-full max-w-[260px]">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                    <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                      </div>
+                      <span className="text-white/80 text-[10px] font-medium">
+                        Create Reward
+                      </span>
+                      <div className="w-12" />
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">
+                          Reward Name
+                        </label>
+                        <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
+                          Free Coffee
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-gray-500 mb-1 block">
+                          Points Required
+                        </label>
+                        <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 border border-gray-200">
+                          500 pts
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">
+                          Available to all customers
+                        </span>
+                        <div className="w-8 h-4.5 bg-primary rounded-full relative">
+                          <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">
+                          Send notification
+                        </span>
+                        <div className="w-8 h-4.5 bg-primary rounded-full relative">
+                          <div className="absolute right-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full" />
+                        </div>
+                      </div>
+                      <button className="w-full bg-primary text-white text-sm font-semibold py-2.5 rounded-lg">
+                        Create Reward
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  1
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Set Up Your Program
+                </h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Create your loyalty program in minutes. Set point rules, design
+                rewards, and invite your staff.
+              </p>
+            </motion.div>
+
+            {/* Step 2 — Customers Earn Points */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              {/* Phone mockup */}
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6 mb-6">
+                <div className="w-[140px] md:w-[180px]">
+                  <div className="rounded-[2rem] md:rounded-[2.5rem] border-[5px] md:border-[6px] border-gray-900 bg-white shadow-2xl overflow-hidden">
+                    <div className="flex justify-center pt-1.5 pb-0.5 md:pt-2 md:pb-1 bg-gray-900">
+                      <div className="w-16 md:w-20 h-3 md:h-4 bg-gray-900 rounded-b-2xl" />
+                    </div>
+                    <div className="bg-primary px-3 py-2 md:px-4 md:py-3 flex items-center gap-1.5 md:gap-2">
+                      <Smartphone className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                      <span className="text-white font-semibold text-[10px] md:text-xs">
+                        NoxaLoyalty
+                      </span>
+                    </div>
+                    {/* Customer profile bar */}
+                    <div className="px-3 py-2 md:px-4 md:py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[10px] md:text-xs text-gray-900">
+                            Maria Santos
+                          </p>
+                          <p className="text-[9px] md:text-[10px] text-gray-500">
+                            1,250 points
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {/* QR code */}
+                    <div className="px-3 py-2.5 md:px-4 md:py-4 flex flex-col items-center">
+                      <p className="text-[9px] md:text-[10px] text-gray-500 mb-1.5 md:mb-2.5 font-medium">
+                        Scan to Earn Points
+                      </p>
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-lg md:rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                        <QrCode className="w-8 h-8 md:w-12 md:h-12 text-gray-400" />
+                      </div>
+                    </div>
+                    {/* Success badge */}
+                    <div className="px-3 pb-2.5 md:px-4 md:pb-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg md:rounded-xl px-2 py-1.5 md:px-3 md:py-2.5 flex items-center gap-1.5 md:gap-2">
+                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 md:w-3.5 md:h-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] md:text-xs font-semibold text-green-800">
+                            Scan Successful!
+                          </p>
+                          <p className="text-[9px] md:text-[10px] text-green-600">
+                            +100 points
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-center pb-1.5 md:pb-2">
+                      <div className="w-16 md:w-24 h-1 bg-gray-300 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  2
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Customers Earn Points
+                </h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Customers scan a QR code at checkout via the mobile app. Points
+                are added instantly.
+              </p>
+            </motion.div>
+
+            {/* Step 3 — Watch Your Business Grow */}
+            <motion.div
+              className="flex flex-col items-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              {/* Dashboard mockup */}
+              <div className="w-full h-auto sm:h-[300px] md:h-[340px] rounded-2xl flex items-center justify-center p-6 mb-6">
+                <div className="w-full max-w-[260px]">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
+                    <div className="bg-primary px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-white/30" />
+                      </div>
+                      <span className="text-white/80 text-[10px] font-medium">
+                        Analytics
+                      </span>
+                      <div className="w-12" />
+                    </div>
+                    <div className="p-4 space-y-3">
+                      {/* Stat cards */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <Users className="w-3.5 h-3.5 text-primary/60" />
+                            <span className="text-[10px] text-green-600 font-medium">
+                              +18%
+                            </span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900">
+                            73%
+                          </p>
+                          <p className="text-[10px] text-gray-500">Returning</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-primary/60" />
+                            <span className="text-[10px] text-green-600 font-medium">
+                              +24%
+                            </span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900">
+                            +₱42K
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            Revenue Impact
+                          </p>
+                        </div>
+                      </div>
+                      {/* Bar chart */}
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-semibold text-gray-700">
+                            Monthly Growth
+                          </span>
+                          <span className="text-[9px] text-gray-400">
+                            Last 12 months
+                          </span>
+                        </div>
+                        <div className="flex items-end gap-1 h-12">
+                          {[25, 32, 38, 35, 42, 48, 45, 55, 60, 58, 68, 80].map(
+                            (h, i) => (
+                              <div
+                                key={i}
+                                className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
+                                style={{ height: `${h}%` }}
+                              >
+                                <div
+                                  className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                                  style={{ height: `${h * 0.7}%` }}
+                                />
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                      {/* Rewards redeemed */}
+                      <div className="bg-secondary/10 rounded-xl p-3 flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                          <Gift className="w-4 h-4 text-secondary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-900">
+                            Rewards Redeemed
+                          </p>
+                          <p className="text-[10px] text-gray-600">
+                            1,847 this month
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Label */}
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Watch Your Business Grow
+                </h3>
+              </div>
+              <p className="text-gray-600 text-sm text-center max-w-[260px]">
+                Track returning customers, measure reward redemptions, and see
+                your loyalty program drive real results.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* CTA */}
+          <motion.div
+            className="text-center mt-14"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+              >
+                Get Started Free
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
 
       {/* Pricing Section */}
       <PricingSection containerVariants={containerVariants} />
 
+      {/* Testimonials Section */}
+      <TestimonialsSection containerVariants={containerVariants} />
+
       {/* CTA Section - Primary Gradient for Brand Impact */}
       <section
-        className="py-20 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#f9fafb' }}
+        className="py-14 md:py-20 px-4 sm:px-6 lg:px-8"
+        style={{
+          background:
+            'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
+        }}
       >
         <motion.div
-          className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary via-primary to-primary/80 rounded-3xl p-12 sm:p-16 text-white relative overflow-hidden shadow-2xl"
+          className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary via-primary to-primary/80 rounded-3xl p-8 sm:p-12 lg:p-16 text-white relative overflow-hidden shadow-2xl"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
@@ -695,7 +1615,7 @@ export default function Home() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/20 rounded-full blur-2xl" />
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 relative z-10">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 relative z-10">
             Ready to Transform Your Customer Relationships?
           </h2>
           <p className="text-lg mb-8 text-white/90 relative z-10">
@@ -705,7 +1625,7 @@ export default function Home() {
           <Link href="#pricing">
             <Button
               size="lg"
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-full px-8 h-12 font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all relative z-10"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg px-8 h-12 font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all relative z-10"
             >
               Get Started Today
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -714,64 +1634,131 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer - White Background */}
+      {/* Footer */}
       <footer
-        className="border-t border-gray-200 py-12 px-4 sm:px-6 lg:px-8"
-        style={{ backgroundColor: '#ffffff' }}
+        className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
+        style={{
+          background: 'linear-gradient(180deg, #1a0505 0%, #0f0202 100%)',
+        }}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 mb-10 sm:mb-12">
+            {/* Brand column */}
             <div>
-              <h4 className="font-bold text-lg mb-4 text-gray-900">
-                NoxaLoyalty
-              </h4>
-              <p className="text-gray-600 text-sm">
-                Loyalty rewards platform for small businesses.
+              <div className="flex items-center gap-2 mb-4">
+                <Image
+                  src="/logoloyalty.png"
+                  alt="NoxaLoyalty"
+                  width={32}
+                  height={32}
+                  className="brightness-0 invert"
+                />
+                <span className="font-bold text-lg text-white">
+                  NoxaLoyalty
+                </span>
+              </div>
+              <p className="text-white/60 text-sm mb-6 leading-relaxed">
+                The loyalty rewards platform built for Philippine small
+                businesses.
               </p>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4 text-gray-900">Product</h5>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>
-                  <a
-                    href="#features"
-                    className="hover:text-gray-900 transition"
+              {/* Social icons */}
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Features
-                  </a>
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://x.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Product column */}
+            <div>
+              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">
+                Product
+              </h5>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <Link
+                    href="/signup"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    Get Started
+                  </Link>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-gray-900 transition">
-                    Pricing
-                  </a>
+                  <Link
+                    href="/book-call"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    Book a Demo
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/login"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    Log In
+                  </Link>
                 </li>
               </ul>
             </div>
+
+            {/* Company column */}
             <div>
-              <h5 className="font-semibold mb-4 text-gray-900">Company</h5>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <h5 className="font-semibold mb-4 text-white text-sm uppercase tracking-wider">
+                Company
+              </h5>
+              <ul className="space-y-3 text-sm">
                 <li>
                   <a
-                    href="#features"
-                    className="hover:text-gray-900 transition"
+                    href="mailto:support@noxaloyalty.com"
+                    className="text-white/60 hover:text-white transition-colors"
                   >
-                    About
+                    Contact Us
                   </a>
                 </li>
-                <li>
-                  <a href="#pricing" className="hover:text-gray-900 transition">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-semibold mb-4 text-gray-900">Legal</h5>
-              <ul className="space-y-2 text-sm text-gray-600">
                 <li>
                   <Link
                     href="/privacy"
-                    className="hover:text-gray-900 transition"
+                    className="text-white/60 hover:text-white transition-colors"
                   >
                     Privacy Policy
                   </Link>
@@ -779,7 +1766,7 @@ export default function Home() {
                 <li>
                   <Link
                     href="/terms"
-                    className="hover:text-gray-900 transition"
+                    className="text-white/60 hover:text-white transition-colors"
                   >
                     Terms of Service
                   </Link>
@@ -788,8 +1775,10 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
+          {/* Bottom bar */}
+          <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-white/40">
             <p>&copy; 2026 NoxaLoyalty. All rights reserved.</p>
+            <p>Made with purpose in the Philippines 🇵🇭</p>
           </div>
         </div>
       </footer>

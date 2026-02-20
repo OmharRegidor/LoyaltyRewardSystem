@@ -38,7 +38,7 @@ export function CustomersHeader({
           />
         </div>
         <Button
-          className="gradient-primary text-primary-foreground gap-2"
+          className="bg-primary text-primary-foreground gap-2"
           onClick={onAddCustomer}
         >
           <Plus className="w-4 h-4" />

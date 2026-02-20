@@ -351,7 +351,7 @@ export function CreateRewardModal({
               Cancel
             </Button>
             <Button
-              className="flex-1 gradient-primary text-primary-foreground"
+              className="flex-1 bg-primary text-primary-foreground"
               type="submit"
               disabled={
                 isSubmitting ||
