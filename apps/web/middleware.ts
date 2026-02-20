@@ -25,6 +25,7 @@ const PUBLIC_PREFIXES = [
   '/api/',
   '/qr/',
   '/business/',
+  '/join/',
 ];
 
 function isPublicRoute(pathname: string): boolean {

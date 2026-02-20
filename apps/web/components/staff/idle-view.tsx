@@ -1,6 +1,6 @@
 "use client";
 
-import { QrCode, UserPlus, CheckCircle } from "lucide-react";
+import { QrCode, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface IdleViewProps {
@@ -35,8 +35,8 @@ export function IdleView({
           onClick={onAddCustomer}
           className="flex items-center gap-2 px-5 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded-xl transition-colors shadow-sm"
         >
-          <UserPlus className="w-5 h-5 text-yellow-600" />
-          <span className="text-gray-700 text-sm">Add Customer</span>
+          <Send className="w-5 h-5 text-yellow-600" />
+          <span className="text-gray-700 text-sm">Invite Customer</span>
         </button>
         <button
           onClick={onVerifyCode}
@@ -47,7 +47,7 @@ export function IdleView({
         </button>
       </div>
       <p className="text-gray-500 text-xs">
-        Add customers or verify redemption codes
+        Invite customers or verify redemption codes
       </p>
     </div>
   );

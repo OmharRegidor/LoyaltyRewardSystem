@@ -34,6 +34,18 @@ interface SendWelcomeEmailParams {
   cardViewUrl: string;
 }
 
+interface SendVerificationEmailParams {
+  to: string;
+  code: string;
+  businessName: string;
+}
+
+interface SendCustomerInviteEmailParams {
+  to: string;
+  businessName: string;
+  joinUrl: string;
+}
+
 interface EmailResult {
   success: boolean;
   messageId?: string;
@@ -215,6 +227,171 @@ export async function sendWelcomeEmail(
     return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('Send email catch error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ============================================
+// VERIFICATION EMAIL
+// ============================================
+
+export async function sendVerificationEmail(
+  params: SendVerificationEmailParams,
+): Promise<EmailResult> {
+  try {
+    const { to, code, businessName } = params;
+    const resend = getResend();
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Verification Code</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #5A171E 0%, #751E26 50%, #8B2A33 100%); padding: 24px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">${businessName}</h1>
+              <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.85); font-size: 13px;">Email Verification</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px; text-align: center;">
+              <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
+                Enter this code to verify your email and join the <strong>${businessName}</strong> loyalty program:
+              </p>
+              <div style="display: inline-block; padding: 16px 32px; background-color: #f9fafb; border: 2px dashed #d1d5db; border-radius: 12px; margin-bottom: 24px;">
+                <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #111827; font-family: monospace;">${code}</span>
+              </div>
+              <p style="margin: 0; color: #9ca3af; font-size: 13px;">
+                This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                Powered by <strong style="color: #751E26;">NoxaLoyalty</strong> &mdash; If you didn't request this, please ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+
+    const text = `Your verification code for ${businessName}: ${code}\n\nThis code expires in 10 minutes. Do not share it with anyone.\n\nPowered by NoxaLoyalty`;
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@noxaloyalty.com',
+      to: [to],
+      subject: `${code} - Your ${businessName} verification code`,
+      html,
+      text,
+    });
+
+    if (error) {
+      console.error('Resend verification error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Send verification email error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ============================================
+// CUSTOMER INVITE EMAIL
+// ============================================
+
+export async function sendCustomerInviteEmail(
+  params: SendCustomerInviteEmailParams,
+): Promise<EmailResult> {
+  try {
+    const { to, businessName, joinUrl } = params;
+    const resend = getResend();
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #5A171E 0%, #751E26 50%, #8B2A33 100%); padding: 24px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">${businessName}</h1>
+              <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.85); font-size: 13px;">Loyalty Rewards Program</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #111827; font-size: 20px; font-weight: 700;">You're Invited!</p>
+              <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
+                <strong>${businessName}</strong> has invited you to join their loyalty rewards program. Earn points on every purchase and redeem them for exclusive rewards!
+              </p>
+              <a href="${joinUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #751E26 0%, #8B2A33 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(117, 30, 38, 0.4);">
+                Join Now
+              </a>
+              <p style="margin: 24px 0 0 0; color: #9ca3af; font-size: 13px;">
+                Or copy this link: <a href="${joinUrl}" style="color: #751E26;">${joinUrl}</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                Powered by <strong style="color: #751E26;">NoxaLoyalty</strong> &mdash; If you didn't expect this, please ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+
+    const text = `You're invited to join ${businessName}'s loyalty rewards program!\n\nJoin now: ${joinUrl}\n\nEarn points on every purchase and redeem them for exclusive rewards.\n\nPowered by NoxaLoyalty`;
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@noxaloyalty.com',
+      to: [to],
+      subject: `You're invited to ${businessName}'s rewards program!`,
+      html,
+      text,
+    });
+
+    if (error) {
+      console.error('Resend invite error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Send invite email error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

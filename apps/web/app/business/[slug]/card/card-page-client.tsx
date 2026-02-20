@@ -3,10 +3,9 @@
 'use client';
 
 import { useState } from 'react';
-import { SignupForm } from './signup-form';
 import { LookupForm } from './lookup-form';
 import { CardModal } from './card-modal';
-import { Gift, Star, CreditCard } from 'lucide-react';
+import { Gift, Star, CreditCard, ArrowRight } from 'lucide-react';
 
 // ============================================
 // TYPES
@@ -27,6 +26,7 @@ interface CardPageClientProps {
     points_per_purchase: number | null;
     pesos_per_point: number | null;
   };
+  joinCode: string | null;
   initialCardData?: InitialCardData | null;
 }
 
@@ -38,6 +38,7 @@ export function CardPageClient({
   slug,
   businessName,
   business,
+  joinCode,
   initialCardData,
 }: CardPageClientProps) {
   const [showModal, setShowModal] = useState(!!initialCardData);
@@ -52,7 +53,7 @@ export function CardPageClient({
               <CreditCard className="w-6 sm:w-8 h-6 sm:h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Get Your Loyalty Card
+              {businessName} Loyalty
             </h1>
             <p className="text-gray-600">
               Join {businessName}&apos;s rewards program and start earning points today!
@@ -76,9 +77,43 @@ export function CardPageClient({
             </div>
           </div>
 
-          {/* Two-Panel Layout */}
+          {/* Layout: New Customer CTA + Lookup */}
           <div className="grid md:grid-cols-2 gap-6">
-            <SignupForm businessSlug={slug} businessName={businessName} />
+            {/* New Customer — redirect to /join */}
+            {joinCode ? (
+              <div className="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-t-primary border border-gray-100 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    New Customer
+                  </h2>
+                </div>
+                <p className="text-sm text-gray-600 mb-6 flex-1">
+                  Sign up with email verification to get your loyalty card and start
+                  earning points.
+                </p>
+                <a
+                  href={`/join/${joinCode}`}
+                  className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  Get My Card
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-t-gray-300 border border-gray-100 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard className="w-5 h-5 text-gray-400" />
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    New Customer
+                  </h2>
+                </div>
+                <p className="text-sm text-gray-500 flex-1">
+                  Ask staff for a join code or scan the QR code at the store to sign up.
+                </p>
+              </div>
+            )}
+
             <LookupForm businessSlug={slug} businessName={businessName} />
           </div>
 

@@ -79,6 +79,19 @@ export async function generateQRCodeBuffer(content: string): Promise<Buffer> {
 }
 
 // ============================================
+// BUSINESS JOIN QR CODE
+// ============================================
+
+/**
+ * Generate a URL for the business join page
+ * Customers scan this QR to self-register
+ */
+export function generateBusinessJoinQRCodeUrl(joinCode: string): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return `${appUrl}/join/${joinCode}`;
+}
+
+// ============================================
 // CARD TOKEN (HMAC-SIGNED)
 // ============================================
 
