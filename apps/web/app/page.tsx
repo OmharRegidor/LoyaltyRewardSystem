@@ -205,9 +205,9 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Auth Buttons */}
             <div className="px-6 pb-8 pt-4 border-t border-border space-y-3">
-              <Link href="/signup" onClick={onClose} className="block">
+              <Link href="#pricing" onClick={onClose} className="block">
                 <Button className="w-full h-14 text-base font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-xl shadow-lg">
-                  Sign Up - It's Free!
+                  Get Started
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -231,7 +231,36 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 // HEADER/NAVBAR COMPONENT
 // ============================================
 
-function Header() {
+interface AnnouncementBarProps {
+  onClose: () => void;
+}
+
+function AnnouncementBar({ onClose }: AnnouncementBarProps) {
+  return (
+    <div className="fixed top-0 left-0 right-0 z-30 h-10 bg-primary/90 backdrop-blur-sm border-b border-white/10 flex items-center justify-center px-4">
+      <p className="text-white/90 text-sm text-center">
+        Start a loyalty program for your business in minutes.{' '}
+        <Link href="/signup" className="text-secondary font-semibold underline hover:text-secondary/80 transition-colors">
+          Try NoxaLoyalty for free
+        </Link>
+      </p>
+      <button
+        onClick={onClose}
+        className="absolute right-3 p-1 text-white/70 hover:text-white transition-colors"
+        aria-label="Dismiss announcement"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+interface HeaderProps {
+  showBanner: boolean;
+  onDismissBanner: () => void;
+}
+
+function Header({ showBanner, onDismissBanner }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleNavClick = (
@@ -247,7 +276,8 @@ function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-30 bg-primary">
+      {showBanner && <AnnouncementBar onClose={onDismissBanner} />}
+      <header className={`fixed left-0 right-0 z-30 bg-primary transition-[top] duration-300 ${showBanner ? 'top-10' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* LEFT: Logo - Always Visible */}
@@ -301,9 +331,9 @@ function Header() {
                     Log in
                   </Button>
                 </Link>
-                <Link href="/signup">
+                <Link href="#pricing">
                   <Button className="bg-secondary text-secondary-foreground rounded-lg px-6 h-10 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold text-sm">
-                    Sign Up - It's Free!
+                    Get Started
                   </Button>
                 </Link>
               </div>
@@ -450,6 +480,7 @@ const HOLD_DURATION = 2000;
 const PAUSE_BETWEEN = 200;
 
 export default function Home() {
+  const [showBanner, setShowBanner] = useState(true);
   const [wordIndex, setWordIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -503,12 +534,16 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
       {/* Header/Navbar */}
-      <Header />
+      <Header showBanner={showBanner} onDismissBanner={() => setShowBanner(false)} />
 
       {/* Hero Section - Split Layout */}
       <section
         id="home"
-        className="relative overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8"
+        className={`relative overflow-hidden pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8 transition-[padding] duration-300 ${
+          showBanner
+            ? 'pt-[7.5rem] sm:pt-[8.5rem] lg:pt-[9.5rem]'
+            : 'pt-28 sm:pt-32 lg:pt-36'
+        }`}
       >
         {/* Background gradient */}
         <div className="absolute inset-0 -z-10">
