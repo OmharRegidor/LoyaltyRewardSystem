@@ -112,8 +112,8 @@ export async function getBusinessBySlug(
     `
     )
     .eq('slug', slug)
-    .in('subscription_status', ['active', 'trialing', 'free_forever'])
-    .single();
+    .in('subscription_status', ['active', 'trialing', 'free_forever', 'preview'])
+    .maybeSingle();
 
   if (error || !data) {
     return null;
@@ -163,10 +163,13 @@ export async function getBusinessByJoinCode(
     `,
     )
     .eq('join_code', joinCode.toUpperCase())
-    .in('subscription_status', ['active', 'trialing', 'free_forever'])
-    .single();
+    .in('subscription_status', ['active', 'trialing', 'free_forever', 'preview'])
+    .maybeSingle();
 
   if (error || !data) {
+    if (error) {
+      console.error('getBusinessByJoinCode error:', error.message, { joinCode });
+    }
     return null;
   }
 

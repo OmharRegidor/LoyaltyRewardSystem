@@ -531,10 +531,16 @@ export function EmbeddedCheckout({
               </label>
               <input
                 type="tel"
+                inputMode="numeric"
+                maxLength={11}
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => {
+                  if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                  if (!/^\d$/.test(e.key)) e.preventDefault();
+                }}
                 onBlur={() => handleBlur('phone')}
-                placeholder="+63 917 123 4567"
+                placeholder="09171234567"
                 className={`w-full px-4 py-3 rounded-lg bg-[#0d0d1a] border ${
                   getFieldError('phone')
                     ? 'border-red-500'

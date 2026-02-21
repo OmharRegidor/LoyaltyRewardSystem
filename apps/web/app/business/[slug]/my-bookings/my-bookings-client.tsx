@@ -290,8 +290,15 @@ export function MyBookingsClient({ business }: MyBookingsClientProps) {
                   <div className="flex gap-3">
                     <Input
                       id="phone"
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={11}
                       placeholder="09171234567"
                       {...register('phone')}
+                      onKeyDown={(e) => {
+                        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                        if (!/^\d$/.test(e.key)) e.preventDefault();
+                      }}
                       className={`flex-1 rounded-xl ${errors.phone ? 'border-destructive' : ''}`}
                     />
                     <Button

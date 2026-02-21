@@ -207,7 +207,9 @@ export async function POST(request: NextRequest) {
     const joinCode = staffInfo.business.join_code;
 
     if (joinCode) {
-      const baseUrl = request.nextUrl.origin;
+      const protocol = request.headers.get('x-forwarded-proto') || 'http';
+      const host = request.headers.get('host') || request.nextUrl.host;
+      const baseUrl = `${protocol}://${host}`;
       const joinUrl = `${baseUrl}/join/${joinCode}?email=${encodeURIComponent(email)}`;
 
       // Store verification code with purpose 'staff_invite'

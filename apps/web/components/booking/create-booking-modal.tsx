@@ -471,13 +471,20 @@ export function CreateBookingModal({
                   <Label htmlFor="customer_phone">Phone *</Label>
                   <Input
                     id="customer_phone"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={formData.customer_phone}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        customer_phone: e.target.value,
+                        customer_phone: e.target.value.replace(/\D/g, ''),
                       }))
                     }
+                    onKeyDown={(e) => {
+                      if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                      if (!/^\d$/.test(e.key)) e.preventDefault();
+                    }}
                     placeholder="e.g., 09171234567"
                   />
                 </div>
