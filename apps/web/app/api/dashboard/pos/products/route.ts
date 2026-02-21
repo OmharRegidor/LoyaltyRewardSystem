@@ -76,8 +76,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ products });
   } catch (error) {
-    console.error('GET /api/dashboard/pos/products error:', error);
-
     if (error instanceof Error && 'code' in error) {
       const err = error as Error & { code: string };
       if (err.code === 'MODULE_NOT_AVAILABLE') {
@@ -88,6 +86,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    console.error('GET /api/dashboard/pos/products error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

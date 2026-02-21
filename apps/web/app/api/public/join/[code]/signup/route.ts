@@ -75,8 +75,23 @@ export async function POST(
       );
     }
 
-    // 4. Rate limit by IP
+    // 4. Check if customer already exists for this business (one-time invite)
     const serviceClient = createServiceClient();
+    const { data: existingCustomer } = await serviceClient
+      .from('customers')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .eq('created_by_business_id', business.id)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      return NextResponse.json(
+        { error: 'You are already a member of this loyalty program.' },
+        { status: 409 },
+      );
+    }
+
+    // 5. Rate limit by IP
     const { data: rateLimitOk } = await serviceClient.rpc('check_rate_limit', {
       p_identifier: ipAddress,
       p_identifier_type: 'ip_address',

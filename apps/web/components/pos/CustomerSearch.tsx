@@ -43,12 +43,6 @@ export function CustomerSearch({ onCustomerFound, disabled }: CustomerSearchProp
     }
   }, [phone, onCustomerFound]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
@@ -56,13 +50,22 @@ export function CustomerSearch({ onCustomerFound, disabled }: CustomerSearchProp
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="tel"
+            inputMode="numeric"
+            maxLength={11}
             placeholder="Search by phone number..."
             value={phone}
             onChange={(e) => {
-              setPhone(e.target.value);
+              setPhone(e.target.value.replace(/\D/g, ''));
               setError(null);
             }}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+                return;
+              }
+              if (['Backspace', 'Delete', 'Tab', 'Escape', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
+            }}
             className="pl-9"
             disabled={disabled || isSearching}
           />

@@ -564,13 +564,19 @@ export default function SettingsPage() {
                     </span>
                     <input
                       type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
                       value={profile.phone}
                       onChange={(e) =>
                         setProfile((prev) => ({
                           ...prev,
-                          phone: e.target.value,
+                          phone: e.target.value.replace(/\D/g, ''),
                         }))
                       }
+                      onKeyDown={(e) => {
+                        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                        if (!/^\d$/.test(e.key)) e.preventDefault();
+                      }}
                       className="flex-1 px-4 py-2.5 border border-gray-200 rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                       placeholder="9123456789"
                     />

@@ -194,11 +194,16 @@ export function BookingForm({
             <Input
               id="phone"
               type="tel"
+              inputMode="numeric"
               placeholder="09171234567"
               value={phone}
               onChange={(e) => onPhoneChange(e.target.value.replace(/\D/g, ''))}
+              onKeyDown={(e) => {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+              }}
               className={inputClasses}
-              maxLength={15}
+              maxLength={11}
               disabled={disabled}
             />
           </div>
