@@ -130,6 +130,7 @@ const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it Works', href: '#how-it-works' },
   { label: 'Pricing', href: '#pricing' },
+  { label: 'Businesses', href: '/business' },
 ];
 
 // ============================================
@@ -156,13 +157,15 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 
   const handleNavClick = (href: string) => {
     onClose();
-    // Small delay to allow menu to close before scrolling
-    setTimeout(() => {
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 300);
+    if (href.startsWith('#')) {
+      // Small delay to allow menu to close before scrolling
+      setTimeout(() => {
+        const element = document.querySelector(href);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
   };
 
   return (
@@ -226,19 +229,37 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Navigation Links */}
             <nav className="px-4 py-4">
-              {NAV_LINKS.map((link, index) => (
-                <motion.button
-                  key={link.href}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: index * 0.05 }}
-                  onClick={() => handleNavClick(link.href)}
-                  className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
-                >
-                  <span>{link.label}</span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
-                </motion.button>
-              ))}
+              {NAV_LINKS.map((link, index) =>
+                link.href.startsWith('#') ? (
+                  <motion.button
+                    key={link.href}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    onClick={() => handleNavClick(link.href)}
+                    className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
+                  >
+                    <span>{link.label}</span>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                  >
+                    <Link
+                      href={link.href}
+                      onClick={onClose}
+                      className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
+                    >
+                      <span>{link.label}</span>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                    </Link>
+                  </motion.div>
+                )
+              )}
             </nav>
 
             {/* Auth Buttons */}
@@ -349,17 +370,28 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
 
             {/* CENTER: Navigation Links - Hidden on mobile/tablet, shown on lg+ */}
             <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => handleNavClick(e, link.href)}
-                  className="text-sm font-bold transition-colors relative group px-2 py-1 text-white/90 hover:text-white"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-secondary group-hover:w-full transition-all duration-300" />
-                </a>
-              ))}
+              {NAV_LINKS.map((link) =>
+                link.href.startsWith('#') ? (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => handleNavClick(e, link.href)}
+                    className="text-sm font-bold transition-colors relative group px-2 py-1 text-white/90 hover:text-white"
+                  >
+                    {link.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-secondary group-hover:w-full transition-all duration-300" />
+                  </a>
+                ) : (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-bold transition-colors relative group px-2 py-1 text-white/90 hover:text-white"
+                  >
+                    {link.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-secondary group-hover:w-full transition-all duration-300" />
+                  </Link>
+                )
+              )}
             </nav>
 
             {/* RIGHT: CTA Buttons (Desktop) + Hamburger (Mobile/Tablet) */}
@@ -1736,6 +1768,14 @@ export default function Home() {
                     className="text-white/60 hover:text-white transition-colors"
                   >
                     Log In
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/business"
+                    className="text-white/60 hover:text-white transition-colors"
+                  >
+                    Browse Businesses
                   </Link>
                 </li>
               </ul>
