@@ -85,6 +85,84 @@ export interface PublicAddon {
 }
 
 // ============================================
+// GET PUBLIC BUSINESSES (DIRECTORY)
+// ============================================
+
+interface GetPublicBusinessesParams {
+  search?: string;
+  businessType?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface GetPublicBusinessesResult {
+  businesses: PublicBusiness[];
+  total: number;
+}
+
+export async function getPublicBusinesses(
+  params: GetPublicBusinessesParams = {}
+): Promise<GetPublicBusinessesResult> {
+  const { search, businessType, page = 1, limit = 12 } = params;
+  const supabase = createServiceClient();
+  const offset = (page - 1) * limit;
+
+  let query = supabase
+    .from('businesses')
+    .select(
+      `
+      id,
+      name,
+      slug,
+      description,
+      logo_url,
+      business_type,
+      address,
+      city,
+      phone,
+      points_per_purchase,
+      pesos_per_point
+    `,
+      { count: 'exact' }
+    )
+    .in('subscription_status', ['active', 'trialing', 'free_forever', 'preview'])
+    .order('name');
+
+  if (search) {
+    query = query.ilike('name', `%${search}%`);
+  }
+
+  if (businessType) {
+    query = query.eq('business_type', businessType);
+  }
+
+  query = query.range(offset, offset + limit - 1);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error('Error fetching public businesses:', error);
+    return { businesses: [], total: 0 };
+  }
+
+  const businesses: PublicBusiness[] = (data || []).map((b) => ({
+    id: b.id,
+    name: b.name,
+    slug: b.slug,
+    description: b.description,
+    logo_url: b.logo_url,
+    business_type: b.business_type,
+    address: b.address,
+    city: b.city,
+    phone: b.phone,
+    points_per_purchase: b.points_per_purchase,
+    pesos_per_point: b.pesos_per_point,
+  }));
+
+  return { businesses, total: count ?? 0 };
+}
+
+// ============================================
 // GET BUSINESS BY SLUG
 // ============================================
 
