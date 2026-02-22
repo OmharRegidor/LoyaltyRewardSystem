@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, AlertCircle, UserPlus } from 'lucide-react';
+import { Loader2, AlertCircle, UserPlus, Users } from 'lucide-react';
 import { CardModal } from './card-modal';
 
 // ============================================
@@ -26,6 +26,7 @@ const SelfSignupSchema = z.object({
     .string()
     .email('Invalid email address')
     .min(1, 'Email is required'),
+  referralCode: z.string().max(10).optional(),
 });
 
 type SelfSignupInput = z.infer<typeof SelfSignupSchema>;
@@ -170,8 +171,8 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
           )}
         </div>
 
-        {/* Email (Optional) */}
-        <div className="mb-6">
+        {/* Email */}
+        <div className="mb-4">
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email <span className="text-red-500">*</span>
           </label>
@@ -185,6 +186,28 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        {/* Referral Code (Optional) */}
+        <div className="mb-6">
+          <label htmlFor="referralCode" className="block text-sm font-medium text-gray-700 mb-1">
+            Referral Code <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <div className="relative">
+            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              {...register('referralCode')}
+              type="text"
+              id="referralCode"
+              maxLength={10}
+              placeholder="e.g. 55F3EC"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors uppercase"
+              disabled={isSubmitting}
+            />
+          </div>
+          {errors.referralCode && (
+            <p className="mt-1 text-sm text-red-500">{errors.referralCode.message}</p>
           )}
         </div>
 

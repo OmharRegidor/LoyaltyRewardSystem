@@ -653,6 +653,7 @@ export type Database = {
           points_expiry_days: number | null
           points_per_purchase: number | null
           qr_code_url: string | null
+          referral_reward_points: number
           slug: string
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string | null
@@ -679,6 +680,7 @@ export type Database = {
           points_expiry_days?: number | null
           points_per_purchase?: number | null
           qr_code_url?: string | null
+          referral_reward_points?: number
           slug: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
@@ -705,6 +707,7 @@ export type Database = {
           points_expiry_days?: number | null
           points_per_purchase?: number | null
           qr_code_url?: string | null
+          referral_reward_points?: number
           slug?: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
@@ -1331,6 +1334,130 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          business_id: string
+          code: string
+          created_at: string
+          customer_id: string
+          id: string
+          is_active: boolean
+          max_uses: number
+          uses: number
+        }
+        Insert: {
+          business_id: string
+          code: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          uses?: number
+        }
+        Update: {
+          business_id?: string
+          code?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_codes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_completions: {
+        Row: {
+          business_id: string
+          completed_at: string
+          id: string
+          invitee_customer_id: string
+          invitee_points: number
+          referral_code_id: string
+          referrer_customer_id: string
+          referrer_points: number
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string
+          id?: string
+          invitee_customer_id: string
+          invitee_points: number
+          referral_code_id: string
+          referrer_customer_id: string
+          referrer_points: number
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string
+          id?: string
+          invitee_customer_id?: string
+          invitee_points?: number
+          referral_code_id?: string
+          referrer_customer_id?: string
+          referrer_points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_completions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_completions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_completions_invitee_customer_id_fkey"
+            columns: ["invitee_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_completions_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_completions_referrer_customer_id_fkey"
+            columns: ["referrer_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -2584,6 +2711,10 @@ export type Database = {
         Args: { p_completed_by: string; p_redemption_id: string }
         Returns: Json
       }
+      complete_referral: {
+        Args: { p_invitee_customer_id: string; p_referral_code: string }
+        Returns: Json
+      }
       decrease_reward_stock: {
         Args: { p_reward_id: string }
         Returns: undefined
@@ -2636,6 +2767,10 @@ export type Database = {
         Returns: string
       }
       get_invite_with_business: { Args: { p_token: string }; Returns: Json }
+      get_or_create_referral_code: {
+        Args: { p_business_id: string; p_customer_id: string }
+        Returns: string
+      }
       get_staff_by_user: {
         Args: { p_business_id: string; p_user_id: string }
         Returns: {

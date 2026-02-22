@@ -42,6 +42,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(main)" />
         <Stack.Screen name="brand/[id]" />
+        <Stack.Screen name="referral" />
       </Stack>
     </AuthProvider>
   );
