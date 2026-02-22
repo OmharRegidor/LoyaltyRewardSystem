@@ -78,7 +78,7 @@ export function CardPageClient({
           </div>
 
           {/* Layout: New Customer CTA + Lookup */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 items-start">
             {/* New Customer — redirect to /join */}
             {joinCode ? (
               <div className="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-t-primary border border-gray-100 flex flex-col">
@@ -88,7 +88,7 @@ export function CardPageClient({
                     New Customer
                   </h2>
                 </div>
-                <p className="text-sm text-gray-600 mb-6 flex-1">
+                <p className="text-sm text-gray-600 mb-6">
                   Sign up with email verification to get your loyalty card and start
                   earning points.
                 </p>
@@ -108,7 +108,7 @@ export function CardPageClient({
                     New Customer
                   </h2>
                 </div>
-                <p className="text-sm text-gray-500 flex-1">
+                <p className="text-sm text-gray-500">
                   Ask staff for a join code or scan the QR code at the store to sign up.
                 </p>
               </div>

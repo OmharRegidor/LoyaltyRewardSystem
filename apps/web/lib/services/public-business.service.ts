@@ -476,9 +476,17 @@ export interface SelfSignupResult {
 export interface CustomerByPhoneResult {
   id: string;
   fullName: string;
+  email: string | null;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
+}
+
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return '***@***.com';
+  const visible = local.slice(0, 2);
+  return `${visible}***@${domain}`;
 }
 
 export async function getCustomerByPhone(
@@ -490,7 +498,7 @@ export async function getCustomerByPhone(
 
   const { data, error } = await supabase
     .from('customers')
-    .select('id, full_name, qr_code_url, tier, total_points')
+    .select('id, full_name, email, qr_code_url, tier, total_points')
     .eq('phone', normalizedPhone)
     .eq('created_by_business_id', businessId)
     .maybeSingle();
@@ -502,6 +510,7 @@ export async function getCustomerByPhone(
   return {
     id: data.id,
     fullName: data.full_name || '',
+    email: data.email || null,
     qrCodeUrl: data.qr_code_url || '',
     tier: data.tier || 'bronze',
     totalPoints: data.total_points || 0,
