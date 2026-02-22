@@ -1,25 +1,28 @@
-// apps/web/app/api/public/business/[slug]/lookup/route.ts
+// apps/web/app/api/public/business/[slug]/lookup/verify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
   getCustomerByPhone,
-  maskEmail,
 } from '@/lib/services/public-business.service';
-import { sendEmailVerification } from '@/lib/services/verification.service';
+import { verifyCode } from '@/lib/services/verification.service';
 import { z } from 'zod';
-import type { Json } from '../../../../../../../../packages/shared/types/database';
+import type { Json } from '../../../../../../../../../packages/shared/types/database';
 
 // ============================================
 // VALIDATION SCHEMA
 // ============================================
 
-const PhoneLookupSchema = z.object({
+const VerifySchema = z.object({
   phone: z
     .string()
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
+  code: z
+    .string()
+    .length(6, 'Code must be 6 digits')
+    .regex(/^\d+$/, 'Code must contain only digits'),
 });
 
 // ============================================
@@ -27,12 +30,9 @@ const PhoneLookupSchema = z.object({
 // ============================================
 
 const RATE_LIMIT = {
-  maxRequests: 5,
+  maxRequests: 10,
   windowSeconds: 3600,
 };
-
-// Artificial delay range (ms) to match OTP send timing
-const ARTIFICIAL_DELAY_MS = { min: 800, max: 1500 };
 
 // ============================================
 // HELPER FUNCTIONS
@@ -45,7 +45,7 @@ async function checkRateLimit(
   const { data, error } = await supabase.rpc('check_rate_limit', {
     p_identifier: ipAddress,
     p_identifier_type: 'ip_address',
-    p_action: 'card_lookup',
+    p_action: 'card_lookup_verify',
     p_max_requests: RATE_LIMIT.maxRequests,
     p_window_seconds: RATE_LIMIT.windowSeconds,
   });
@@ -75,15 +75,8 @@ async function logAuditEvent(
   });
 }
 
-function artificialDelay(): Promise<void> {
-  const ms =
-    Math.floor(Math.random() * (ARTIFICIAL_DELAY_MS.max - ARTIFICIAL_DELAY_MS.min)) +
-    ARTIFICIAL_DELAY_MS.min;
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // ============================================
-// POST: Phone Lookup — Step 1 (send OTP)
+// POST: Verify OTP — Step 2 (return card data)
 // ============================================
 
 export async function POST(
@@ -112,20 +105,20 @@ export async function POST(
     const withinLimit = await checkRateLimit(serviceClient, ipAddress);
     if (!withinLimit) {
       await logAuditEvent(serviceClient, {
-        action: 'card_lookup_rate_limited',
+        action: 'card_lookup_verify_rate_limited',
         businessId: business.id,
         details: { ipAddress, userAgent },
       });
 
       return NextResponse.json(
-        { error: 'Too many lookup attempts. Please try again in an hour.' },
+        { error: 'Too many verification attempts. Please try again in an hour.' },
         { status: 429 }
       );
     }
 
     // 3. Parse and validate input
     const body = await request.json();
-    const validation = PhoneLookupSchema.safeParse(body);
+    const validation = VerifySchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -137,67 +130,65 @@ export async function POST(
       );
     }
 
-    const { phone } = validation.data;
+    const { phone, code } = validation.data;
 
-    // 4. Look up customer by phone
+    // 4. Look up customer to get email
     const customer = await getCustomerByPhone(business.id, phone);
-
-    // 5. If customer found with email, send OTP
-    if (customer?.email) {
-      const otpResult = await sendEmailVerification(
-        customer.email,
-        business.id,
-        business.name,
-        'card_lookup'
+    if (!customer?.email) {
+      return NextResponse.json(
+        { error: 'Verification failed. Please try looking up your card again.' },
+        { status: 400 }
       );
+    }
 
+    // 5. Verify the OTP code
+    const verifyResult = await verifyCode(code, customer.email, business.id);
+
+    if (!verifyResult.success) {
       await logAuditEvent(serviceClient, {
-        action: 'card_lookup_otp_sent',
+        action: 'card_lookup_verify_failed',
         businessId: business.id,
         details: {
           customerId: customer.id,
-          otpSent: otpResult.success,
+          attemptsRemaining: verifyResult.attemptsRemaining,
           processingTimeMs: Date.now() - startTime,
           ipAddress,
           userAgent,
         },
       });
 
-      if (!otpResult.success) {
-        return NextResponse.json({
-          success: false,
-          message: otpResult.error || 'Failed to send verification code. Please try again.',
-        });
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'A verification code has been sent to your registered email.',
-        maskedEmail: maskEmail(customer.email),
-      });
+      return NextResponse.json(
+        {
+          error: verifyResult.error || 'Invalid verification code.',
+          attemptsRemaining: verifyResult.attemptsRemaining,
+        },
+        { status: 400 }
+      );
     }
 
-    // 6. Customer not found or no email — artificial delay + generic response
-    await artificialDelay();
-
+    // 6. OTP verified — return card data
     await logAuditEvent(serviceClient, {
-      action: 'card_lookup_not_found',
+      action: 'card_lookup_verified',
       businessId: business.id,
       details: {
-        phoneHash: phone.slice(-4),
+        customerId: customer.id,
         processingTimeMs: Date.now() - startTime,
         ipAddress,
         userAgent,
       },
     });
 
-    // Same shape as success to prevent enumeration
     return NextResponse.json({
-      success: false,
-      message: 'No card found for this phone number. Please check the number or sign up first.',
+      success: true,
+      data: {
+        customerName: customer.fullName,
+        qrCodeUrl: customer.qrCodeUrl,
+        tier: customer.tier,
+        totalPoints: customer.totalPoints,
+      },
     });
   } catch (error) {
-    console.error('Phone lookup error:', error);
+    console.error('Lookup verify error:', error);
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },
       { status: 500 }
