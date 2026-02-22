@@ -22,6 +22,7 @@ const JoinSignupSchema = z.object({
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
   email: z.string().email('Invalid email address'),
+  referralCode: z.string().max(10).optional(),
 });
 
 // ============================================
@@ -64,7 +65,7 @@ export async function POST(
       );
     }
 
-    const { fullName, phone, email } = validation.data;
+    const { fullName, phone, email, referralCode } = validation.data;
 
     // 3. Require email verification
     const verified = await hasVerifiedCode(email, business.id);
@@ -126,7 +127,23 @@ export async function POST(
       })
       .eq('id', result.customerId);
 
-    // 7. Fetch customer data for response
+    // 7. Complete referral if code provided
+    let referralResult = null;
+    if (referralCode && result.isNewCustomer) {
+      try {
+        const { data } = await (serviceClient as any).rpc('complete_referral', {
+          p_referral_code: referralCode,
+          p_invitee_customer_id: result.customerId,
+        });
+        if (data?.success) {
+          referralResult = data;
+        }
+      } catch (refErr) {
+        console.error('Referral completion error:', refErr);
+      }
+    }
+
+    // 8. Fetch customer data for response
     let tier = 'bronze';
     let totalPoints = 0;
     let storedName = fullName;
@@ -184,6 +201,9 @@ export async function POST(
         qrCodeUrl: result.qrCodeUrl,
         tier,
         totalPoints,
+        referral: referralResult
+          ? { pointsAwarded: referralResult.invitee_points }
+          : null,
       },
     });
   } catch (error) {

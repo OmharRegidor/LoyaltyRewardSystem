@@ -28,6 +28,7 @@ import {
   Briefcase,
   ChevronRight,
   Camera,
+  Users,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 
@@ -118,6 +119,9 @@ export default function SettingsPage() {
     pointsExpiryDays: '',
   });
 
+  // Referral Settings State
+  const [referralRewardPoints, setReferralRewardPoints] = useState(25);
+
   const [selectedPreset, setSelectedPreset] = useState<number>(10);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [previewAmount, setPreviewAmount] = useState('500');
@@ -174,6 +178,8 @@ export default function SettingsPage() {
           description: business.description || '',
           logoUrl: business.logo_url,
         });
+
+        setReferralRewardPoints((business as Record<string, unknown>).referral_reward_points as number ?? 25);
 
         setInputValues({
           customRate: String(business.pesos_per_point || 10),
@@ -278,7 +284,7 @@ export default function SettingsPage() {
     const supabase = createClient();
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('businesses')
         .update({
           name: profile.businessName,
@@ -296,6 +302,7 @@ export default function SettingsPage() {
           points_expiry_days: loyalty.pointsExpiryDays
             ? parseInt(loyalty.pointsExpiryDays)
             : null,
+          referral_reward_points: referralRewardPoints,
         })
         .eq('id', businessId);
 
@@ -796,6 +803,52 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Referral Settings */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-orange-500/10 rounded-xl">
+                <Users className="w-5 h-5 text-orange-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Referral Program</h2>
+                <p className="text-sm text-gray-500">
+                  Reward customers who invite friends
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Referral Reward Points
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Points awarded to both the referrer and the new customer when a referral is completed.
+                </p>
+                <input
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={referralRewardPoints}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 1) {
+                      setReferralRewardPoints(val);
+                    }
+                  }}
+                  className="w-32 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background text-center font-semibold"
+                />
+                <span className="ml-2 text-sm text-gray-500">points each</span>
+              </div>
+
+              <div className="p-3 bg-orange-50 rounded-xl border border-orange-200/50">
+                <p className="text-xs text-orange-700">
+                  When a customer refers a friend using their unique code, both the referrer and the new customer will receive <strong>{referralRewardPoints} points</strong>.
+                </p>
               </div>
             </div>
           </Card>

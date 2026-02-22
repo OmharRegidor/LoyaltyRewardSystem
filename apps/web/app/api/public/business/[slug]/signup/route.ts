@@ -27,6 +27,7 @@ const SelfSignupSchema = z.object({
     .string()
     .email('Invalid email address')
     .min(1, 'Email is required'),
+  referralCode: z.string().max(10).optional(),
 });
 
 // ============================================
@@ -142,7 +143,7 @@ export async function POST(
       );
     }
 
-    const { fullName, phone, email } = validation.data;
+    const { fullName, phone, email, referralCode } = validation.data;
 
     // 3b. Require email verification (lockdown: no unverified signups)
     const isVerified = await hasVerifiedCode(email, business.id);
@@ -161,7 +162,23 @@ export async function POST(
       email,
     );
 
-    // 5. Fetch customer data for response (non-critical)
+    // 5. Complete referral if code provided
+    let referralResult = null;
+    if (referralCode && result.isNewCustomer) {
+      try {
+        const { data } = await (serviceClient as any).rpc('complete_referral', {
+          p_referral_code: referralCode,
+          p_invitee_customer_id: result.customerId,
+        });
+        if (data?.success) {
+          referralResult = data;
+        }
+      } catch (refErr) {
+        console.error('Referral completion error:', refErr);
+      }
+    }
+
+    // 6. Fetch customer data for response (non-critical)
     let tier = 'bronze';
     let totalPoints = 0;
     let storedName = fullName;
@@ -223,6 +240,9 @@ export async function POST(
         qrCodeUrl: result.qrCodeUrl,
         tier,
         totalPoints,
+        referral: referralResult
+          ? { pointsAwarded: referralResult.invitee_points }
+          : null,
       },
     });
   } catch (error) {

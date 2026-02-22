@@ -24,12 +24,14 @@ interface AuthState {
   session: Session | null;
   isLoading: boolean;
   isInitialized: boolean;
+  isNewCustomer: boolean;
 }
 
 interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshCustomer: () => Promise<void>;
+  clearNewCustomerFlag: () => void;
 }
 
 const initialState: AuthState = {
@@ -38,6 +40,7 @@ const initialState: AuthState = {
   session: null,
   isLoading: false,
   isInitialized: false,
+  isNewCustomer: false,
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,38 +89,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   // Separate function to load customer
-  const loadCustomer = useCallback(async (user: User, session: Session) => {
-    if (isLoadingCustomer.current) return;
-    isLoadingCustomer.current = true;
+  const loadCustomer = useCallback(
+    async (user: User, session: Session, fromInit = false) => {
+      if (isLoadingCustomer.current) return;
+      isLoadingCustomer.current = true;
 
-    try {
-      const profile = extractUserProfile(user);
-      const customer = await customerService.findOrCreate(profile);
+      try {
+        const profile = extractUserProfile(user);
+        const { customer, isNew } =
+          await customerService.findOrCreate(profile);
 
-      setState({
-        user,
-        customer,
-        session,
-        isLoading: false,
-        isInitialized: true,
-      });
+        setState({
+          user,
+          customer,
+          session,
+          isLoading: false,
+          isInitialized: true,
+          // Only show onboarding modal for fresh signups, not app relaunches
+          isNewCustomer: fromInit ? false : isNew,
+        });
 
-      if (customer?.id) {
-        setupRealtimeSubscription(customer.id);
+        if (customer?.id) {
+          setupRealtimeSubscription(customer.id);
+        }
+      } catch (error) {
+        console.error('[AuthProvider] Load customer error:', error);
+        setState({
+          user,
+          customer: null,
+          session,
+          isLoading: false,
+          isInitialized: true,
+          isNewCustomer: false,
+        });
+      } finally {
+        isLoadingCustomer.current = false;
       }
-    } catch (error) {
-      console.error('[AuthProvider] Load customer error:', error);
-      setState({
-        user,
-        customer: null,
-        session,
-        isLoading: false,
-        isInitialized: true,
-      });
-    } finally {
-      isLoadingCustomer.current = false;
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Setup realtime subscription for customer points updates
   const setupRealtimeSubscription = useCallback((customerId: string) => {
@@ -168,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession();
 
         if (session?.user) {
-          await loadCustomer(session.user, session);
+          await loadCustomer(session.user, session, true);
         } else {
           setState((prev) => ({ ...prev, isInitialized: true }));
         }
@@ -196,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session: null,
           isLoading: false,
           isInitialized: true,
+          isNewCustomer: false,
         });
       }
     });
@@ -245,9 +256,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session: null,
         isLoading: false,
         isInitialized: true,
+        isNewCustomer: false,
       });
     }
   }, [cleanupRealtimeSubscription]);
+
+  const clearNewCustomerFlag = useCallback(() => {
+    setState((prev) => ({ ...prev, isNewCustomer: false }));
+  }, []);
 
   const refreshCustomer = useCallback(async () => {
     if (!state.user) return;
@@ -267,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signOut,
         refreshCustomer,
+        clearNewCustomerFlag,
       }}
     >
       {children}

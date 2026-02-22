@@ -17,6 +17,7 @@ import {
   Gift,
   CreditCard,
   ArrowLeft,
+  Users,
 } from 'lucide-react';
 import { CardModal } from '@/app/business/[slug]/card/card-modal';
 
@@ -34,6 +35,7 @@ const Step1Schema = z.object({
     .string()
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
+  referralCode: z.string().max(10).optional(),
 });
 
 const Step2Schema = z.object({
@@ -96,6 +98,7 @@ export function JoinPageClient({
       fullName: '',
       email: prefillEmail,
       phone: '',
+      referralCode: '',
     },
   });
 
@@ -177,6 +180,7 @@ export function JoinPageClient({
           fullName: formData.fullName,
           phone: formData.phone,
           email: formData.email,
+          referralCode: formData.referralCode,
         }),
       });
 
@@ -356,7 +360,7 @@ export function JoinPageClient({
               </div>
 
               {/* Phone */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
@@ -390,6 +394,29 @@ export function JoinPageClient({
                 {step1Form.formState.errors.phone && (
                   <p className="mt-1 text-xs text-red-500">
                     {step1Form.formState.errors.phone.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Referral Code (Optional) */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referral Code <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    {...step1Form.register('referralCode')}
+                    type="text"
+                    maxLength={10}
+                    placeholder="e.g. 55F3EC"
+                    disabled={isSubmitting}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors uppercase"
+                  />
+                </div>
+                {step1Form.formState.errors.referralCode && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {step1Form.formState.errors.referralCode.message}
                   </p>
                 )}
               </div>

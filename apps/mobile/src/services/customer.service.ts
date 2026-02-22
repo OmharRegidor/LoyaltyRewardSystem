@@ -158,7 +158,9 @@ export const customerService = {
    * 3. If linked, update profile and return
    * 4. If no match, create new customer
    */
-  async findOrCreate(profile: UserProfile): Promise<Customer> {
+  async findOrCreate(
+    profile: UserProfile,
+  ): Promise<{ customer: Customer; isNew: boolean }> {
     // Step 1: Check if already linked by user_id
     const existingByUserId = await this.getByUserId(profile.id);
     if (existingByUserId) {
@@ -170,7 +172,7 @@ export const customerService = {
         });
       }
 
-      return existingByUserId;
+      return { customer: existingByUserId, isNew: false };
     }
 
     // Step 2: Try to link by email (for staff-added customers)
@@ -191,7 +193,7 @@ export const customerService = {
             email: linkedCustomer.email || profile.email,
           });
 
-          return linkedCustomer;
+          return { customer: linkedCustomer, isNew: false };
         }
       }
     }
@@ -209,13 +211,14 @@ export const customerService = {
             email: phoneLinkedCustomer.email || profile.email,
           });
 
-          return phoneLinkedCustomer;
+          return { customer: phoneLinkedCustomer, isNew: false };
         }
       }
     }
 
     // Step 3: No existing customer found, create new one
-    return this.create(profile);
+    const customer = await this.create(profile);
+    return { customer, isNew: true };
   },
 
   /**

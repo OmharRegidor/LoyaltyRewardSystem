@@ -18,7 +18,6 @@ import {
   HeaderSection,
   BalanceCard,
   MemberQRCard,
-  QuickActions,
   NearbyBusinesses,
   RedeemableRewards,
 } from '../../src/components/home';
@@ -81,9 +80,6 @@ export default function HomeScreen() {
         <View style={styles.contentArea}>
           {/* QR Card - overlaps gradient */}
           <MemberQRCard qrCodeUrl={qrCodeUrl} isLoading={isLoading} />
-
-          {/* Quick Actions */}
-          {/* <QuickActions /> */}
 
           {/* Redeemable Rewards */}
           <RedeemableRewards />

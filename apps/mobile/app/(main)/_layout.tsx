@@ -15,6 +15,7 @@ import {
   useEarnPoints,
 } from '../../src/providers/EarnPointsProvider';
 import { QuickQRModal } from '@/src/components/home';
+import { ReferralOnboardingModal } from '@/src/components/ReferralOnboardingModal';
 
 // ============================================
 // ICON COMPONENTS - Clean outlined style
@@ -296,6 +297,7 @@ function MainLayoutContent() {
       </Tabs>
       <CustomTabBar />
       <QRModalWrapper />
+      <ReferralOnboardingModal />
     </View>
   );
 }
