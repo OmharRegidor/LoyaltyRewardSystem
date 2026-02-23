@@ -45,10 +45,14 @@ export const customerService = {
    * Get customer by user ID with all fields
    */
   async getByUserId(userId: string): Promise<Customer | null> {
+    // A user may have multiple customer records (one per business).
+    // Return the earliest-created record as the "primary" customer.
     const { data, error } = await supabase
       .from('customers')
       .select(CUSTOMER_COLUMNS)
       .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (error) {

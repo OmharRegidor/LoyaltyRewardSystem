@@ -359,8 +359,10 @@ export default function StaffScannerPage() {
     const supabase = createClient();
 
     try {
-      const { data: rpcResult } = await supabase.rpc("lookup_customer_by_qr", {
+      // Resolve to the correct business-specific customer record
+      const { data: rpcResult } = await supabase.rpc("resolve_customer_for_business", {
         p_scanned_code: scannedCode,
+        p_business_id: staffData?.businessId ?? "",
       });
 
       let customerData =

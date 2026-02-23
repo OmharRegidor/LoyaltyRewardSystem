@@ -76,18 +76,36 @@ export async function POST(
       );
     }
 
-    // 4. Check if customer already exists for this business (one-time invite)
+    // 4. Check if customer already exists for this business
     const serviceClient = createServiceClient();
-    const { data: existingCustomer } = await serviceClient
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPhone = phone.replace(/\s+/g, '');
+
+    const { data: existingByEmail } = await serviceClient
       .from('customers')
       .select('id')
-      .eq('email', email.toLowerCase().trim())
+      .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id)
       .maybeSingle();
 
-    if (existingCustomer) {
+    if (existingByEmail) {
       return NextResponse.json(
         { error: 'You are already a member of this loyalty program.' },
+        { status: 409 },
+      );
+    }
+
+    // 4b. Check if phone is already registered under a different email
+    const { data: existingByPhone } = await serviceClient
+      .from('customers')
+      .select('id, email')
+      .eq('phone', normalizedPhone)
+      .eq('created_by_business_id', business.id)
+      .maybeSingle();
+
+    if (existingByPhone && existingByPhone.email && existingByPhone.email.toLowerCase() !== normalizedEmail) {
+      return NextResponse.json(
+        { error: 'This phone number is already registered with a different email. Use "View My Card" to access your existing card.' },
         { status: 409 },
       );
     }

@@ -2837,6 +2837,21 @@ export type Database = {
           user_id: string
         }[]
       }
+      resolve_customer_for_business: {
+        Args: { p_scanned_code: string; p_business_id: string }
+        Returns: {
+          card_token: string
+          created_by_business_id: string
+          email: string
+          full_name: string
+          id: string
+          lifetime_points: number
+          qr_code_url: string
+          tier: string
+          total_points: number
+          user_id: string
+        }[]
+      }
       recalculate_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined

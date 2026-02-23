@@ -154,6 +154,24 @@ export async function POST(
       );
     }
 
+    // 3c. Check if phone is already registered under a different email
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPhone = phone.replace(/\s+/g, '');
+
+    const { data: existingByPhone } = await serviceClient
+      .from('customers')
+      .select('id, email')
+      .eq('phone', normalizedPhone)
+      .eq('created_by_business_id', business.id)
+      .maybeSingle();
+
+    if (existingByPhone && existingByPhone.email && existingByPhone.email.toLowerCase() !== normalizedEmail) {
+      return NextResponse.json(
+        { error: 'This phone number is already registered with a different email. Use "View My Card" to access your existing card.' },
+        { status: 409 }
+      );
+    }
+
     // 4. Create or find customer
     const result = await createSelfSignupCustomer(
       business.id,
