@@ -51,7 +51,9 @@
       "Bash(wc:*)",
       "Bash(git push:*)",
       "Bash(cd C:/Users/regid/Desktop/LoyaltyRewardHub/apps/mobile && npm audit 2>&1)",
-      "Bash(cd C:/Users/regid/Desktop/LoyaltyRewardHub/apps/mobile && npm audit fix 2>&1)"
+      "Bash(cd C:/Users/regid/Desktop/LoyaltyRewardHub/apps/mobile && npm audit fix 2>&1)",
+      "Bash(tail:*)",
+      "Bash(cd:*)"
     ]
   }
 }

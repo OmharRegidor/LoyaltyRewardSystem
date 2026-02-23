@@ -30,7 +30,10 @@
       "Bash(~/.bashrc)",
       "Bash(source ~/.bashrc)",
       "Bash(adb reverse:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(cd /c/Users/regid/Desktop/LoyaltyRewardHub/apps/mobile && npx eas-cli build:list --platform android --limit 15 2>&1)",
+      "Bash(echo JSON parsing failed, trying alternative...:*)",
+      "Bash(cd /c/Users/regid/Desktop/LoyaltyRewardHub/apps/mobile && npx expo-doctor 2>&1)"
     ]
   }
 }
