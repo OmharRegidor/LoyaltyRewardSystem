@@ -86,6 +86,7 @@ export default function StaffScannerPage() {
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [staffData, setStaffData] = useState<StaffData | null>(null);
+  const staffDataRef = useRef<StaffData | null>(null);
   const [stats, setStats] = useState({ scansToday: 0, pointsAwardedToday: 0 });
   const [scannerState, setScannerState] = useState<ScannerState>("idle");
   const [customer, setCustomer] = useState<CustomerData | null>(null);
@@ -113,6 +114,10 @@ export default function StaffScannerPage() {
   // ============================================
   // INITIALIZATION
   // ============================================
+
+  useEffect(() => {
+    staffDataRef.current = staffData;
+  }, [staffData]);
 
   useEffect(() => {
     checkAccess();
@@ -360,10 +365,17 @@ export default function StaffScannerPage() {
 
     try {
       // Resolve to the correct business-specific customer record
-      const { data: rpcResult } = await supabase.rpc("resolve_customer_for_business", {
+      const { data: rpcResult, error: rpcError } = await supabase.rpc("resolve_customer_for_business", {
         p_scanned_code: scannedCode,
-        p_business_id: staffData?.businessId ?? "",
+        p_business_id: staffDataRef.current?.businessId ?? "",
       });
+
+      if (rpcError) {
+        console.error("RPC error:", rpcError);
+        setError("Failed to look up customer. Please try again.");
+        setScannerState("error");
+        return;
+      }
 
       let customerData =
         rpcResult && rpcResult.length > 0 ? rpcResult[0] : null;
@@ -375,7 +387,7 @@ export default function StaffScannerPage() {
       }
 
       // Lazy card token generation for mobile-created customers
-      if (!customerData.card_token && staffData) {
+      if (!customerData.card_token && staffDataRef.current) {
         try {
           const response = await fetch("/api/staff/customer/card-token", {
             method: "POST",
@@ -392,29 +404,29 @@ export default function StaffScannerPage() {
       }
 
       // Set created_by_business_id if null (mobile-created customers)
-      if (!customerData.created_by_business_id && staffData) {
+      if (!customerData.created_by_business_id && staffDataRef.current) {
         await supabase
           .from("customers")
-          .update({ created_by_business_id: staffData.businessId })
+          .update({ created_by_business_id: staffDataRef.current.businessId })
           .eq("id", customerData.id)
           .is("created_by_business_id", null);
       }
 
       // Auto-link customer to business + detect first visit
       let isFirstVisit = false;
-      if (staffData) {
+      if (staffDataRef.current) {
         const { data: existingLink } = await supabase
           .from("customer_businesses")
           .select("id")
           .eq("customer_id", customerData.id)
-          .eq("business_id", staffData.businessId)
+          .eq("business_id", staffDataRef.current.businessId)
           .maybeSingle();
 
         if (!existingLink) {
           isFirstVisit = true;
           await supabase.from("customer_businesses").insert({
             customer_id: customerData.id,
-            business_id: staffData.businessId,
+            business_id: staffDataRef.current.businessId,
           });
         }
       }
