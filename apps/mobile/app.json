@@ -7,7 +7,7 @@
     "newArchEnabled": true,
     "orientation": "portrait",
     "icon": "./assets/images/logoloyalty.png",
-    "scheme": "NoxaLoyalty",
+    "scheme": "noxaloyalty",
     "platforms": [
       "ios",
       "android"
@@ -41,7 +41,7 @@
           "action": "VIEW",
           "data": [
             {
-              "scheme": "NoxaLoyalty",
+              "scheme": "noxaloyalty",
               "host": "auth",
               "pathPrefix": "/callback"
             }
