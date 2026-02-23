@@ -132,7 +132,9 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: string | null }) {
   const [copied, setCopied] = useState(false);
 
-  const publicUrl = slug ? `noxaloyalty.com/business/${slug}` : null;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appHost = new URL(appUrl).host;
+  const publicUrl = slug ? `${appHost}/business/${slug}` : null;
 
   const handleCopy = async () => {
     if (!publicUrl) return;
