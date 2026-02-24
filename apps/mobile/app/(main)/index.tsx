@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
+import { useNotifications } from '../../src/hooks/useNotifications';
 import {
   HeaderSection,
   BalanceCard,
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user, isLoading } = useAuth();
   const { qrCodeUrl, points, lifetimePoints, refreshCustomer } = useCustomer();
+  const { unreadCount } = useNotifications();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Get display name from Google OAuth metadata
@@ -70,6 +72,8 @@ export default function HomeScreen() {
             name={displayName}
             avatarUri={avatarUrl}
             onAvatarPress={handleAvatarPress}
+            unreadCount={unreadCount}
+            onBellPress={() => router.push('/notifications')}
           />
 
           {/* Points Balance + Tier Progress */}
