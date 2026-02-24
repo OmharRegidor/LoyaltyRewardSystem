@@ -12,6 +12,7 @@ import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { supabase } from '../lib/supabase';
 import { customerService } from '../services/customer.service';
+import { notificationService } from '../services/notification.service';
 import type { Customer } from '../types/database.types';
 
 GoogleSignin.configure({
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const isLoadingCustomer = useRef(false);
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
+  const pushTokenRef = useRef<string | null>(null);
 
   // Separate function to load customer
   const loadCustomer = useCallback(
@@ -111,6 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (customer?.id) {
           setupRealtimeSubscription(customer.id);
+
+          // Register push token (non-blocking)
+          notificationService.registerPushToken(customer.id).then((token) => {
+            if (token) pushTokenRef.current = token;
+          });
         }
       } catch (error) {
         console.error('[AuthProvider] Load customer error:', error);
@@ -244,6 +251,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
+
+      // Remove push token before signing out
+      if (state.customer?.id && pushTokenRef.current) {
+        await notificationService
+          .removePushToken(state.customer.id, pushTokenRef.current)
+          .catch(() => {});
+        pushTokenRef.current = null;
+      }
+
       cleanupRealtimeSubscription();
       await GoogleSignin.revokeAccess();
       await GoogleSignin.signOut();
@@ -259,7 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isNewCustomer: false,
       });
     }
-  }, [cleanupRealtimeSubscription]);
+  }, [cleanupRealtimeSubscription, state.customer?.id]);
 
   const clearNewCustomerFlag = useCallback(() => {
     setState((prev) => ({ ...prev, isNewCustomer: false }));
