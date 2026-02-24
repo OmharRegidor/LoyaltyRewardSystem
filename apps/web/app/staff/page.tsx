@@ -362,13 +362,16 @@ export default function StaffScannerPage() {
 
   const lookupCustomer = async (scannedCode: string) => {
     const supabase = createClient();
+    const businessId = staffDataRef.current?.businessId ?? "";
 
     try {
       // Resolve to the correct business-specific customer record
-      const { data: rpcResult, error: rpcError } = await supabase.rpc("resolve_customer_for_business", {
-        p_scanned_code: scannedCode,
-        p_business_id: staffDataRef.current?.businessId ?? "",
-      });
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc("resolve_customer_for_business", {
+          p_scanned_code: scannedCode,
+          p_business_id: businessId,
+        })
+        .maybeSingle();
 
       if (rpcError) {
         console.error("RPC error:", rpcError);
@@ -377,11 +380,29 @@ export default function StaffScannerPage() {
         return;
       }
 
-      let customerData =
-        rpcResult && rpcResult.length > 0 ? rpcResult[0] : null;
+      let customerData = rpcResult ?? null;
+
+      // Fallback: direct DB lookup if RPC returned nothing
+      if (!customerData) {
+        const { data: fallback } = await supabase
+          .from("customers")
+          .select("id, user_id, full_name, email, total_points, lifetime_points, tier, card_token, created_by_business_id, qr_code_url")
+          .or(`qr_code_url.eq.${scannedCode},qr_code_url.eq.NoxaLoyalty://customer/${scannedCode}`)
+          .maybeSingle();
+
+        if (fallback) {
+          customerData = fallback as typeof rpcResult;
+        }
+      }
 
       if (!customerData) {
-        setError("Customer not found. Please try again.");
+        console.error(
+          "Customer lookup failed — scanned:",
+          scannedCode.slice(0, 20),
+          "businessId:",
+          businessId,
+        );
+        setError(`Customer not found (scanned: ${scannedCode.slice(0, 20)}…). Please try again.`);
         setScannerState("error");
         return;
       }
