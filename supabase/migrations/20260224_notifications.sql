@@ -16,26 +16,41 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 );
 
 -- Indexes
-CREATE INDEX idx_notifications_customer_id ON public.notifications(customer_id);
-CREATE INDEX idx_notifications_customer_unread ON public.notifications(customer_id) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_notifications_customer_id ON public.notifications(customer_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_customer_unread ON public.notifications(customer_id) WHERE is_read = false;
 
 -- RLS
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Customers can view own notifications"
-  ON public.notifications FOR SELECT
-  USING (customer_id IN (
-    SELECT id FROM public.customers WHERE user_id = auth.uid()
-  ));
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Customers can view own notifications'
+  ) THEN
+    CREATE POLICY "Customers can view own notifications"
+      ON public.notifications FOR SELECT
+      USING (customer_id IN (
+        SELECT id FROM public.customers WHERE user_id = auth.uid()
+      ));
+  END IF;
+END $$;
 
-CREATE POLICY "Customers can update own notifications"
-  ON public.notifications FOR UPDATE
-  USING (customer_id IN (
-    SELECT id FROM public.customers WHERE user_id = auth.uid()
-  ));
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Customers can update own notifications'
+  ) THEN
+    CREATE POLICY "Customers can update own notifications"
+      ON public.notifications FOR UPDATE
+      USING (customer_id IN (
+        SELECT id FROM public.customers WHERE user_id = auth.uid()
+      ));
+  END IF;
+END $$;
 
--- Add to realtime publication
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+-- Add to realtime publication (ignore if already added)
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 2. Push tokens table
 CREATE TABLE IF NOT EXISTS public.push_tokens (
@@ -51,23 +66,41 @@ CREATE TABLE IF NOT EXISTS public.push_tokens (
 -- RLS
 ALTER TABLE public.push_tokens ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Customers can insert own push tokens"
-  ON public.push_tokens FOR INSERT
-  WITH CHECK (customer_id IN (
-    SELECT id FROM public.customers WHERE user_id = auth.uid()
-  ));
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'push_tokens' AND policyname = 'Customers can insert own push tokens'
+  ) THEN
+    CREATE POLICY "Customers can insert own push tokens"
+      ON public.push_tokens FOR INSERT
+      WITH CHECK (customer_id IN (
+        SELECT id FROM public.customers WHERE user_id = auth.uid()
+      ));
+  END IF;
+END $$;
 
-CREATE POLICY "Customers can view own push tokens"
-  ON public.push_tokens FOR SELECT
-  USING (customer_id IN (
-    SELECT id FROM public.customers WHERE user_id = auth.uid()
-  ));
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'push_tokens' AND policyname = 'Customers can view own push tokens'
+  ) THEN
+    CREATE POLICY "Customers can view own push tokens"
+      ON public.push_tokens FOR SELECT
+      USING (customer_id IN (
+        SELECT id FROM public.customers WHERE user_id = auth.uid()
+      ));
+  END IF;
+END $$;
 
-CREATE POLICY "Customers can delete own push tokens"
-  ON public.push_tokens FOR DELETE
-  USING (customer_id IN (
-    SELECT id FROM public.customers WHERE user_id = auth.uid()
-  ));
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'push_tokens' AND policyname = 'Customers can delete own push tokens'
+  ) THEN
+    CREATE POLICY "Customers can delete own push tokens"
+      ON public.push_tokens FOR DELETE
+      USING (customer_id IN (
+        SELECT id FROM public.customers WHERE user_id = auth.uid()
+      ));
+  END IF;
+END $$;
 
 -- 3. PG function: create notification rows for all followers when a new reward is added
 CREATE OR REPLACE FUNCTION public.notify_followers_on_new_reward()
@@ -115,6 +148,7 @@ END;
 $$;
 
 -- 4. Trigger
+DROP TRIGGER IF EXISTS trg_notify_followers_on_new_reward ON public.rewards;
 CREATE TRIGGER trg_notify_followers_on_new_reward
   AFTER INSERT ON public.rewards
   FOR EACH ROW

@@ -364,6 +364,13 @@ export default function StaffScannerPage() {
     const supabase = createClient();
     const businessId = staffDataRef.current?.businessId ?? "";
 
+    if (!businessId) {
+      console.error("lookupCustomer: businessId is empty — staffDataRef.current:", staffDataRef.current);
+      setError("Staff session not loaded yet. Please wait and try again.");
+      setScannerState("error");
+      return;
+    }
+
     try {
       // Resolve to the correct business-specific customer record
       const { data: rpcResult, error: rpcError } = await supabase
@@ -374,13 +381,16 @@ export default function StaffScannerPage() {
         .maybeSingle();
 
       if (rpcError) {
-        console.error("RPC error:", rpcError);
-        setError("Failed to look up customer. Please try again.");
+        console.error("RPC error:", rpcError.message, rpcError.code, rpcError.details, JSON.stringify(rpcError));
+        setError(`Failed to look up customer: ${rpcError.message || "Unknown error"}`);
         setScannerState("error");
         return;
       }
 
       let customerData = rpcResult ?? null;
+
+      console.log("[DEBUG] RPC result:", JSON.stringify(rpcResult));
+      console.log("[DEBUG] businessId used:", businessId);
 
       // Fallback: direct DB lookup if RPC returned nothing
       if (!customerData) {
