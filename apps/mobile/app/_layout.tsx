@@ -16,22 +16,21 @@ import { AuthProvider } from '../src/providers/AuthProvider';
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-// TODO: Re-enable after development build
 // Configure foreground notification display (no-op in Expo Go)
-// try {
-//   const Notifications = require('expo-notifications');
-//   Notifications.setNotificationHandler({
-//     handleNotification: async () => ({
-//       shouldShowAlert: true,
-//       shouldPlaySound: true,
-//       shouldSetBadge: true,
-//       shouldShowBanner: true,
-//       shouldShowList: true,
-//     }),
-//   });
-// } catch {
-//   // expo-notifications not available in Expo Go
-// }
+try {
+  const Notifications = require('expo-notifications');
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {
+  // expo-notifications not available in Expo Go
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -54,8 +53,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <StatusBar style="dark" />
-      {/* TODO: Re-enable after development build */}
-      {/* <PushNotificationHandler /> */}
+      <PushNotificationHandler />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />

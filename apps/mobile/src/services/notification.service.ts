@@ -75,11 +75,63 @@ export const notificationService = {
    * Register an Expo push token for the current device.
    * No-op in Expo Go — requires a dev client build with native modules.
    */
-  // TODO: Re-enable after development build
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async registerPushToken(_customerId: string): Promise<string | null> {
-    console.log('[NotificationService] Push notifications disabled (Expo Go)');
-    return null;
+  async registerPushToken(customerId: string): Promise<string | null> {
+    try {
+      // These native modules only exist in dev client / standalone builds
+      const Device = require('expo-device');
+      const Notifications = require('expo-notifications');
+      const Constants = require('expo-constants');
+
+      if (!Device.isDevice) {
+        console.log('[NotificationService] Push notifications require a physical device');
+        return null;
+      }
+
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        console.log('[NotificationService] Push notification permission not granted');
+        return null;
+      }
+
+      const projectId = Constants.default?.expoConfig?.extra?.eas?.projectId
+        ?? Constants.expoConfig?.extra?.eas?.projectId;
+      if (!projectId) {
+        console.error('[NotificationService] Missing EAS project ID');
+        return null;
+      }
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+      const token = tokenData.data;
+
+      const { error } = await supabase
+        .from('push_tokens')
+        .upsert(
+          {
+            customer_id: customerId,
+            token,
+            platform: Platform.OS,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'customer_id,token' },
+        );
+
+      if (error) {
+        console.error('[NotificationService] registerPushToken error:', error.message);
+      }
+
+      return token;
+    } catch {
+      // Expected in Expo Go — native modules not available
+      console.log('[NotificationService] Push notifications not available (Expo Go)');
+      return null;
+    }
   },
 
   /**
