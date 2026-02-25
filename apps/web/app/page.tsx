@@ -16,7 +16,6 @@ import {
   Users,
   Store,
   TrendingUp,
-  Award,
   Zap,
   Smartphone,
 } from 'lucide-react';
@@ -815,14 +814,15 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[1fr_0.85fr] gap-12 lg:gap-16 items-center">
-            {/* Left Column - Text */}
+            {/* Left Column - Text (heading + subtitle) */}
             <motion.div
+              className="order-1 lg:order-1"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
               <motion.h1
-                className="font-display text-[42px] sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center sm:text-left"
+                className="font-display text-[42px] sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center lg:text-left"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
@@ -842,7 +842,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p
-                className="text-md sm:text-xl text-gray-600 mb-10 sm:mb-8 max-w-lg leading-relaxed text-center sm:text-left mx-auto sm:mx-0"
+                className="text-md sm:text-xl text-gray-600 mb-10 lg:mb-8 max-w-lg leading-relaxed text-center lg:text-left mx-auto lg:mx-0"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -852,13 +852,198 @@ export default function Home() {
                 forever.
               </motion.p>
 
-              {/* Dual CTAs */}
-              <motion.div
-                className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mb-10"
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
+              {/* CTAs + Trust — visible on desktop, hidden on mobile (shown below photo instead) */}
+              <div className="hidden lg:block">
+                {/* Dual CTAs */}
+                <motion.div
+                  className="flex flex-col sm:flex-row items-start gap-3 mb-10"
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  <Link href="/signup" className="w-auto">
+                    <Button
+                      size="lg"
+                      className="w-auto bg-primary text-primary-foreground rounded-lg px-8 h-13 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-primary/90 transition-all font-bold text-base gap-2"
+                    >
+                      Get Started Free
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </Link>
+                  <Link href="/book-call" className="w-auto">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-auto rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-bold text-base gap-2"
+                    >
+                      <Play className="w-4 h-4" />
+                      Book a Demo
+                    </Button>
+                  </Link>
+                </motion.div>
+
+                {/* Trust Indicators */}
+                <motion.div
+                  className="flex flex-wrap gap-6 justify-start"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                >
+                  {[
+                    { icon: Store, label: '10,000+ Businesses' },
+                    { icon: Star, label: '4.8 Rating' },
+                    { icon: Zap, label: 'Limited Time Offer' },
+                  ].map((badge) => (
+                    <div
+                      key={badge.label}
+                      className="flex items-center gap-2 text-sm text-gray-500"
+                    >
+                      <badge.icon className="w-4 h-4 text-primary/70" />
+                      <span className="font-medium">{badge.label}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Right Column - Hero Photo with Floating Cards */}
+            <motion.div
+              className="order-2 lg:order-2 block relative self-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+            >
+              <div className="relative flex items-center justify-center">
+                {/* Subtle gradient glow behind photo */}
+                <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none">
+                  <div className="w-[390px] h-[390px] sm:w-[470px] sm:h-[470px] md:w-[530px] md:h-[530px] lg:w-[590px] lg:h-[590px] xl:w-[670px] xl:h-[670px] rounded-full bg-gradient-to-br from-orange-100/60 via-amber-50/40 to-rose-100/50 blur-2xl" />
+                </div>
+
+                {/* Dot grid decoration - top left behind photo */}
+                <div className="absolute top-0 left-2 md:left-6 lg:left-0 z-0 grid grid-cols-4 gap-2.5">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-gray-400/50"
+                    />
+                  ))}
+                </div>
+
+                {/* Photo container - circular crop, 10% larger + white border + warm shadow */}
+                <div
+                  className="relative z-[1] w-[340px] h-[340px] sm:w-[410px] sm:h-[410px] md:w-[460px] md:h-[460px] lg:w-[520px] lg:h-[520px] xl:w-[580px] xl:h-[580px] rounded-full overflow-hidden border-[3.5px] border-white"
+                  style={{
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <Image
+                    src="/hero-landing-page.png"
+                    alt="Filipino business owner using NoxaLoyalty"
+                    fill
+                    className="object-cover object-center"
+                    priority
+                    sizes="(max-width: 640px) 340px, (max-width: 768px) 410px, (max-width: 1024px) 460px, (max-width: 1280px) 520px, 580px"
+                  />
+                </div>
+
+                {/* Floating Card: QR Points - top left */}
+                <div
+                  className="absolute z-10 bg-white rounded-xl border border-gray-100 border-l-[3px] border-l-primary w-[100px] sm:w-[120px] px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col items-center gap-1.5 top-[0%] left-[2%] sm:left-[-4%] md:left-[-8%] lg:left-[-10%]"
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center whitespace-nowrap">
+                    QR Points
+                  </span>
+                </div>
+
+                {/* Floating Card: Customer Analytics - top right */}
+                <div
+                  className="absolute z-10 bg-white rounded-xl border border-gray-100 border-l-[3px] border-l-blue-500 w-[100px] sm:w-[120px] px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col items-center gap-1.5 top-[-5%] sm:top-[5%] right-[2%] sm:right-[-4%] md:right-[-10%] lg:right-[-13%]"
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center whitespace-nowrap">
+                    Analytics
+                  </span>
+                </div>
+
+                {/* Floating Card: Digital Rewards - bottom left */}
+                <div
+                  className="absolute z-10 bg-white rounded-xl border border-gray-100 border-l-[3px] border-l-amber-500 w-[100px] sm:w-[120px] px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col items-center gap-1.5 bottom-[18%] left-[2%] sm:left-[-4%] md:left-[-8%] lg:left-[-10%]"
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-50 flex items-center justify-center">
+                    <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center whitespace-nowrap">
+                    Rewards
+                  </span>
+                </div>
+
+                {/* Floating Card: Multi-Branch - bottom right */}
+                <div
+                  className="absolute z-10 bg-white rounded-xl border border-gray-100 border-l-[3px] border-l-green-500 w-[100px] sm:w-[120px] px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col items-center gap-1.5 bottom-[3%] right-[2%] sm:right-[-4%] md:right-[-10%] lg:right-[-13%]"
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-green-50 flex items-center justify-center">
+                    <Store className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-800 text-center whitespace-nowrap">
+                    Multi-Branch
+                  </span>
+                </div>
+
+                {/* Chevron decorations - bottom right */}
+                <div
+                  className="absolute bottom-0 right-2 md:right-6 lg:right-0 z-0 flex flex-col gap-1"
+                >
+                  <svg
+                    width="40"
+                    height="32"
+                    viewBox="0 0 40 32"
+                    fill="none"
+                    className="text-primary/40"
+                  >
+                    <path
+                      d="M8 8L16 16L8 24"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M20 8L28 16L20 24"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Mobile-only CTAs + Trust — shown below photo */}
+            <motion.div
+              className="order-3 lg:hidden flex flex-col items-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-8 w-full">
                 <Link href="/signup" className="w-full sm:w-auto">
                   <Button
                     size="lg"
@@ -878,15 +1063,9 @@ export default function Home() {
                     Book a Demo
                   </Button>
                 </Link>
-              </motion.div>
+              </div>
 
-              {/* Trust Indicators */}
-              <motion.div
-                className="flex flex-wrap gap-4 sm:gap-6 justify-center sm:justify-start"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
+              <div className="flex flex-wrap gap-4 justify-center">
                 {[
                   { icon: Store, label: '10,000+ Businesses' },
                   { icon: Star, label: '4.8 Rating' },
@@ -900,170 +1079,6 @@ export default function Home() {
                     <span className="font-medium">{badge.label}</span>
                   </div>
                 ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Right Column - Dashboard Mockup */}
-            <motion.div
-              className="block relative"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
-            >
-              <div className="relative lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-500">
-                {/* Main dashboard card */}
-                <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
-                  {/* Dashboard header */}
-                  <div className="bg-primary px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-white/30" />
-                      <div className="w-3 h-3 rounded-full bg-white/30" />
-                      <div className="w-3 h-3 rounded-full bg-white/30" />
-                    </div>
-                    <span className="text-white/80 text-xs font-medium">
-                      NoxaLoyalty Dashboard
-                    </span>
-                    <div className="w-16" />
-                  </div>
-
-                  {/* Dashboard content */}
-                  <div className="p-5 sm:p-6 space-y-5">
-                    {/* Stat cards row */}
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        {
-                          label: 'Total Customers',
-                          value: '2,847',
-                          change: '+12%',
-                          icon: Users,
-                        },
-                        {
-                          label: 'Points Issued',
-                          value: '45.2K',
-                          change: '+8%',
-                          icon: Award,
-                        },
-                        {
-                          label: 'Active Rewards',
-                          value: '18',
-                          change: '+3',
-                          icon: Gift,
-                        },
-                      ].map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="bg-gray-50 rounded-xl p-3 sm:p-4"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <stat.icon className="w-4 h-4 text-primary/60" />
-                            <span className="text-xs text-green-600 font-medium">
-                              {stat.change}
-                            </span>
-                          </div>
-                          <p className="text-lg sm:text-xl font-bold text-gray-900">
-                            {stat.value}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {stat.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chart placeholder */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold text-gray-700">
-                          Customer Growth
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          Last 7 days
-                        </span>
-                      </div>
-                      <div className="flex items-end gap-1.5 h-16">
-                        {[40, 55, 45, 65, 50, 75, 85].map((h, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 bg-primary/20 rounded-t-sm relative overflow-hidden"
-                            style={{ height: `${h}%` }}
-                          >
-                            <div
-                              className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
-                              style={{ height: `${h * 0.7}%` }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Recent activity */}
-                    <div>
-                      <span className="text-sm font-semibold text-gray-700">
-                        Recent Activity
-                      </span>
-                      <div className="mt-2 space-y-2">
-                        {[
-                          {
-                            name: 'Maria S.',
-                            action: 'earned 150 points',
-                            time: '2m ago',
-                          },
-                          {
-                            name: 'Juan D.',
-                            action: 'redeemed Free Coffee',
-                            time: '5m ago',
-                          },
-                          {
-                            name: 'Ana L.',
-                            action: 'joined loyalty program',
-                            time: '12m ago',
-                          },
-                        ].map((activity) => (
-                          <div
-                            key={activity.name}
-                            className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-xs font-bold text-primary">
-                                  {activity.name[0]}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-sm font-medium text-gray-800">
-                                  {activity.name}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  {' '}
-                                  {activity.action}
-                                </span>
-                              </div>
-                            </div>
-                            <span className="text-xs text-gray-400">
-                              {activity.time}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating accent card */}
-                <motion.div
-                  className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg border border-gray-200 px-4 py-3 hidden lg:flex items-center gap-3"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                >
-                  <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">+27%</p>
-                    <p className="text-xs text-gray-500">Return visits</p>
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
           </div>
