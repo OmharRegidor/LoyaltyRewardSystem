@@ -192,7 +192,7 @@ export function AddCustomerModal({
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Enter the customer&apos;s email address. They&apos;ll receive
                 an invitation to sign up and verify their identity.
@@ -231,7 +231,7 @@ export function AddCustomerModal({
 
               {/* Submit Button */}
               <Button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={submitState === 'submitting'}
                 className="w-full"
               >
@@ -247,7 +247,7 @@ export function AddCustomerModal({
                   </>
                 )}
               </Button>
-            </div>
+            </form>
           )}
         </motion.div>
       </DialogContent>

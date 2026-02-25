@@ -92,70 +92,72 @@ export function AdjustStockDialog({
           <DialogTitle>Adjust Stock</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Product *</Label>
-            <Select value={productId} onValueChange={setProductId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a product" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {selectedProduct && (
-            <div className="rounded-md bg-muted p-3 text-sm">
-              <span className="text-muted-foreground">Current Stock: </span>
-              <span className="font-medium">{selectedProduct.stock_quantity}</span>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Product *</Label>
+              <Select value={productId} onValueChange={setProductId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="adjust-quantity">New Quantity *</Label>
-            <Input
-              id="adjust-quantity"
-              type="number"
-              value={newQuantity}
-              onChange={(e) => setNewQuantity(e.target.value)}
-              placeholder="Enter new stock quantity"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="adjust-reason">Reason *</Label>
-            <Input
-              id="adjust-reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g., Physical count correction, damaged goods"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSaving || !productId || newQuantity === '' || !reason.trim()}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Saving...
-              </>
-            ) : (
-              'Adjust Stock'
+            {selectedProduct && (
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <span className="text-muted-foreground">Current Stock: </span>
+                <span className="font-medium">{selectedProduct.stock_quantity}</span>
+              </div>
             )}
-          </Button>
-        </DialogFooter>
+
+            <div className="space-y-2">
+              <Label htmlFor="adjust-quantity">New Quantity *</Label>
+              <Input
+                id="adjust-quantity"
+                type="number"
+                value={newQuantity}
+                onChange={(e) => setNewQuantity(e.target.value)}
+                placeholder="Enter new stock quantity"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adjust-reason">Reason *</Label>
+              <Input
+                id="adjust-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g., Physical count correction, damaged goods"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving || !productId || newQuantity === '' || !reason.trim()}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Adjust Stock'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
