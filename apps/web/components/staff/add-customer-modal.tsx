@@ -200,7 +200,7 @@ export function AddCustomerModal({
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
               <p className="text-sm text-gray-600">
                 Enter the customer&apos;s email address. They&apos;ll receive an
                 invitation to sign up on their own device.
@@ -240,7 +240,7 @@ export function AddCustomerModal({
 
               {/* Submit Button */}
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={submitState === 'submitting'}
                 className="w-full py-3.5 bg-secondary hover:bg-secondary/90 text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-900"
               >
@@ -256,7 +256,7 @@ export function AddCustomerModal({
                   </>
                 )}
               </button>
-            </div>
+            </form>
           )}
         </div>
       </div>

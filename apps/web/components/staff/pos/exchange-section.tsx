@@ -99,6 +99,7 @@ export function ExchangeSection({
                 type="number"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApply(); } }}
                 placeholder="Points to use"
                 min="0"
                 max={maxExchangePoints}
