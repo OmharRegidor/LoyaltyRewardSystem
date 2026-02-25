@@ -20,7 +20,7 @@ export default function BookCallPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-[#7F0404] transition-colors"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Home</span>
@@ -32,7 +32,7 @@ export default function BookCallPage() {
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* Left Side - Benefits */}
           <div className="lg:sticky lg:top-8">
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#7F0404] mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-4">
               Book a Call with Our Team
             </h1>
             <p className="text-lg text-gray-600 mb-8">

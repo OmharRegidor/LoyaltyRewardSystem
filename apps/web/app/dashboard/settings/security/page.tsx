@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card } from '@/components/ui/card';
@@ -38,7 +38,7 @@ export default function SecuritySettingsPage() {
   const [isLoadingEmail, setIsLoadingEmail] = useState(true);
 
   // Load user email on mount
-  useState(() => {
+  useEffect(() => {
     const loadEmail = async () => {
       const supabase = createClient();
       const {
@@ -50,7 +50,7 @@ export default function SecuritySettingsPage() {
       setIsLoadingEmail(false);
     };
     loadEmail();
-  });
+  }, []);
 
   // ============================================
   // SEND PASSWORD RESET EMAIL
@@ -161,14 +161,14 @@ export default function SecuritySettingsPage() {
                   className="space-y-6"
                 >
                   {/* Security Info Box */}
-                  <div className="p-4 bg-primary/5  border border-primary/20  rounded-xl">
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
                     <div className="flex gap-3">
-                      <ShieldCheck className="w-5 h-5 text-primary  shrink-0 mt-0.5" />
+                      <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-primary/90 /80">
+                        <p className="font-medium text-primary/90">
                           Secure Password Reset
                         </p>
-                        <p className="text-sm text-primary/80 /70 mt-1">
+                        <p className="text-sm text-primary/80 mt-1">
                           For your security, we'll send a password reset link to
                           your email. This ensures only you can change your
                           password.

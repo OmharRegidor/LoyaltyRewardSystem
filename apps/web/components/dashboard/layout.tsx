@@ -161,14 +161,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+    <div className="min-h-screen bg-background">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -276,7 +276,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </header>
 
       {/* Main Content - White background */}
-      <main className="lg:ml-64 min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+      <main className="lg:ml-64 min-h-[100dvh] bg-background">
         <div className="p-4 pt-20 lg:p-8 lg:pt-8">{children}</div>
       </main>
     </div>

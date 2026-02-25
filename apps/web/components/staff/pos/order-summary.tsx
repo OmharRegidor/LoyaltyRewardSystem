@@ -211,7 +211,7 @@ export function OrderSummary({
           onClick={onComplete}
           disabled={isEmpty || isProcessing}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold text-gray-900 border border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold text-gray-900 border border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isProcessing ? (
             <>

@@ -10,7 +10,7 @@ interface JoinAlreadyMemberProps {
 export function JoinAlreadyMember({ businessName }: JoinAlreadyMemberProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-[#7F0404] py-6 px-4 text-center">
+      <div className="bg-primary py-6 px-4 text-center">
         <h1 className="text-2xl font-bold text-white">{businessName}</h1>
         <p className="text-white/80 text-sm">Loyalty Rewards Program</p>
       </div>

@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[50],
   },
   contentContainer: {
-    paddingBottom: SPACING['2xl'],
+    paddingBottom: 100,
   },
 
   // Gradient Header

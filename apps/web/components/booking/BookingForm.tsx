@@ -150,7 +150,7 @@ export function BookingForm({
 
   // Input classes for preview mode (white bg, black border, yellow focus)
   const inputClasses = isPreview
-    ? 'h-9 text-sm bg-white border-gray-900 text-gray-900 placeholder:text-gray-400 focus:border-yellow-400 focus:ring-yellow-400'
+    ? 'h-9 text-sm bg-white border-gray-900 text-gray-900 placeholder:text-gray-400 focus:border-secondary focus:ring-secondary'
     : 'h-9 text-sm bg-white border-gray-300 text-gray-900 placeholder:text-gray-400';
 
   const labelClasses = isPreview
@@ -319,7 +319,7 @@ export function BookingForm({
               <h4 className={sectionTitleClasses}>
                 {businessType === 'hotel' ? 'Add Experiences' : 'Add-ons'}
               </h4>
-              <Badge className={isPreview ? 'text-xs ml-auto bg-yellow-100 text-gray-900 border border-gray-900' : 'text-xs ml-auto'} variant={isPreview ? undefined : 'secondary'}>
+              <Badge className={isPreview ? 'text-xs ml-auto bg-secondary/20 text-gray-900 border border-gray-900' : 'text-xs ml-auto'} variant={isPreview ? undefined : 'secondary'}>
                 <Sparkles className="h-3 w-3 mr-1" />
                 Optional
               </Badge>
@@ -352,7 +352,7 @@ export function BookingForm({
           value={specialRequests}
           onChange={(e) => onSpecialRequestsChange(e.target.value)}
           rows={2}
-          className={isPreview ? 'text-sm resize-none bg-white border-gray-900 text-gray-900 placeholder:text-gray-400 focus:border-yellow-400 focus:ring-yellow-400' : 'text-sm resize-none'}
+          className={isPreview ? 'text-sm resize-none bg-white border-gray-900 text-gray-900 placeholder:text-gray-400 focus:border-secondary focus:ring-secondary' : 'text-sm resize-none'}
           maxLength={500}
           disabled={disabled}
         />

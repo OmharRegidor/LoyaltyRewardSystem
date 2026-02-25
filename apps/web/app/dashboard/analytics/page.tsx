@@ -214,8 +214,9 @@ export default function AnalyticsPage() {
 
     if (redemptions && redemptions.length > 0) {
       const counts: Record<string, { name: string; count: number }> = {};
-      redemptions.forEach((r: any) => {
-        const name = r.rewards?.title || 'Unknown';
+      redemptions.forEach((r) => {
+        const reward = r.rewards as { title: string } | null;
+        const name = reward?.title || 'Unknown';
         if (!counts[r.reward_id]) counts[r.reward_id] = { name, count: 0 };
         counts[r.reward_id].count++;
       });
@@ -288,7 +289,7 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-8"
+        className="space-y-6"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -314,7 +315,7 @@ export default function AnalyticsPage() {
 
         {/* KPI Cards */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           variants={containerVariants}
         >
           {[
@@ -333,7 +334,7 @@ export default function AnalyticsPage() {
             { label: 'Repeat Customer Rate', value: `${kpi.repeatRate}%` },
           ].map((item, i) => (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="p-6 bg-white border border-gray-100 shadow-md">
+              <Card className="p-4 bg-white border border-gray-100 shadow-md">
                 <p className="text-sm text-gray-500 mb-1">
                   {item.label}
                 </p>

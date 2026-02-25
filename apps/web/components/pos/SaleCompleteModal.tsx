@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Star, Receipt, X } from 'lucide-react';
+import { CheckCircle, Star } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -122,15 +122,9 @@ export function SaleCompleteModal({ sale, isOpen, onClose, onNewSale }: SaleComp
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onClose}>
-            <Receipt className="h-4 w-4 mr-2" />
-            View Receipt
-          </Button>
-          <Button className="flex-1" onClick={onNewSale}>
-            New Sale
-          </Button>
-        </div>
+        <Button className="w-full" onClick={onNewSale}>
+          New Sale
+        </Button>
       </DialogContent>
     </Dialog>
   );

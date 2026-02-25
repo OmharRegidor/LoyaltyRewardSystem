@@ -169,7 +169,7 @@ export function VerifyRedemptionView({
                 setRedemptionCode(e.target.value.toUpperCase().slice(0, 8))
               }
               placeholder="ABC123"
-              className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all"
+              className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all"
               maxLength={8}
               autoFocus
             />
@@ -191,7 +191,7 @@ export function VerifyRedemptionView({
             <button
               onClick={verifyRedemptionCode}
               disabled={redemptionCode.length < 8 || isVerifying}
-              className="flex-1 py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-900 border border-gray-900"
+              className="flex-1 py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-900 border border-gray-900"
             >
               {isVerifying ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

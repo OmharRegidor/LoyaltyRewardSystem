@@ -62,7 +62,7 @@ export function PreviewPanel({ formData, businessType }: PreviewPanelProps) {
       <div className="px-4 py-3 border-b border-gray-900">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Customer Preview</h3>
-          <Badge className="text-xs bg-yellow-400 text-gray-900 hover:bg-yellow-500">
+          <Badge className="text-xs bg-secondary text-secondary-foreground hover:bg-secondary/90">
             Live Preview
           </Badge>
         </div>
@@ -131,7 +131,7 @@ export function PreviewPanel({ formData, businessType }: PreviewPanelProps) {
 
         {/* Book Button (Disabled Preview) */}
         <Button
-          className="w-full bg-yellow-400 text-gray-900 font-semibold hover:bg-yellow-500 border border-gray-900"
+          className="w-full bg-secondary text-secondary-foreground font-semibold hover:bg-secondary/90 border border-gray-900"
           disabled
         >
           Book Now

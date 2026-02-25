@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CustomerSearch } from './CustomerSearch';
 import { CustomerCard } from './CustomerCard';
 import { ProductGrid } from './ProductGrid';
@@ -220,12 +221,12 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
   const canCompleteSale = items.length > 0 && amountTenderedCentavos >= totalCentavos;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-auto lg:h-[calc(100vh-8rem)]">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:h-full">
       {/* Left Panel - Products & Quick Entry */}
-      <div className="lg:col-span-3 flex flex-col gap-4 overflow-visible lg:overflow-hidden">
+      <div className="md:col-span-3 flex flex-col gap-4 md:overflow-hidden">
         {/* Customer Search */}
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-2">
             {linkedCustomer ? (
               <CustomerCard
                 customer={linkedCustomer}
@@ -242,104 +243,114 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
 
         {/* Quick Amount Input */}
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-2">
             <QuickAmountInput onAdd={handleQuickAdd} disabled={isProcessing} />
           </CardContent>
         </Card>
 
         {/* Products */}
-        <Card className="flex-1 overflow-hidden">
-          <CardHeader className="py-3">
-            <CardTitle className="text-base">Products</CardTitle>
-          </CardHeader>
-          <ScrollArea className="h-[calc(100%-3rem)]">
-            <CardContent>
-              {isLoadingProducts ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <ProductGrid
-                  products={products}
-                  onProductSelect={handleProductSelect}
-                  disabled={isProcessing}
-                />
-              )}
-            </CardContent>
-          </ScrollArea>
+        <Card className="flex-1 overflow-hidden flex flex-col min-h-[300px] md:min-h-0">
+          {isLoadingProducts ? (
+            <div className="flex items-center justify-center py-12 flex-1">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <ProductGrid
+              products={products}
+              onProductSelect={handleProductSelect}
+              disabled={isProcessing}
+            />
+          )}
         </Card>
       </div>
 
-      {/* Right Panel - Cart & Payment */}
-      <div className="lg:col-span-2 flex flex-col gap-4 overflow-visible lg:overflow-y-auto">
-        {/* Current Sale */}
+      {/* Right Panel - Cart & Payment (Tabbed) */}
+      <div className="md:col-span-2 flex flex-col overflow-hidden min-h-[350px] md:min-h-0">
         <Card className="flex-1 overflow-hidden flex flex-col">
-          <CardHeader className="py-3 border-b">
-            <CardTitle className="text-base">Current Sale</CardTitle>
-          </CardHeader>
-          <ScrollArea className="flex-1 min-h-0">
-            <CardContent className="py-4 space-y-4">
-              <SaleItemList
-                items={items}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemoveItem={handleRemoveItem}
-                disabled={isProcessing}
-              />
+          <Tabs defaultValue="cart" className="flex flex-col flex-1 min-h-0 gap-0">
+            <div className="border-b px-4 pt-1 pb-2 shrink-0">
+              <TabsList className="w-full">
+                <TabsTrigger value="cart" className="flex-1">
+                  Cart{items.length > 0 && ` (${items.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="payment" className="flex-1">
+                  Payment
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-              {items.length > 0 && (
-                <div className="border-t pt-4 space-y-4">
-                  <DiscountInput
-                    subtotalCentavos={subtotalCentavos}
-                    onDiscountChange={handleDiscountChange}
+            <TabsContent value="cart" className="flex-1 overflow-hidden m-0">
+              <ScrollArea className="h-full">
+                <CardContent className="py-4 space-y-4">
+                  <SaleItemList
+                    items={items}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemoveItem={handleRemoveItem}
                     disabled={isProcessing}
                   />
-                  <SaleSummary
-                    items={items}
-                    discountCentavos={discountCentavos}
-                    pointsEarned={pointsEarned}
-                    hasCustomer={linkedCustomer !== null}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </ScrollArea>
-        </Card>
 
-        {/* Payment (Cash Only) */}
-        {items.length > 0 && (
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <CashPaymentInput
-                totalCentavos={totalCentavos}
-                onTenderedChange={setAmountTenderedCentavos}
-                disabled={isProcessing}
-              />
+                  {items.length > 0 && (
+                    <div className="border-t pt-4 space-y-4">
+                      <DiscountInput
+                        subtotalCentavos={subtotalCentavos}
+                        onDiscountChange={handleDiscountChange}
+                        disabled={isProcessing}
+                      />
+                      <SaleSummary
+                        items={items}
+                        discountCentavos={discountCentavos}
+                        pointsEarned={pointsEarned}
+                        hasCustomer={linkedCustomer !== null}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </ScrollArea>
+            </TabsContent>
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
-
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleCompleteSale}
-                disabled={!canCompleteSale || isProcessing}
-              >
-                {isProcessing ? (
+            <TabsContent value="payment" className="flex-1 overflow-y-auto m-0">
+              <CardContent className="py-4 space-y-4">
+                {items.length > 0 ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Processing...
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Total: <span className="text-foreground text-lg font-bold">₱{(totalCentavos / 100).toFixed(2)}</span>
+                    </div>
+                    <Separator />
+                    <CashPaymentInput
+                      totalCentavos={totalCentavos}
+                      onTenderedChange={setAmountTenderedCentavos}
+                      disabled={isProcessing}
+                    />
+
+                    {error && (
+                      <p className="text-sm text-destructive">{error}</p>
+                    )}
+
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={handleCompleteSale}
+                      disabled={!canCompleteSale || isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Complete Sale'
+                      )}
+                    </Button>
                   </>
                 ) : (
-                  'Complete Sale'
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Add items to cart first
+                  </p>
                 )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </TabsContent>
+          </Tabs>
+        </Card>
       </div>
 
       {/* Sale Complete Modal */}

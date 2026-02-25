@@ -21,7 +21,7 @@ export function IdleView({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className="w-40 h-40 bg-yellow-400 hover:bg-yellow-500 rounded-full flex flex-col items-center justify-center mb-6 shadow-xl shadow-yellow-400/30 border border-gray-900 text-gray-900"
+        className="w-40 h-40 bg-secondary hover:bg-secondary/90 rounded-full flex flex-col items-center justify-center mb-6 shadow-xl shadow-secondary/30 border border-gray-900 text-gray-900"
       >
         <QrCode className="w-14 h-14 mb-2" />
         <span className="font-semibold text-sm">Scan Customer</span>

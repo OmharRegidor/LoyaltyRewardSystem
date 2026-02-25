@@ -238,8 +238,8 @@ export default function InventoryPage() {
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <Package className="h-5 w-5 text-primary" />
@@ -251,8 +251,8 @@ export default function InventoryPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       (summary?.low_stock_count ?? 0) > 0 ? 'bg-amber-100' : 'bg-muted'
@@ -272,8 +272,8 @@ export default function InventoryPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       (summary?.out_of_stock_count ?? 0) > 0 ? 'bg-red-100' : 'bg-muted'

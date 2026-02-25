@@ -35,7 +35,7 @@ export function QuickAmountInput({ onAdd, disabled }: QuickAmountInputProps) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">Quick Amount</label>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap sm:flex-nowrap gap-2">
         <Input
           type="text"
           placeholder="Item name (optional)"
@@ -43,9 +43,9 @@ export function QuickAmountInput({ onAdd, disabled }: QuickAmountInputProps) {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          className="flex-1"
+          className="flex-1 min-w-0"
         />
-        <div className="relative w-32">
+        <div className="relative w-28 sm:w-32 shrink-0">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
           <Input
             type="number"
@@ -62,6 +62,7 @@ export function QuickAmountInput({ onAdd, disabled }: QuickAmountInputProps) {
         <Button
           onClick={handleAdd}
           disabled={disabled || !amount || parseFloat(amount) <= 0}
+          className="shrink-0"
         >
           <Plus className="h-4 w-4" />
           Add

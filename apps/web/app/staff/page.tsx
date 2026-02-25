@@ -620,7 +620,7 @@ export default function StaffScannerPage() {
   return (
     <div className={`${isCustomerFound ? "h-screen flex flex-col overflow-hidden" : "min-h-screen"} bg-white text-gray-900`}>
       {/* Header */}
-      <header className="p-4 flex items-center justify-between border-b border-gray-200 bg-[#7F0404] shadow-md">
+      <header className="p-4 flex items-center justify-between border-b border-gray-200 bg-primary shadow-md">
         <div>
           <h1 className="text-lg font-bold text-white">
             {staffData?.businessName}
@@ -699,14 +699,14 @@ export default function StaffScannerPage() {
                     )}
                     {tab === "products" ? "Products" : "Cart"}
                     {tab === "cart" && pos.cartItems.length > 0 && (
-                      <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                      <span className="bg-secondary text-gray-900 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                         {pos.cartItems.length}
                       </span>
                     )}
                     {mobileTab === tab && (
                       <motion.div
                         layoutId="tab-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary"
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
                     )}
@@ -946,7 +946,7 @@ export default function StaffScannerPage() {
               <motion.button
                 onClick={resetScanner}
                 whileTap={{ scale: 0.97 }}
-                className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
+                className="w-full py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
               >
                 Scan Next Customer
               </motion.button>
@@ -966,7 +966,7 @@ export default function StaffScannerPage() {
               <motion.button
                 onClick={resetScanner}
                 whileTap={{ scale: 0.97 }}
-                className="w-full py-4 bg-yellow-400 hover:bg-yellow-500 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
+                className="w-full py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
               >
                 Try Again
               </motion.button>

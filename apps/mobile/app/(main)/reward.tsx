@@ -1,6 +1,6 @@
 // app/(main)/reward.tsx — Brands list screen
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -37,12 +37,13 @@ export default function BrandsScreen() {
   );
 
   const [searchDebounce, setSearchDebounce] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSearch = useCallback(
     (text: string) => {
       setSearchDebounce(text);
-      const timer = setTimeout(() => setSearchQuery(text), 300);
-      return () => clearTimeout(timer);
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(() => setSearchQuery(text), 300);
     },
     [setSearchQuery],
   );
