@@ -29,8 +29,21 @@ import {
   ChevronRight,
   Camera,
   Users,
+  Pencil,
+  X,
+  Store,
+  UtensilsCrossed,
+  Scissors,
+  Hotel,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { createClient } from '@/lib/supabase';
 
 // ============================================
@@ -55,6 +68,21 @@ interface LoyaltySettings {
   pointsExpiryDays: string;
 }
 
+interface InputValues {
+  customRate: string;
+  minPurchase: string;
+  previewAmount: string;
+}
+
+interface EditSnapshot {
+  profile: BusinessProfile;
+  loyalty: LoyaltySettings;
+  referralRewardPoints: number;
+  inputValues: InputValues;
+  selectedPreset: number;
+  showCustomInput: boolean;
+}
+
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
 // ============================================
@@ -62,10 +90,10 @@ type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 // ============================================
 
 const BUSINESS_TYPES = [
-  { value: 'retail', label: 'Retail Stores' },
-  { value: 'restaurant', label: 'Restaurants & Cafés' },
-  { value: 'salon', label: 'Salons & Spas' },
-  { value: 'hotel', label: 'Hotels & Travel' },
+  { value: 'retail', label: 'Retail Stores', icon: Store },
+  { value: 'restaurant', label: 'Restaurants & Cafés', icon: UtensilsCrossed },
+  { value: 'salon', label: 'Salons & Spas', icon: Scissors },
+  { value: 'hotel', label: 'Hotels & Travel', icon: Hotel },
 ];
 
 const POINTS_RATE_PRESETS = [
@@ -100,6 +128,10 @@ export default function SettingsPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
 
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [snapshot, setSnapshot] = useState<EditSnapshot | null>(null);
+
   // Business Profile State
   const [profile, setProfile] = useState<BusinessProfile>({
     businessName: '',
@@ -127,11 +159,50 @@ export default function SettingsPage() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [previewAmount, setPreviewAmount] = useState('500');
 
-  const [inputValues, setInputValues] = useState({
+  const [inputValues, setInputValues] = useState<InputValues>({
     customRate: '10',
     minPurchase: '0',
     previewAmount: '500',
   });
+
+  // ============================================
+  // INPUT STYLING HELPER
+  // ============================================
+
+  const editableStyle = isEditing
+    ? 'border-gray-200 bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary'
+    : 'border-transparent bg-transparent';
+
+  // ============================================
+  // EDIT MODE HANDLERS
+  // ============================================
+
+  const startEditing = () => {
+    setSnapshot({
+      profile: { ...profile },
+      loyalty: { ...loyalty },
+      referralRewardPoints,
+      inputValues: { ...inputValues },
+      selectedPreset,
+      showCustomInput,
+    });
+    setIsEditing(true);
+    setSaveStatus('idle');
+  };
+
+  const cancelEditing = () => {
+    if (snapshot) {
+      setProfile(snapshot.profile);
+      setLoyalty(snapshot.loyalty);
+      setReferralRewardPoints(snapshot.referralRewardPoints);
+      setInputValues(snapshot.inputValues);
+      setSelectedPreset(snapshot.selectedPreset);
+      setShowCustomInput(snapshot.showCustomInput);
+    }
+    setIsEditing(false);
+    setSnapshot(null);
+    setSaveStatus('idle');
+  };
 
   // ============================================
   // LOAD SETTINGS
@@ -169,10 +240,14 @@ export default function SettingsPage() {
         // Get user metadata for business_type and phone if not in business table
         const metadata = user.user_metadata || {};
 
+        // Strip country code (+63 or 63) from phone so the input only shows the local number
+        const rawPhone = business.phone || metadata.phone || '';
+        const cleanPhone = rawPhone.replace(/^\+?63/, '');
+
         setProfile({
           businessName: business.name || '',
           businessType: business.business_type || metadata.business_type || '',
-          phone: business.phone || metadata.phone || '',
+          phone: cleanPhone,
           ownerEmail: user.email || '',
           address: business.address || '',
           city: business.city || '',
@@ -310,7 +385,11 @@ export default function SettingsPage() {
       if (error) throw error;
 
       setSaveStatus('success');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setIsEditing(false);
+        setSnapshot(null);
+      }, 2000);
     } catch (error) {
       console.error('Save settings error:', error);
       setSaveStatus('error');
@@ -323,6 +402,7 @@ export default function SettingsPage() {
   // ============================================
 
   const handlePresetChange = (value: number) => {
+    if (!isEditing) return;
     setSelectedPreset(value);
     if (value === 0) {
       setShowCustomInput(true);
@@ -534,15 +614,35 @@ export default function SettingsPage() {
         variants={containerVariants}
       >
         {/* Header */}
-        <motion.div variants={itemVariants}>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-gray-500 mt-1">
-            Manage your business profile and loyalty program settings
-          </p>
+        <motion.div variants={itemVariants} className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Settings</h1>
+            <p className="text-gray-500 mt-1">
+              Manage your business profile and loyalty program settings
+            </p>
+          </div>
+          {!isEditing ? (
+            <button
+              onClick={startEditing}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+            >
+              <Pencil className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+          ) : (
+            <button
+              onClick={cancelEditing}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition"
+            >
+              <X className="w-4 h-4" />
+              <span>Cancel</span>
+            </button>
+          )}
         </motion.div>
 
         {/* Single Column Layout */}
         <div className="space-y-6">
+          {/* Business Profile */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-primary/10 rounded-xl">
@@ -575,19 +675,23 @@ export default function SettingsPage() {
                         </span>
                       )}
                     </div>
-                    <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                      <Camera className="w-6 h-6 text-white" />
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                      />
-                    </label>
+                    {isEditing && (
+                      <label className="absolute inset-0 bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <Camera className="w-6 h-6 text-white" />
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    Click to upload
-                  </p>
+                  {isEditing && (
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      Click to upload
+                    </p>
+                  )}
                 </div>
 
                 {/* Name & Type */}
@@ -599,13 +703,14 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       value={profile.businessName}
+                      disabled={!isEditing}
                       onChange={(e) =>
                         setProfile((prev) => ({
                           ...prev,
                           businessName: e.target.value,
                         }))
                       }
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className={`w-full px-4 py-2.5 border rounded-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                       placeholder="Your business name"
                     />
                   </div>
@@ -613,23 +718,49 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium mb-1.5">
                       Business Type
                     </label>
-                    <select
+                    <Select
                       value={profile.businessType}
-                      onChange={(e) =>
+                      disabled={!isEditing}
+                      onValueChange={(value) =>
                         setProfile((prev) => ({
                           ...prev,
-                          businessType: e.target.value,
+                          businessType: value,
                         }))
                       }
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
                     >
-                      <option value="">Select type</option>
-                      {BUSINESS_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={`w-full px-4 py-2.5 h-auto border rounded-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default [&>svg]:opacity-${isEditing ? '50' : '0'}`}>
+                        <SelectValue placeholder="Select type">
+                          {profile.businessType && (() => {
+                            const selected = BUSINESS_TYPES.find(t => t.value === profile.businessType);
+                            if (!selected) return 'Select type';
+                            const Icon = selected.icon;
+                            return (
+                              <span className="flex items-center gap-2">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                {selected.label}
+                              </span>
+                            );
+                          })()}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl p-1">
+                        {BUSINESS_TYPES.map((type) => {
+                          const Icon = type.icon;
+                          return (
+                            <SelectItem
+                              key={type.value}
+                              value={type.value}
+                              className="rounded-lg px-3 py-2.5 cursor-pointer"
+                            >
+                              <span className="flex items-center gap-2.5">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                {type.label}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -643,7 +774,7 @@ export default function SettingsPage() {
                     Phone Number
                   </label>
                   <div className="flex">
-                    <span className="px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-500 text-sm">
+                    <span className={`px-3 py-2.5 bg-gray-100 border border-r-0 rounded-l-xl text-gray-500 text-sm ${isEditing ? 'border-gray-200' : 'border-transparent bg-transparent'}`}>
                       +63
                     </span>
                     <input
@@ -651,6 +782,7 @@ export default function SettingsPage() {
                       inputMode="numeric"
                       maxLength={10}
                       value={profile.phone}
+                      disabled={!isEditing}
                       onChange={(e) =>
                         setProfile((prev) => ({
                           ...prev,
@@ -661,7 +793,7 @@ export default function SettingsPage() {
                         if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
                         if (!/^\d$/.test(e.key)) e.preventDefault();
                       }}
-                      className="flex-1 px-4 py-2.5 border border-gray-200 rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                      className={`flex-1 px-4 py-2.5 border rounded-r-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                       placeholder="9123456789"
                     />
                   </div>
@@ -690,13 +822,14 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     value={profile.address}
+                    disabled={!isEditing}
                     onChange={(e) =>
                       setProfile((prev) => ({
                         ...prev,
                         address: e.target.value,
                       }))
                     }
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className={`w-full px-4 py-2.5 border rounded-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                     placeholder="Street address"
                   />
                 </div>
@@ -709,10 +842,11 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     value={profile.city}
+                    disabled={!isEditing}
                     onChange={(e) =>
                       setProfile((prev) => ({ ...prev, city: e.target.value }))
                     }
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background"
+                    className={`w-full px-4 py-2.5 border rounded-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                     placeholder="City"
                   />
                 </div>
@@ -728,6 +862,7 @@ export default function SettingsPage() {
                 </label>
                 <textarea
                   value={profile.description}
+                  disabled={!isEditing}
                   onChange={(e) =>
                     setProfile((prev) => ({
                       ...prev,
@@ -735,7 +870,7 @@ export default function SettingsPage() {
                     }))
                   }
                   rows={2}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background resize-none text-sm"
+                  className={`w-full px-4 py-2.5 border rounded-xl transition resize-none text-sm ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                   placeholder="Brief description of your business..."
                 />
               </div>
@@ -767,11 +902,14 @@ export default function SettingsPage() {
                     <button
                       key={preset.value}
                       type="button"
+                      disabled={!isEditing}
                       onClick={() => handlePresetChange(preset.value)}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      className={`p-3 rounded-xl border-2 text-left transition-all disabled:cursor-default ${
                         selectedPreset === preset.value
                           ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                          : isEditing
+                            ? 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                            : 'border-gray-200'
                       }`}
                     >
                       <p className="font-semibold text-sm">{preset.label}</p>
@@ -790,11 +928,12 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         min="1"
+                        disabled={!isEditing}
                         value={inputValues.customRate}
                         onChange={(e) => handleCustomRateChange(e.target.value)}
                         onBlur={handleCustomRateBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-20 px-3 py-2 border border-gray-200 rounded-lg bg-background text-center font-semibold"
+                        className={`w-20 px-3 py-2 border rounded-lg text-center font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                         placeholder="1"
                       />
                       <span className="text-gray-500">= 1 point</span>
@@ -850,13 +989,14 @@ export default function SettingsPage() {
                       <input
                         type="number"
                         min="0"
+                        disabled={!isEditing}
                         value={inputValues.minPurchase}
                         onChange={(e) =>
                           handleMinPurchaseChange(e.target.value)
                         }
                         onBlur={handleMinPurchaseBlur}
                         onFocus={(e) => e.target.select()}
-                        className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg bg-background text-sm"
+                        className={`w-full pl-7 pr-3 py-2 border rounded-lg text-sm ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                         placeholder="0"
                       />
                     </div>
@@ -868,6 +1008,7 @@ export default function SettingsPage() {
                     <input
                       type="number"
                       min="0"
+                      disabled={!isEditing}
                       value={loyalty.maxPointsPerTransaction}
                       onChange={(e) =>
                         setLoyalty((prev) => ({
@@ -875,7 +1016,7 @@ export default function SettingsPage() {
                           maxPointsPerTransaction: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-background text-sm"
+                      className={`w-full px-3 py-2 border rounded-lg text-sm ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                       placeholder="No limit"
                     />
                   </div>
@@ -910,6 +1051,7 @@ export default function SettingsPage() {
                   type="number"
                   min="1"
                   max="1000"
+                  disabled={!isEditing}
                   value={referralRewardPoints}
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
@@ -917,7 +1059,7 @@ export default function SettingsPage() {
                       setReferralRewardPoints(val);
                     }
                   }}
-                  className="w-32 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition bg-background text-center font-semibold"
+                  className={`w-32 px-4 py-2.5 border rounded-xl transition text-center font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                 />
                 <span className="ml-2 text-sm text-gray-500">points each</span>
               </div>
@@ -964,68 +1106,74 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Floating Save Button */}
-        <motion.div variants={itemVariants} className="sticky bottom-6 z-10">
-          <Card className="p-4 bg-background/95 backdrop-blur-xl border-2 border-gray-200/50 shadow-2xl">
-            <div className="flex items-center justify-between gap-4">
-              {/* Status Messages */}
-              <div className="flex-1 min-w-0">
-                {saveStatus === 'success' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-green-600"
-                  >
-                    <div className="p-1 bg-green-100 rounded-full">
-                      <CheckCircle className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-medium">
-                      Settings saved successfully!
-                    </span>
-                  </motion.div>
-                )}
-                {saveStatus === 'error' && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 text-red-600"
-                  >
-                    <div className="p-1 bg-red-100 rounded-full">
-                      <AlertCircle className="w-4 h-4" />
-                    </div>
-                    <span className="text-sm font-medium truncate">
-                      {errorMessage}
-                    </span>
-                  </motion.div>
-                )}
-                {saveStatus === 'idle' && (
-                  <p className="text-sm text-gray-500">
-                    Make changes and click save to update your settings
-                  </p>
-                )}
-              </div>
+        {/* Save Button - bottom of form, visible only in edit mode */}
+        {isEditing && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            variants={itemVariants}
+          >
+            <Card className="p-4 border-2 border-gray-200/50">
+              <div className="flex items-center justify-between gap-4">
+                {/* Status Messages */}
+                <div className="flex-1 min-w-0">
+                  {saveStatus === 'success' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-2 text-green-600"
+                    >
+                      <div className="p-1 bg-green-100 rounded-full">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        Settings saved successfully!
+                      </span>
+                    </motion.div>
+                  )}
+                  {saveStatus === 'error' && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-2 text-red-600"
+                    >
+                      <div className="p-1 bg-red-100 rounded-full">
+                        <AlertCircle className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-medium truncate">
+                        {errorMessage}
+                      </span>
+                    </motion.div>
+                  )}
+                  {saveStatus === 'idle' && (
+                    <p className="text-sm text-gray-500">
+                      Review your changes and click save to update
+                    </p>
+                  )}
+                </div>
 
-              {/* Save Button */}
-              <button
-                onClick={saveSettings}
-                disabled={saveStatus === 'saving'}
-                className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-primary to-primary/80 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
-              >
-                {saveStatus === 'saving' ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    <span>Save Settings</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </Card>
-        </motion.div>
+                {/* Save Button */}
+                <button
+                  onClick={saveSettings}
+                  disabled={saveStatus === 'saving'}
+                  className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-primary to-primary/80 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+                >
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      <span>Save Settings</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
       </motion.div>
     </DashboardLayout>
   );
