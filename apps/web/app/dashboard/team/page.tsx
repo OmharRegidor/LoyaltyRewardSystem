@@ -20,6 +20,7 @@ import {
   AlertCircle,
   UserX,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   getTeamMembers,
   getPendingInvites,
@@ -193,8 +194,44 @@ export default function TeamManagementPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="space-y-6 overflow-hidden">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-48 rounded-lg" />
+              <Skeleton className="h-5 w-56 mt-1 rounded-lg" />
+            </div>
+            <Skeleton className="h-12 w-48 rounded-xl" />
+          </div>
+
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
+                <Skeleton className="h-7 w-10 mb-1 rounded-lg" />
+                <Skeleton className="h-4 w-24 rounded-lg" />
+              </div>
+            ))}
+          </div>
+
+          {/* Team members list skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
+            <div className="p-4 sm:p-6 border-b border-gray-100">
+              <Skeleton className="h-6 w-44 rounded-lg" />
+            </div>
+            <div className="divide-y divide-gray-100">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 sm:p-6 flex items-center gap-4">
+                  <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-36 rounded-lg" />
+                    <Skeleton className="h-4 w-48 rounded-lg" />
+                  </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );

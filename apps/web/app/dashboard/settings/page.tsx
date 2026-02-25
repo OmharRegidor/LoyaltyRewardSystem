@@ -30,6 +30,7 @@ import {
   Camera,
   Users,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { createClient } from '@/lib/supabase';
 
 // ============================================
@@ -437,8 +438,84 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="w-full max-w-4xl mx-auto space-y-6 overflow-hidden">
+          {/* Header skeleton */}
+          <div>
+            <Skeleton className="h-9 w-32 rounded-lg" />
+            <Skeleton className="h-5 w-72 mt-1 rounded-lg" />
+          </div>
+
+          {/* Business Profile card skeleton */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <div>
+                <Skeleton className="h-6 w-40 rounded-lg" />
+                <Skeleton className="h-4 w-48 mt-1 rounded-lg" />
+              </div>
+            </div>
+            <div className="flex items-start gap-6">
+              <Skeleton className="w-24 h-24 rounded-2xl shrink-0" />
+              <div className="flex-1 space-y-4">
+                <div>
+                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Loyalty card skeleton */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <div>
+                <Skeleton className="h-6 w-36 rounded-lg" />
+                <Skeleton className="h-4 w-44 mt-1 rounded-lg" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-16 rounded-xl" />
+              ))}
+            </div>
+          </Card>
+
+          {/* Referral card skeleton */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <div>
+                <Skeleton className="h-6 w-40 rounded-lg" />
+                <Skeleton className="h-4 w-56 mt-1 rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </Card>
+
+          {/* Security card skeleton */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <div>
+                <Skeleton className="h-6 w-24 rounded-lg" />
+                <Skeleton className="h-4 w-44 mt-1 rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </Card>
         </div>
       </DashboardLayout>
     );

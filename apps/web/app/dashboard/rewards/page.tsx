@@ -11,7 +11,7 @@ import { ViewRewardModal } from '@/components/rewards/view-modal';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ============================================
 // TYPES
@@ -343,8 +343,38 @@ export default function RewardsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-32 rounded-lg" />
+              <Skeleton className="h-5 w-56 mt-1 rounded-lg" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-20 rounded-lg" />
+              <Skeleton className="h-10 w-36 rounded-xl" />
+            </div>
+          </div>
+
+          {/* Rewards grid skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+                <Skeleton className="h-36 w-full rounded-none" />
+                <div className="p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-5 w-32 rounded-lg" />
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4 rounded-lg" />
+                  <div className="flex items-center justify-between pt-1">
+                    <Skeleton className="h-6 w-20 rounded-lg" />
+                    <Skeleton className="h-4 w-16 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </DashboardLayout>
     );

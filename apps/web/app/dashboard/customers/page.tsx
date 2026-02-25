@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { useState, useCallback } from 'react';
 import { useCustomers, type Customer } from '@/hooks/useCustomers';
 import { useBusinessContext } from '@/hooks/useBusinessContext';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CustomersPage() {
   // Business context
@@ -62,9 +62,52 @@ export default function CustomersPage() {
   if (isLoadingBusiness) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <span className="ml-3 text-gray-500">Loading...</span>
+        <div className="space-y-6 overflow-hidden">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-40 rounded-lg" />
+              <Skeleton className="h-5 w-64 mt-1 rounded-lg" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-64 rounded-xl" />
+              <Skeleton className="h-10 w-36 rounded-xl" />
+            </div>
+          </div>
+
+          {/* Filters skeleton */}
+          <div className="flex flex-wrap gap-3">
+            <Skeleton className="h-9 w-20 rounded-full" />
+            <Skeleton className="h-9 w-24 rounded-full" />
+            <Skeleton className="h-9 w-28 rounded-full" />
+            <Skeleton className="h-9 w-24 rounded-full" />
+          </div>
+
+          {/* Table skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+            {/* Table header */}
+            <div className="px-6 py-3 bg-gray-50 flex gap-4">
+              <Skeleton className="h-4 w-8" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-24 ml-auto" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            {/* Table rows */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-gray-100">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-36 rounded-lg" />
+                  <Skeleton className="h-3 w-24 rounded-lg" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-lg" />
+                <Skeleton className="h-5 w-14 rounded-full" />
+                <Skeleton className="h-4 w-20 rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
       </DashboardLayout>
     );
