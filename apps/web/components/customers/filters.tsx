@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 
 interface CustomersFiltersProps {
@@ -49,19 +49,28 @@ export function CustomersFilters({
           {/* Points Range */}
           <div className="space-y-2 md:col-span-1">
             <label className="text-sm font-medium text-gray-700">Points Range</label>
-            <div className="space-y-2">
-              <Slider
-                min={0}
-                max={5000}
-                step={100}
-                value={pointsRange}
-                onValueChange={(value) => onPointsRangeChange(value as [number, number])}
-                className="w-full"
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Min"
+                value={pointsRange[0]}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "")
+                  onPointsRangeChange([value === "" ? 0 : Number(value), pointsRange[1]])
+                }}
               />
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>{pointsRange[0]}</span>
-                <span>{pointsRange[1]}</span>
-              </div>
+              <span className="text-sm text-gray-500">to</span>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Max"
+                value={pointsRange[1]}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "")
+                  onPointsRangeChange([pointsRange[0], value === "" ? 0 : Number(value)])
+                }}
+              />
             </div>
           </div>
 
