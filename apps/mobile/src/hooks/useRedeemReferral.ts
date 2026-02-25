@@ -22,6 +22,7 @@ interface SuccessInfo {
   businessName: string;
   pointsEarned: number;
   businessId: string;
+  pending: boolean;
 }
 
 // ============================================
@@ -102,12 +103,15 @@ export function useRedeemReferral() {
         return;
       }
 
-      await refreshCustomer();
+      if (!result.pending) {
+        await refreshCustomer();
+      }
 
       setSuccess({
-        businessName: preview.businessName,
+        businessName: result.business_name || preview.businessName,
         pointsEarned: result.invitee_points || preview.bonusPoints,
         businessId: result.business_id || '',
+        pending: result.pending ?? false,
       });
       setStep('success');
     } catch (err) {

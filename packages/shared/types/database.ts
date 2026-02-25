@@ -994,6 +994,64 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string
+          business_id: string
+          created_at: string
+          customer_id: string
+          data: Json | null
+          id: string
+          is_read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          body: string
+          business_id: string
+          created_at?: string
+          customer_id: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          title: string
+          type?: string
+        }
+        Update: {
+          body?: string
+          business_id?: string
+          created_at?: string
+          customer_id?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_history: {
         Row: {
           amount: number
@@ -1240,6 +1298,41 @@ export type Database = {
           },
         ]
       }
+      push_tokens: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          platform?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           action: string
@@ -1403,6 +1496,7 @@ export type Database = {
           referral_code_id: string
           referrer_customer_id: string
           referrer_points: number
+          status: string
         }
         Insert: {
           business_id: string
@@ -1413,6 +1507,7 @@ export type Database = {
           referral_code_id: string
           referrer_customer_id: string
           referrer_points: number
+          status?: string
         }
         Update: {
           business_id?: string
@@ -1423,6 +1518,7 @@ export type Database = {
           referral_code_id?: string
           referrer_customer_id?: string
           referrer_points?: number
+          status?: string
         }
         Relationships: [
           {
@@ -2706,6 +2802,10 @@ export type Database = {
         Args: { p_business_id: string; p_limit_type: string }
         Returns: boolean
       }
+      claim_referral_code: {
+        Args: { p_invitee_customer_id: string; p_referral_code: string }
+        Returns: Json
+      }
       cleanup_expired_verification_codes: { Args: never; Returns: number }
       complete_redemption: {
         Args: { p_completed_by: string; p_redemption_id: string }
@@ -2837,21 +2937,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      resolve_customer_for_business: {
-        Args: { p_scanned_code: string; p_business_id: string }
-        Returns: {
-          card_token: string
-          created_by_business_id: string
-          email: string
-          full_name: string
-          id: string
-          lifetime_points: number
-          qr_code_url: string
-          tier: string
-          total_points: number
-          user_id: string
-        }[]
-      }
       recalculate_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined
@@ -2868,6 +2953,21 @@ export type Database = {
       redeem_reward: {
         Args: { p_customer_id: string; p_reward_id: string }
         Returns: Json
+      }
+      resolve_customer_for_business: {
+        Args: { p_business_id: string; p_scanned_code: string }
+        Returns: {
+          card_token: string
+          created_by_business_id: string
+          email: string
+          full_name: string
+          id: string
+          lifetime_points: number
+          qr_code_url: string
+          tier: string
+          total_points: number
+          user_id: string
+        }[]
       }
       update_staff_last_login: {
         Args: { p_staff_id: string }

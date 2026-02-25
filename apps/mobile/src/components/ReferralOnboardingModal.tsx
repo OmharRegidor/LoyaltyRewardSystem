@@ -273,9 +273,13 @@ export function ReferralOnboardingModal() {
               <View style={styles.successCircle}>
                 <Text style={styles.successCheckmark}>✓</Text>
               </View>
-              <Text style={styles.heading}>Welcome Bonus Earned!</Text>
+              <Text style={styles.heading}>
+                {success.pending ? 'Referral Code Saved!' : 'Welcome Bonus Earned!'}
+              </Text>
               <Text style={styles.subtitle}>
-                +{success.pointsEarned} points at {success.businessName}
+                {success.pending
+                  ? `You'll earn +${success.pointsEarned} points at ${success.businessName} after your first purchase`
+                  : `+${success.pointsEarned} points at ${success.businessName}`}
               </Text>
               <TouchableOpacity
                 style={styles.primaryButton}
