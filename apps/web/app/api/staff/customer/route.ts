@@ -206,32 +206,36 @@ export async function POST(request: NextRequest) {
     // 6. Send invite email
     const joinCode = staffInfo.business.join_code;
 
-    if (joinCode) {
-      const protocol = request.headers.get('x-forwarded-proto') || 'http';
-      const host = request.headers.get('host') || request.nextUrl.host;
-      const baseUrl = `${protocol}://${host}`;
-      const joinUrl = `${baseUrl}/join/${joinCode}?email=${encodeURIComponent(email)}`;
-
-      // Store verification code with purpose 'staff_invite'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (serviceClient as any)
-        .from('verification_codes')
-        .insert({
-          email,
-          code: '000000', // placeholder — customer will go through full OTP flow
-          business_id: staffInfo.business.id,
-          purpose: 'staff_invite',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-          attempts: 0,
-          max_attempts: 5,
-        });
-
-      await sendCustomerInviteEmail({
-        to: email,
-        businessName: staffInfo.business.name,
-        joinUrl,
-      });
+    if (!joinCode) {
+      return NextResponse.json(
+        { error: 'Your business does not have a join code configured. Please generate one in Dashboard Settings before inviting customers.' },
+        { status: 400 },
+      );
     }
+
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || request.nextUrl.host;
+    const baseUrl = `${protocol}://${host}`;
+    const joinUrl = `${baseUrl}/join/${joinCode}?email=${encodeURIComponent(email)}`;
+
+    // Store verification code with purpose 'staff_invite'
+    await serviceClient
+      .from('verification_codes')
+      .insert({
+        email,
+        code: '000000', // placeholder — customer will go through full OTP flow
+        business_id: staffInfo.business.id,
+        purpose: 'staff_invite',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        attempts: 0,
+        max_attempts: 5,
+      });
+
+    await sendCustomerInviteEmail({
+      to: email,
+      businessName: staffInfo.business.name,
+      joinUrl,
+    });
 
     // 7. Log audit event
     await logAuditEvent(serviceClient, {
@@ -241,7 +245,7 @@ export async function POST(request: NextRequest) {
       details: {
         staffId: staffInfo.staffId,
         inviteEmail: email,
-        emailSent: !!joinCode,
+        emailSent: true,
         processingTimeMs: Date.now() - startTime,
         ipAddress,
       },
@@ -251,7 +255,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         alreadyRegistered: false,
-        emailSent: !!joinCode,
+        emailSent: true,
       },
     });
   } catch (error) {
