@@ -13,11 +13,8 @@ import { CardModal } from './card-modal';
 // VALIDATION SCHEMAS
 // ============================================
 
-const PhoneLookupSchema = z.object({
-  phone: z
-    .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+const EmailLookupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
 });
 
 const OtpSchema = z.object({
@@ -27,7 +24,7 @@ const OtpSchema = z.object({
     .regex(/^\d+$/, 'Code must contain only digits'),
 });
 
-type PhoneLookupInput = z.infer<typeof PhoneLookupSchema>;
+type EmailLookupInput = z.infer<typeof EmailLookupSchema>;
 type OtpInput = z.infer<typeof OtpSchema>;
 
 // ============================================
@@ -41,7 +38,7 @@ interface LookupFormProps {
 
 interface CardData {
   customerName: string;
-  phone: string;
+  phone: string | null;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
@@ -59,12 +56,12 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
-  const [phone, setPhone] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  const phoneForm = useForm<PhoneLookupInput>({
-    resolver: zodResolver(PhoneLookupSchema),
-    defaultValues: { phone: '' },
+  const emailForm = useForm<EmailLookupInput>({
+    resolver: zodResolver(EmailLookupSchema),
+    defaultValues: { email: '' },
   });
 
   const otpForm = useForm<OtpInput>({
@@ -76,7 +73,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
   // STEP 1: Submit phone — send OTP
   // ============================================
 
-  const onPhoneSubmit = async (data: PhoneLookupInput) => {
+  const onEmailSubmit = async (data: EmailLookupInput) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -95,13 +92,12 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
       }
 
       if (!json.success) {
-        // Customer not found or no email
-        setError(json.message || 'No card found for this phone number.');
+        setError(json.message || 'No card found for this email address.');
         return;
       }
 
       // OTP sent successfully
-      setPhone(data.phone);
+      setEmail(data.email);
       setMaskedEmail(json.maskedEmail || null);
       setStep('otp_sent');
       startResendCooldown();
@@ -124,7 +120,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
       const response = await fetch(`/api/public/business/${businessSlug}/lookup/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, code: data.code }),
+        body: JSON.stringify({ email, code: data.code }),
       });
 
       const json = await response.json();
@@ -143,7 +139,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
       // Success — show card
       setCardData({
         customerName: json.data.customerName,
-        phone,
+        phone: json.data.phone || null,
         qrCodeUrl: json.data.qrCodeUrl,
         tier: json.data.tier,
         totalPoints: json.data.totalPoints,
@@ -168,7 +164,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
       const response = await fetch(`/api/public/business/${businessSlug}/lookup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email }),
       });
 
       const json = await response.json();
@@ -218,8 +214,8 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
     setStep('idle');
     setError(null);
     setMaskedEmail(null);
-    setPhone('');
-    phoneForm.reset();
+    setEmail('');
+    emailForm.reset();
     otpForm.reset();
   };
 
@@ -229,10 +225,10 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
 
   return (
     <>
-      {/* STEP 1: Phone Input */}
+      {/* STEP 1: Email Input */}
       {step === 'idle' && (
         <form
-          onSubmit={phoneForm.handleSubmit(onPhoneSubmit)}
+          onSubmit={emailForm.handleSubmit(onEmailSubmit)}
           className="bg-white rounded-2xl shadow-lg p-6 border-t-4 border-t-secondary border border-gray-100"
         >
           <div className="flex items-center gap-2 mb-4">
@@ -249,35 +245,26 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
 
           <div className="mb-6">
             <label
-              htmlFor="lookupPhone"
+              htmlFor="lookupEmail"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Phone Number
+              Email Address
             </label>
             <input
-              {...phoneForm.register('phone')}
-              type="tel"
-              inputMode="numeric"
-              maxLength={11}
-              id="lookupPhone"
-              placeholder="09171234567"
+              {...emailForm.register('email')}
+              type="email"
+              id="lookupEmail"
+              placeholder="juan@email.com"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               disabled={isSubmitting}
-              onKeyDown={(e) => {
-                if (
-                  ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)
-                )
-                  return;
-                if (!/^\d$/.test(e.key)) e.preventDefault();
-              }}
             />
-            {phoneForm.formState.errors.phone && (
+            {emailForm.formState.errors.email && (
               <p className="mt-1 text-sm text-red-500">
-                {phoneForm.formState.errors.phone.message}
+                {emailForm.formState.errors.email.message}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Enter the phone number you used to sign up
+              Enter the email address you used to sign up
             </p>
           </div>
 
@@ -398,7 +385,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
           onClose={handleCloseModal}
           customerName={cardData.customerName}
           businessName={businessName}
-          phone={cardData.phone}
+          phone={cardData.phone || undefined}
           qrCodeUrl={cardData.qrCodeUrl}
           tier={cardData.tier}
           totalPoints={cardData.totalPoints}

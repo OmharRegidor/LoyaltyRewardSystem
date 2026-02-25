@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
-  getCustomerByPhone,
+  getCustomerByEmail,
   maskEmail,
 } from '@/lib/services/public-business.service';
 import { sendEmailVerification } from '@/lib/services/verification.service';
@@ -15,11 +15,8 @@ import type { Json } from '../../../../../../../../packages/shared/types/databas
 // VALIDATION SCHEMA
 // ============================================
 
-const PhoneLookupSchema = z.object({
-  phone: z
-    .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+const EmailLookupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
 });
 
 // ============================================
@@ -125,7 +122,7 @@ export async function POST(
 
     // 3. Parse and validate input
     const body = await request.json();
-    const validation = PhoneLookupSchema.safeParse(body);
+    const validation = EmailLookupSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -137,15 +134,15 @@ export async function POST(
       );
     }
 
-    const { phone } = validation.data;
+    const { email } = validation.data;
 
-    // 4. Look up customer by phone
-    const customer = await getCustomerByPhone(business.id, phone);
+    // 4. Look up customer by email
+    const customer = await getCustomerByEmail(business.id, email);
 
-    // 5. If customer found with email, send OTP
-    if (customer?.email) {
+    // 5. If customer found, send OTP to the provided email
+    if (customer) {
       const otpResult = await sendEmailVerification(
-        customer.email,
+        email,
         business.id,
         business.name,
         'card_lookup'
@@ -172,32 +169,30 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: 'A verification code has been sent to your registered email.',
-        maskedEmail: maskEmail(customer.email),
+        message: 'A verification code has been sent to your email.',
+        maskedEmail: maskEmail(email),
       });
     }
 
-    // 6. Customer not found or no email — artificial delay + generic response
+    // 6. Customer not found — artificial delay + generic response
     await artificialDelay();
 
     await logAuditEvent(serviceClient, {
       action: 'card_lookup_not_found',
       businessId: business.id,
       details: {
-        phoneHash: phone.slice(-4),
         processingTimeMs: Date.now() - startTime,
         ipAddress,
         userAgent,
       },
     });
 
-    // Same shape as success to prevent enumeration
     return NextResponse.json({
       success: false,
-      message: 'No card found for this phone number. Please check the number or sign up first.',
+      message: 'No card found for this email address. Please check the email or sign up first.',
     });
   } catch (error) {
-    console.error('Phone lookup error:', error);
+    console.error('Email lookup error:', error);
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },
       { status: 500 }

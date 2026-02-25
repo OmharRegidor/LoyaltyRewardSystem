@@ -555,6 +555,7 @@ export interface CustomerByPhoneResult {
   id: string;
   fullName: string;
   email: string | null;
+  phone: string | null;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
@@ -576,7 +577,7 @@ export async function getCustomerByPhone(
 
   const { data, error } = await supabase
     .from('customers')
-    .select('id, full_name, email, qr_code_url, tier, total_points')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points')
     .eq('phone', normalizedPhone)
     .eq('created_by_business_id', businessId)
     .maybeSingle();
@@ -589,6 +590,36 @@ export async function getCustomerByPhone(
     id: data.id,
     fullName: data.full_name || '',
     email: data.email || null,
+    phone: data.phone || null,
+    qrCodeUrl: data.qr_code_url || '',
+    tier: data.tier || 'bronze',
+    totalPoints: data.total_points || 0,
+  };
+}
+
+export async function getCustomerByEmail(
+  businessId: string,
+  email: string
+): Promise<CustomerByPhoneResult | null> {
+  const supabase = createServiceClient();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points')
+    .eq('email', normalizedEmail)
+    .eq('created_by_business_id', businessId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    fullName: data.full_name || '',
+    email: data.email || null,
+    phone: data.phone || null,
     qrCodeUrl: data.qr_code_url || '',
     tier: data.tier || 'bronze',
     totalPoints: data.total_points || 0,
@@ -602,22 +633,26 @@ export async function getCustomerByPhone(
 export async function createSelfSignupCustomer(
   businessId: string,
   fullName: string,
-  phone: string,
+  phone: string | null | undefined,
   email?: string
 ): Promise<SelfSignupResult> {
   const supabase = createServiceClient();
 
   // Normalize inputs
-  const normalizedPhone = phone.replace(/\s+/g, '');
+  const normalizedPhone = phone ? phone.replace(/\s+/g, '') : null;
   const normalizedEmail = email?.toLowerCase().trim() || null;
 
-  // Check for existing customer by phone within this business
-  const { data: existingCustomer } = await supabase
-    .from('customers')
-    .select('id, qr_code_url, card_token, email')
-    .eq('phone', normalizedPhone)
-    .eq('created_by_business_id', businessId)
-    .maybeSingle();
+  // Check for existing customer by phone (if provided) within this business
+  let existingCustomer: { id: string; qr_code_url: string | null; card_token: string | null; email: string | null } | null = null;
+  if (normalizedPhone) {
+    const { data } = await supabase
+      .from('customers')
+      .select('id, qr_code_url, card_token, email')
+      .eq('phone', normalizedPhone)
+      .eq('created_by_business_id', businessId)
+      .maybeSingle();
+    existingCustomer = data;
+  }
 
   if (existingCustomer) {
     // Customer exists - ensure card_token exists
@@ -674,7 +709,7 @@ export async function createSelfSignupCustomer(
       user_id: null,
       email: normalizedEmail,
       full_name: fullName,
-      phone: normalizedPhone,
+      phone: normalizedPhone || null,
       total_points: 0,
       lifetime_points: 0,
       tier: 'bronze',
@@ -687,12 +722,18 @@ export async function createSelfSignupCustomer(
 
   if (createError || !newCustomer) {
     // INSERT failed — re-check for existing customer (concurrent insert race)
-    const { data: existing } = await supabase
+    let raceQuery = supabase
       .from('customers')
       .select('id, qr_code_url, card_token, email')
-      .eq('phone', normalizedPhone)
-      .eq('created_by_business_id', businessId)
-      .maybeSingle();
+      .eq('created_by_business_id', businessId);
+
+    if (normalizedPhone) {
+      raceQuery = raceQuery.eq('phone', normalizedPhone);
+    } else if (normalizedEmail) {
+      raceQuery = raceQuery.eq('email', normalizedEmail);
+    }
+
+    const { data: existing } = await raceQuery.maybeSingle();
 
     if (!existing) {
       console.error('Create self-signup customer error:', createError);
