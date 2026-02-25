@@ -24,10 +24,10 @@ import {
   TrendingUp,
   Gift,
   Download,
-  Loader2,
   BarChart3,
   PieChartIcon,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ============================================
 // DEFAULT EMPTY STATE VALUES
@@ -279,8 +279,47 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="space-y-6 overflow-hidden">
+          {/* Header skeleton */}
+          <div className="flex justify-between items-center">
+            <div>
+              <Skeleton className="h-9 w-32 rounded-lg" />
+              <Skeleton className="h-5 w-64 mt-1 rounded-lg" />
+            </div>
+            <Skeleton className="h-10 w-28 rounded-lg" />
+          </div>
+
+          {/* KPI cards skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="p-4 bg-white border border-gray-100 shadow-md">
+                <Skeleton className="h-4 w-32 mb-1 rounded-lg" />
+                <Skeleton className="h-7 w-20 rounded-lg" />
+                <Skeleton className="h-3 w-24 mt-2 rounded-lg" />
+              </Card>
+            ))}
+          </div>
+
+          {/* Charts skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Monthly points chart skeleton */}
+            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+              <Skeleton className="h-6 w-36 mb-4 rounded-lg" />
+              <div className="h-[200px] flex items-end gap-3 px-4">
+                {[40, 65, 45, 80, 55, 70, 50, 85, 60, 75, 90, 65].map((h, i) => (
+                  <Skeleton key={i} className="flex-1 rounded-t-lg" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+            </Card>
+
+            {/* Customer segments chart skeleton */}
+            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+              <Skeleton className="h-6 w-44 mb-4 rounded-lg" />
+              <div className="h-[200px] flex items-center justify-center">
+                <Skeleton className="w-[180px] h-[180px] rounded-full" />
+              </div>
+            </Card>
+          </div>
         </div>
       </DashboardLayout>
     );

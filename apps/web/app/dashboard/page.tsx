@@ -781,15 +781,77 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6 animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-64" />
+        <div className="space-y-6 overflow-hidden">
+          {/* Header skeleton */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-40 rounded-lg" />
+              <Skeleton className="h-5 w-56 mt-2 rounded-lg" />
+            </div>
+            <div className="text-right">
+              <Skeleton className="h-4 w-20 ml-auto rounded-lg" />
+              <Skeleton className="h-6 w-48 mt-1 ml-auto rounded-lg" />
+            </div>
+          </div>
+
+          {/* Stat cards skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-6 h-40 border border-gray-100"
-              />
+              <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-md">
+                <div className="flex items-start justify-between mb-2">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <Skeleton className="h-5 w-12 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-24 mb-1 rounded-lg" />
+                <Skeleton className="h-7 w-20 mb-1 rounded-lg" />
+                <Skeleton className="h-3 w-32 rounded-lg" />
+              </div>
             ))}
+          </div>
+
+          {/* Two column layout skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Recent transactions skeleton */}
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-md">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <Skeleton className="h-6 w-44 rounded-lg" />
+                <Skeleton className="h-5 w-20 rounded-lg" />
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="px-6 py-4 flex items-center gap-4">
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32 rounded-lg" />
+                      <Skeleton className="h-3 w-20 rounded-full" />
+                    </div>
+                    <Skeleton className="h-5 w-16 rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top rewards skeleton */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
+              <div className="p-6 border-b border-gray-100">
+                <Skeleton className="h-6 w-44 rounded-lg" />
+                <Skeleton className="h-4 w-24 mt-1 rounded-lg" />
+              </div>
+              <div className="p-6 space-y-5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-8 h-8 rounded-lg" />
+                        <Skeleton className="h-4 w-28 rounded-lg" />
+                      </div>
+                      <Skeleton className="h-4 w-8 rounded-lg" />
+                    </div>
+                    <Skeleton className="h-2 w-full rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>

@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MoreVertical, Star, Loader2, Trash2, X } from 'lucide-react';
+import { MoreVertical, Star, Trash2, X } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -211,9 +212,29 @@ export const CustomersTable = memo(function CustomersTable({
   // Loading state
   if (isLoading) {
     return (
-      <Card className="flex items-center justify-center py-20 bg-white">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-3 text-gray-500">Loading customers...</span>
+      <Card className="bg-white overflow-hidden">
+        {/* Table header skeleton */}
+        <div className="px-6 py-3 bg-gray-50 flex gap-4">
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-24 ml-auto" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        {/* Table rows skeleton */}
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-gray-100">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-36 rounded-lg" />
+              <Skeleton className="h-3 w-24 rounded-lg" />
+            </div>
+            <Skeleton className="h-5 w-16 rounded-lg" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+            <Skeleton className="h-4 w-20 rounded-lg" />
+          </div>
+        ))}
       </Card>
     );
   }

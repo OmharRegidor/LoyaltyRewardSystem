@@ -20,6 +20,7 @@ import {
   Clock,
   ShoppingCart,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
@@ -113,13 +114,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.location.href = '/login';
   };
 
-  // Main navigation items
-  const navigation = [
+  // Core navigation items (always visible)
+  const coreNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
     { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
     { name: 'Team', href: '/dashboard/team', icon: UsersRound },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  ];
+
+  // Full navigation with conditional feature-gated items
+  const navigation = [
+    ...coreNavigation,
     // Booking items - only show if plan has booking feature
     ...(hasBooking
       ? [
@@ -145,6 +151,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
+  // While loading, show only core nav (skip feature-gated items that depend on subscription)
+  const visibleNavigation = isLoading
+    ? [...coreNavigation, { name: 'Settings', href: '/dashboard/settings', icon: Settings }]
+    : navigation;
+
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
     if (href === '/dashboard/team') return pathname === '/dashboard/team';
@@ -158,14 +169,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/dashboard/pos') return pathname.startsWith('/dashboard/pos');
     return pathname.startsWith(href);
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -201,7 +204,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => (
+          {visibleNavigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
@@ -220,35 +223,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Bottom Section */}
         <div className="p-4 space-y-2 border-t border-sidebar-border">
-          {/* Dark Mode Toggle */}
-          {/* <button
-            onClick={toggleDarkMode}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-all"
-          >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-            {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-          </button> */}
-
           {/* User Info */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
-              <span className="text-sidebar-primary-foreground font-bold">
-                {userData.businessName.charAt(0).toUpperCase()}
-              </span>
+          {isLoading ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
+              <Skeleton className="w-10 h-10 rounded-full shrink-0 bg-sidebar-accent/20" />
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <Skeleton className="h-4 w-24 rounded bg-sidebar-accent/20" />
+                <Skeleton className="h-3 w-14 rounded bg-sidebar-accent/20" />
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {userData.businessName}
-              </p>
-              <p className="text-xs text-sidebar-foreground/70 capitalize">
-                {userData.role}
-              </p>
+          ) : (
+            <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
+                <span className="text-sidebar-primary-foreground font-bold">
+                  {userData.businessName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {userData.businessName}
+                </p>
+                <p className="text-xs text-sidebar-foreground/70 capitalize">
+                  {userData.role}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Logout */}
           <button
