@@ -81,7 +81,7 @@ export function DiscountSection({
       </button>
 
       {isOpen && (
-        <div className="px-3 pb-3 space-y-3">
+        <form onSubmit={(e) => { e.preventDefault(); applyDiscount(); }} className="px-3 pb-3 space-y-3">
           {/* Type selector */}
           <div className="flex gap-2">
             <button
@@ -141,7 +141,7 @@ export function DiscountSection({
           {/* Actions */}
           <div className="flex gap-2">
             <button
-              onClick={applyDiscount}
+              type="submit"
               disabled={!value || parseFloat(value) <= 0}
               className="flex-1 py-2 bg-secondary hover:bg-secondary/90 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -156,7 +156,7 @@ export function DiscountSection({
               </button>
             )}
           </div>
-        </div>
+        </form>
       )}
     </div>
   );

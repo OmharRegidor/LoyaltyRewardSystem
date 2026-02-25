@@ -172,6 +172,11 @@ export function VerifyRedemptionView({
               className="w-full px-4 py-4 bg-white border border-gray-300 rounded-xl text-gray-900 text-2xl font-mono text-center tracking-widest placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all"
               maxLength={8}
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && redemptionCode.length >= 8 && !isVerifying) {
+                  verifyRedemptionCode();
+                }
+              }}
             />
           </div>
 

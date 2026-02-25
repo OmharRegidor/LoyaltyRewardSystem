@@ -118,7 +118,7 @@ export function CartSection({
 
       {/* Manual Amount Input */}
       {showManualInput ? (
-        <div className="p-3 border-t border-gray-100 space-y-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleAddManual(); }} className="p-3 border-t border-gray-100 space-y-2">
           <input
             type="text"
             value={manualName}
@@ -143,7 +143,7 @@ export function CartSection({
               />
             </div>
             <button
-              onClick={handleAddManual}
+              type="submit"
               disabled={!manualName.trim() || !manualPrice || parseFloat(manualPrice) <= 0}
               className="px-4 py-2 bg-secondary hover:bg-secondary/90 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -160,7 +160,7 @@ export function CartSection({
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       ) : (
         <div className="p-3 border-t border-gray-100">
           <button

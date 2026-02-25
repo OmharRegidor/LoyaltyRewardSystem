@@ -422,7 +422,7 @@ export default function POSProductsPage() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 overflow-y-auto flex-1 -mx-6 px-6">
+          <form id="product-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4 py-4 overflow-y-auto flex-1 -mx-6 px-6">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
               <Input
@@ -571,14 +571,15 @@ export default function POSProductsPage() {
                 }
               />
             </div>
-          </div>
+          </form>
 
           <DialogFooter className="shrink-0">
-            <Button variant="outline" onClick={handleCloseDialog}>
+            <Button type="button" variant="outline" onClick={handleCloseDialog}>
               Cancel
             </Button>
             <Button
-              onClick={handleSave}
+              type="submit"
+              form="product-form"
               disabled={isSaving || !formData.name || formData.price <= 0}
             >
               {isSaving ? (

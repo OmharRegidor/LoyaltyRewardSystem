@@ -222,7 +222,7 @@ export function InviteModal({
             </div>
           ) : (
             // Form State
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -291,7 +291,7 @@ export function InviteModal({
 
               {/* Submit Button */}
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={state === "submitting"}
                 className="w-full py-3 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -307,7 +307,7 @@ export function InviteModal({
                   </>
                 )}
               </button>
-            </div>
+            </form>
           )}
         </div>
       </div>
