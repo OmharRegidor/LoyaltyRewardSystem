@@ -127,9 +127,9 @@ function RewardCard({
   const badgeStatus = getBadgeStatus();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group bg-white">
+    <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group bg-white py-0 gap-0">
       {/* Image */}
-      <div className="relative h-40 bg-gray-100 overflow-hidden">
+      <div className="relative aspect-video bg-gray-100 overflow-hidden">
         <img
           src={reward.image || '/placeholder.svg'}
           alt={reward.title}
