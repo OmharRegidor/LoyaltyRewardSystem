@@ -12,6 +12,7 @@ interface ReferralCompletion {
   referrer_points: number;
   invitee_points: number;
   completed_at: string;
+  status: 'pending' | 'completed';
   invitee: {
     full_name: string | null;
   } | null;
@@ -42,9 +43,11 @@ export interface ReferralCodePreview {
 export interface RedeemReferralResult {
   success: boolean;
   error?: string;
+  pending?: boolean;
   referrer_points?: number;
   invitee_points?: number;
   business_id?: string;
+  business_name?: string;
 }
 
 // ============================================
@@ -87,6 +90,7 @@ export const referralService = {
         referrer_points,
         invitee_points,
         completed_at,
+        status,
         invitee:customers!referral_completions_invitee_customer_id_fkey (full_name),
         business:businesses!referral_completions_business_id_fkey (name, logo_url)
       `)
@@ -167,7 +171,7 @@ export const referralService = {
     code: string,
     inviteeCustomerId: string,
   ): Promise<RedeemReferralResult> {
-    const { data, error } = await supabase.rpc('complete_referral', {
+    const { data, error } = await supabase.rpc('claim_referral_code', {
       p_referral_code: code.toUpperCase().trim(),
       p_invitee_customer_id: inviteeCustomerId,
     });

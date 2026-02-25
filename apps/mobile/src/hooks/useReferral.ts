@@ -21,6 +21,7 @@ interface ReferralHistoryItem {
   referrer_points: number;
   invitee_points: number;
   completed_at: string;
+  status: 'pending' | 'completed';
   invitee: { full_name: string | null } | null;
   business: { name: string; logo_url: string | null } | null;
 }

@@ -85,10 +85,10 @@ export default function ReferralScreen() {
           style={styles.heroCard}
         >
           <Text style={styles.heroEmoji}>🎁</Text>
-          <Text style={styles.heroTitle}>Give 25, Get 25</Text>
+          <Text style={styles.heroTitle}>Give Points, Get Points</Text>
           <Text style={styles.heroSubtitle}>
-            Share your code with friends. When they join, you both earn 25 bonus
-            points!
+            Share your code with friends. When they make their first purchase,
+            you both earn bonus points!
           </Text>
         </LinearGradient>
 
@@ -108,6 +108,15 @@ export default function ReferralScreen() {
               <Text style={styles.stepEmoji}>👋</Text>
             </View>
             <Text style={styles.stepLabel}>Friend Joins</Text>
+          </View>
+
+          <View style={styles.stepConnector} />
+
+          <View style={styles.stepItem}>
+            <View style={styles.stepCircle}>
+              <Text style={styles.stepEmoji}>🛒</Text>
+            </View>
+            <Text style={styles.stepLabel}>Friend Buys</Text>
           </View>
 
           <View style={styles.stepConnector} />
@@ -269,9 +278,15 @@ export default function ReferralScreen() {
                       {new Date(item.completed_at).toLocaleDateString()}
                     </Text>
                   </View>
-                  <View style={styles.pointsBadge}>
-                    <Text style={styles.pointsBadgeText}>
-                      +{item.referrer_points} pts
+                  <View style={[
+                    styles.pointsBadge,
+                    item.status === 'pending' && styles.pendingBadge,
+                  ]}>
+                    <Text style={[
+                      styles.pointsBadgeText,
+                      item.status === 'pending' && styles.pendingBadgeText,
+                    ]}>
+                      {item.status === 'pending' ? 'Pending' : `+${item.referrer_points} pts`}
                     </Text>
                   </View>
                 </View>
@@ -595,5 +610,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.sm,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.success,
+  },
+  pendingBadge: {
+    backgroundColor: COLORS.gray[200],
+  },
+  pendingBadgeText: {
+    color: COLORS.gray[500],
   },
 });
