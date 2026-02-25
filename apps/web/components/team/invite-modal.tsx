@@ -139,7 +139,7 @@ export function InviteModal({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl w-full max-w-md border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-[#7F0404] rounded-t-2xl z-10">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-primary rounded-t-2xl z-10">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-white" />
             {state === "success" ? "Invite Created!" : "Invite Staff/Cashier"}
@@ -182,7 +182,7 @@ export function InviteModal({
                     className={`p-2 rounded-lg transition-colors ${
                       copied
                         ? "bg-green-600 hover:bg-green-700"
-                        : "bg-[#7F0404] hover:bg-[#6a0303]"
+                        : "bg-primary hover:bg-primary/90"
                     }`}
                   >
                     {copied ? (
@@ -215,7 +215,7 @@ export function InviteModal({
 
               <button
                 onClick={handleDone}
-                className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900 rounded-xl font-medium transition-colors"
+                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 rounded-xl font-medium transition-colors"
               >
                 Done
               </button>
@@ -235,7 +235,7 @@ export function InviteModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter cashier's name"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
@@ -253,7 +253,7 @@ export function InviteModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="cashier@email.com"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
@@ -271,7 +271,7 @@ export function InviteModal({
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
                     placeholder="e.g., San Pedro Branch"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
@@ -293,7 +293,7 @@ export function InviteModal({
               <button
                 onClick={handleSubmit}
                 disabled={state === "submitting"}
-                className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {state === "submitting" ? (
                   <>

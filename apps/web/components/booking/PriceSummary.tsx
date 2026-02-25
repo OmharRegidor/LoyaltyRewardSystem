@@ -305,7 +305,7 @@ export function PriceSummary({
           <Button
             onClick={onConfirm}
             disabled={!isValid || isSubmitting}
-            className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold text-base border border-gray-900"
+            className="w-full h-12 bg-secondary hover:bg-secondary/90 text-gray-900 font-semibold text-base border border-gray-900"
           >
             {isSubmitting ? 'Confirming...' : 'Confirm Booking'}
           </Button>

@@ -96,8 +96,8 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
   const isPositive = growth >= 0;
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-md hover:shadow-lg transition-shadow">
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-md hover:shadow-lg transition-shadow">
+      <div className="flex items-start justify-between mb-2">
         <div
           className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
         >
@@ -115,7 +115,7 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
         </div>
       </div>
       <p className="text-sm text-gray-500 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-gray-900 mb-1">
+      <p className="text-2xl font-bold text-gray-900 mb-1">
         {value}
       </p>
       <p className="text-xs text-gray-400">
@@ -803,7 +803,7 @@ export default function DashboardPage() {
         <WelcomeModalHandler businessSlug={businessSlug} />
       </Suspense>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>

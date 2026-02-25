@@ -110,7 +110,7 @@ export function BusinessDirectoryClient({
   return (
     <>
       {/* Hero Section */}
-      <section className="relative bg-[#7F0404] overflow-hidden">
+      <section className="relative bg-primary overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
@@ -126,7 +126,7 @@ export function BusinessDirectoryClient({
           >
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
               Discover Local{' '}
-              <span className="text-[#e8c872]">Businesses</span>
+              <span className="text-secondary">Businesses</span>
             </h1>
             <p className="text-white/70 text-base sm:text-lg max-w-xl mx-auto mb-8">
               Find businesses with loyalty programs near you. Earn points and
@@ -142,13 +142,13 @@ export function BusinessDirectoryClient({
                   placeholder="Search businesses by name..."
                   value={search}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-white text-gray-900 placeholder-gray-400 border-0 shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e8c872]"
+                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-white text-gray-900 placeholder-gray-400 border-0 shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary"
                 />
               </div>
               <select
                 value={initialType || ''}
                 onChange={(e) => handleTypeChange(e.target.value)}
-                className="h-12 px-4 rounded-xl bg-white text-gray-700 border-0 shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e8c872] cursor-pointer sm:w-[180px]"
+                className="h-12 px-4 rounded-xl bg-white text-gray-700 border-0 shadow-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary cursor-pointer sm:w-[180px]"
               >
                 <option value="">All Types</option>
                 {BUSINESS_TYPES.map((type) => (
@@ -190,7 +190,7 @@ export function BusinessDirectoryClient({
           {initialType && (
             <button
               onClick={() => handleTypeChange('')}
-              className="text-xs font-medium text-[#7F0404] hover:underline flex items-center gap-1"
+              className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
             >
               Clear filter
             </button>
@@ -230,28 +230,30 @@ export function BusinessDirectoryClient({
                     href={`/business/${biz.slug}`}
                     className="block h-full"
                   >
-                    <div className="h-full bg-white rounded-2xl border border-gray-200/80 p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.08)] hover:border-[#7F0404]/20 transition-all duration-300 group">
+                    <div className="h-full bg-white rounded-2xl border border-gray-200/80 p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.08)] hover:border-primary/20 transition-all duration-300 group">
                       {/* Top: Logo + Name + Badge */}
                       <div className="flex items-center gap-3.5 mb-3">
                         {biz.logo_url ? (
-                          <Image
-                            src={biz.logo_url}
-                            alt={biz.name}
-                            width={44}
-                            height={44}
-                            className="rounded-xl object-cover ring-1 ring-gray-100 shrink-0"
-                          />
+                          <div className="h-11 w-11 rounded-xl overflow-hidden ring-1 ring-gray-100 shrink-0">
+                            <Image
+                              src={biz.logo_url}
+                              alt={biz.name}
+                              width={44}
+                              height={44}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
                         ) : (
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#7F0404]/8 shrink-0">
-                            <Building2 className="h-5 w-5 text-[#7F0404]" />
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/8 shrink-0">
+                            <Building2 className="h-5 w-5 text-primary" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 text-[15px] truncate group-hover:text-[#7F0404] transition-colors">
+                          <h3 className="font-semibold text-gray-900 text-[15px] truncate group-hover:text-primary transition-colors">
                             {biz.name}
                           </h3>
                           {biz.business_type && (
-                            <span className="inline-block mt-0.5 text-[11px] font-medium text-[#7F0404]/70 bg-[#7F0404]/8 px-2 py-0.5 rounded-md">
+                            <span className="inline-block mt-0.5 text-[11px] font-medium text-primary/70 bg-primary/8 px-2 py-0.5 rounded-md">
                               {biz.business_type}
                             </span>
                           )}
@@ -282,7 +284,7 @@ export function BusinessDirectoryClient({
                             <span>Loyalty rewards</span>
                           </div>
                         )}
-                        <span className="text-xs font-semibold text-[#7F0404] flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <span className="text-xs font-semibold text-primary flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                           Visit store
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </span>
@@ -331,7 +333,7 @@ export function BusinessDirectoryClient({
                         onClick={() => handlePageChange(item)}
                         className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                           item === initialPage
-                            ? 'bg-[#7F0404] text-white shadow-sm'
+                            ? 'bg-primary text-white shadow-sm'
                             : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                         }`}
                       >

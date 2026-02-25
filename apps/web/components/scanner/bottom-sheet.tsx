@@ -138,7 +138,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-                <Button className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900" onClick={handleConfirm}>
+                <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-gray-900" onClick={handleConfirm}>
                   <Check className="w-4 h-4 mr-2" />
                   Confirm Award
                 </Button>
@@ -177,7 +177,7 @@ export function ScannerBottomSheet({ customer, onClose, onConfirm }: ScannerBott
                 {[...Array(10)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                    className="absolute w-2 h-2 bg-secondary rounded-full"
                     initial={{
                       x: 0,
                       y: 0,

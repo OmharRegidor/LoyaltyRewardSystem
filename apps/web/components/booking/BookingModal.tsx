@@ -431,7 +431,7 @@ export function BookingModal({
                 {bookingResult.cardToken && (
                   <Button
                     asChild
-                    className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900"
+                    className="w-full bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900"
                   >
                     <Link href={`/card/${bookingResult.cardToken}`}>
                       <CreditCard className="h-4 w-4 mr-2" />
@@ -588,7 +588,7 @@ export function BookingModal({
           <Button
             onClick={handleConfirm}
             disabled={!form.isValid || form.state.isSubmitting}
-            className="w-full h-12 bg-yellow-400 hover:bg-yellow-500 text-gray-900 border border-gray-900 font-semibold"
+            className="w-full h-12 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 font-semibold"
           >
             {form.state.isSubmitting ? (
               <>

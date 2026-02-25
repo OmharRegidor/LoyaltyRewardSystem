@@ -6,7 +6,7 @@ import { FileQuestion, Home } from 'lucide-react';
 export function JoinNotFound() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-[#7F0404] py-6 px-4 text-center">
+      <div className="bg-primary py-6 px-4 text-center">
         <h1 className="text-2xl font-bold text-white">NoxaLoyalty</h1>
       </div>
 

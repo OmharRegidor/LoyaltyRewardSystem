@@ -141,7 +141,7 @@ export function AddCustomerModal({
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-[#7F0404]">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-primary">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <Send className="w-5 h-5 text-white" />
@@ -179,7 +179,7 @@ export function AddCustomerModal({
                 </button>
                 <button
                   onClick={handleClose}
-                  className="flex-1 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-xl font-medium transition-colors border border-gray-900"
+                  className="flex-1 py-3 bg-secondary hover:bg-secondary/90 text-gray-900 rounded-xl font-medium transition-colors border border-gray-900"
                 >
                   Done
                 </button>
@@ -218,10 +218,10 @@ export function AddCustomerModal({
                     value={formData.email}
                     onChange={(e) => handleInputChange(e.target.value)}
                     placeholder="juan@email.com"
-                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/50 transition-all ${
+                    className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-secondary/50 transition-all ${
                       errors.email
                         ? 'border-red-500'
-                        : 'border-gray-300 focus:border-yellow-400'
+                        : 'border-gray-300 focus:border-secondary'
                     }`}
                   />
                 </div>
@@ -242,7 +242,7 @@ export function AddCustomerModal({
               <button
                 onClick={handleSubmit}
                 disabled={submitState === 'submitting'}
-                className="w-full py-3.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-900"
+                className="w-full py-3.5 bg-secondary hover:bg-secondary/90 text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-900"
               >
                 {submitState === 'submitting' ? (
                   <>

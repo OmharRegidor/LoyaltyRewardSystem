@@ -42,13 +42,15 @@ export default async function BusinessLayout({
               <div className="relative">
                 <div className="absolute inset-0 bg-secondary/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-125" />
                 {business.logo_url ? (
-                  <Image
-                    src={business.logo_url}
-                    alt={business.name}
-                    width={40}
-                    height={40}
-                    className="rounded-lg object-cover relative z-10 transition-transform duration-300 group-hover:scale-105 ring-2 ring-white/20"
-                  />
+                  <div className="h-10 w-10 rounded-lg overflow-hidden relative z-10 transition-transform duration-300 group-hover:scale-105 ring-2 ring-white/20">
+                    <Image
+                      src={business.logo_url}
+                      alt={business.name}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 border border-white/20 relative z-10 transition-transform duration-300 group-hover:scale-105">
                     <Building2 className="h-5 w-5 text-white" />

@@ -284,7 +284,7 @@ export default function SettingsPage() {
     const supabase = createClient();
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('businesses')
         .update({
           name: profile.businessName,

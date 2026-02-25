@@ -260,13 +260,15 @@ export function JoinPageClient({
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
-        <div className="bg-[#7F0404] py-6 px-4 text-center">
+        <div className="bg-primary py-6 px-4 text-center">
           {businessLogo ? (
-            <img
-              src={businessLogo}
-              alt={businessName}
-              className="h-12 mx-auto mb-2"
-            />
+            <div className="h-12 w-12 mx-auto mb-2 rounded-xl overflow-hidden">
+              <img
+                src={businessLogo}
+                alt={businessName}
+                className="h-full w-full object-cover"
+              />
+            </div>
           ) : (
             <h1 className="text-2xl font-bold text-white">{businessName}</h1>
           )}

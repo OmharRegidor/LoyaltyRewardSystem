@@ -152,8 +152,8 @@ export default function POSAnalyticsPage() {
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                       <TrendingUp className="h-5 w-5 text-green-600" />
@@ -168,8 +168,8 @@ export default function POSAnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <Receipt className="h-5 w-5 text-primary" />
@@ -184,8 +184,8 @@ export default function POSAnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                       <ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -200,8 +200,8 @@ export default function POSAnalyticsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="py-3">
+                <CardContent className="pt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
                       <Package className="h-5 w-5 text-orange-600" />

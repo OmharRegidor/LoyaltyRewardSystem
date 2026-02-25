@@ -113,24 +113,22 @@ export default function POSPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            Point of Sale
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Process sales and manage transactions
-          </p>
-        </div>
+      <div className="flex flex-col gap-3 md:h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-4rem)]">
+        <div className="shrink-0 space-y-3">
+          {/* Header */}
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+              Point of Sale
+            </h1>
+          </div>
 
         {/* Sub-Navigation */}
         <POSNavTabs />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="py-2">
+            <CardContent className="pt-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Receipt className="h-5 w-5 text-primary" />
@@ -142,8 +140,8 @@ export default function POSPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="py-2">
+            <CardContent className="pt-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                   <Banknote className="h-5 w-5 text-green-600" />
@@ -157,8 +155,8 @@ export default function POSPage() {
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="py-2">
+            <CardContent className="pt-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                   <Package className="h-5 w-5 text-blue-600" />
@@ -171,11 +169,14 @@ export default function POSPage() {
             </CardContent>
           </Card>
         </div>
+        </div>
 
-        <POSInterface
-          businessSettings={businessSettings || undefined}
-          onSaleComplete={loadSummary}
-        />
+        <div className="flex-1 min-h-0">
+          <POSInterface
+            businessSettings={businessSettings || undefined}
+            onSaleComplete={loadSummary}
+          />
+        </div>
       </div>
     </DashboardLayout>
   );

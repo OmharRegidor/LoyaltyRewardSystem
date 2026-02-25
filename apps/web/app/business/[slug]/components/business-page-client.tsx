@@ -166,13 +166,15 @@ export function BusinessPageClient({
                 <div className="absolute inset-0 bg-linear-to-r from-primary/30 to-secondary/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-110" />
 
                 {business.logo_url ? (
-                  <Image
-                    src={business.logo_url}
-                    alt={business.name}
-                    width={120}
-                    height={120}
-                    className="rounded-2xl object-cover relative z-10 shadow-lg"
-                  />
+                  <div className="h-[120px] w-[120px] rounded-2xl overflow-hidden relative z-10 shadow-lg">
+                    <Image
+                      src={business.logo_url}
+                      alt={business.name}
+                      width={120}
+                      height={120}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-[120px] w-[120px] items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-secondary/20 relative z-10 shadow-lg">
                     <Building2 className="h-14 w-14 text-primary" />

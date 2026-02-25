@@ -167,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     realtimeChannelRef.current = channel;
+    channel.subscribe();
   }, []);
 
   // Cleanup realtime subscription

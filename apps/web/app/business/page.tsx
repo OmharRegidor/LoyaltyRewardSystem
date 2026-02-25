@@ -32,7 +32,7 @@ export default async function BusinessDirectoryPage({
   return (
     <div className="min-h-screen bg-[#faf8f5]">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#7F0404] shadow-lg">
+      <header className="sticky top-0 z-50 bg-primary shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
@@ -77,7 +77,7 @@ export default async function BusinessDirectoryPage({
             Powered by{' '}
             <Link
               href="/"
-              className="font-semibold text-[#7F0404] hover:opacity-80 transition-opacity"
+              className="font-semibold text-primary hover:opacity-80 transition-opacity"
             >
               NoxaLoyalty
             </Link>

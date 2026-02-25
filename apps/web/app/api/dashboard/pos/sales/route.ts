@@ -62,7 +62,8 @@ async function getBusinessId(userId: string): Promise<string | null> {
 async function getStaffId(userId: string, businessId: string): Promise<string | null> {
   const supabase = createServiceClient();
 
-  // Check if business owner
+  // Check if business owner — owners don't have a staff record,
+  // so return null (sales.staff_id FK references staff.id)
   const { data: business } = await supabase
     .from('businesses')
     .select('id')
@@ -70,7 +71,7 @@ async function getStaffId(userId: string, businessId: string): Promise<string | 
     .eq('owner_id', userId)
     .maybeSingle();
 
-  if (business) return userId; // Return user ID for owner
+  if (business) return null;
 
   // Get staff record
   const { data: staff } = await supabase

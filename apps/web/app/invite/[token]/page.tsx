@@ -20,8 +20,11 @@ import {
   LogIn,
 } from 'lucide-react';
 
-type AcceptInviteReturn =
-  Database['public']['Functions']['accept_staff_invite']['Returns'];
+interface AcceptInviteResult {
+  success: boolean;
+  error?: string;
+  message?: string;
+}
 
 type PageStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 
@@ -243,7 +246,7 @@ export default function InvitePage() {
         return;
       }
 
-      const result = data as any;
+      const result = data as unknown as AcceptInviteResult;
 
       if (!result?.success) {
         // If already member, just redirect

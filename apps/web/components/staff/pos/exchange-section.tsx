@@ -102,7 +102,7 @@ export function ExchangeSection({
                 placeholder="Points to use"
                 min="0"
                 max={maxExchangePoints}
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
               />
             </div>
             <button
@@ -126,7 +126,7 @@ export function ExchangeSection({
             <button
               onClick={handleApply}
               disabled={!inputValue || parseInt(inputValue) <= 0}
-              className="flex-1 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2 bg-secondary hover:bg-secondary/90 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Apply
             </button>

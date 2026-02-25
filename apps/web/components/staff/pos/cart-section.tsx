@@ -124,7 +124,7 @@ export function CartSection({
             value={manualName}
             onChange={(e) => setManualName(e.target.value)}
             placeholder="Item name"
-            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
             autoFocus
           />
           <div className="flex gap-2">
@@ -139,13 +139,13 @@ export function CartSection({
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/20"
+                className="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
               />
             </div>
             <button
               onClick={handleAddManual}
               disabled={!manualName.trim() || !manualPrice || parseFloat(manualPrice) <= 0}
-              className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-secondary hover:bg-secondary/90 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add
             </button>
