@@ -122,13 +122,13 @@ export default function SecuritySettingsPage() {
             <span className="text-sm font-medium">Back to Settings</span>
           </button>
 
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-500/10 rounded-2xl">
-              <Shield className="w-8 h-8 text-red-500" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-red-500/10 rounded-2xl shrink-0">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Security Settings</h1>
-              <p className="text-gray-500 mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold">Security Settings</h1>
+              <p className="text-sm sm:text-base text-gray-500 mt-1">
                 Manage your account security and password
               </p>
             </div>
@@ -137,13 +137,13 @@ export default function SecuritySettingsPage() {
 
         {/* Password Change Card */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6 overflow-hidden">
+          <Card className="p-4 sm:p-6 overflow-hidden">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-primary/10 rounded-xl">
                 <KeyRound className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Change Password</h2>
+                <h2 className="text-lg sm:text-xl font-bold">Change Password</h2>
                 <p className="text-sm text-gray-500">
                   Secure your account with a new password
                 </p>
@@ -286,7 +286,7 @@ export default function SecuritySettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => setRequestStatus('idle')}
                       className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-100 transition font-medium"
@@ -334,7 +334,7 @@ export default function SecuritySettingsPage() {
 
         {/* Security Tips Card */}
         <motion.div variants={itemVariants}>
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-amber-500/10 rounded-xl">
                 <Lock className="w-5 h-5 text-amber-500" />
@@ -342,7 +342,7 @@ export default function SecuritySettingsPage() {
               <h2 className="text-lg font-bold">Security Tips</h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 {
                   title: 'Use a strong password',

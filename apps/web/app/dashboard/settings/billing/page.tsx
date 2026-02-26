@@ -26,6 +26,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // ============================================
 // TYPES
@@ -235,17 +236,17 @@ function PaymentForm({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-0">
+      <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
         <button
           onClick={onCancel}
-          className="p-2 hover:bg-gray-100  rounded-lg"
+          className="p-2 hover:bg-gray-100  rounded-lg shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold">Complete your subscription</h1>
-          <p className="text-gray-600 ">
+          <h1 className="text-xl sm:text-2xl font-bold">Complete your subscription</h1>
+          <p className="text-sm sm:text-base text-gray-600 ">
             {plan.displayName} plan • {interval === 'annual' ? 'Annual' : 'Monthly'} billing
           </p>
         </div>
@@ -289,7 +290,7 @@ function PaymentForm({
                     key={method.id}
                     type="button"
                     onClick={() => setPaymentMethod(method.id as typeof paymentMethod)}
-                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${
+                    className={`p-3 sm:p-4 rounded-xl border-2 flex flex-col items-center gap-1.5 sm:gap-2 transition-all ${
                       paymentMethod === method.id
                         ? 'border-primary bg-primary/5 '
                         : 'border-gray-200  hover:border-gray-300'
@@ -742,8 +743,32 @@ function BillingContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="max-w-4xl mx-auto space-y-8 p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <div className="rounded-2xl border border-gray-200 p-6 space-y-6">
+          <Skeleton className="h-6 w-32" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-14 h-14 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+        <div className="rounded-2xl border border-gray-200 p-6 space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-12 h-8 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -763,10 +788,10 @@ function BillingContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-6">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 px-4 py-4 sm:p-6">
       <div>
-        <h1 className="text-3xl font-bold">Billing & Subscription</h1>
-        <p className="text-gray-600  mt-1">
+        <h1 className="text-2xl sm:text-3xl font-bold">Billing & Subscription</h1>
+        <p className="text-sm sm:text-base text-gray-600  mt-1">
           Manage your subscription and payments
         </p>
       </div>
@@ -797,10 +822,10 @@ function BillingContent() {
 
       {/* Current Plan */}
       <div className="bg-white  rounded-2xl border border-gray-200 ">
-        <div className="p-6 border-b border-gray-200 ">
+        <div className="p-4 sm:p-6 border-b border-gray-200 ">
           <h2 className="text-lg font-semibold">Current Plan</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {subscription?.status === 'preview' && (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-gray-100  rounded-full flex items-center justify-center mx-auto mb-4">
@@ -824,10 +849,10 @@ function BillingContent() {
 
           {subscription?.hasAccess && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${
                       subscription.plan?.name === 'enterprise'
                         ? 'bg-gradient-to-br from-secondary to-yellow-500'
                         : 'bg-gradient-to-br from-primary to-primary/70'
@@ -890,10 +915,10 @@ function BillingContent() {
       {/* Payment Method */}
       {subscription?.hasAccess && !subscription?.isFreeForever && (
         <div className="bg-white  rounded-2xl border border-gray-200 ">
-          <div className="p-6 border-b border-gray-200  flex items-center justify-between">
+          <div className="p-4 sm:p-6 border-b border-gray-200  flex items-center justify-between">
             <h2 className="text-lg font-semibold">Payment Method</h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {paymentMethod ? (
               <div className="flex items-center gap-4">
                 <div className="w-12 h-8 bg-gray-100  rounded-lg flex items-center justify-center">
@@ -924,25 +949,25 @@ function BillingContent() {
         !subscription?.isFreeForever &&
         invoices.length > 0 && (
           <div className="bg-white  rounded-2xl border border-gray-200 ">
-            <div className="p-6 border-b border-gray-200 ">
+            <div className="p-4 sm:p-6 border-b border-gray-200 ">
               <h2 className="text-lg font-semibold">Billing History</h2>
             </div>
             <div className="divide-y divide-gray-200 ">
               {invoices.slice(0, 5).map((inv) => (
                 <div
                   key={inv.id}
-                  className="p-4 flex items-center justify-between"
+                  className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div className="flex items-center gap-3">
-                    <Receipt className="w-5 h-5 text-gray-400" />
+                    <Receipt className="w-5 h-5 text-gray-400 shrink-0" />
                     <div>
-                      <p className="font-medium">{inv.number}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-sm sm:text-base">{inv.number}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">
                         {formatDate(inv.date)}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 ml-8 sm:ml-0">
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded-full ${
                         inv.status === 'paid'
@@ -952,7 +977,7 @@ function BillingContent() {
                     >
                       {inv.status}
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-sm sm:text-base">
                       {formatPrice(inv.amount)}
                     </span>
                   </div>
@@ -965,7 +990,7 @@ function BillingContent() {
       {/* Actions */}
       {subscription?.hasAccess && !subscription?.isFreeForever && (
         <div className="bg-white  rounded-2xl border border-gray-200 ">
-          <div className="p-6 border-b border-gray-200 ">
+          <div className="p-4 sm:p-6 border-b border-gray-200 ">
             <h2 className="text-lg font-semibold">Manage Subscription</h2>
           </div>
           <div className="divide-y divide-gray-200 ">
@@ -1034,8 +1059,13 @@ export default function BillingPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="max-w-4xl mx-auto space-y-8 p-6">
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-64" />
+            <Skeleton className="h-4 w-80" />
+          </div>
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
         </div>
       }
     >

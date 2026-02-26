@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -251,8 +252,14 @@ export function POSInterface({ businessSettings, onSaleComplete }: POSInterfaceP
         {/* Products */}
         <Card className="flex-1 overflow-hidden flex flex-col min-h-[300px] md:min-h-0">
           {isLoadingProducts ? (
-            <div className="flex items-center justify-center py-12 flex-1">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 flex-1">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-20 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))}
             </div>
           ) : (
             <ProductGrid
