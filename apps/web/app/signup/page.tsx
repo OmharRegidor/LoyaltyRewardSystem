@@ -488,7 +488,7 @@ export default function SignupPage() {
 
           {/* Step 1: Business Information */}
           {step === 1 && (
-            <div className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-6">
               <div>
                 <label
                   htmlFor="businessName"
@@ -596,12 +596,12 @@ export default function SignupPage() {
                   </p>
                 )}
               </div>
-            </div>
+            </form>
           )}
 
           {/* Step 2: Account Details */}
           {step === 2 && (
-            <div className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-6">
               <div>
                 <label
                   htmlFor="email"
@@ -743,12 +743,12 @@ export default function SignupPage() {
                   ))}
                 </div>
               </div>
-            </div>
+            </form>
           )}
 
           {/* Step 3: Agreement */}
           {step === 3 && (
-            <div className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
               <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-6 border-2 border-primary/20">
                 <div className="space-y-4">
                   <div className="flex gap-4">
@@ -819,7 +819,7 @@ export default function SignupPage() {
                   </a>
                 </span>
               </label>
-            </div>
+            </form>
           )}
 
           {/* Navigation Buttons */}
