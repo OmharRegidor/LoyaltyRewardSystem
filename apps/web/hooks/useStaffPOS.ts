@@ -17,6 +17,7 @@ interface UseStaffPOSOptions {
   customerPoints: number;
   customerTier: TierKey;
   customerId: string;
+  businessId?: string;
 }
 
 interface UseStaffPOSReturn {
@@ -61,7 +62,7 @@ interface UseStaffPOSReturn {
 }
 
 export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
-  const { pesosPerPoint, customerPoints, customerTier, customerId } = options;
+  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId } = options;
 
   // Product state
   const [products, setProducts] = useState<Product[]>([]);
@@ -115,6 +116,37 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
       cancelled = true;
     };
   }, []);
+
+  // Realtime stock updates from other staff
+  useEffect(() => {
+    if (!businessId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`products-stock-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: `business_id=eq.${businessId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; stock_quantity: number };
+          setProducts((prev) =>
+            prev.map((p) =>
+              p.id === updated.id ? { ...p, stock_quantity: updated.stock_quantity } : p,
+            ),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [businessId]);
 
   // ============================================
   // COMPUTED VALUES
@@ -285,6 +317,15 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
       const { data } = await res.json();
       setSaleResult(data);
+
+      // Instant local stock deduction for immediate UI feedback
+      setProducts((prev) =>
+        prev.map((p) => {
+          const sold = cartItems.find((i) => i.product_id === p.id);
+          return sold ? { ...p, stock_quantity: p.stock_quantity - sold.quantity } : p;
+        }),
+      );
+
       return data;
     } finally {
       setIsProcessing(false);

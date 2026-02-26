@@ -109,6 +109,7 @@ export default function StaffScannerPage() {
     customerPoints: customer?.currentPoints || 0,
     customerTier: customer?.tier || "bronze",
     customerId: customer?.id || "",
+    businessId: staffData?.businessId,
   });
 
   // ============================================
@@ -786,6 +787,7 @@ export default function StaffScannerPage() {
                     {pos.hasPOSModule && !pos.isLoadingProducts && (
                       <ProductSelector
                         products={pos.products}
+                        cartItems={pos.cartItems}
                         onAddToCart={(product) => {
                           pos.addProduct(product);
                           // On mobile, switch to cart tab after adding

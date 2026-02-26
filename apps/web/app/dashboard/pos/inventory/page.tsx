@@ -15,6 +15,7 @@ import {
   DatabaseZap,
 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
+import { createClient } from '@/lib/supabase';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -128,6 +129,67 @@ export default function InventoryPage() {
       loadMovements();
     }
   }, [hasPOS, isLoading, loadMovements]);
+
+  // Fetch business ID for realtime subscriptions
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  useEffect(() => {
+    async function fetchBusinessId() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single();
+      if (business) setBusinessId(business.id);
+    }
+    fetchBusinessId();
+  }, []);
+
+  // Realtime subscriptions for stock updates
+  useEffect(() => {
+    if (!businessId) return;
+
+    const supabase = createClient();
+
+    const productsChannel = supabase
+      .channel(`inventory-products-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products',
+          filter: `business_id=eq.${businessId}`,
+        },
+        () => {
+          loadInventory();
+        },
+      )
+      .subscribe();
+
+    const movementsChannel = supabase
+      .channel(`inventory-movements-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'stock_movements',
+          filter: `business_id=eq.${businessId}`,
+        },
+        () => {
+          loadMovements();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(movementsChannel);
+    };
+  }, [businessId, loadInventory, loadMovements]);
 
   const handleReceiveForProduct = (productId: string) => {
     setPreselectedProductId(productId);
