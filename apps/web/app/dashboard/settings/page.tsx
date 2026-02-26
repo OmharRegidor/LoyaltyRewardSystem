@@ -255,6 +255,18 @@ export default function SettingsPage() {
           logoUrl: business.logo_url,
         });
 
+        // Backfill missing fields from auth metadata for existing accounts
+        if (!business.business_type || !business.phone || !business.owner_email) {
+          const updates: Record<string, string> = {};
+          if (!business.business_type && metadata.business_type) updates.business_type = metadata.business_type;
+          if (!business.phone && metadata.phone) updates.phone = metadata.phone;
+          if (!business.owner_email && user.email) updates.owner_email = user.email;
+
+          if (Object.keys(updates).length > 0) {
+            await supabase.from('businesses').update(updates).eq('id', business.id);
+          }
+        }
+
         setReferralRewardPoints((business as Record<string, unknown>).referral_reward_points as number ?? 25);
 
         setInputValues({

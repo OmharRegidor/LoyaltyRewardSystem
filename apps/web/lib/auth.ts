@@ -11,6 +11,15 @@ type StaffRole = 'owner' | 'manager' | 'cashier';
 type Business = Database['public']['Tables']['businesses']['Row'];
 
 // Helper to generate URL-safe slug from business name
+function generateJoinCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 function generateSlug(name: string): string {
   const base = name
     .toLowerCase()
@@ -279,6 +288,10 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
         name: businessName,
         slug: generateSlug(businessName),
         points_per_purchase: 10,
+        business_type: metadata?.business_type || null,
+        phone: metadata?.phone || null,
+        owner_email: user.email || null,
+        join_code: generateJoinCode(),
       })
       .select()
       .single();
@@ -412,6 +425,10 @@ export async function loginBusinessOwner(
             name: businessName,
             slug: generateSlug(businessName),
             points_per_purchase: 10,
+            business_type: metadata?.business_type || null,
+            phone: metadata?.phone || null,
+            owner_email: authData.user.email || null,
+            join_code: generateJoinCode(),
           })
           .select()
           .single();
