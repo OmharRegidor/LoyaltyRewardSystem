@@ -1102,9 +1102,9 @@ export default function Home() {
                     name: 'BiNuKboK VieW PoiNt ReSoRT',
                     src: '/binukbok-logo.png',
                   },
-                  { name: 'Jaza Media', src: '/Jaza-Media-logo.jpg' },
-                  { name: 'Noxa', src: '/noxa-tech-company.jpg' },
-                  { name: 'Evolvia', src: '/evolvia-logo.png' },
+                  { name: 'Jaza Media', src: '/JAZA logo.png' },
+                  { name: 'Noxa', src: '/noxa-tech-2026.png' },
+                  { name: 'Evolvia', src: '/Evolvia.png' },
                 ])
                   .flat()
                   .map((partner, i) => (
@@ -1117,7 +1117,7 @@ export default function Home() {
                         alt={partner.name}
                         width={80}
                         height={80}
-                        className="object-contain max-w-[60px] max-h-[60px] sm:max-w-[80px] sm:max-h-[80px]"
+                        className="object-contain max-w-[60px] max-h-[60px] sm:max-w-[80px] sm:max-h-[80px] grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
                       />
                       <span className="mt-1 text-[10px] font-medium text-gray-600 text-center leading-tight opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         {partner.name}
