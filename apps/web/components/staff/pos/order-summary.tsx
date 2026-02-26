@@ -56,7 +56,7 @@ export function OrderSummary({
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-      <div className="p-4 space-y-2">
+      <div className="px-3 py-2.5 space-y-1.5">
         {/* Expanded: Subtotal / Discount / Exchange breakdown */}
         {detailsOpen && (
           <>
@@ -93,9 +93,9 @@ export function OrderSummary({
           onClick={() => setDetailsOpen((o) => !o)}
           className={`w-full flex items-center justify-between ${detailsOpen ? "pt-2 border-t border-gray-200" : ""}`}
         >
-          <span className="text-base font-bold text-gray-900">TOTAL DUE</span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-xl font-bold text-gray-900">
+          <span className="text-sm font-bold text-gray-900">TOTAL DUE</span>
+          <span className="flex items-center gap-1">
+            <span className="text-base font-bold text-gray-900">
               ₱{(totalDueCentavos / 100).toFixed(2)}
             </span>
             <ChevronDown
@@ -206,12 +206,12 @@ export function OrderSummary({
       )}
 
       {/* Action — always visible */}
-      <div className="p-4 pt-0">
+      <div className="px-3 pb-2.5 pt-0">
         <motion.button
           onClick={onComplete}
           disabled={isEmpty || isProcessing}
           whileTap={{ scale: 0.97 }}
-          className="w-full py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold text-gray-900 border border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold text-gray-900 border border-gray-900 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
         >
           {isProcessing ? (
             <>

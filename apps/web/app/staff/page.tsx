@@ -97,6 +97,7 @@ export default function StaffScannerPage() {
   const [error, setError] = useState("");
   const [isDeactivated, setIsDeactivated] = useState(false);
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
+  const [desktopSidebarTab, setDesktopSidebarTab] = useState<"cart" | "payment">("cart");
   const [pendingScan, setPendingScan] = useState(false);
 
   // Refs
@@ -718,7 +719,7 @@ export default function StaffScannerPage() {
               <div className="flex flex-col md:flex-row flex-1 min-h-0">
                 {/* LEFT PANEL — Cart & Order Sidebar */}
                 <div
-                  className={`md:w-[380px] lg:w-[400px] bg-white border-r border-gray-200 md:flex md:flex-col ${
+                  className={`md:w-[380px] lg:w-[400px] bg-white border-r border-gray-200 md:!flex md:flex-col min-h-0 ${
                     mobileTab === "cart" ? "flex flex-col flex-1" : "hidden"
                   }`}
                 >
@@ -732,39 +733,90 @@ export default function StaffScannerPage() {
                     />
                   </div>
 
+                  {/* Desktop-only sub-tab switcher */}
+                  <div className="hidden md:flex items-center gap-1 px-4 pt-3 pb-1">
+                    {(["cart", "payment"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setDesktopSidebarTab(tab)}
+                        className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-lg transition-all ${
+                          desktopSidebarTab === tab
+                            ? "bg-gray-900 text-white shadow-sm"
+                            : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {tab === "cart" ? "Cart" : "Payment"}
+                        {tab === "cart" && pos.cartItems.length > 0 && (
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                            desktopSidebarTab === "cart"
+                              ? "bg-white/20 text-white"
+                              : "bg-gray-200 text-gray-700"
+                          }`}>
+                            {pos.cartItems.length}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Scrollable cart area */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    <CartSection
-                      items={pos.cartItems}
-                      onUpdateQuantity={pos.updateQuantity}
-                      onRemoveItem={pos.removeItem}
-                      onAddManualItem={pos.addManualItem}
-                      subtotalCentavos={pos.subtotalCentavos}
-                    />
+                  <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+                    {/* Mobile: show everything. Desktop: show based on active tab */}
+                    <div className={`space-y-4 ${desktopSidebarTab === "cart" ? "" : "md:hidden"}`}>
+                      <CartSection
+                        items={pos.cartItems}
+                        onUpdateQuantity={pos.updateQuantity}
+                        onRemoveItem={pos.removeItem}
+                        onAddManualItem={pos.addManualItem}
+                        subtotalCentavos={pos.subtotalCentavos}
+                      />
+                    </div>
 
                     {pos.subtotalCentavos > 0 && (
                       <>
-                        <DiscountSection
-                          subtotalCentavos={pos.subtotalCentavos}
-                          discount={pos.discount}
-                          onDiscountChange={pos.setDiscount}
-                        />
+                        {/* Desktop payment tab: Discount, Exchange, OrderSummary */}
+                        <div className={`space-y-4 hidden ${desktopSidebarTab === "payment" ? "md:block" : ""}`}>
+                          <DiscountSection
+                            subtotalCentavos={pos.subtotalCentavos}
+                            discount={pos.discount}
+                            onDiscountChange={pos.setDiscount}
+                          />
 
-                        <ExchangeSection
-                          customerPoints={customer.currentPoints}
-                          pesosPerPoint={staffData.pesosPerPoint}
-                          maxExchangePoints={pos.maxExchangePoints}
-                          currentExchangePoints={pos.exchange?.pointsUsed || 0}
-                          onExchangeChange={pos.setExchange}
-                        />
+                          <ExchangeSection
+                            customerPoints={customer.currentPoints}
+                            pesosPerPoint={staffData.pesosPerPoint}
+                            maxExchangePoints={pos.maxExchangePoints}
+                            currentExchangePoints={pos.exchange?.pointsUsed || 0}
+                            onExchangeChange={pos.setExchange}
+                          />
+
+                          <OrderSummary
+                            subtotalCentavos={pos.subtotalCentavos}
+                            discountCentavos={pos.discountCentavos}
+                            exchangeCentavos={pos.exchangeCentavos}
+                            totalDueCentavos={pos.totalDueCentavos}
+                            basePointsToEarn={pos.basePointsToEarn}
+                            pointsToEarn={pos.pointsToEarn}
+                            tierMultiplier={pos.tierMultiplier}
+                            customerTier={customer.tier}
+                            pesosPerPoint={staffData.pesosPerPoint}
+                            cartItemCount={pos.cartItems.length}
+                            amountTenderedCentavos={pos.amountTenderedCentavos}
+                            onTenderedChange={pos.setAmountTenderedCentavos}
+                            isProcessing={pos.isProcessing}
+                            onComplete={handleCompleteSale}
+                          />
+                        </div>
                       </>
                     )}
                   </div>
 
-                  {/* Pinned bottom: Order summary + Cancel + Mini stats */}
+                  {/* Pinned bottom: Cancel + Mini stats */}
                   <div className="border-t border-gray-200 bg-gray-50/80 backdrop-blur-sm">
-                    {pos.subtotalCentavos > 0 && (
-                      <OrderSummary
+                    {/* Mobile-only: OrderSummary stays pinned on mobile */}
+                    <div className="md:hidden">
+                      {pos.subtotalCentavos > 0 && (
+                        <OrderSummary
                         subtotalCentavos={pos.subtotalCentavos}
                         discountCentavos={pos.discountCentavos}
                         exchangeCentavos={pos.exchangeCentavos}
@@ -781,11 +833,12 @@ export default function StaffScannerPage() {
                         onComplete={handleCompleteSale}
                       />
                     )}
+                    </div>
 
-                    <div className="px-4 pb-3">
+                    <div className="px-4 pb-2">
                       <button
                         onClick={resetScanner}
-                        className="w-full py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700 border border-gray-300"
+                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors text-gray-500 border border-gray-200"
                       >
                         Cancel
                       </button>
@@ -809,20 +862,16 @@ export default function StaffScannerPage() {
 
                 {/* RIGHT PANEL — Product Area */}
                 <div
-                  className={`flex-1 bg-gray-50 md:block ${
-                    mobileTab === "products" ? "block" : "hidden"
+                  className={`flex-1 bg-gray-50 md:!flex md:flex-col min-h-0 ${
+                    mobileTab === "products" ? "flex flex-col" : "hidden"
                   }`}
                 >
-                  <div className="p-4 md:p-5 h-full overflow-y-auto">
+                  <div className="p-4 md:p-5 flex-1 overflow-y-auto min-h-0">
                     {pos.hasPOSModule && !pos.isLoadingProducts && (
                       <ProductSelector
                         products={pos.products}
                         onAddToCart={(product) => {
                           pos.addProduct(product);
-                          // On mobile, switch to cart tab after adding
-                          if (window.innerWidth < 768) {
-                            setMobileTab("cart");
-                          }
                         }}
                         disabled={pos.isProcessing}
                       />

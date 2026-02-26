@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
 import { Search, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/types/pos.types";
+import type { StaffCartItem } from "@/types/staff-pos.types";
 
 interface ProductSelectorProps {
   products: Product[];
+  cartItems?: StaffCartItem[];
   onAddToCart: (product: Product) => void;
   disabled?: boolean;
 }
@@ -36,15 +38,17 @@ function ProductCard({
   onAdd,
   disabled,
   index,
+  availableStock,
 }: {
   product: Product;
   onAdd: () => void;
   disabled?: boolean;
   index: number;
+  availableStock: number;
 }) {
-  const outOfStock = product.stock_quantity <= 0;
+  const outOfStock = availableStock <= 0;
   const lowStock =
-    !outOfStock && product.stock_quantity <= product.low_stock_threshold;
+    !outOfStock && availableStock <= product.low_stock_threshold;
   const color = getCategoryColor(product.category || "Other");
 
   return (
@@ -93,10 +97,16 @@ function ProductCard({
             </div>
           )}
 
-          {/* Low stock badge */}
-          {lowStock && (
-            <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-full">
-              {product.stock_quantity} left
+          {/* Stock count badge */}
+          {!outOfStock && (
+            <span className={`absolute top-1.5 right-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
+              availableStock <= 10
+                ? "text-red-800 bg-red-100 border-red-300"
+                : availableStock <= 25
+                  ? "text-amber-800 bg-amber-100 border-amber-300"
+                  : "text-emerald-700 bg-emerald-50 border-emerald-200"
+            }`}>
+              {availableStock} left
             </span>
           )}
         </div>
@@ -117,11 +127,23 @@ function ProductCard({
 
 export function ProductSelector({
   products,
+  cartItems = [],
   onAddToCart,
   disabled,
 }: ProductSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Map product_id → total quantity in cart
+  const cartQuantityMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of cartItems) {
+      if (item.product_id) {
+        map.set(item.product_id, (map.get(item.product_id) || 0) + item.quantity);
+      }
+    }
+    return map;
+  }, [cartItems]);
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -223,6 +245,7 @@ export function ProductSelector({
                 onAdd={() => onAddToCart(product)}
                 disabled={disabled}
                 index={index}
+                availableStock={product.stock_quantity - (cartQuantityMap.get(product.id) || 0)}
               />
             ))}
           </div>
