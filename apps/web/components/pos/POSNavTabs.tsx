@@ -16,28 +16,26 @@ export function POSNavTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <div className="flex gap-1 bg-muted p-1 rounded-lg w-full sm:w-fit">
-        {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
-          const Icon = tab.icon;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={cn(
-                'flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap',
-                isActive
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </Link>
-          );
-        })}
-      </div>
+    <div className="flex gap-0.5 sm:gap-1 bg-muted p-1 rounded-lg w-full sm:w-fit">
+      {tabs.map((tab) => {
+        const isActive = pathname === tab.href;
+        const Icon = tab.icon;
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={cn(
+              'flex flex-1 sm:flex-initial flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-[10px] sm:text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="truncate max-w-full">{tab.label}</span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

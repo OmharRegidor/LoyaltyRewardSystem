@@ -91,7 +91,7 @@ export function TeamMemberActivity({
       customer: log.customers as { id: string; full_name: string } | null,
     }));
 
-    setScanLogs(formattedLogs as any);
+    setScanLogs(formattedLogs as ScanLog[]);
 
     // Calculate stats
     const totalScans = formattedLogs.length;
@@ -118,40 +118,40 @@ export function TeamMemberActivity({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl">
+      <div className="bg-background rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700 shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-              <span className="text-white font-bold">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold">
                 {member.name.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-bold text-foreground">
                 {member.name}
               </h2>
-              <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+              <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
         {/* Date Range Tabs */}
-        <div className="flex gap-2 p-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+        <div className="flex gap-2 p-4 border-b border-border shrink-0">
           {(['today', 'week', 'month'] as const).map((range) => (
             <button
               key={range}
               onClick={() => setDateRange(range)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 dateRange === range
-                  ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               {range === 'today'
@@ -164,28 +164,28 @@ export function TeamMemberActivity({
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 shrink-0">
+        <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 shrink-0">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-foreground">
               {stats.totalScans}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Total Scans
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+            <p className="text-2xl font-bold text-primary">
               {stats.totalPoints.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Points Awarded
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-foreground">
               {stats.avgPointsPerScan}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Avg per Scan
             </p>
           </div>
@@ -195,43 +195,43 @@ export function TeamMemberActivity({
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           ) : scanLogs.length === 0 ? (
             <div className="text-center py-12">
-              <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">
+              <Clock className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-muted-foreground">
                 No activity for this period
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="divide-y divide-border">
               {scanLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                  className="p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
-                        <User className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        <p className="font-medium text-foreground text-sm">
                           {log.customer?.full_name || 'Unknown Customer'}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3" />
                           {formatTime(log.scanned_at)}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-green-600 dark:text-green-400">
+                      <p className="font-semibold text-green-600">
                         +{log.points_awarded} pts
                       </p>
                       {log.transaction_amount && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           ₱{log.transaction_amount.toLocaleString()}
                         </p>
                       )}
@@ -244,10 +244,10 @@ export function TeamMemberActivity({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700 shrink-0">
+        <div className="p-4 border-t border-border shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="w-full py-3 bg-muted text-foreground rounded-xl font-semibold hover:bg-muted/80 transition-colors"
           >
             Close
           </button>
