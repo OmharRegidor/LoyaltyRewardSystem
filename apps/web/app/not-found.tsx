@@ -10,7 +10,10 @@ export default function NotFound() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ colorScheme: 'light' }}>
+    <div
+      className="min-h-screen bg-white flex flex-col"
+      style={{ colorScheme: 'light' }}
+    >
       {/* Header */}
       <header className="bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,7 +46,9 @@ export default function NotFound() {
             <FileQuestion className="h-10 w-10 text-gray-500" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Page Not Found
+          </h1>
 
           <p className="text-gray-500 mb-8">
             The page you&apos;re looking for doesn&apos;t exist or may have been
@@ -51,7 +56,11 @@ export default function NotFound() {
           </p>
 
           <div className="flex items-center justify-center gap-3">
-            <Button className='text-black' variant="outline" onClick={() => router.back()}>
+            <Button
+              className="text-black"
+              variant="outline"
+              onClick={() => router.back()}
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>
@@ -69,7 +78,10 @@ export default function NotFound() {
       {/* Footer */}
       <footer className="border-t border-gray-200 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-500" suppressHydrationWarning>
+          <p
+            className="text-center text-sm text-gray-500"
+            suppressHydrationWarning
+          >
             &copy; {new Date().getFullYear()} NoxaLoyalty. All rights reserved.
           </p>
         </div>
