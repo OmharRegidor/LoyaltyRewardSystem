@@ -1,5 +1,6 @@
 // apps/web/app/api/staff/customer/route.ts
 
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   createServiceClient,
@@ -204,13 +205,16 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Send invite email
-    const joinCode = staffInfo.business.join_code;
+    let joinCode = staffInfo.business.join_code;
 
+    // Auto-generate join code for existing accounts that don't have one
     if (!joinCode) {
-      return NextResponse.json(
-        { error: 'Your business does not have a join code configured. Please generate one in Dashboard Settings before inviting customers.' },
-        { status: 400 },
-      );
+      joinCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (serviceClient as any)
+        .from('businesses')
+        .update({ join_code: joinCode })
+        .eq('id', staffInfo.business.id);
     }
 
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
