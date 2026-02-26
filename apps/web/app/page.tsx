@@ -258,7 +258,7 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
                       <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
                     </Link>
                   </motion.div>
-                )
+                ),
               )}
             </nav>
 
@@ -390,7 +390,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
                     {link.label}
                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-secondary group-hover:w-full transition-all duration-300" />
                   </Link>
-                )
+                ),
               )}
             </nav>
 

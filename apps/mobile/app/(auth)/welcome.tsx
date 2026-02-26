@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,8 +101,12 @@ export default function WelcomeScreen() {
 
             <Text style={styles.terms}>
               By continuing, you agree to our{' '}
-              <Text style={styles.link}>Terms of Service</Text> and{' '}
-              <Text style={styles.link}>Privacy Policy</Text>
+              <Text style={styles.link} onPress={() => router.push('/(auth)/terms-of-service')}>
+                Terms of Service
+              </Text>{' '}and{' '}
+              <Text style={styles.link} onPress={() => router.push('/(auth)/privacy-policy')}>
+                Privacy Policy
+              </Text>
             </Text>
           </View>
         </View>
