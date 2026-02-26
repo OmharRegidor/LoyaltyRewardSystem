@@ -350,8 +350,9 @@ export function JoinPageClient({
                     {...step1Form.register('email')}
                     type="email"
                     placeholder="juan@email.com"
-                    disabled={isSubmitting}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                    disabled={isSubmitting || !!prefillEmail}
+                    readOnly={!!prefillEmail}
+                    className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors ${prefillEmail ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                   />
                 </div>
                 {step1Form.formState.errors.email && (

@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Coding Rules
 
 - Never use `any` type for type declarations. Create type interfaces instead.
+- Never use `as any` type assertions. Use proper types or create appropriate interfaces.
 - Build only the minimum viable version of every feature.
 - Follow the anti-overengineering rules.
 
