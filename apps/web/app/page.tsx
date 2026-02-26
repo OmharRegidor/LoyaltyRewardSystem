@@ -143,15 +143,18 @@ interface MobileMenuProps {
 }
 
 function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
-  // Prevent body scroll when menu is open
+  // Prevent all body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -189,46 +192,42 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 35, stiffness: 400 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 dark:bg-gray-900/98 backdrop-blur-xl border-t border-border rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white backdrop-blur-xl border-t border-gray-200 rounded-t-3xl shadow-2xl overflow-y-auto"
+            style={{ maxHeight: 'calc(100dvh - 2rem)' }}
           >
             {/* Drag Handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
 
             {/* Menu Header with Centered Logo */}
-            <div className="px-6 pb-4 border-b border-border relative bg-primary">
-              {/* Close Button - Absolute positioned right */}
+            <div className="px-5 pb-2.5 pt-0.5 border-b border-gray-200 relative">
+              {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute right-4 top-0 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                className="absolute right-3 top-0.5 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                 aria-label="Close menu"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-4 h-4 text-primary" />
               </button>
 
               {/* Centered Logo */}
-              <div className="flex flex-col items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Image
                   src="/logoloyalty.png"
                   alt="NoxaLoyalty"
-                  width={48}
-                  height={48}
-                  className="h-12 w-auto object-contain brightness-0 invert"
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto object-contain"
                 />
-                <div className="flex flex-col items-center">
-                  <span className="text-base font-bold text-white">
-                    NoxaLoyalty
-                  </span>
-                  <span className="text-xs text-white/70">
-                    Rewards Platform
-                  </span>
-                </div>
+                <span className="text-sm font-bold text-primary leading-none">
+                  NoxaLoyalty
+                </span>
               </div>
             </div>
 
             {/* Navigation Links */}
-            <nav className="px-4 py-4">
+            <nav className="px-3 py-1.5">
               {NAV_LINKS.map((link, index) =>
                 link.href.startsWith('#') ? (
                   <motion.button
@@ -237,10 +236,10 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                     onClick={() => handleNavClick(link.href)}
-                    className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 rounded-lg transition-colors group"
                   >
                     <span>{link.label}</span>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </motion.button>
                 ) : (
                   <motion.div
@@ -252,10 +251,10 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
                     <Link
                       href={link.href}
                       onClick={onClose}
-                      className="w-full flex items-center justify-between px-4 py-4 text-lg font-semibold text-foreground hover:bg-muted rounded-xl transition-colors group"
+                      className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 rounded-lg transition-colors group"
                     >
                       <span>{link.label}</span>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                      <ChevronRight className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </Link>
                   </motion.div>
                 ),
@@ -263,17 +262,17 @@ function MobileBottomSheet({ isOpen, onClose }: MobileMenuProps) {
             </nav>
 
             {/* Auth Buttons */}
-            <div className="px-6 pb-8 pt-4 border-t border-border space-y-3">
+            <div className="px-5 pb-5 pt-2 border-t border-gray-200 space-y-2">
               <Link href="#pricing" onClick={onClose} className="block">
-                <Button className="w-full h-14 text-base font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-xl shadow-lg">
+                <Button className="w-full h-11 text-sm font-bold bg-primary text-white hover:bg-primary/90 rounded-xl shadow-md">
                   Get Started
-                  <ArrowRight className="ml-2 w-5 h-5" />
+                  <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
               <Link href="/login" onClick={onClose} className="block">
                 <Button
                   variant="outline"
-                  className="w-full h-12 text-base font-bold rounded-xl border-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                  className="w-full h-10 text-sm font-bold rounded-xl border-2 border-primary text-primary hover:bg-primary hover:text-white"
                 >
                   Log in
                 </Button>
@@ -296,19 +295,19 @@ interface AnnouncementBarProps {
 
 function AnnouncementBar({ onClose }: AnnouncementBarProps) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-30 h-auto min-h-[40px] sm:h-10 bg-white/90 backdrop-blur-sm border-b border-white/10 flex items-center justify-center px-10 sm:px-4">
-      <p className="text-primary/90 text-xs sm:text-sm text-center">
+    <div className="fixed top-0 left-0 right-0 z-30 h-auto min-h-[40px] sm:h-10 bg-secondary flex items-center justify-center px-10 sm:px-4">
+      <p className="text-primary text-xs sm:text-sm text-center font-medium">
         Start a loyalty program for your business in minutes.{' '}
         <Link
           href="/signup"
-          className="text-secondary font-semibold underline hover:text-secondary/80 transition-colors"
+          className="text-primary font-bold underline hover:text-primary/80 transition-colors"
         >
           Try NoxaLoyalty for free
         </Link>
       </p>
       <button
         onClick={onClose}
-        className="absolute right-2 sm:right-3 p-2 sm:p-1 text-white/70 hover:text-white transition-colors"
+        className="absolute right-2 sm:right-3 p-2 sm:p-1 text-primary/50 hover:text-primary transition-colors"
         aria-label="Dismiss announcement"
       >
         <X className="w-4 h-4" />
@@ -343,7 +342,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
         className={`fixed left-0 right-0 z-30 bg-primary transition-[top] duration-300 ${showBanner ? 'top-10' : 'top-0'}`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
+          <div className="flex items-center justify-between h-16 sm:h-20 px-1 sm:px-0">
             {/* LEFT: Logo - Always Visible */}
             <a
               href="#home"
@@ -790,7 +789,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: '#ffffff' }}>
       {/* Header/Navbar */}
       <Header
         showBanner={showBanner}
@@ -842,7 +841,7 @@ export default function Home() {
               </motion.h1>
 
               <motion.p
-                className="text-md sm:text-xl text-gray-600 mb-10 sm:mb-8 max-w-lg leading-relaxed text-center sm:text-left mx-auto sm:mx-0"
+                className="text-md sm:text-xl text-gray-600 mb-8 sm:mb-8 max-w-lg leading-relaxed text-center sm:text-left mx-auto sm:mx-0"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -851,6 +850,121 @@ export default function Home() {
                 QR code points, digital rewards, and customer insights — free
                 forever.
               </motion.p>
+
+              {/* Mobile Dashboard Preview - shown before CTAs on mobile only */}
+              <motion.div
+                className="lg:hidden mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+              >
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-200/80 overflow-hidden max-w-sm mx-auto">
+                  {/* Dashboard header */}
+                  <div className="bg-primary px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-white/30" />
+                      <div className="w-2 h-2 rounded-full bg-white/30" />
+                      <div className="w-2 h-2 rounded-full bg-white/30" />
+                    </div>
+                    <span className="text-white/80 text-xs font-medium">
+                      NoxaLoyalty Dashboard
+                    </span>
+                    <div className="w-12" />
+                  </div>
+
+                  <div className="p-3.5 space-y-3">
+                    {/* Stat cards */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: 'Customers', value: '2,847', change: '+12%', icon: Users },
+                        { label: 'Points Issued', value: '45.2K', change: '+8%', icon: Award },
+                        { label: 'Rewards', value: '18', change: '+3', icon: Gift },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="bg-gray-50 rounded-xl p-2.5"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <stat.icon className="w-3.5 h-3.5 text-primary/50" />
+                            <span className="text-[10px] text-green-600 font-semibold">
+                              {stat.change}
+                            </span>
+                          </div>
+                          <p className="text-base font-bold text-gray-900 leading-tight">
+                            {stat.value}
+                          </p>
+                          <p className="text-[9px] text-gray-500 mt-0.5">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Mini bar chart */}
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-semibold text-gray-700">
+                          Customer Growth
+                        </span>
+                        <span className="text-[9px] text-gray-400">
+                          Last 7 days
+                        </span>
+                      </div>
+                      <div className="flex items-end gap-1.5 h-10">
+                        {[40, 55, 45, 65, 50, 75, 85].map((h, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 bg-primary/15 rounded-t-sm relative overflow-hidden"
+                            style={{ height: `${h}%` }}
+                          >
+                            <div
+                              className="absolute bottom-0 inset-x-0 bg-primary rounded-t-sm"
+                              style={{ height: `${h * 0.7}%` }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent activity */}
+                    <div>
+                      <span className="text-[11px] font-semibold text-gray-700">
+                        Recent Activity
+                      </span>
+                      <div className="mt-1.5 space-y-0">
+                        {[
+                          { name: 'Maria S.', action: 'earned 150 points', time: '2m ago' },
+                          { name: 'Juan D.', action: 'redeemed Free Coffee', time: '5m ago' },
+                        ].map((activity) => (
+                          <div
+                            key={activity.name}
+                            className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-primary">
+                                  {activity.name[0]}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[11px] font-medium text-gray-800">
+                                  {activity.name}
+                                </span>
+                                <span className="text-[11px] text-gray-500">
+                                  {' '}{activity.action}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[9px] text-gray-400">
+                              {activity.time}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
 
               {/* Dual CTAs */}
               <motion.div
@@ -903,9 +1017,9 @@ export default function Home() {
               </motion.div>
             </motion.div>
 
-            {/* Right Column - Dashboard Mockup */}
+            {/* Right Column - Dashboard Mockup (desktop only) */}
             <motion.div
-              className="block relative"
+              className="hidden lg:block relative"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
@@ -1072,7 +1186,7 @@ export default function Home() {
 
       {/* Partner Logos */}
       <section
-        className="py-14 md:py-20"
+        className="py-14 md:py-20 overflow-hidden"
         style={{
           background:
             'linear-gradient(180deg, #ffffff 0%, #faf8f5 12%, #faf8f5 88%, #ffffff 100%)',
