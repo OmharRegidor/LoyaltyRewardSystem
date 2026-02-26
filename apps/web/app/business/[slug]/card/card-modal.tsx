@@ -14,7 +14,7 @@ interface CardModalProps {
   onClose: () => void;
   customerName: string;
   businessName: string;
-  phone: string;
+  phone?: string;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
@@ -224,9 +224,11 @@ export function CardModal({
                     <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">
                       {customerName}
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      {formatPhone(phone)}
-                    </p>
+                    {phone && (
+                      <p className="text-xs text-gray-500">
+                        {formatPhone(phone)}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 mt-0.5">
                       <Star className="w-3.5 h-3.5 text-amber-500" />
                       <span className="text-xs font-semibold text-gray-700">

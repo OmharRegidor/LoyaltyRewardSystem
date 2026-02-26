@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
-  getCustomerByPhone,
+  getCustomerByEmail,
 } from '@/lib/services/public-business.service';
 import { verifyCode } from '@/lib/services/verification.service';
 import { z } from 'zod';
@@ -15,10 +15,7 @@ import type { Json } from '../../../../../../../../../packages/shared/types/data
 // ============================================
 
 const VerifySchema = z.object({
-  phone: z
-    .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+  email: z.string().email('Please enter a valid email address'),
   code: z
     .string()
     .length(6, 'Code must be 6 digits')
@@ -130,11 +127,11 @@ export async function POST(
       );
     }
 
-    const { phone, code } = validation.data;
+    const { email, code } = validation.data;
 
-    // 4. Look up customer to get email
-    const customer = await getCustomerByPhone(business.id, phone);
-    if (!customer?.email) {
+    // 4. Look up customer by email
+    const customer = await getCustomerByEmail(business.id, email);
+    if (!customer) {
       return NextResponse.json(
         { error: 'Verification failed. Please try looking up your card again.' },
         { status: 400 }
@@ -142,7 +139,7 @@ export async function POST(
     }
 
     // 5. Verify the OTP code
-    const verifyResult = await verifyCode(code, customer.email, business.id);
+    const verifyResult = await verifyCode(code, email, business.id);
 
     if (!verifyResult.success) {
       await logAuditEvent(serviceClient, {
@@ -182,6 +179,7 @@ export async function POST(
       success: true,
       data: {
         customerName: customer.fullName,
+        phone: customer.phone || null,
         qrCodeUrl: customer.qrCodeUrl,
         tier: customer.tier,
         totalPoints: customer.totalPoints,
