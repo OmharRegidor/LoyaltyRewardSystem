@@ -614,17 +614,17 @@ export default function SettingsPage() {
         variants={containerVariants}
       >
         {/* Header */}
-        <motion.div variants={itemVariants} className="flex items-center justify-between">
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <p className="text-gray-500 mt-1">
-              Manage your business profile and loyalty program settings
+            <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
+            <p className="text-gray-500 mt-1 text-sm sm:text-base">
+              Manage your business profile and loyalty program
             </p>
           </div>
           {!isEditing ? (
             <button
               onClick={startEditing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition self-start sm:self-auto"
             >
               <Pencil className="w-4 h-4" />
               <span>Edit</span>
@@ -632,7 +632,7 @@ export default function SettingsPage() {
           ) : (
             <button
               onClick={cancelEditing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition self-start sm:self-auto"
             >
               <X className="w-4 h-4" />
               <span>Cancel</span>
@@ -643,13 +643,13 @@ export default function SettingsPage() {
         {/* Single Column Layout */}
         <div className="space-y-6">
           {/* Business Profile */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-primary/10 rounded-xl">
                 <Building2 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Business Profile</h2>
+                <h2 className="text-lg sm:text-xl font-bold">Business Profile</h2>
                 <p className="text-sm text-gray-500">
                   Your business information
                 </p>
@@ -658,7 +658,7 @@ export default function SettingsPage() {
 
             <div className="space-y-6">
               {/* Logo + Business Name Row */}
-              <div className="flex items-start gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 {/* Logo Upload */}
                 <div className="shrink-0">
                   <div className="relative group">
@@ -878,13 +878,13 @@ export default function SettingsPage() {
           </Card>
 
           {/* Loyalty Points Settings */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-amber-500/10 rounded-xl">
                 <Coins className="w-5 h-5 text-amber-500" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Loyalty Points</h2>
+                <h2 className="text-lg sm:text-xl font-bold">Loyalty Points</h2>
                 <p className="text-sm text-gray-500">
                   Configure earning rates
                 </p>
@@ -1026,13 +1026,13 @@ export default function SettingsPage() {
           </Card>
 
           {/* Referral Settings */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-orange-500/10 rounded-xl">
                 <Users className="w-5 h-5 text-orange-500" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Referral Program</h2>
+                <h2 className="text-lg sm:text-xl font-bold">Referral Program</h2>
                 <p className="text-sm text-gray-500">
                   Reward customers who invite friends
                 </p>
@@ -1073,13 +1073,13 @@ export default function SettingsPage() {
           </Card>
 
           {/* Security Card */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-red-500/10 rounded-xl">
                 <Shield className="w-5 h-5 text-red-500" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Security</h2>
+                <h2 className="text-lg sm:text-xl font-bold">Security</h2>
                 <p className="text-sm text-gray-500">
                   Manage account security
                 </p>
@@ -1114,7 +1114,7 @@ export default function SettingsPage() {
             variants={itemVariants}
           >
             <Card className="p-4 border-2 border-gray-200/50">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 {/* Status Messages */}
                 <div className="flex-1 min-w-0">
                   {saveStatus === 'success' && (
@@ -1156,7 +1156,7 @@ export default function SettingsPage() {
                 <button
                   onClick={saveSettings}
                   disabled={saveStatus === 'saving'}
-                  className="flex items-center gap-2 px-8 py-3 bg-linear-to-r from-primary to-primary/80 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3 bg-linear-to-r from-primary to-primary/80 text-primary-foreground rounded-xl hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
                 >
                   {saveStatus === 'saving' ? (
                     <>
