@@ -8,25 +8,26 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  ScrollView,
 } from 'react-native';
-
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
 import { GoogleSignInButton } from '../../src/components/auth/GoogleSignInButton';
-import { Button } from '../../src/components/ui/Button';
-import {
-  COLORS,
-  SPACING,
-  FONT_SIZE,
-  BORDER_RADIUS,
-} from '../../src/lib/constants';
+import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
+
+const FEATURES = [
+  { icon: 'gift' as const, text: 'Earn points on every visit', color: '#7F0404' },
+  { icon: 'star' as const, text: 'Exclusive member rewards', color: '#D4A017' },
+  { icon: 'qr-code' as const, text: 'Your QR code for easy scanning', color: '#22C55E' },
+];
 
 export default function WelcomeScreen() {
   const { signInWithGoogle, isLoading, user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  // Navigate when user becomes available
   React.useEffect(() => {
     if (user) {
       router.replace('/(main)');
@@ -45,121 +46,148 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <View style={[styles.gradient, { backgroundColor: COLORS.white }]}>
-      <SafeAreaView style={styles.container}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/images/logoloyalty.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
+    <View style={styles.root}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+      >
+        {/* Hero Gradient Section */}
+        <LinearGradient
+          colors={['#7F0404', '#5A0303']}
+          style={styles.hero}
+        >
+          <SafeAreaView style={styles.heroInner}>
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../assets/images/logoloyalty.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+
+            {/* Welcome Text */}
+            <Text style={styles.title}>Welcome to NoxaLoyalty</Text>
+            <Text style={styles.subtitle}>
+              Earn rewards with every purchase.{'\n'}
+              Scan, collect, and redeem.
+            </Text>
+          </SafeAreaView>
+        </LinearGradient>
+
+        {/* Features Section */}
+        <View style={styles.body}>
+          <View style={styles.features}>
+            {FEATURES.map((feature) => (
+              <View key={feature.icon} style={styles.featureItem}>
+                <View style={[styles.iconContainer, { backgroundColor: feature.color }]}>
+                  <Ionicons name={feature.icon} size={22} color="#fff" />
+                </View>
+                <Text style={styles.featureText}>{feature.text}</Text>
+              </View>
+            ))}
           </View>
 
-          {/* Welcome Text */}
-          <Text style={styles.title}>Welcome to NoxaLoyalty</Text>
-          <Text style={styles.subtitle}>
-            Earn rewards with every purchase.{'\n'}
-            Scan, collect, and redeem.
-          </Text>
+          {/* Action Section */}
+          <View style={styles.actions}>
+            <GoogleSignInButton
+              onPress={handleGoogleSignIn}
+              loading={isLoading}
+            />
+
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
+            <Text style={styles.terms}>
+              By continuing, you agree to our{' '}
+              <Text style={styles.link}>Terms of Service</Text> and{' '}
+              <Text style={styles.link}>Privacy Policy</Text>
+            </Text>
+          </View>
         </View>
-
-        {/* Features Preview */}
-        <View style={styles.features}>
-          <FeatureItem icon="🎁" text="Earn points on every visit" />
-          <FeatureItem icon="⭐" text="Exclusive member rewards" />
-          <FeatureItem icon="📱" text="Your QR code for easy scanning" />
-        </View>
-
-        {/* Action Section */}
-        <View style={styles.actions}>
-          <GoogleSignInButton
-            onPress={handleGoogleSignIn}
-            loading={isLoading}
-          />
-
-          {error && <Text style={styles.errorText}>{error}</Text>}
-
-          {/* Terms */}
-          <Text style={styles.terms}>
-            By continuing, you agree to our{' '}
-            <Text style={styles.link}>Terms of Service</Text> and{' '}
-            <Text style={styles.link}>Privacy Policy</Text>
-          </Text>
-        </View>
-      </SafeAreaView>
-    </View>
-  );
-}
-
-function FeatureItem({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.featureItem}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  root: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  scrollView: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: SPACING.lg,
-    justifyContent: 'space-between',
+  scrollContent: {
+    flexGrow: 1,
   },
-  header: {
+  hero: {
+    paddingBottom: SPACING['2xl'],
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  heroInner: {
     alignItems: 'center',
     paddingTop: SPACING['3xl'],
+    paddingHorizontal: SPACING.lg,
   },
   logoContainer: {
-    marginBottom: SPACING.xl,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    padding: SPACING.base,
+    marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoImage: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
   },
   title: {
-    fontSize: FONT_SIZE['2xl'],
-    fontWeight: '700',
-    color: COLORS.gray[900],
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
     marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: FONT_SIZE.base,
-    color: COLORS.gray[600],
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
   },
+  body: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl,
+    justifyContent: 'space-between',
+  },
   features: {
-    backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.lg,
-    gap: SPACING.base,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    gap: 18,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  featureIcon: {
-    fontSize: 24,
+  iconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureText: {
-    fontSize: FONT_SIZE.base,
-    color: COLORS.gray[700],
+    fontSize: 15,
     fontWeight: '500',
+    color: COLORS.gray[800],
+    flex: 1,
   },
   actions: {
+    paddingTop: SPACING.xl,
     paddingBottom: SPACING['2xl'],
     gap: SPACING.base,
   },
@@ -169,7 +197,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   terms: {
-    fontSize: FONT_SIZE.xs,
+    fontSize: 12,
     color: COLORS.gray[500],
     textAlign: 'center',
     lineHeight: 18,
