@@ -46,6 +46,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { createClient } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { POSNavTabs } from '@/components/pos';
 import type { Product, ProductFormData } from '@/types/pos.types';
 
@@ -259,19 +260,19 @@ export default function POSProductsPage() {
   if (isLoadingSubscription) {
     return (
       <DashboardLayout>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-36" />
-              <Skeleton className="h-4 w-64" />
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Skeleton className="h-7 sm:h-8 w-28 sm:w-36" />
+              <Skeleton className="h-4 w-48 sm:w-64" />
             </div>
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-9 sm:h-10 w-28 sm:w-32" />
           </div>
-          <Skeleton className="h-10 w-full max-w-md" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-10 w-full" />
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-4 border rounded-lg">
-                <Skeleton className="w-16 h-16 rounded-lg" />
+              <div key={i} className="flex items-center gap-3 p-3 sm:p-4 border rounded-lg">
+                <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -287,14 +288,14 @@ export default function POSProductsPage() {
   if (!hasPOS) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-          <Card className="max-w-md">
-            <CardContent className="flex flex-col items-center text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Package className="h-8 w-8 text-muted-foreground" />
+        <div className="flex items-center justify-center h-[calc(100vh-8rem)] px-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="flex flex-col items-center text-center py-8 sm:py-12">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Package className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">POS Not Available</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-2">POS Not Available</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mb-6">
                 Point of Sale is available on the Enterprise plan.
               </p>
               <Button onClick={() => router.push('/dashboard/settings')}>
@@ -322,16 +323,17 @@ export default function POSProductsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog for POS</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold">Products</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your product catalog for POS</p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
+          <Button onClick={() => handleOpenDialog()} size="sm" className="shrink-0 sm:size-default">
+            <Plus className="h-4 w-4 mr-1.5 sm:mr-2" />
+            <span className="hidden xs:inline">Add Product</span>
+            <span className="xs:hidden">Add</span>
           </Button>
         </div>
 
@@ -340,10 +342,10 @@ export default function POSProductsPage() {
 
         {/* Products */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-4 border rounded-lg">
-                <Skeleton className="w-16 h-16 rounded-lg" />
+              <div key={i} className="flex items-center gap-3 p-3 sm:p-4 border rounded-lg">
+                <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -353,8 +355,8 @@ export default function POSProductsPage() {
           </div>
         ) : products.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mb-2" />
+            <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 text-muted-foreground">
+              <Package className="h-10 w-10 sm:h-12 sm:w-12 mb-2" />
               <p>No products yet</p>
               <p className="text-sm">Add products to use them in POS</p>
               <Button className="mt-4" onClick={() => handleOpenDialog()}>
@@ -364,21 +366,21 @@ export default function POSProductsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {Object.entries(categories).map(([category, categoryProducts]) => (
               <Card key={category}>
-                <CardHeader>
-                  <CardTitle className="text-base">{category}</CardTitle>
+                <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+                  <CardTitle className="text-sm sm:text-base">{category}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+                  <div className="grid gap-2.5 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {categoryProducts.map((product) => (
                       <div
                         key={product.id}
-                        className="flex items-center gap-3 p-4 border rounded-lg"
+                        className="flex items-center gap-3 p-3 sm:p-4 border rounded-lg active:bg-muted/50 transition-colors"
                       >
                         {/* Product Image Thumbnail */}
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                           {product.image_url ? (
                             <img
                               src={product.image_url}
@@ -387,29 +389,29 @@ export default function POSProductsPage() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-6 w-6 text-muted-foreground" />
+                              <Package className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium truncate">{product.name}</p>
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <p className="text-sm sm:text-base font-medium truncate">{product.name}</p>
                             {!product.is_active && (
-                              <Badge variant="secondary">Inactive</Badge>
+                              <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">Inactive</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {formatPrice(product.price_centavos)}
                           </p>
                           {product.sku && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
                               SKU: {product.sku}
                             </p>
                           )}
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm">
+                            <Button variant="ghost" size="icon-sm" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -442,50 +444,65 @@ export default function POSProductsPage() {
 
       {/* Product Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent className="max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-h-[95dvh] sm:max-h-[85vh] flex flex-col overflow-hidden p-4 sm:p-6">
           <DialogHeader className="shrink-0">
             <DialogTitle>
               {selectedProduct ? 'Edit Product' : 'Add Product'}
             </DialogTitle>
           </DialogHeader>
 
-          <form id="product-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4 py-4 overflow-y-auto flex-1 -mx-6 px-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Product name"
-              />
+          <form id="product-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-3 sm:space-y-4 py-3 sm:py-4 overflow-y-auto flex-1 -mx-4 px-4 sm:-mx-6 sm:px-6">
+            {/* Name & Price side by side on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="Product name"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="price">Price (₱) *</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.price || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))
+                  }
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (₱) *</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price || ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))
-                }
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+                  placeholder="e.g., Food, Drinks"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input
+                  id="sku"
+                  value={formData.sku}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sku: e.target.value }))}
+                  placeholder="Optional SKU"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                placeholder="e.g., Food, Drinks, Services"
-              />
-            </div>
-
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
@@ -497,48 +514,40 @@ export default function POSProductsPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sku">SKU</Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => setFormData((prev) => ({ ...prev, sku: e.target.value }))}
-                placeholder="Optional SKU"
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {!selectedProduct && (
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="stock_quantity">Initial Stock</Label>
+                  <Input
+                    id="stock_quantity"
+                    type="number"
+                    value={formData.stock_quantity || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))
+                    }
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              )}
 
-            {!selectedProduct && (
-              <div className="space-y-2">
-                <Label htmlFor="stock_quantity">Initial Stock</Label>
+              <div className={cn('space-y-1.5 sm:space-y-2', selectedProduct && 'col-span-2 sm:col-span-1')}>
+                <Label htmlFor="low_stock_threshold">Low Stock Alert</Label>
                 <Input
-                  id="stock_quantity"
+                  id="low_stock_threshold"
                   type="number"
-                  value={formData.stock_quantity || ''}
+                  value={formData.low_stock_threshold || ''}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))
+                    setFormData((prev) => ({ ...prev, low_stock_threshold: parseInt(e.target.value) || 0 }))
                   }
-                  placeholder="0"
+                  placeholder="5"
                   min="0"
                 />
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="low_stock_threshold">Low Stock Threshold</Label>
-              <Input
-                id="low_stock_threshold"
-                type="number"
-                value={formData.low_stock_threshold || ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, low_stock_threshold: parseInt(e.target.value) || 0 }))
-                }
-                placeholder="5"
-                min="0"
-              />
             </div>
 
             {/* Image Upload */}
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label>Product Image</Label>
               <input
                 ref={fileInputRef}
@@ -548,7 +557,7 @@ export default function POSProductsPage() {
                 className="hidden"
               />
               {imagePreview ? (
-                <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                <div className="relative w-full h-28 sm:h-32 rounded-lg overflow-hidden border">
                   <img
                     src={imagePreview}
                     alt="Product preview"
@@ -568,20 +577,20 @@ export default function POSProductsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-32 flex flex-col items-center justify-center gap-2"
+                  className="w-full h-24 sm:h-32 flex flex-col items-center justify-center gap-1.5 sm:gap-2"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >
                   {isUploading ? (
                     <>
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                      <span className="text-sm">Uploading...</span>
+                      <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                      <span className="text-xs sm:text-sm">Uploading...</span>
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Click to upload image</span>
-                      <span className="text-xs text-muted-foreground">Max 2MB</span>
+                      <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                      <span className="text-xs sm:text-sm text-muted-foreground">Click to upload image</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Max 2MB</span>
                     </>
                   )}
                 </Button>

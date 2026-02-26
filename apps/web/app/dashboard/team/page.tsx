@@ -207,7 +207,7 @@ export default function TeamManagementPage() {
           {/* Stats skeleton */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
+              <div key={i} className="bg-background rounded-xl p-4 border border-border shadow-sm">
                 <Skeleton className="h-7 w-10 mb-1 rounded-lg" />
                 <Skeleton className="h-4 w-24 rounded-lg" />
               </div>
@@ -215,11 +215,11 @@ export default function TeamManagementPage() {
           </div>
 
           {/* Team members list skeleton */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
-            <div className="p-4 sm:p-6 border-b border-gray-100">
+          <div className="bg-background rounded-2xl border border-border shadow-sm">
+            <div className="p-4 sm:p-6 border-b border-border">
               <Skeleton className="h-6 w-44 rounded-lg" />
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="p-4 sm:p-6 flex items-center gap-4">
                   <Skeleton className="w-12 h-12 rounded-full shrink-0" />
@@ -249,16 +249,16 @@ export default function TeamManagementPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               Team Management
             </h1>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Manage your staff and cashiers
             </p>
           </div>
           <button
             onClick={handleInviteClick}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
           >
             <Plus className="w-5 h-5" />
             Invite Team Member
@@ -267,29 +267,29 @@ export default function TeamManagementPage() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
+            <p className="text-2xl font-bold text-foreground">
               {teamMembers.length}
             </p>
-            <p className="text-sm text-gray-500">Total Members</p>
+            <p className="text-sm text-muted-foreground">Total Members</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
+          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
             <p className="text-2xl font-bold text-green-600">
               {activeMembers.length}
             </p>
-            <p className="text-sm text-gray-500">Active Staff</p>
+            <p className="text-sm text-muted-foreground">Active Staff</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
+          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
             <p className="text-2xl font-bold text-yellow-600">
               {pendingInvites.length}
             </p>
-            <p className="text-sm text-gray-500">Pending Invites</p>
+            <p className="text-sm text-muted-foreground">Pending Invites</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-md">
-            <p className="text-2xl font-bold text-gray-400">
+          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
+            <p className="text-2xl font-bold text-muted-foreground">
               {inactiveMembers.length}
             </p>
-            <p className="text-sm text-gray-500">Inactive</p>
+            <p className="text-sm text-muted-foreground">Inactive</p>
           </div>
         </div>
 
@@ -316,14 +316,14 @@ export default function TeamManagementPage() {
                       <Mail className="w-5 h-5 text-yellow-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
+                      <p className="font-medium text-foreground truncate">
                         {invite.name}
                       </p>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {invite.email}
                       </p>
                     </div>
-                    <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600 capitalize shrink-0">
+                    <span className="px-2 py-1 bg-muted rounded-lg text-xs font-medium text-muted-foreground capitalize shrink-0">
                       {invite.role}
                     </span>
                   </div>
@@ -333,7 +333,7 @@ export default function TeamManagementPage() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
                         copiedToken === invite.token
                           ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
                       }`}
                     >
                       <Copy className="w-4 h-4" />
@@ -354,9 +354,9 @@ export default function TeamManagementPage() {
         )}
 
         {/* Team Members Section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-md">
-          <div className="p-4 sm:p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="bg-background rounded-2xl border border-border shadow-sm">
+          <div className="p-4 sm:p-6 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <Users className="w-5 h-5" />
               Team Members ({teamMembers.length})
             </h2>
@@ -364,26 +364,26 @@ export default function TeamManagementPage() {
 
           {teamMembers.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 No team members yet
               </h3>
-              <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
                 Invite your first team member to help manage your loyalty
                 program
               </p>
               <button
                 onClick={handleInviteClick}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors"
               >
                 <Plus className="w-5 h-5" />
                 Invite Team Member
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {teamMembers.map((member) => (
                 <TeamMemberCard
                   key={member.id}
@@ -440,18 +440,18 @@ export default function TeamManagementPage() {
       {/* Deactivate Confirmation Modal */}
       {deactivateTarget && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+          <div className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-xl border border-border">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
-                <UserX className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center shrink-0">
+                <UserX className="w-5 h-5 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-foreground">
                 Deactivate Member
               </h3>
             </div>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Are you sure you want to deactivate{' '}
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-foreground">
                 {deactivateTarget.name}
               </span>
               ? They will no longer be able to scan customers.
@@ -460,14 +460,14 @@ export default function TeamManagementPage() {
               <button
                 onClick={() => setDeactivateTarget(null)}
                 disabled={isDeactivating}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors text-gray-700"
+                className="flex-1 py-2.5 bg-muted hover:bg-muted/80 rounded-xl font-medium transition-colors text-foreground"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeactivate}
                 disabled={isDeactivating}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 py-2.5 bg-destructive hover:bg-destructive/90 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isDeactivating ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
