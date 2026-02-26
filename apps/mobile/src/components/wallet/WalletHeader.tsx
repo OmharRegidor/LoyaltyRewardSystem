@@ -50,7 +50,12 @@ export function WalletHeader({
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12, backgroundColor: COLORS.primary }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + 12, backgroundColor: COLORS.primary },
+      ]}
+    >
       {/* Top Row - Back, Title, History */}
       <View style={styles.topRow}>
         <TouchableOpacity
@@ -63,9 +68,9 @@ export function WalletHeader({
 
         <Text style={styles.title}>My Wallet</Text>
 
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+        {/* <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
           <HistoryIcon />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Points Display */}
