@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getBusinessByJoinCode } from '@/lib/services/public-business.service';
 import { createSelfSignupCustomer } from '@/lib/services/public-business.service';
-import { hasVerifiedCode } from '@/lib/services/verification.service';
 import { createServiceClient } from '@/lib/supabase-server';
 import { hashPin } from '@/lib/services/pin.service';
 import type { Json } from '../../../../../../../../packages/shared/types/database';
@@ -72,16 +71,7 @@ export async function POST(
 
     const { fullName, phone, email, pin, referralCode } = validation.data;
 
-    // 3. Require email verification
-    const verified = await hasVerifiedCode(email, business.id);
-    if (!verified) {
-      return NextResponse.json(
-        { error: 'Email not verified. Please complete verification first.' },
-        { status: 403 },
-      );
-    }
-
-    // 4. Check if customer already exists for this business
+    // 3. Check if customer already exists for this business
     const serviceClient = createServiceClient();
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedPhone = phone.replace(/\s+/g, '');
@@ -147,7 +137,7 @@ export async function POST(
       .update({
         is_verified: true,
         verified_at: new Date().toISOString(),
-        verification_method: 'email_otp',
+        verification_method: 'owner_registered',
         pin_hash: pinHash,
       })
       .eq('id', result.customerId);
@@ -212,7 +202,7 @@ export async function POST(
       details: {
         customerId: result.customerId,
         isNewCustomer: result.isNewCustomer,
-        verificationMethod: 'email_otp',
+        verificationMethod: 'owner_registered',
         processingTimeMs: Date.now() - startTime,
         ipAddress,
       } as Json,
