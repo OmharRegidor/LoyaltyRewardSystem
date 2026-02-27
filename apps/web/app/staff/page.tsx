@@ -487,11 +487,25 @@ export default function StaffScannerPage() {
 
       const tier = (customerData.tier as TierKey) || "bronze";
 
+      // Fetch business-specific points
+      let businessPoints = customerData.total_points || 0;
+      if (staffDataRef.current) {
+        const { data: bpData } = await supabase
+          .from("customer_businesses")
+          .select("points")
+          .eq("customer_id", customerData.id)
+          .eq("business_id", staffDataRef.current.businessId)
+          .maybeSingle();
+        if (bpData) {
+          businessPoints = bpData.points || 0;
+        }
+      }
+
       setCustomer({
         id: customerData.id,
         name: customerName,
         email: customerData.email || "",
-        currentPoints: customerData.total_points || 0,
+        currentPoints: businessPoints,
         lifetimePoints: customerData.lifetime_points || 0,
         tier,
         isFirstVisit,

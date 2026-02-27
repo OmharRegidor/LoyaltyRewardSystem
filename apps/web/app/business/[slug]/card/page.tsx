@@ -19,25 +19,37 @@ interface PageProps {
 // HELPERS
 // ============================================
 
-async function getCustomerByCardToken(token: string) {
+async function getCustomerByCardToken(token: string, businessId: string) {
   const payload = verifyCardToken(token);
   if (!payload) return null;
 
   const supabase = createServiceClient();
   const { data: customer } = await supabase
     .from('customers')
-    .select('id, full_name, phone, qr_code_url, tier, total_points, card_token')
+    .select('id, full_name, phone, qr_code_url, tier, card_token')
     .eq('id', payload.customerId)
     .single();
 
   if (!customer || customer.card_token !== token) return null;
+
+  // Fetch business-specific points
+  let totalPoints = 0;
+  const { data: bpData } = await supabase
+    .from('customer_businesses')
+    .select('points')
+    .eq('customer_id', customer.id)
+    .eq('business_id', businessId)
+    .maybeSingle();
+  if (bpData) {
+    totalPoints = bpData.points || 0;
+  }
 
   return {
     customerName: customer.full_name || 'Valued Customer',
     phone: customer.phone || '',
     qrCodeUrl: customer.qr_code_url || '',
     tier: customer.tier || 'bronze',
-    totalPoints: customer.total_points || 0,
+    totalPoints,
   };
 }
 
@@ -68,7 +80,7 @@ export default async function CardSignupPage({ params, searchParams }: PageProps
   const joinCode = await getBusinessJoinCode(business.id);
 
   // If token is present, verify and fetch customer data for auto-open modal
-  const cardData = token ? await getCustomerByCardToken(token) : null;
+  const cardData = token ? await getCustomerByCardToken(token, business.id) : null;
 
   return (
     <CardPageClient

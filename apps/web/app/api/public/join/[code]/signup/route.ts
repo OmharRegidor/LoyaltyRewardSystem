@@ -76,18 +76,40 @@ export async function POST(
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedPhone = phone.replace(/\s+/g, '');
 
+    // Check business-scoped customers first
     const { data: existingByEmail } = await serviceClient
       .from('customers')
-      .select('id')
+      .select('id, card_token')
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id)
       .maybeSingle();
 
-    if (existingByEmail) {
+    if (existingByEmail?.card_token) {
       return NextResponse.json(
         { error: 'You are already a member of this loyalty program.' },
         { status: 409 },
       );
+    }
+
+    // Also check if any customer already linked to this business matches by email or phone
+    const { data: linkedCustomers } = await serviceClient
+      .from('customer_businesses')
+      .select('customer_id, customers!inner(id, email, phone, card_token)')
+      .eq('business_id', business.id);
+
+    if (linkedCustomers) {
+      for (const link of linkedCustomers) {
+        const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+        if (!c) continue;
+        const emailMatch = c.email && c.email.toLowerCase() === normalizedEmail;
+        const phoneMatch = c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone;
+        if ((emailMatch || phoneMatch) && c.card_token) {
+          return NextResponse.json(
+            { error: 'You are already a member of this loyalty program.' },
+            { status: 409 },
+          );
+        }
+      }
     }
 
     // 4b. Check if phone is already registered under a different email
@@ -165,14 +187,25 @@ export async function POST(
 
     const { data: customerData } = await serviceClient
       .from('customers')
-      .select('tier, total_points, full_name')
+      .select('tier, full_name')
       .eq('id', result.customerId)
       .single();
 
     if (customerData) {
       tier = customerData.tier || 'bronze';
-      totalPoints = customerData.total_points || 0;
       storedName = customerData.full_name || fullName;
+    }
+
+    // Get business-specific points
+    const { data: businessPoints } = await serviceClient
+      .from('customer_businesses')
+      .select('points')
+      .eq('customer_id', result.customerId)
+      .eq('business_id', business.id)
+      .maybeSingle();
+
+    if (businessPoints) {
+      totalPoints = businessPoints.points || 0;
     }
 
     // 8. Name mismatch check for existing customers

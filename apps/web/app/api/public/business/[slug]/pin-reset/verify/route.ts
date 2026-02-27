@@ -140,7 +140,9 @@ export async function POST(
     // Hash new PIN and update customer
     const pinHash = await hashPin(newPin);
 
-    const { error: updateError } = await serviceClient
+    // Try business-scoped customer first
+    let updateError = null;
+    const { error: scopedError, count: scopedCount } = await serviceClient
       .from('customers')
       .update({
         pin_hash: pinHash,
@@ -149,6 +151,39 @@ export async function POST(
       })
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id);
+
+    if (scopedError || scopedCount === 0) {
+      // Fallback: find customer linked via customer_businesses
+      const { data: linked } = await serviceClient
+        .from('customer_businesses')
+        .select('customer_id, customers!inner(id, email)')
+        .eq('business_id', business.id);
+
+      let linkedCustomerId: string | null = null;
+      if (linked) {
+        for (const link of linked) {
+          const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+          if (c?.email?.toLowerCase() === normalizedEmail) {
+            linkedCustomerId = c.id;
+            break;
+          }
+        }
+      }
+
+      if (linkedCustomerId) {
+        const { error: linkedError } = await serviceClient
+          .from('customers')
+          .update({
+            pin_hash: pinHash,
+            failed_pin_attempts: 0,
+            pin_locked_until: null,
+          })
+          .eq('id', linkedCustomerId);
+        updateError = linkedError;
+      } else {
+        updateError = scopedError || new Error('Customer not found');
+      }
+    }
 
     if (updateError) {
       console.error('Failed to update PIN:', updateError);

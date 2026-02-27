@@ -646,23 +646,57 @@ export async function lookupCustomerByPhone(
   const supabase = createServiceClient();
   const normalizedPhone = phone.replace(/\s+/g, "");
 
+  // First check business-scoped customers
   const { data, error } = await supabase
     .from("customers")
-    .select("id, full_name, phone, total_points, tier")
+    .select("id, full_name, phone, tier")
     .eq("phone", normalizedPhone)
     .eq("created_by_business_id", businessId)
     .maybeSingle();
 
-  if (error || !data) {
+  let customer = !error && data ? data : null;
+
+  // Fallback: check customers linked via customer_businesses
+  if (!customer) {
+    const { data: linked } = await supabase
+      .from("customer_businesses")
+      .select("customers!inner(id, full_name, phone, tier)")
+      .eq("business_id", businessId);
+
+    if (linked) {
+      for (const link of linked) {
+        const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+        if (!c) continue;
+        if (c.phone && c.phone.replace(/\s+/g, "") === normalizedPhone) {
+          customer = c;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!customer) {
     return null;
   }
 
+  // Fetch business-specific points
+  let totalPoints = 0;
+  const { data: bpData } = await supabase
+    .from("customer_businesses")
+    .select("points")
+    .eq("customer_id", customer.id)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (bpData) {
+    totalPoints = bpData.points || 0;
+  }
+
   return {
-    id: data.id,
-    fullName: data.full_name || "",
-    phone: data.phone || "",
-    totalPoints: data.total_points || 0,
-    tier: data.tier || "bronze",
+    id: customer.id,
+    fullName: customer.full_name || "",
+    phone: customer.phone || "",
+    totalPoints,
+    tier: customer.tier || "bronze",
   };
 }
 

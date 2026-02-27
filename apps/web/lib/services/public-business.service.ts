@@ -581,6 +581,7 @@ export async function getCustomerByPhone(
   const supabase = createServiceClient();
   const normalizedPhone = phone.replace(/\s+/g, '');
 
+  // First check business-scoped customers
   const { data, error } = await supabase
     .from('customers')
     .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
@@ -588,22 +589,49 @@ export async function getCustomerByPhone(
     .eq('created_by_business_id', businessId)
     .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (!error && data) {
+    return {
+      id: data.id,
+      fullName: data.full_name || '',
+      email: data.email || null,
+      phone: data.phone || null,
+      qrCodeUrl: data.qr_code_url || '',
+      tier: data.tier || 'bronze',
+      totalPoints: data.total_points || 0,
+      pinHash: data.pin_hash || null,
+      failedPinAttempts: data.failed_pin_attempts || 0,
+      pinLockedUntil: data.pin_locked_until || null,
+    };
   }
 
-  return {
-    id: data.id,
-    fullName: data.full_name || '',
-    email: data.email || null,
-    phone: data.phone || null,
-    qrCodeUrl: data.qr_code_url || '',
-    tier: data.tier || 'bronze',
-    totalPoints: data.total_points || 0,
-    pinHash: data.pin_hash || null,
-    failedPinAttempts: data.failed_pin_attempts || 0,
-    pinLockedUntil: data.pin_locked_until || null,
-  };
+  // Fallback: check customers linked to this business via customer_businesses
+  const { data: linked } = await supabase
+    .from('customer_businesses')
+    .select('customers!inner(id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until)')
+    .eq('business_id', businessId);
+
+  if (linked) {
+    for (const link of linked) {
+      const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+      if (!c) continue;
+      if (c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone) {
+        return {
+          id: c.id,
+          fullName: c.full_name || '',
+          email: c.email || null,
+          phone: c.phone || null,
+          qrCodeUrl: c.qr_code_url || '',
+          tier: c.tier || 'bronze',
+          totalPoints: c.total_points || 0,
+          pinHash: c.pin_hash || null,
+          failedPinAttempts: c.failed_pin_attempts || 0,
+          pinLockedUntil: c.pin_locked_until || null,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 export async function getCustomerByEmail(
@@ -613,6 +641,7 @@ export async function getCustomerByEmail(
   const supabase = createServiceClient();
   const normalizedEmail = email.toLowerCase().trim();
 
+  // First check business-scoped customers
   const { data, error } = await supabase
     .from('customers')
     .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
@@ -620,22 +649,49 @@ export async function getCustomerByEmail(
     .eq('created_by_business_id', businessId)
     .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if (!error && data) {
+    return {
+      id: data.id,
+      fullName: data.full_name || '',
+      email: data.email || null,
+      phone: data.phone || null,
+      qrCodeUrl: data.qr_code_url || '',
+      tier: data.tier || 'bronze',
+      totalPoints: data.total_points || 0,
+      pinHash: data.pin_hash || null,
+      failedPinAttempts: data.failed_pin_attempts || 0,
+      pinLockedUntil: data.pin_locked_until || null,
+    };
   }
 
-  return {
-    id: data.id,
-    fullName: data.full_name || '',
-    email: data.email || null,
-    phone: data.phone || null,
-    qrCodeUrl: data.qr_code_url || '',
-    tier: data.tier || 'bronze',
-    totalPoints: data.total_points || 0,
-    pinHash: data.pin_hash || null,
-    failedPinAttempts: data.failed_pin_attempts || 0,
-    pinLockedUntil: data.pin_locked_until || null,
-  };
+  // Fallback: check customers linked to this business via customer_businesses
+  const { data: linked } = await supabase
+    .from('customer_businesses')
+    .select('customers!inner(id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until)')
+    .eq('business_id', businessId);
+
+  if (linked) {
+    for (const link of linked) {
+      const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+      if (!c) continue;
+      if (c.email && c.email.toLowerCase() === normalizedEmail) {
+        return {
+          id: c.id,
+          fullName: c.full_name || '',
+          email: c.email || null,
+          phone: c.phone || null,
+          qrCodeUrl: c.qr_code_url || '',
+          tier: c.tier || 'bronze',
+          totalPoints: c.total_points || 0,
+          pinHash: c.pin_hash || null,
+          failedPinAttempts: c.failed_pin_attempts || 0,
+          pinLockedUntil: c.pin_locked_until || null,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 // ============================================
@@ -655,15 +711,61 @@ export async function createSelfSignupCustomer(
   const normalizedEmail = email?.toLowerCase().trim() || null;
 
   // Check for existing customer by phone (if provided) within this business
-  let existingCustomer: { id: string; qr_code_url: string | null; card_token: string | null; email: string | null } | null = null;
+  let existingCustomer: { id: string; qr_code_url: string | null; card_token: string | null; email: string | null; phone: string | null } | null = null;
   if (normalizedPhone) {
     const { data } = await supabase
       .from('customers')
-      .select('id, qr_code_url, card_token, email')
+      .select('id, qr_code_url, card_token, email, phone')
       .eq('phone', normalizedPhone)
       .eq('created_by_business_id', businessId)
       .maybeSingle();
     existingCustomer = data;
+  }
+
+  // If no business-scoped match, search for customers already linked to this
+  // business via customer_businesses (e.g. mobile-originated customers who
+  // earned points but have created_by_business_id = NULL and may have
+  // different email/phone than what was entered on the web form).
+  if (!existingCustomer) {
+    const { data: linkedCustomers } = await supabase
+      .from('customer_businesses')
+      .select('customer_id, customers!inner(id, qr_code_url, card_token, email, phone)')
+      .eq('business_id', businessId);
+
+    if (linkedCustomers && linkedCustomers.length > 0) {
+      for (const link of linkedCustomers) {
+        const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+        if (!c) continue;
+        const emailMatch = normalizedEmail && c.email && c.email.toLowerCase() === normalizedEmail;
+        const phoneMatch = normalizedPhone && c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone;
+        if (emailMatch || phoneMatch) {
+          existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, card_token: c.card_token, email: c.email, phone: c.phone };
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback: search globally for mobile-created customers by email/phone
+  if (!existingCustomer) {
+    if (normalizedEmail) {
+      const { data } = await supabase
+        .from('customers')
+        .select('id, qr_code_url, card_token, email, phone')
+        .eq('email', normalizedEmail)
+        .not('user_id', 'is', null)
+        .maybeSingle();
+      if (data) existingCustomer = data;
+    }
+    if (!existingCustomer && normalizedPhone) {
+      const { data } = await supabase
+        .from('customers')
+        .select('id, qr_code_url, card_token, email, phone')
+        .eq('phone', normalizedPhone)
+        .not('user_id', 'is', null)
+        .maybeSingle();
+      if (data) existingCustomer = data;
+    }
   }
 
   if (existingCustomer) {
@@ -691,6 +793,14 @@ export async function createSelfSignupCustomer(
       await supabase
         .from('customers')
         .update({ email: normalizedEmail })
+        .eq('id', existingCustomer.id);
+    }
+
+    // Update phone if provided and customer doesn't have one
+    if (normalizedPhone && !existingCustomer.phone) {
+      await supabase
+        .from('customers')
+        .update({ phone: normalizedPhone })
         .eq('id', existingCustomer.id);
     }
 
