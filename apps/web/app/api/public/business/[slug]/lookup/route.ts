@@ -4,10 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
-  getCustomerByEmail,
-  maskEmail,
+  getCustomerByPhone,
 } from '@/lib/services/public-business.service';
-import { sendEmailVerification } from '@/lib/services/verification.service';
+import { verifyPin, PIN_MAX_ATTEMPTS, LOCKOUT_MINUTES } from '@/lib/services/pin.service';
 import { z } from 'zod';
 import type { Json } from '../../../../../../../../packages/shared/types/database';
 
@@ -15,8 +14,15 @@ import type { Json } from '../../../../../../../../packages/shared/types/databas
 // VALIDATION SCHEMA
 // ============================================
 
-const EmailLookupSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+const PinLookupSchema = z.object({
+  phone: z
+    .string()
+    .length(11, 'Phone number must be exactly 11 digits')
+    .regex(/^\d+$/, 'Phone number must contain only digits'),
+  pin: z
+    .string()
+    .length(4, 'PIN must be exactly 4 digits')
+    .regex(/^\d+$/, 'PIN must contain only digits'),
 });
 
 // ============================================
@@ -24,11 +30,10 @@ const EmailLookupSchema = z.object({
 // ============================================
 
 const RATE_LIMIT = {
-  maxRequests: 5,
+  maxRequests: 10,
   windowSeconds: 3600,
 };
 
-// Artificial delay range (ms) to match OTP send timing
 const ARTIFICIAL_DELAY_MS = { min: 800, max: 1500 };
 
 // ============================================
@@ -49,7 +54,7 @@ async function checkRateLimit(
 
   if (error) {
     console.error('Rate limit check failed:', error);
-    return true; // fail-open
+    return true;
   }
 
   return data === true;
@@ -80,7 +85,7 @@ function artificialDelay(): Promise<void> {
 }
 
 // ============================================
-// POST: Phone Lookup — Step 1 (send OTP)
+// POST: Phone + PIN Lookup
 // ============================================
 
 export async function POST(
@@ -122,7 +127,7 @@ export async function POST(
 
     // 3. Parse and validate input
     const body = await request.json();
-    const validation = EmailLookupSchema.safeParse(body);
+    const validation = PinLookupSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -134,53 +139,117 @@ export async function POST(
       );
     }
 
-    const { email } = validation.data;
+    const { phone, pin } = validation.data;
 
-    // 4. Look up customer by email
-    const customer = await getCustomerByEmail(business.id, email);
+    // 4. Look up customer by phone
+    const customer = await getCustomerByPhone(business.id, phone);
 
-    // 5. If customer found, send OTP to the provided email
-    if (customer) {
-      const otpResult = await sendEmailVerification(
-        email,
-        business.id,
-        business.name,
-        'card_lookup'
-      );
+    if (!customer) {
+      await artificialDelay();
 
       await logAuditEvent(serviceClient, {
-        action: 'card_lookup_otp_sent',
+        action: 'card_lookup_not_found',
         businessId: business.id,
         details: {
-          customerId: customer.id,
-          otpSent: otpResult.success,
           processingTimeMs: Date.now() - startTime,
           ipAddress,
           userAgent,
         },
       });
 
-      if (!otpResult.success) {
-        return NextResponse.json({
-          success: false,
-          message: otpResult.error || 'Failed to send verification code. Please try again.',
-        });
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'A verification code has been sent to your email.',
-        maskedEmail: maskEmail(email),
-      });
+      return NextResponse.json(
+        { error: 'No card found for this phone number. Please check the number or sign up first.' },
+        { status: 404 }
+      );
     }
 
-    // 6. Customer not found — artificial delay + generic response
-    await artificialDelay();
+    // 5. Check if customer has a PIN set
+    if (!customer.pinHash) {
+      return NextResponse.json(
+        {
+          needsPinSetup: true,
+        },
+        { status: 200 }
+      );
+    }
+
+    // 6. Check lockout
+    if (
+      customer.failedPinAttempts >= PIN_MAX_ATTEMPTS &&
+      customer.pinLockedUntil &&
+      new Date(customer.pinLockedUntil) > new Date()
+    ) {
+      const minutesLeft = Math.ceil(
+        (new Date(customer.pinLockedUntil).getTime() - Date.now()) / 60000
+      );
+
+      return NextResponse.json(
+        { error: `Account locked due to too many failed attempts. Try again in ${minutesLeft} minute${minutesLeft === 1 ? '' : 's'}.` },
+        { status: 429 }
+      );
+    }
+
+    // 7. Verify PIN
+    const pinValid = await verifyPin(pin, customer.pinHash);
+
+    if (!pinValid) {
+      const newAttempts = customer.failedPinAttempts + 1;
+      const updateData: Record<string, unknown> = {
+        failed_pin_attempts: newAttempts,
+      };
+
+      if (newAttempts >= PIN_MAX_ATTEMPTS) {
+        updateData.pin_locked_until = new Date(
+          Date.now() + LOCKOUT_MINUTES * 60 * 1000
+        ).toISOString();
+      }
+
+      await serviceClient
+        .from('customers')
+        .update(updateData)
+        .eq('id', customer.id);
+
+      const remaining = PIN_MAX_ATTEMPTS - newAttempts;
+
+      await logAuditEvent(serviceClient, {
+        action: 'card_lookup_pin_failed',
+        businessId: business.id,
+        details: {
+          customerId: customer.id,
+          attemptsRemaining: remaining,
+          processingTimeMs: Date.now() - startTime,
+          ipAddress,
+          userAgent,
+        },
+      });
+
+      if (remaining <= 0) {
+        return NextResponse.json(
+          { error: `Too many failed attempts. Account locked for ${LOCKOUT_MINUTES} minutes.` },
+          { status: 429 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error: 'Incorrect PIN.',
+          attemptsRemaining: remaining,
+        },
+        { status: 401 }
+      );
+    }
+
+    // 8. PIN correct — reset failed attempts
+    await serviceClient
+      .from('customers')
+      .update({ failed_pin_attempts: 0, pin_locked_until: null })
+      .eq('id', customer.id);
 
     await logAuditEvent(serviceClient, {
-      action: 'card_lookup_not_found',
+      action: 'card_lookup_success',
       businessId: business.id,
       details: {
+        customerId: customer.id,
         processingTimeMs: Date.now() - startTime,
         ipAddress,
         userAgent,
@@ -188,11 +257,17 @@ export async function POST(
     });
 
     return NextResponse.json({
-      success: false,
-      message: 'No card found for this email address. Please check the email or sign up first.',
+      success: true,
+      data: {
+        customerName: customer.fullName,
+        phone: customer.phone || null,
+        qrCodeUrl: customer.qrCodeUrl,
+        tier: customer.tier,
+        totalPoints: customer.totalPoints,
+      },
     });
   } catch (error) {
-    console.error('Email lookup error:', error);
+    console.error('Phone+PIN lookup error:', error);
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },
       { status: 500 }

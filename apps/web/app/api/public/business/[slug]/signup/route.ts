@@ -7,6 +7,7 @@ import {
   createSelfSignupCustomer,
 } from '@/lib/services/public-business.service';
 import { hasVerifiedCode } from '@/lib/services/verification.service';
+import { hashPin } from '@/lib/services/pin.service';
 import { z } from 'zod';
 import type { Json } from '../../../../../../../../packages/shared/types/database';
 
@@ -27,6 +28,10 @@ const SelfSignupSchema = z.object({
     .string()
     .email('Invalid email address')
     .min(1, 'Email is required'),
+  pin: z
+    .string()
+    .length(4, 'PIN must be exactly 4 digits')
+    .regex(/^\d+$/, 'PIN must contain only digits'),
   referralCode: z.string().max(10).optional(),
 });
 
@@ -143,7 +148,7 @@ export async function POST(
       );
     }
 
-    const { fullName, phone, email, referralCode } = validation.data;
+    const { fullName, phone, email, pin, referralCode } = validation.data;
 
     // 3b. Require email verification (lockdown: no unverified signups)
     const isVerified = await hasVerifiedCode(email, business.id);
@@ -179,6 +184,17 @@ export async function POST(
       phone,
       email,
     );
+
+    // 4b. Hash and store PIN
+    try {
+      const pinHash = await hashPin(pin);
+      await serviceClient
+        .from('customers')
+        .update({ pin_hash: pinHash })
+        .eq('id', result.customerId);
+    } catch (pinErr) {
+      console.error('Failed to store PIN hash:', pinErr);
+    }
 
     // 5. Complete referral if code provided
     let referralResult = null;

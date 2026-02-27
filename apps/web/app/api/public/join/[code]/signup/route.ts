@@ -6,6 +6,7 @@ import { getBusinessByJoinCode } from '@/lib/services/public-business.service';
 import { createSelfSignupCustomer } from '@/lib/services/public-business.service';
 import { hasVerifiedCode } from '@/lib/services/verification.service';
 import { createServiceClient } from '@/lib/supabase-server';
+import { hashPin } from '@/lib/services/pin.service';
 import type { Json } from '../../../../../../../../packages/shared/types/database';
 
 // ============================================
@@ -22,6 +23,10 @@ const JoinSignupSchema = z.object({
     .length(11, 'Phone number must be exactly 11 digits')
     .regex(/^\d+$/, 'Phone number must contain only digits'),
   email: z.string().email('Invalid email address'),
+  pin: z
+    .string()
+    .length(4, 'PIN must be exactly 4 digits')
+    .regex(/^\d+$/, 'PIN must contain only digits'),
   referralCode: z.string().max(10).optional(),
 });
 
@@ -65,7 +70,7 @@ export async function POST(
       );
     }
 
-    const { fullName, phone, email, referralCode } = validation.data;
+    const { fullName, phone, email, pin, referralCode } = validation.data;
 
     // 3. Require email verification
     const verified = await hasVerifiedCode(email, business.id);
@@ -134,7 +139,8 @@ export async function POST(
       email,
     );
 
-    // 6. Mark customer as verified (columns added via migration, not yet in generated types)
+    // 6. Mark customer as verified and store PIN hash
+    const pinHash = await hashPin(pin);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (serviceClient as any)
       .from('customers')
@@ -142,6 +148,7 @@ export async function POST(
         is_verified: true,
         verified_at: new Date().toISOString(),
         verification_method: 'email_otp',
+        pin_hash: pinHash,
       })
       .eq('id', result.customerId);
 

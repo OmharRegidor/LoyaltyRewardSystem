@@ -773,12 +773,15 @@ export type Database = {
           email: string | null
           email_sent_at: string | null
           email_sent_count: number | null
+          failed_pin_attempts: number
           full_name: string | null
           id: string
           is_verified: boolean
           last_visit: string | null
           lifetime_points: number | null
           phone: string | null
+          pin_hash: string | null
+          pin_locked_until: string | null
           qr_code_url: string | null
           tier: string | null
           total_points: number | null
@@ -796,12 +799,15 @@ export type Database = {
           email?: string | null
           email_sent_at?: string | null
           email_sent_count?: number | null
+          failed_pin_attempts?: number
           full_name?: string | null
           id?: string
           is_verified?: boolean
           last_visit?: string | null
           lifetime_points?: number | null
           phone?: string | null
+          pin_hash?: string | null
+          pin_locked_until?: string | null
           qr_code_url?: string | null
           tier?: string | null
           total_points?: number | null
@@ -819,12 +825,15 @@ export type Database = {
           email?: string | null
           email_sent_at?: string | null
           email_sent_count?: number | null
+          failed_pin_attempts?: number
           full_name?: string | null
           id?: string
           is_verified?: boolean
           last_visit?: string | null
           lifetime_points?: number | null
           phone?: string | null
+          pin_hash?: string | null
+          pin_locked_until?: string | null
           qr_code_url?: string | null
           tier?: string | null
           total_points?: number | null
