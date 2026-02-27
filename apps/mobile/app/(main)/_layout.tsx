@@ -16,6 +16,7 @@ import {
 } from '../../src/providers/EarnPointsProvider';
 import { QuickQRModal } from '@/src/components/home';
 import { ReferralOnboardingModal } from '@/src/components/ReferralOnboardingModal';
+import { PhoneCompletionModal } from '@/src/components/PhoneCompletionModal';
 
 // ============================================
 // ICON COMPONENTS - Clean outlined style
@@ -281,6 +282,17 @@ function QRModalWrapper() {
 // MAIN LAYOUT
 // ============================================
 
+function PhoneModalWrapper() {
+  const { needsPhone, dismissPhonePrompt, submitPhone } = useAuth();
+  return (
+    <PhoneCompletionModal
+      visible={needsPhone}
+      onSubmit={submitPhone}
+      onSkip={dismissPhonePrompt}
+    />
+  );
+}
+
 function MainLayoutContent() {
   return (
     <View style={styles.container}>
@@ -298,6 +310,7 @@ function MainLayoutContent() {
       <CustomTabBar />
       <QRModalWrapper />
       <ReferralOnboardingModal />
+      <PhoneModalWrapper />
     </View>
   );
 }

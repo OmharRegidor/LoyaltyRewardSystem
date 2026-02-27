@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
   getCustomerByPhone,
+  getCustomerByEmail,
 } from '@/lib/services/public-business.service';
 import { sendEmailVerification } from '@/lib/services/verification.service';
 import { z } from 'zod';
@@ -18,7 +19,8 @@ const PinResetRequestSchema = z.object({
   phone: z
     .string()
     .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+    .regex(/^\d+$/, 'Phone number must contain only digits')
+    .optional(),
   email: z.string().email('Please enter a valid email address'),
 });
 
@@ -124,8 +126,10 @@ export async function POST(
 
     const { phone, email } = validation.data;
 
-    // Look up customer by phone
-    const customer = await getCustomerByPhone(business.id, phone);
+    // Look up customer by phone (if provided) or by email
+    const customer = phone
+      ? await getCustomerByPhone(business.id, phone)
+      : await getCustomerByEmail(business.id, email);
 
     // Verify email matches (prevent enumeration by always responding the same)
     if (!customer || !customer.email || customer.email.toLowerCase() !== email.toLowerCase().trim()) {

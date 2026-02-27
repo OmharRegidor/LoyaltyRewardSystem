@@ -167,32 +167,32 @@ export function CardModal({
             >
               {/* Main content area */}
               <div className="flex-1 flex flex-col items-center justify-center px-6">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white text-center leading-tight">
+                <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold text-white text-center leading-tight">
                   {businessName}
                 </h2>
-                <p className="text-sm sm:text-base text-white/80 mt-1">
+                <p className="text-xs xs:text-sm sm:text-base text-white/80 mt-1">
                   Loyalty Rewards
                 </p>
               </div>
 
               {/* Tier banner */}
               <div
-                className={`${tierStyle.banner} px-6 py-2.5 flex items-center justify-between`}
+                className={`${tierStyle.banner} px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between`}
               >
                 <div className="flex items-center gap-2">
                   <Star className={`w-4 h-4 ${tierStyle.bannerText}`} />
                   <span
-                    className={`text-sm font-semibold ${tierStyle.bannerText}`}
+                    className={`text-xs sm:text-sm font-semibold ${tierStyle.bannerText}`}
                   >
                     {tierStyle.label} Member
                   </span>
                 </div>
                 <button
                   onClick={() => setIsFlipped(true)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${tierStyle.bannerText} hover:bg-black/10 transition-colors`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${tierStyle.bannerText} hover:bg-black/10 transition-colors`}
                   aria-label="Flip card"
                 >
-                  <RotateCw className="w-4 h-4" />
+                  <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
             </div>
@@ -205,54 +205,58 @@ export function CardModal({
                 transform: 'rotateY(180deg)',
               }}
             >
-              {/* Black magnetic stripe */}
-              <div className="bg-black h-7 sm:h-15 w-full mt-3 sm:mt-4" />
+              {/* Black magnetic stripe — scales with card via percentage height */}
+              <div className="bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 w-full" style={{ height: '13%', marginTop: '4%' }} />
 
-              {/* Main content — side-by-side: info left, QR right */}
-              <div className="flex-1 flex items-center px-5 sm:px-6 py-3 gap-4">
+              {/* Main content — always side-by-side, scales proportionally */}
+              <div className="flex-1 flex items-center gap-2 sm:gap-4" style={{ padding: '2% 4%' }}>
                 {/* Left: avatar + customer info */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {/* Initials avatar */}
+                <div className="flex items-center gap-1.5 sm:gap-3 flex-1 min-w-0">
+                  {/* Initials avatar — percentage-driven sizing */}
                   <div
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full ${tierStyle.avatar} ${tierStyle.avatarText} flex items-center justify-center text-sm sm:text-base font-bold shrink-0`}
+                    className={`rounded-full ${tierStyle.avatar} ${tierStyle.avatarText} flex items-center justify-center font-bold shrink-0`}
+                    style={{ width: '15%', maxWidth: '48px', aspectRatio: '1' , fontSize: 'clamp(10px, 2.5cqi, 16px)' }}
                   >
                     {getInitials(customerName)}
                   </div>
 
-                  {/* Customer details */}
-                  <div className="min-w-0">
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">
+                  {/* Customer details — clamp-based fluid typography */}
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="font-bold text-gray-900 leading-tight break-words"
+                      style={{ fontSize: 'clamp(11px, 3cqi, 16px)' }}
+                    >
                       {customerName}
                     </h3>
                     {phone && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-gray-500 leading-tight" style={{ fontSize: 'clamp(9px, 2.2cqi, 12px)' }}>
                         {formatPhone(phone)}
                       </p>
                     )}
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <Star className="w-3.5 h-3.5 text-amber-500" />
-                      <span className="text-xs font-semibold text-gray-700">
+                    <div className="flex items-center gap-0.5 sm:gap-1 mt-0.5">
+                      <Star className="text-amber-500 shrink-0" style={{ width: 'clamp(10px, 2.5cqi, 14px)', height: 'clamp(10px, 2.5cqi, 14px)' }} />
+                      <span className="font-semibold text-gray-700" style={{ fontSize: 'clamp(9px, 2.2cqi, 12px)' }}>
                         {totalPoints.toLocaleString()} points
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Right: QR Code */}
-                <div className="shrink-0">
-                  <div className="bg-white border-2 border-gray-100 rounded-lg p-1.5 shadow-sm">
+                {/* Right: QR Code — sized relative to card height */}
+                <div className="shrink-0" style={{ width: '35%', maxWidth: '152px' }}>
+                  <div className="bg-white border border-gray-200 rounded-md sm:rounded-lg shadow-sm" style={{ padding: 'clamp(2px, 1%, 6px)' }}>
                     <img
                       src={`/api/qr/${encodeURIComponent(qrCodeUrl)}`}
                       alt="Your Loyalty QR Code"
-                      className="w-32 h-32 sm:w-36 sm:h-36"
+                      className="w-full h-auto"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="px-6 py-2.5 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-xs text-gray-400">
+              {/* Footer — compact and proportional */}
+              <div className="border-t border-gray-100 flex items-center justify-between" style={{ padding: '1.5% 4%' }}>
+                <span className="text-gray-400" style={{ fontSize: 'clamp(8px, 2cqi, 12px)' }}>
                   Powered by{' '}
                   <span className="font-semibold text-gray-500">
                     NoxaLoyalty
@@ -260,10 +264,11 @@ export function CardModal({
                 </span>
                 <button
                   onClick={() => setIsFlipped(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+                  className="rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors"
+                  style={{ width: 'clamp(20px, 5cqi, 32px)', height: 'clamp(20px, 5cqi, 32px)' }}
                   aria-label="Flip card"
                 >
-                  <RotateCw className="w-4 h-4" />
+                  <RotateCw style={{ width: 'clamp(10px, 2.5cqi, 16px)', height: 'clamp(10px, 2.5cqi, 16px)' }} />
                 </button>
               </div>
             </div>
