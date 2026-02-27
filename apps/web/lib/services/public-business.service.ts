@@ -559,6 +559,9 @@ export interface CustomerByPhoneResult {
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
+  pinHash: string | null;
+  failedPinAttempts: number;
+  pinLockedUntil: string | null;
 }
 
 export function maskEmail(email: string): string {
@@ -577,7 +580,7 @@ export async function getCustomerByPhone(
 
   const { data, error } = await supabase
     .from('customers')
-    .select('id, full_name, email, phone, qr_code_url, tier, total_points')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
     .eq('phone', normalizedPhone)
     .eq('created_by_business_id', businessId)
     .maybeSingle();
@@ -594,6 +597,9 @@ export async function getCustomerByPhone(
     qrCodeUrl: data.qr_code_url || '',
     tier: data.tier || 'bronze',
     totalPoints: data.total_points || 0,
+    pinHash: data.pin_hash || null,
+    failedPinAttempts: data.failed_pin_attempts || 0,
+    pinLockedUntil: data.pin_locked_until || null,
   };
 }
 
@@ -606,7 +612,7 @@ export async function getCustomerByEmail(
 
   const { data, error } = await supabase
     .from('customers')
-    .select('id, full_name, email, phone, qr_code_url, tier, total_points')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
     .eq('email', normalizedEmail)
     .eq('created_by_business_id', businessId)
     .maybeSingle();
@@ -623,6 +629,9 @@ export async function getCustomerByEmail(
     qrCodeUrl: data.qr_code_url || '',
     tier: data.tier || 'bronze',
     totalPoints: data.total_points || 0,
+    pinHash: data.pin_hash || null,
+    failedPinAttempts: data.failed_pin_attempts || 0,
+    pinLockedUntil: data.pin_locked_until || null,
   };
 }
 

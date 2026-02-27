@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, AlertCircle, UserPlus, Users } from 'lucide-react';
+import { Loader2, AlertCircle, UserPlus, Users, Lock } from 'lucide-react';
 import { CardModal } from './card-modal';
 
 // ============================================
@@ -26,7 +26,15 @@ const SelfSignupSchema = z.object({
     .string()
     .email('Invalid email address')
     .min(1, 'Email is required'),
+  pin: z
+    .string()
+    .length(4, 'PIN must be exactly 4 digits')
+    .regex(/^\d+$/, 'PIN must contain only digits'),
+  confirmPin: z.string(),
   referralCode: z.string().max(10).optional(),
+}).refine((data) => data.pin === data.confirmPin, {
+  message: 'PINs do not match',
+  path: ['confirmPin'],
 });
 
 type SelfSignupInput = z.infer<typeof SelfSignupSchema>;
@@ -68,6 +76,8 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
       fullName: '',
       phone: '',
       email: '',
+      pin: '',
+      confirmPin: '',
     },
   });
 
@@ -186,6 +196,63 @@ export function SignupForm({ businessSlug, businessName }: SignupFormProps) {
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        {/* PIN */}
+        <div className="mb-4">
+          <label htmlFor="pin" className="block text-sm font-medium text-gray-700 mb-1">
+            4-Digit PIN <span className="text-red-500">*</span>
+          </label>
+          <p className="text-xs text-gray-500 mb-1">
+            You&apos;ll use this PIN to view your card later
+          </p>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              {...register('pin')}
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              id="pin"
+              placeholder="••••"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              disabled={isSubmitting}
+              onKeyDown={(e) => {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+              }}
+            />
+          </div>
+          {errors.pin && (
+            <p className="mt-1 text-sm text-red-500">{errors.pin.message}</p>
+          )}
+        </div>
+
+        {/* Confirm PIN */}
+        <div className="mb-4">
+          <label htmlFor="confirmPin" className="block text-sm font-medium text-gray-700 mb-1">
+            Confirm PIN <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              {...register('confirmPin')}
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              id="confirmPin"
+              placeholder="••••"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+              disabled={isSubmitting}
+              onKeyDown={(e) => {
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+              }}
+            />
+          </div>
+          {errors.confirmPin && (
+            <p className="mt-1 text-sm text-red-500">{errors.confirmPin.message}</p>
           )}
         </div>
 

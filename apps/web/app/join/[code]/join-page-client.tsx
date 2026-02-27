@@ -18,6 +18,7 @@ import {
   CreditCard,
   ArrowLeft,
   Users,
+  Lock,
 } from 'lucide-react';
 import { CardModal } from '@/app/business/[slug]/card/card-modal';
 
@@ -25,18 +26,28 @@ import { CardModal } from '@/app/business/[slug]/card/card-modal';
 // SCHEMAS
 // ============================================
 
-const Step1Schema = z.object({
-  fullName: z
-    .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name is too long'),
-  email: z.string().email('Invalid email address'),
-  phone: z
-    .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
-  referralCode: z.string().max(10).optional(),
-});
+const Step1Schema = z
+  .object({
+    fullName: z
+      .string()
+      .min(2, 'Name must be at least 2 characters')
+      .max(100, 'Name is too long'),
+    email: z.string().email('Invalid email address'),
+    phone: z
+      .string()
+      .length(11, 'Phone number must be exactly 11 digits')
+      .regex(/^\d+$/, 'Phone number must contain only digits'),
+    pin: z
+      .string()
+      .length(4, 'PIN must be exactly 4 digits')
+      .regex(/^\d+$/, 'PIN must contain only digits'),
+    confirmPin: z.string(),
+    referralCode: z.string().max(10).optional(),
+  })
+  .refine((data) => data.pin === data.confirmPin, {
+    message: 'PINs do not match',
+    path: ['confirmPin'],
+  });
 
 const Step2Schema = z.object({
   code: z
@@ -98,6 +109,8 @@ export function JoinPageClient({
       fullName: '',
       email: prefillEmail,
       phone: '',
+      pin: '',
+      confirmPin: '',
       referralCode: '',
     },
   });
@@ -180,6 +193,7 @@ export function JoinPageClient({
           fullName: formData.fullName,
           phone: formData.phone,
           email: formData.email,
+          pin: formData.pin,
           referralCode: formData.referralCode,
         }),
       });
@@ -399,6 +413,87 @@ export function JoinPageClient({
                     {step1Form.formState.errors.phone.message}
                   </p>
                 )}
+              </div>
+
+              {/* PIN */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  4-Digit PIN <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    {...step1Form.register('pin')}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="Enter 4-digit PIN"
+                    disabled={isSubmitting}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                    onKeyDown={(e) => {
+                      if (
+                        [
+                          'Backspace',
+                          'Delete',
+                          'Tab',
+                          'Escape',
+                          'Enter',
+                          'ArrowLeft',
+                          'ArrowRight',
+                        ].includes(e.key)
+                      )
+                        return;
+                      if (!/^\d$/.test(e.key)) e.preventDefault();
+                    }}
+                  />
+                </div>
+                {step1Form.formState.errors.pin && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {step1Form.formState.errors.pin.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Confirm PIN */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm PIN <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    {...step1Form.register('confirmPin')}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="Re-enter PIN"
+                    disabled={isSubmitting}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                    onKeyDown={(e) => {
+                      if (
+                        [
+                          'Backspace',
+                          'Delete',
+                          'Tab',
+                          'Escape',
+                          'Enter',
+                          'ArrowLeft',
+                          'ArrowRight',
+                        ].includes(e.key)
+                      )
+                        return;
+                      if (!/^\d$/.test(e.key)) e.preventDefault();
+                    }}
+                  />
+                </div>
+                {step1Form.formState.errors.confirmPin && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {step1Form.formState.errors.confirmPin.message}
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  You&apos;ll use this PIN to quickly look up your card.
+                </p>
               </div>
 
               {/* Referral Code (Optional) */}
