@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useCustomer } from './useCustomer';
 import type {
   Transaction,
+  ReferenceType,
   CustomerRedemption,
   GroupedTransactions,
   WalletTab,
@@ -128,6 +129,39 @@ function groupTransactionsByDate(
 // ============================================
 
 /**
+ * Infers a friendly reference type from the transaction description
+ */
+function inferReferenceType(
+  description: string | null,
+  isEarn: boolean
+): ReferenceType {
+  if (!description) return isEarn ? 'purchase' : 'redemption';
+  const lower = description.toLowerCase();
+  if (lower.includes('referral')) return 'referral';
+  if (lower.includes('bonus') || lower.includes('welcome')) return 'bonus';
+  if (lower.includes('adjust')) return 'adjustment';
+  if (lower.includes('redeem') || lower.includes('redemption'))
+    return 'redemption';
+  return isEarn ? 'purchase' : 'redemption';
+}
+
+/**
+ * Creates a friendly title from a raw transaction description
+ */
+function friendlyTitle(description: string | null, isEarn: boolean): string {
+  if (!description) return isEarn ? 'Points Earned' : 'Points Redeemed';
+  const lower = description.toLowerCase();
+  if (lower.includes('referral')) return 'Referral Bonus';
+  if (lower.includes('welcome')) return 'Welcome Bonus';
+  if (lower.includes('bonus')) return 'Bonus Points';
+  // Strip POS Sale reference IDs like "POS Sale #20260227-0001"
+  if (lower.startsWith('pos sale')) return 'Purchase';
+  if (lower.includes('redeem') || lower.includes('redemption'))
+    return 'Reward Redeemed';
+  return description;
+}
+
+/**
  * Transforms a database transaction row to the Transaction type
  */
 function transformTransaction(row: TransactionRow): Transaction {
@@ -140,12 +174,12 @@ function transformTransaction(row: TransactionRow): Transaction {
     business_id: row.business_id,
     type: isEarn ? 'credit' : 'debit',
     amount: row.points,
-    title: row.description ?? (isEarn ? 'Points Earned' : 'Points Redeemed'),
+    title: friendlyTitle(row.description, isEarn),
     description: row.amount_spent
       ? `₱${row.amount_spent.toFixed(2)} spent`
       : null,
     reference_id: row.reward_id,
-    reference_type: isEarn ? 'purchase' : 'redemption',
+    reference_type: inferReferenceType(row.description, isEarn),
     created_at: row.created_at,
     business: business
       ? {

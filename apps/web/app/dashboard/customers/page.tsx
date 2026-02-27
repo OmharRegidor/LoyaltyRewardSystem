@@ -183,6 +183,7 @@ export default function CustomersPage() {
               )}`,
               customerId: selectedCustomer.id,
             }}
+            businessId={business?.id}
             onClose={() => setSelectedCustomer(null)}
           />
         )}

@@ -1,6 +1,6 @@
 // app/(main)/wallet.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,6 +17,7 @@ import {
   RedemptionCard,
   SectionHeader,
   EmptyWallet,
+  TransactionDetailModal,
 } from '../../src/components/wallet';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
 import type {
@@ -39,8 +40,10 @@ export default function WalletScreen() {
     refresh,
   } = useWallet();
 
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
   const handleTransactionPress = (transaction: Transaction) => {
-    // Could open detail modal
+    setSelectedTransaction(transaction);
   };
 
   const handleRedemptionPress = (redemption: CustomerRedemption) => {
@@ -80,6 +83,12 @@ export default function WalletScreen() {
           onRedemptionPress={handleRedemptionPress}
         />
       )}
+      {/* Transaction Detail Modal */}
+      <TransactionDetailModal
+        transaction={selectedTransaction}
+        visible={selectedTransaction !== null}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </View>
   );
 }

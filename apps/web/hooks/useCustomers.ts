@@ -175,7 +175,31 @@ export function useCustomers({
 
       // Remove duplicates (in case a customer matches both conditions)
       const uniqueCustomers = removeDuplicates(data || []);
-      const mappedCustomers = uniqueCustomers.map(mapDatabaseCustomer);
+
+      // Fetch business-specific points from customer_businesses
+      const customerIds = uniqueCustomers.map((c) => c.id);
+      const businessPointsMap = new Map<string, number>();
+      if (customerIds.length > 0) {
+        const { data: cbData } = await supabase
+          .from('customer_businesses')
+          .select('customer_id, points')
+          .eq('business_id', businessId)
+          .in('customer_id', customerIds);
+        if (cbData) {
+          for (const row of cbData) {
+            businessPointsMap.set(row.customer_id, row.points);
+          }
+        }
+      }
+
+      const mappedCustomers = uniqueCustomers.map((c) => {
+        const mapped = mapDatabaseCustomer(c);
+        const businessPoints = businessPointsMap.get(c.id);
+        if (businessPoints !== undefined) {
+          mapped.totalPoints = businessPoints;
+        }
+        return mapped;
+      });
 
       setCustomers(mappedCustomers);
       setTotalCount(mappedCustomers.length);
