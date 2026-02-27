@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { customerService } from '../services/customer.service';
 import { notificationService } from '../services/notification.service';
@@ -26,6 +27,7 @@ interface AuthState {
   isLoading: boolean;
   isInitialized: boolean;
   isNewCustomer: boolean;
+  needsPhone: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -33,6 +35,8 @@ interface AuthContextType extends AuthState {
   signOut: () => Promise<void>;
   refreshCustomer: () => Promise<void>;
   clearNewCustomerFlag: () => void;
+  dismissPhonePrompt: () => void;
+  submitPhone: (phone: string) => Promise<void>;
 }
 
 const initialState: AuthState = {
@@ -42,7 +46,11 @@ const initialState: AuthState = {
   isLoading: false,
   isInitialized: false,
   isNewCustomer: false,
+  needsPhone: false,
 };
+
+const PHONE_PROMPT_SKIP_KEY = 'phone_prompt_skip_count';
+const MAX_PHONE_PROMPTS = 3;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -101,6 +109,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { customer, isNew } =
           await customerService.findOrCreate(profile);
 
+        // Check if phone prompt should be shown
+        let needsPhone = false;
+        if (customer && !customer.phone) {
+          const skipCountStr = await AsyncStorage.getItem(PHONE_PROMPT_SKIP_KEY);
+          const skipCount = skipCountStr ? parseInt(skipCountStr, 10) : 0;
+          needsPhone = skipCount < MAX_PHONE_PROMPTS;
+        }
+
         setState({
           user,
           customer,
@@ -109,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isInitialized: true,
           // Only show onboarding modal for fresh signups, not app relaunches
           isNewCustomer: fromInit ? false : isNew,
+          needsPhone,
         });
 
         if (customer?.id) {
@@ -128,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           isInitialized: true,
           isNewCustomer: false,
+          needsPhone: false,
         });
       } finally {
         isLoadingCustomer.current = false;
@@ -215,6 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           isInitialized: true,
           isNewCustomer: false,
+          needsPhone: false,
         });
       }
     });
@@ -274,6 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
         isInitialized: true,
         isNewCustomer: false,
+        needsPhone: false,
       });
     }
   }, [cleanupRealtimeSubscription, state.customer?.id]);
@@ -281,6 +301,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearNewCustomerFlag = useCallback(() => {
     setState((prev) => ({ ...prev, isNewCustomer: false }));
   }, []);
+
+  const dismissPhonePrompt = useCallback(async () => {
+    const skipCountStr = await AsyncStorage.getItem(PHONE_PROMPT_SKIP_KEY);
+    const skipCount = skipCountStr ? parseInt(skipCountStr, 10) : 0;
+    await AsyncStorage.setItem(PHONE_PROMPT_SKIP_KEY, String(skipCount + 1));
+    setState((prev) => ({ ...prev, needsPhone: false }));
+  }, []);
+
+  const submitPhone = useCallback(async (phone: string) => {
+    if (!state.customer) return;
+    await customerService.updatePhone(state.customer.id, phone);
+    // Clear skip counter since they completed it
+    await AsyncStorage.removeItem(PHONE_PROMPT_SKIP_KEY);
+    setState((prev) => ({
+      ...prev,
+      needsPhone: false,
+      customer: prev.customer ? { ...prev.customer, phone } : null,
+    }));
+  }, [state.customer]);
 
   const refreshCustomer = useCallback(async () => {
     if (!state.user) return;
@@ -301,6 +340,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         refreshCustomer,
         clearNewCustomerFlag,
+        dismissPhonePrompt,
+        submitPhone,
       }}
     >
       {children}

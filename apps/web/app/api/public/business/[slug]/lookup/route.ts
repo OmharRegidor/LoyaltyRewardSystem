@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase-server';
 import {
   getBusinessBySlug,
   getCustomerByPhone,
+  getCustomerByEmail,
 } from '@/lib/services/public-business.service';
 import { verifyPin, PIN_MAX_ATTEMPTS, LOCKOUT_MINUTES } from '@/lib/services/pin.service';
 import { z } from 'zod';
@@ -15,10 +16,7 @@ import type { Json } from '../../../../../../../../packages/shared/types/databas
 // ============================================
 
 const PinLookupSchema = z.object({
-  phone: z
-    .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+  identifier: z.string().min(1, 'Phone number or email is required'),
   pin: z
     .string()
     .length(4, 'PIN must be exactly 4 digits')
@@ -139,10 +137,22 @@ export async function POST(
       );
     }
 
-    const { phone, pin } = validation.data;
+    const { identifier, pin } = validation.data;
 
-    // 4. Look up customer by phone
-    const customer = await getCustomerByPhone(business.id, phone);
+    // 4. Detect identifier type and look up customer
+    const isEmail = identifier.includes('@');
+    const isPhone = /^\d{11}$/.test(identifier.replace(/\s+/g, ''));
+
+    if (!isEmail && !isPhone) {
+      return NextResponse.json(
+        { error: 'Please enter a valid 11-digit phone number or email address.' },
+        { status: 400 }
+      );
+    }
+
+    const customer = isEmail
+      ? await getCustomerByEmail(business.id, identifier)
+      : await getCustomerByPhone(business.id, identifier.replace(/\s+/g, ''));
 
     if (!customer) {
       await artificialDelay();
@@ -151,6 +161,7 @@ export async function POST(
         action: 'card_lookup_not_found',
         businessId: business.id,
         details: {
+          lookupType: isEmail ? 'email' : 'phone',
           processingTimeMs: Date.now() - startTime,
           ipAddress,
           userAgent,
@@ -158,7 +169,10 @@ export async function POST(
       });
 
       return NextResponse.json(
-        { error: 'No card found for this phone number. Please check the number or sign up first.' },
+        { error: isEmail
+            ? 'No card found for this email. Please check the address or sign up first.'
+            : 'No card found for this phone number. Please check the number or sign up first.'
+        },
         { status: 404 }
       );
     }

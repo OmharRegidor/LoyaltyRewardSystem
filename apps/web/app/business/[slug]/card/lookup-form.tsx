@@ -14,10 +14,19 @@ import { CardModal } from './card-modal';
 // ============================================
 
 const PinLookupSchema = z.object({
-  phone: z
+  identifier: z
     .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+    .min(1, 'Phone number or email is required')
+    .refine(
+      (val) => {
+        const trimmed = val.trim();
+        // Email
+        if (trimmed.includes('@')) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+        // Phone (11 digits)
+        return /^\d{11}$/.test(trimmed.replace(/\s+/g, ''));
+      },
+      { message: 'Enter a valid 11-digit phone number or email address' }
+    ),
   pin: z
     .string()
     .length(4, 'PIN must be exactly 4 digits')
@@ -27,8 +36,9 @@ const PinLookupSchema = z.object({
 const PinResetRequestSchema = z.object({
   phone: z
     .string()
-    .length(11, 'Phone number must be exactly 11 digits')
-    .regex(/^\d+$/, 'Phone number must contain only digits'),
+    .regex(/^\d{11}$/, 'Phone number must be exactly 11 digits')
+    .optional()
+    .or(z.literal('')),
   email: z.string().email('Please enter a valid email address'),
 });
 
@@ -81,10 +91,11 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [resetEmail, setResetEmail] = useState('');
+  const [lookupWasEmail, setLookupWasEmail] = useState(false);
 
   const lookupForm = useForm<PinLookupInput>({
     resolver: zodResolver(PinLookupSchema),
-    defaultValues: { phone: '', pin: '' },
+    defaultValues: { identifier: '', pin: '' },
   });
 
   const resetRequestForm = useForm<PinResetRequestInput>({
@@ -127,6 +138,7 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
 
       // Existing customer without PIN
       if (json.needsPinSetup) {
+        setLookupWasEmail(data.identifier.includes('@'));
         setStep('pin_setup_prompt');
         return;
       }
@@ -154,10 +166,13 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
     setError(null);
 
     try {
+      const payload: { email: string; phone?: string } = { email: data.email };
+      if (data.phone) payload.phone = data.phone;
+
       const response = await fetch(`/api/public/business/${businessSlug}/pin-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const json = await response.json();
@@ -272,25 +287,22 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
             </div>
           )}
 
-          {/* Phone */}
+          {/* Phone or Email */}
           <div className="mb-4">
-            <label htmlFor="lookupPhone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
+            <label htmlFor="lookupIdentifier" className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number or Email
             </label>
             <input
-              {...lookupForm.register('phone')}
-              type="tel"
-              inputMode="numeric"
-              maxLength={11}
-              id="lookupPhone"
-              placeholder="09171234567"
+              {...lookupForm.register('identifier')}
+              type="text"
+              id="lookupIdentifier"
+              placeholder="09171234567 or juan@email.com"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
               disabled={isSubmitting}
-              onKeyDown={digitOnlyKeyDown}
             />
-            {lookupForm.formState.errors.phone && (
+            {lookupForm.formState.errors.identifier && (
               <p className="mt-1 text-sm text-red-500">
-                {lookupForm.formState.errors.phone.message}
+                {lookupForm.formState.errors.identifier.message}
               </p>
             )}
           </div>
@@ -378,9 +390,11 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
             type="button"
             onClick={() => {
               // Pre-fill phone from lookup form
-              const phone = lookupForm.getValues('phone');
-              if (phone) {
-                resetRequestForm.setValue('phone', phone);
+              const id = lookupForm.getValues('identifier');
+              if (id && id.includes('@')) {
+                resetRequestForm.setValue('email', id.trim());
+              } else if (id && /^\d+$/.test(id.replace(/\s+/g, ''))) {
+                resetRequestForm.setValue('phone', id.replace(/\s+/g, ''));
               }
               setStep('reset_request');
               setError(null);
@@ -413,7 +427,9 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
             <h2 className="text-lg font-semibold text-gray-900">Reset PIN</h2>
           </div>
           <p className="text-sm text-gray-500 mb-5">
-            Enter your phone number and the email you used to sign up. We&apos;ll send a verification code to your email.
+            {lookupWasEmail
+              ? 'We\u2019ll send a verification code to your email so you can set your PIN.'
+              : 'Enter your phone number and the email you used to sign up. We\u2019ll send a verification code to your email.'}
           </p>
 
           {error && (
@@ -423,28 +439,30 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
             </div>
           )}
 
-          {/* Phone */}
-          <div className="mb-4">
-            <label htmlFor="resetPhone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
-            </label>
-            <input
-              {...resetRequestForm.register('phone')}
-              type="tel"
-              inputMode="numeric"
-              maxLength={11}
-              id="resetPhone"
-              placeholder="09171234567"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-              disabled={isSubmitting}
-              onKeyDown={digitOnlyKeyDown}
-            />
-            {resetRequestForm.formState.errors.phone && (
-              <p className="mt-1 text-sm text-red-500">
-                {resetRequestForm.formState.errors.phone.message}
-              </p>
-            )}
-          </div>
+          {/* Phone - hidden when lookup was by email */}
+          {!lookupWasEmail && (
+            <div className="mb-4">
+              <label htmlFor="resetPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                {...resetRequestForm.register('phone')}
+                type="tel"
+                inputMode="numeric"
+                maxLength={11}
+                id="resetPhone"
+                placeholder="09171234567"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                disabled={isSubmitting}
+                onKeyDown={digitOnlyKeyDown}
+              />
+              {resetRequestForm.formState.errors.phone && (
+                <p className="mt-1 text-sm text-red-500">
+                  {resetRequestForm.formState.errors.phone.message}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Email */}
           <div className="mb-6">

@@ -226,6 +226,22 @@ export const customerService = {
   },
 
   /**
+   * Update phone number for a customer and all linked records (same user_id).
+   * The DB trigger handles propagation, so we just update the primary record.
+   */
+  async updatePhone(customerId: string, phone: string): Promise<void> {
+    const { error } = await supabase
+      .from('customers')
+      .update({ phone })
+      .eq('id', customerId);
+
+    if (error) {
+      console.error('[CustomerService] updatePhone error:', error.message);
+      throw error;
+    }
+  },
+
+  /**
    * Get customer by ID (for staff lookups)
    */
   async getById(customerId: string): Promise<Customer | null> {
