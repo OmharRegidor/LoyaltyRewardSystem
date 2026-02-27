@@ -25,7 +25,19 @@ export async function unlinkCustomersFromBusiness(
 ): Promise<UnlinkResult> {
   const supabase = createServiceClient();
 
-  // Clear created_by_business_id for customers that belong to this business
+  // 1. Remove from customer_businesses junction table
+  const { error: cbError } = await supabase
+    .from("customer_businesses")
+    .delete()
+    .in("customer_id", customerIds)
+    .eq("business_id", businessId);
+
+  if (cbError) {
+    console.error("Error removing customer_businesses links:", cbError);
+    throw cbError;
+  }
+
+  // 2. Clear created_by_business_id on customers table (if it matches this business)
   const { error, count } = await supabase
     .from("customers")
     .update({ created_by_business_id: null })
