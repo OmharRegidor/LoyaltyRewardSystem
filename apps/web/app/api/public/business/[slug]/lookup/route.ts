@@ -256,6 +256,19 @@ export async function POST(
       },
     });
 
+    // Fetch business-specific points
+    let businessPoints = customer.totalPoints;
+    const { data: bpData } = await serviceClient
+      .from('customer_businesses')
+      .select('points')
+      .eq('customer_id', customer.id)
+      .eq('business_id', business.id)
+      .maybeSingle();
+
+    if (bpData) {
+      businessPoints = bpData.points || 0;
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -263,7 +276,7 @@ export async function POST(
         phone: customer.phone || null,
         qrCodeUrl: customer.qrCodeUrl,
         tier: customer.tier,
-        totalPoints: customer.totalPoints,
+        totalPoints: businessPoints,
       },
     });
   } catch (error) {

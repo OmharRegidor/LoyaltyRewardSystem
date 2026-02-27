@@ -21,18 +21,38 @@ export default async function JoinPage({ params, searchParams }: JoinPageProps) 
     return <JoinNotFound />;
   }
 
-  // If email is provided (staff invite link), check if already a member
+  // If email is provided (staff invite link), check if already a member with a card
   if (email) {
     const supabase = createServiceClient();
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check business-scoped customers
     const { data: existing } = await supabase
       .from('customers')
-      .select('id')
-      .eq('email', email.toLowerCase().trim())
+      .select('id, card_token')
+      .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id)
       .maybeSingle();
 
-    if (existing) {
+    if (existing?.card_token) {
       return <JoinAlreadyMember businessName={business.name} />;
+    }
+
+    // Check linked customers
+    if (!existing) {
+      const { data: linked } = await supabase
+        .from('customer_businesses')
+        .select('customers!inner(id, email, card_token)')
+        .eq('business_id', business.id);
+
+      if (linked) {
+        for (const link of linked) {
+          const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
+          if (c?.email?.toLowerCase() === normalizedEmail && c.card_token) {
+            return <JoinAlreadyMember businessName={business.name} />;
+          }
+        }
+      }
     }
   }
 

@@ -78,6 +78,11 @@ export function TransactionCard({
         <Text style={styles.title} numberOfLines={1}>
           {transaction.title}
         </Text>
+        {transaction.business?.name != null && (
+          <Text style={styles.businessName} numberOfLines={1}>
+            {transaction.business.name}
+          </Text>
+        )}
         {transaction.description != null && (
           <Text style={styles.description} numberOfLines={1}>
             {transaction.description}
@@ -143,6 +148,12 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.base,
     fontWeight: '600',
     color: COLORS.gray[900],
+  },
+  businessName: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.gray[600],
+    fontWeight: '500',
+    marginTop: 2,
   },
   description: {
     fontSize: FONT_SIZE.xs,

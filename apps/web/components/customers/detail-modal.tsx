@@ -51,6 +51,7 @@ interface Transaction {
 
 interface CustomerDetailModalProps {
   customer: Customer;
+  businessId?: string;
   onClose: () => void;
 }
 
@@ -88,14 +89,30 @@ function formatRelativeDate(dateString: string): string {
 
 const ITEMS_PER_PAGE = 5;
 
+/**
+ * Creates a friendly title from a raw transaction description
+ */
+function friendlyTitle(description: string | null, type: string): string {
+  if (!description) return type === 'earn' ? 'Points Earned' : 'Points Redeemed';
+  const lower = description.toLowerCase();
+  if (lower.includes('referral')) return 'Referral Bonus';
+  if (lower.includes('welcome')) return 'Welcome Bonus';
+  if (lower.includes('bonus')) return 'Bonus Points';
+  if (lower.startsWith('pos sale')) return 'Purchase';
+  if (lower.includes('redeem') || lower.includes('redemption')) return 'Reward Redeemed';
+  return description;
+}
+
 export function CustomerDetailModal({
   customer,
+  businessId,
   onClose,
 }: CustomerDetailModalProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [businessPoints, setBusinessPoints] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(
     customer.customerId || null
   );
@@ -124,6 +141,24 @@ export function CustomerDetailModal({
     findCustomerId();
   }, [customer.customerId, customer.name, customer.phone]);
 
+  // Fetch business-specific points
+  useEffect(() => {
+    async function fetchBusinessPoints() {
+      if (!customerId || !businessId) return;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('customer_businesses')
+        .select('points')
+        .eq('customer_id', customerId)
+        .eq('business_id', businessId)
+        .maybeSingle();
+      if (data) {
+        setBusinessPoints(data.points);
+      }
+    }
+    fetchBusinessPoints();
+  }, [customerId, businessId]);
+
   // Fetch transactions
   useEffect(() => {
     async function fetchTransactions() {
@@ -136,21 +171,29 @@ export function CustomerDetailModal({
       const supabase = createClient();
 
       try {
-        // Get total count
-        const { count } = await supabase
+        // Build query with optional business filter
+        let countQuery = supabase
           .from('transactions')
           .select('*', { count: 'exact', head: true })
           .eq('customer_id', customerId);
+        if (businessId) {
+          countQuery = countQuery.eq('business_id', businessId);
+        }
+        const { count } = await countQuery;
 
         setTotalCount(count || 0);
 
         // Get paginated transactions
         const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
-        const { data, error } = await supabase
+        let txQuery = supabase
           .from('transactions')
           .select('id, type, points, description, created_at, amount_spent')
-          .eq('customer_id', customerId)
+          .eq('customer_id', customerId);
+        if (businessId) {
+          txQuery = txQuery.eq('business_id', businessId);
+        }
+        const { data, error } = await txQuery
           .order('created_at', { ascending: false })
           .range(offset, offset + ITEMS_PER_PAGE - 1);
 
@@ -285,10 +328,10 @@ export function CustomerDetailModal({
                   <Star className="w-5 h-5 text-yellow-500 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500">
-                      Total Points
+                      {businessId ? 'Business Points' : 'Total Points'}
                     </p>
                     <p className="text-lg font-bold text-gray-900">
-                      {customer.points.toLocaleString()}
+                      {(businessPoints ?? customer.points).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -354,10 +397,7 @@ export function CustomerDetailModal({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {tx.description ||
-                              (tx.type === 'earn'
-                                ? 'Points earned'
-                                : 'Points redeemed')}
+                            {friendlyTitle(tx.description, tx.type)}
                           </p>
                           {tx.amountSpent != null && tx.type === 'earn' && (
                             <p className="text-xs text-gray-500">

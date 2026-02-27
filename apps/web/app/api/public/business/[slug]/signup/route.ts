@@ -220,14 +220,25 @@ export async function POST(
     try {
       const { data: customerData, error: fetchError } = await serviceClient
         .from('customers')
-        .select('tier, total_points, full_name')
+        .select('tier, full_name')
         .eq('id', result.customerId)
         .single();
 
       if (!fetchError && customerData) {
         tier = customerData.tier || 'bronze';
-        totalPoints = customerData.total_points || 0;
         storedName = customerData.full_name || fullName;
+      }
+
+      // Get business-specific points
+      const { data: businessPoints } = await serviceClient
+        .from('customer_businesses')
+        .select('points')
+        .eq('customer_id', result.customerId)
+        .eq('business_id', business.id)
+        .maybeSingle();
+
+      if (businessPoints) {
+        totalPoints = businessPoints.points || 0;
       }
     } catch (fetchErr) {
       console.error('Failed to fetch customer data after signup:', fetchErr);

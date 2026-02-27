@@ -6,3 +6,4 @@ export { TransactionCard } from './TransactionCard';
 export { RedemptionCard } from './RedemptionCard';
 export { SectionHeader } from './SectionHeader';
 export { EmptyWallet } from './EmptyWallet';
+export { TransactionDetailModal } from './TransactionDetailModal';

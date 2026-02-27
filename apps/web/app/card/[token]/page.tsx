@@ -96,6 +96,20 @@ async function getCustomerByToken(token: string): Promise<CustomerData | null> {
     ? customer.businesses[0]
     : customer.businesses;
 
+  // Fetch business-specific points if business context is available
+  let totalPoints = customer.total_points || 0;
+  if (business) {
+    const { data: bpData } = await supabase
+      .from('customer_businesses')
+      .select('points')
+      .eq('customer_id', customer.id)
+      .eq('business_id', business.id)
+      .maybeSingle();
+    if (bpData) {
+      totalPoints = bpData.points || 0;
+    }
+  }
+
   return {
     id: customer.id,
     fullName: customer.full_name || 'Valued Customer',
@@ -103,7 +117,7 @@ async function getCustomerByToken(token: string): Promise<CustomerData | null> {
     phone: customer.phone,
     qrCodeUrl: customer.qr_code_url || '',
     tier: customer.tier || 'bronze',
-    totalPoints: customer.total_points || 0,
+    totalPoints,
     business: business
       ? {
           id: business.id,
