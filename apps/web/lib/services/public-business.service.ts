@@ -121,10 +121,13 @@ export async function getPublicBusinesses(
       city,
       phone,
       points_per_purchase,
-      pesos_per_point
+      pesos_per_point,
+      rewards!inner(id)
     `,
       { count: 'exact' }
     )
+    .eq('rewards.is_active', true)
+    .eq('rewards.is_visible', true)
     .in('subscription_status', ['active', 'trialing', 'free_forever', 'preview'])
     .order('name');
 

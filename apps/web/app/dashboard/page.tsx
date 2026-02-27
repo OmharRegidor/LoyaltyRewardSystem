@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
+import { OnboardingBanner } from '@/components/dashboard/onboarding-banner';
 import {
   Dialog,
   DialogContent,
@@ -543,6 +544,8 @@ export default function DashboardPage() {
   const [currentDate, setCurrentDate] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [businessSlug, setBusinessSlug] = useState<string | null>(null);
+  const [pesosPerPoint, setPesosPerPoint] = useState<number | null>(null);
+  const [referralRewardPoints, setReferralRewardPoints] = useState<number | null>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
@@ -568,13 +571,15 @@ export default function DashboardPage() {
         const metadata = user.user_metadata || {};
         const { data: business } = await supabase
           .from('businesses')
-          .select('id, name, slug, subscription_status')
+          .select('id, name, slug, subscription_status, pesos_per_point, referral_reward_points')
           .eq('owner_id', user.id)
           .maybeSingle();
 
         if (business) {
           setBusinessId(business.id);
           setBusinessSlug(business.slug);
+          setPesosPerPoint(business.pesos_per_point);
+          setReferralRewardPoints(business.referral_reward_points);
           setUserName(
             business.name || metadata.business_name || 'Your Business',
           );
@@ -864,6 +869,15 @@ export default function DashboardPage() {
       <Suspense fallback={null}>
         <WelcomeModalHandler businessSlug={businessSlug} />
       </Suspense>
+
+      {/* Onboarding Banner for new businesses */}
+      {stats.activeRewards === 0 && (
+        <OnboardingBanner
+          activeRewardCount={stats.activeRewards}
+          pesosPerPoint={pesosPerPoint}
+          referralRewardPoints={referralRewardPoints}
+        />
+      )}
 
       <div className="space-y-6">
         {/* Header */}
