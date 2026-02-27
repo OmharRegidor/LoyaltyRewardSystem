@@ -235,11 +235,19 @@ export async function POST(request: NextRequest) {
         max_attempts: 5,
       });
 
-    await sendCustomerInviteEmail({
+    const emailResult = await sendCustomerInviteEmail({
       to: email,
       businessName: staffInfo.business.name,
       joinUrl,
     });
+
+    if (!emailResult.success) {
+      console.error('Failed to send invite email:', emailResult.error);
+      return NextResponse.json(
+        { error: `Failed to send invitation email: ${emailResult.error}` },
+        { status: 502 },
+      );
+    }
 
     // 7. Log audit event
     await logAuditEvent(serviceClient, {
