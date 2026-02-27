@@ -16,7 +16,6 @@ import {
   Star,
   Gift,
   CreditCard,
-  ArrowLeft,
   Users,
   Lock,
 } from 'lucide-react';
@@ -49,15 +48,7 @@ const Step1Schema = z
     path: ['confirmPin'],
   });
 
-const Step2Schema = z.object({
-  code: z
-    .string()
-    .length(6, 'Code must be 6 digits')
-    .regex(/^\d+$/, 'Code must contain only digits'),
-});
-
 type Step1Input = z.infer<typeof Step1Schema>;
-type Step2Input = z.infer<typeof Step2Schema>;
 
 // ============================================
 // TYPES
@@ -72,7 +63,7 @@ interface JoinPageClientProps {
   prefillEmail: string;
 }
 
-type Step = 'info' | 'verify' | 'success';
+type Step = 'info' | 'success';
 
 interface CardData {
   customerName: string;
@@ -100,7 +91,6 @@ export function JoinPageClient({
   const [formData, setFormData] = useState<Step1Input | null>(null);
   const [cardData, setCardData] = useState<CardData | null>(null);
   const [showCardModal, setShowCardModal] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Step 1 form
   const step1Form = useForm<Step1Input>({
@@ -115,12 +105,6 @@ export function JoinPageClient({
     },
   });
 
-  // Step 2 form
-  const step2Form = useForm<Step2Input>({
-    resolver: zodResolver(Step2Schema),
-    defaultValues: { code: '' },
-  });
-
   // ============================================
   // STEP 1: Submit info + send OTP
   // ============================================
@@ -130,71 +114,15 @@ export function JoinPageClient({
     setError(null);
 
     try {
-      const response = await fetch('/api/public/verify/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: data.email,
-          joinCode,
-        }),
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        setError(json.error || 'Failed to send verification code');
-        return;
-      }
-
-      setFormData(data);
-      setStep('verify');
-      startResendCooldown();
-    } catch {
-      setError('Network error. Please check your connection.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ============================================
-  // STEP 2: Verify OTP
-  // ============================================
-
-  const onStep2Submit = async (data: Step2Input) => {
-    if (!formData) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Verify the code
-      const verifyResponse = await fetch('/api/public/verify/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: data.code,
-          email: formData.email,
-          joinCode,
-        }),
-      });
-
-      const verifyJson = await verifyResponse.json();
-
-      if (!verifyResponse.ok) {
-        setError(verifyJson.message || verifyJson.error || 'Invalid code');
-        return;
-      }
-
-      // Create customer
       const signupResponse = await fetch(`/api/public/join/${joinCode}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: formData.fullName,
-          phone: formData.phone,
-          email: formData.email,
-          pin: formData.pin,
-          referralCode: formData.referralCode,
+          fullName: data.fullName,
+          phone: data.phone,
+          email: data.email,
+          pin: data.pin,
+          referralCode: data.referralCode,
         }),
       });
 
@@ -205,10 +133,10 @@ export function JoinPageClient({
         return;
       }
 
-      // Success!
+      setFormData(data);
       setCardData({
         customerName: signupJson.data.customerName,
-        phone: formData.phone,
+        phone: data.phone,
         qrCodeUrl: signupJson.data.qrCodeUrl,
         tier: signupJson.data.tier,
         totalPoints: signupJson.data.totalPoints,
@@ -220,50 +148,6 @@ export function JoinPageClient({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // ============================================
-  // RESEND CODE
-  // ============================================
-
-  const handleResend = async () => {
-    if (resendCooldown > 0 || !formData) return;
-
-    setError(null);
-    try {
-      const response = await fetch('/api/public/verify/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          joinCode,
-        }),
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        setError(json.error || 'Failed to resend code');
-        return;
-      }
-
-      startResendCooldown();
-    } catch {
-      setError('Network error.');
-    }
-  };
-
-  const startResendCooldown = () => {
-    setResendCooldown(60);
-    const interval = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
 
   // ============================================
@@ -527,127 +411,15 @@ export function JoinPageClient({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending code...
+                    Creating your card...
                   </>
                 ) : (
                   <>
-                    <Mail className="w-4 h-4" />
-                    Verify Email & Continue
+                    <CreditCard className="w-4 h-4" />
+                    Get My Card
                   </>
                 )}
               </button>
-
-              <p className="mt-4 text-xs text-center text-gray-500">
-                We&apos;ll send a 6-digit code to verify your email address.
-              </p>
-            </form>
-          )}
-
-          {/* STEP 2: Enter OTP */}
-          {step === 'verify' && (
-            <form
-              onSubmit={step2Form.handleSubmit(onStep2Submit)}
-              className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('info');
-                  setError(null);
-                  step2Form.reset();
-                }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </button>
-
-              <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Verify Your Email
-                </h2>
-              </div>
-              <p className="text-sm text-gray-500 mb-5">
-                We sent a 6-digit code to{' '}
-                <strong className="text-gray-700">{formData?.email}</strong>
-              </p>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
-
-              {/* Code Input */}
-              <div className="mb-6">
-                <input
-                  {...step2Form.register('code')}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  autoComplete="one-time-code"
-                  disabled={isSubmitting}
-                  className="w-full py-4 text-center text-3xl font-mono font-bold tracking-[0.5em] border border-gray-300 rounded-xl bg-white text-gray-900 placeholder:text-gray-300 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-                  onKeyDown={(e) => {
-                    if (
-                      [
-                        'Backspace',
-                        'Delete',
-                        'Tab',
-                        'Escape',
-                        'Enter',
-                        'ArrowLeft',
-                        'ArrowRight',
-                      ].includes(e.key)
-                    )
-                      return;
-                    if (!/^\d$/.test(e.key)) e.preventDefault();
-                  }}
-                />
-                {step2Form.formState.errors.code && (
-                  <p className="mt-1 text-xs text-red-500 text-center">
-                    {step2Form.formState.errors.code.message}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4" />
-                    Verify & Get Card
-                  </>
-                )}
-              </button>
-
-              {/* Resend */}
-              <div className="mt-4 text-center">
-                {resendCooldown > 0 ? (
-                  <p className="text-xs text-gray-400">
-                    Resend code in {resendCooldown}s
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Didn&apos;t receive the code? Resend
-                  </button>
-                )}
-              </div>
             </form>
           )}
 
