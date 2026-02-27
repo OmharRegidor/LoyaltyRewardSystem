@@ -162,7 +162,7 @@ export function useCustomers({
         `,
         )
         .or(
-          `created_by_business_id.eq.${businessId},id.in.(${await getCustomerIdsWithTransactions(
+          `created_by_business_id.eq.${businessId},id.in.(${await getLinkedCustomerIds(
             supabase,
             businessId,
           )})`,
@@ -375,10 +375,60 @@ export function useCustomers({
       )
       .subscribe();
 
+    // Subscribe to customer_businesses inserts (join code signups)
+    const cbChannel = supabase
+      .channel(`customer-businesses-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'customer_businesses',
+          filter: `business_id=eq.${businessId}`,
+        },
+        async (payload) => {
+          if (payload.new && 'customer_id' in payload.new) {
+            const customerId = payload.new.customer_id as string;
+            const alreadyExists = customersRef.current.some(
+              (c) => c.id === customerId,
+            );
+            if (!alreadyExists) {
+              const { data: customerData } = await supabase
+                .from('customers')
+                .select(
+                  `id, full_name, email, phone, total_points, lifetime_points, tier, last_visit, created_at, created_by_staff_id, created_by_business_id`,
+                )
+                .eq('id', customerId)
+                .single();
+
+              if (customerData) {
+                const newCustomer: Customer = {
+                  ...mapDatabaseCustomer(customerData),
+                  isNew: true,
+                };
+                setCustomers((prev) => [newCustomer, ...prev]);
+                setTotalCount((prev) => prev + 1);
+                playNotificationSound();
+                onNewCustomer?.(newCustomer);
+                setTimeout(() => {
+                  setCustomers((prev) =>
+                    prev.map((c) =>
+                      c.id === newCustomer.id ? { ...c, isNew: false } : c,
+                    ),
+                  );
+                }, 3000);
+              }
+            }
+          }
+        },
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(insertChannel);
       supabase.removeChannel(updateChannel);
       supabase.removeChannel(transactionChannel);
+      supabase.removeChannel(cbChannel);
     };
   }, [businessId, onNewCustomer]);
 
@@ -399,26 +449,38 @@ export function useCustomers({
 }
 
 // ============================================
-// HELPER: Get customer IDs with transactions
+// HELPER: Get customer IDs linked to business
 // ============================================
 
-async function getCustomerIdsWithTransactions(
+async function getLinkedCustomerIds(
   supabase: ReturnType<typeof createClient>,
   businessId: string,
 ): Promise<string> {
-  const { data } = await supabase
-    .from('transactions')
-    .select('customer_id')
-    .eq('business_id', businessId);
+  // Fetch from both transactions and customer_businesses
+  const [txResult, cbResult] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('customer_id')
+      .eq('business_id', businessId),
+    supabase
+      .from('customer_businesses')
+      .select('customer_id')
+      .eq('business_id', businessId),
+  ]);
 
-  if (!data || data.length === 0) {
-    // Return a UUID that won't match anything
+  const ids = new Set<string>();
+  if (txResult.data) {
+    for (const t of txResult.data) ids.add(t.customer_id);
+  }
+  if (cbResult.data) {
+    for (const cb of cbResult.data) ids.add(cb.customer_id);
+  }
+
+  if (ids.size === 0) {
     return '00000000-0000-0000-0000-000000000000';
   }
 
-  // Get unique customer IDs
-  const uniqueIds = [...new Set(data.map((t) => t.customer_id))];
-  return uniqueIds.join(',');
+  return [...ids].join(',');
 }
 
 // ============================================
