@@ -78,6 +78,7 @@ interface EditSnapshot {
   profile: BusinessProfile;
   loyalty: LoyaltySettings;
   referralRewardPoints: number;
+  referralInput: string;
   inputValues: InputValues;
   selectedPreset: number;
   showCustomInput: boolean;
@@ -154,6 +155,7 @@ export default function SettingsPage() {
 
   // Referral Settings State
   const [referralRewardPoints, setReferralRewardPoints] = useState(25);
+  const [referralInput, setReferralInput] = useState('25');
 
   const [selectedPreset, setSelectedPreset] = useState<number>(10);
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -182,6 +184,7 @@ export default function SettingsPage() {
       profile: { ...profile },
       loyalty: { ...loyalty },
       referralRewardPoints,
+      referralInput,
       inputValues: { ...inputValues },
       selectedPreset,
       showCustomInput,
@@ -195,6 +198,7 @@ export default function SettingsPage() {
       setProfile(snapshot.profile);
       setLoyalty(snapshot.loyalty);
       setReferralRewardPoints(snapshot.referralRewardPoints);
+      setReferralInput(snapshot.referralInput);
       setInputValues(snapshot.inputValues);
       setSelectedPreset(snapshot.selectedPreset);
       setShowCustomInput(snapshot.showCustomInput);
@@ -267,7 +271,9 @@ export default function SettingsPage() {
           }
         }
 
-        setReferralRewardPoints((business as Record<string, unknown>).referral_reward_points as number ?? 25);
+        const referralPts = (business as Record<string, unknown>).referral_reward_points as number ?? 25;
+        setReferralRewardPoints(referralPts);
+        setReferralInput(String(referralPts));
 
         setInputValues({
           customRate: String(business.pesos_per_point || 10),
@@ -1064,11 +1070,21 @@ export default function SettingsPage() {
                   min="1"
                   max="1000"
                   disabled={!isEditing}
-                  value={referralRewardPoints}
+                  value={referralInput}
                   onChange={(e) => {
+                    setReferralInput(e.target.value);
                     const val = parseInt(e.target.value);
                     if (!isNaN(val) && val >= 1) {
                       setReferralRewardPoints(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    const val = parseInt(referralInput);
+                    if (isNaN(val) || val < 1) {
+                      setReferralInput('1');
+                      setReferralRewardPoints(1);
+                    } else {
+                      setReferralInput(String(val));
                     }
                   }}
                   className={`w-32 px-4 py-2.5 border rounded-xl transition text-center font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
