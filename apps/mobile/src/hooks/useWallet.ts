@@ -359,9 +359,9 @@ export function useWallet() {
   useEffect(() => {
     if (customerIds.length === 0) return;
 
-    const channels = customerIds.map((id) =>
+    const channels = customerIds.flatMap((id) => [
       supabase
-        .channel(`wallet-${id}`)
+        .channel(`wallet-tx-${id}`)
         .on(
           'postgres_changes',
           {
@@ -374,8 +374,23 @@ export function useWallet() {
             fetchAllData();
           }
         )
-        .subscribe()
-    );
+        .subscribe(),
+      supabase
+        .channel(`wallet-redemptions-${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'redemptions',
+            filter: `customer_id=eq.${id}`,
+          },
+          () => {
+            fetchAllData();
+          }
+        )
+        .subscribe(),
+    ]);
 
     return () => {
       channels.forEach((ch) => supabase.removeChannel(ch));
