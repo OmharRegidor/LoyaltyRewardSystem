@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Invalid or Expired Link</h1>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Invalid or Expired Link</h1>
           <p className="text-muted-foreground mb-6">
             This password reset link is invalid or has expired. Please request a
             new one.
@@ -158,7 +158,7 @@ export default function ResetPasswordPage() {
           <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShieldCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Password Updated!</h1>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Password Updated!</h1>
           <p className="text-muted-foreground mb-6">
             Your password has been successfully changed. You can now log in with
             your new password.
@@ -194,7 +194,7 @@ export default function ResetPasswordPage() {
           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Set New Password</h1>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Set New Password</h1>
           <p className="text-muted-foreground">
             Create a strong password for your account
           </p>
@@ -221,7 +221,7 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* New Password */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 text-foreground">
                 New Password
               </label>
               <div className="relative">
@@ -249,7 +249,7 @@ export default function ResetPasswordPage() {
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 text-foreground">
                 Confirm Password
               </label>
               <input
@@ -273,7 +273,7 @@ export default function ResetPasswordPage() {
 
             {/* Password Requirements */}
             <div className="p-4 bg-muted/50 rounded-xl space-y-2">
-              <p className="text-sm font-medium mb-2">Password requirements:</p>
+              <p className="text-sm font-medium mb-2 text-foreground">Password requirements:</p>
               {[
                 { met: requirements.length, label: 'At least 8 characters' },
                 { met: requirements.uppercase, label: 'One uppercase letter' },
