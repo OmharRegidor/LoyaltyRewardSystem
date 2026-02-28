@@ -29,6 +29,11 @@ const CUSTOMER_COLUMNS = `
 // TYPES
 // ============================================
 
+export interface AggregatedPoints {
+  totalPoints: number;
+  lifetimePoints: number;
+}
+
 interface UserProfile {
   id: string;
   email?: string;
@@ -240,6 +245,43 @@ export const customerService = {
       console.error('[CustomerService] updatePhone error:', error.message);
       throw error;
     }
+  },
+
+  /**
+   * Get all customer IDs for a user (one per business)
+   */
+  async getAllCustomerIds(userId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[CustomerService] getAllCustomerIds error:', error.message);
+      throw error;
+    }
+
+    return (data ?? []).map((row) => row.id);
+  },
+
+  /**
+   * Get aggregated points across all businesses for a user
+   */
+  async getAggregatedPoints(userId: string): Promise<AggregatedPoints> {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('total_points, lifetime_points')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('[CustomerService] getAggregatedPoints error:', error.message);
+      throw error;
+    }
+
+    const totalPoints = (data ?? []).reduce((sum, row) => sum + (row.total_points ?? 0), 0);
+    const lifetimePoints = (data ?? []).reduce((sum, row) => sum + (row.lifetime_points ?? 0), 0);
+
+    return { totalPoints, lifetimePoints };
   },
 
   /**

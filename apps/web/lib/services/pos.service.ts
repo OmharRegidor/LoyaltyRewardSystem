@@ -871,12 +871,13 @@ export async function createStaffSale(
     transaction_amount: totalCentavos / 100,
   });
 
-  // 12. Get updated customer balance
-  const { data: updatedCustomer } = await supabase
-    .from("customers")
-    .select("total_points")
-    .eq("id", input.customer_id)
-    .single();
+  // 12. Get updated per-business points balance
+  const { data: businessBalance } = await supabase
+    .from("customer_businesses")
+    .select("points")
+    .eq("customer_id", input.customer_id)
+    .eq("business_id", businessId)
+    .maybeSingle();
 
   return {
     sale_id: sale.id,
@@ -887,7 +888,7 @@ export async function createStaffSale(
     total_centavos: totalCentavos,
     points_earned: pointsEarned,
     points_redeemed: exchangePoints,
-    new_points_balance: updatedCustomer?.total_points || 0,
+    new_points_balance: businessBalance?.points || 0,
     tier_multiplier: tierMultiplier,
     base_points: basePoints,
   };

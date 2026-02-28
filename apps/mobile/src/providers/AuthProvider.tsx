@@ -29,6 +29,9 @@ interface AuthState {
   isInitialized: boolean;
   isNewCustomer: boolean;
   needsPhone: boolean;
+  totalPoints: number;
+  lifetimePoints: number;
+  customerIds: string[];
 }
 
 interface AuthContextType extends AuthState {
@@ -48,6 +51,9 @@ const initialState: AuthState = {
   isInitialized: false,
   isNewCustomer: false,
   needsPhone: false,
+  totalPoints: 0,
+  lifetimePoints: 0,
+  customerIds: [],
 };
 
 const PHONE_PROMPT_SKIP_KEY = 'phone_prompt_skip_count';
@@ -110,6 +116,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { customer, isNew } =
           await customerService.findOrCreate(profile);
 
+        // Fetch all customer IDs and aggregate points across all businesses
+        const [aggregated, customerIds] = await Promise.all([
+          customerService.getAggregatedPoints(user.id),
+          customerService.getAllCustomerIds(user.id),
+        ]);
+
         // Check if phone prompt should be shown
         let needsPhone = false;
         if (customer && !customer.phone) {
@@ -127,10 +139,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Only show onboarding modal for fresh signups, not app relaunches
           isNewCustomer: fromInit ? false : isNew,
           needsPhone,
+          totalPoints: aggregated.totalPoints,
+          lifetimePoints: aggregated.lifetimePoints,
+          customerIds,
         });
 
         if (customer?.id) {
-          setupRealtimeSubscription(customer.id);
+          setupRealtimeSubscription(user.id);
 
           // Register push token (non-blocking)
           notificationService.registerPushToken(customer.id).then((token) => {
@@ -147,6 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isInitialized: true,
           isNewCustomer: false,
           needsPhone: false,
+          totalPoints: 0,
+          lifetimePoints: 0,
+          customerIds: [],
         });
       } finally {
         isLoadingCustomer.current = false;
@@ -155,33 +173,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  // Setup realtime subscription for customer points updates
-  const setupRealtimeSubscription = useCallback((customerId: string) => {
+  // Setup realtime subscription for customer points updates (all records for user)
+  const setupRealtimeSubscription = useCallback((userId: string) => {
     if (realtimeChannelRef.current) {
       supabase.removeChannel(realtimeChannelRef.current);
     }
 
-    const channel = supabase.channel(`customer-${customerId}`).on(
+    const channel = supabase.channel(`customer-user-${userId}`).on(
       'postgres_changes',
       {
         event: 'UPDATE',
         schema: 'public',
         table: 'customers',
-        filter: `id=eq.${customerId}`,
+        filter: `user_id=eq.${userId}`,
       },
-      (payload) => {
-        setState((prev) => ({
-          ...prev,
-          customer: prev.customer
-            ? {
-                ...prev.customer,
-                total_points: (payload.new as Customer).total_points,
-                lifetime_points: (payload.new as Customer).lifetime_points,
-                tier: (payload.new as Customer).tier,
-                last_visit: (payload.new as Customer).last_visit,
-              }
-            : null,
-        }));
+      () => {
+        // Re-aggregate points from all customer records
+        customerService.getAggregatedPoints(userId).then((aggregated) => {
+          setState((prev) => ({
+            ...prev,
+            totalPoints: aggregated.totalPoints,
+            lifetimePoints: aggregated.lifetimePoints,
+          }));
+        });
       },
     );
 
@@ -237,6 +251,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isInitialized: true,
           isNewCustomer: false,
           needsPhone: false,
+          totalPoints: 0,
+          lifetimePoints: 0,
+          customerIds: [],
         });
       }
     });
@@ -314,6 +331,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isInitialized: true,
         isNewCustomer: false,
         needsPhone: false,
+        totalPoints: 0,
+        lifetimePoints: 0,
+        customerIds: [],
       });
     }
   }, [cleanupRealtimeSubscription, state.customer?.id]);
@@ -345,8 +365,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!state.user) return;
 
     try {
-      const customer = await customerService.getByUserId(state.user.id);
-      setState((prev) => ({ ...prev, customer }));
+      const [customer, aggregated, customerIds] = await Promise.all([
+        customerService.getByUserId(state.user.id),
+        customerService.getAggregatedPoints(state.user.id),
+        customerService.getAllCustomerIds(state.user.id),
+      ]);
+      setState((prev) => ({
+        ...prev,
+        customer,
+        totalPoints: aggregated.totalPoints,
+        lifetimePoints: aggregated.lifetimePoints,
+        customerIds,
+      }));
     } catch (error) {
       console.error('[AuthProvider] Refresh customer error:', error);
     }

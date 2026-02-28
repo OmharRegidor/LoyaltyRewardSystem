@@ -275,13 +275,12 @@ const TRANSACTION_LIMIT = 50;
 // ============================================
 
 export function useWallet() {
-  const { customer, points } = useCustomer();
+  const { customer, points, lifetimePoints, customerIds } = useCustomer();
 
   // State
   const [activeTab, setActiveTab] = useState<WalletTab>('transactions');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [redemptions, setRedemptions] = useState<CustomerRedemption[]>([]);
-  const [lifetimePoints, setLifetimePoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -291,11 +290,11 @@ export function useWallet() {
   // ============================================
 
   const fetchTransactions = useCallback(
-    async (customerId: string): Promise<Transaction[]> => {
+    async (ids: string[]): Promise<Transaction[]> => {
       const { data, error } = await supabase
         .from('transactions')
         .select(TRANSACTION_SELECT)
-        .eq('customer_id', customerId)
+        .in('customer_id', ids)
         .order('created_at', { ascending: false })
         .limit(TRANSACTION_LIMIT);
 
@@ -307,11 +306,11 @@ export function useWallet() {
   );
 
   const fetchRedemptions = useCallback(
-    async (customerId: string): Promise<CustomerRedemption[]> => {
+    async (ids: string[]): Promise<CustomerRedemption[]> => {
       const { data, error } = await supabase
         .from('redemptions')
         .select(REDEMPTION_SELECT)
-        .eq('customer_id', customerId)
+        .in('customer_id', ids)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -321,36 +320,19 @@ export function useWallet() {
     []
   );
 
-  const fetchLifetimePoints = useCallback(
-    async (customerId: string): Promise<number> => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('lifetime_points')
-        .eq('id', customerId)
-        .single();
-
-      if (error) throw error;
-
-      return (data as { lifetime_points: number | null })?.lifetime_points ?? 0;
-    },
-    []
-  );
-
   const fetchAllData = useCallback(async () => {
-    if (!customer?.id) return;
+    if (customerIds.length === 0) return;
 
     try {
       setError(null);
 
-      const [txData, redemptionData, lifetime] = await Promise.all([
-        fetchTransactions(customer.id),
-        fetchRedemptions(customer.id),
-        fetchLifetimePoints(customer.id),
+      const [txData, redemptionData] = await Promise.all([
+        fetchTransactions(customerIds),
+        fetchRedemptions(customerIds),
       ]);
 
       setTransactions(txData);
       setRedemptions(redemptionData);
-      setLifetimePoints(lifetime);
     } catch (err) {
       console.error('Wallet fetch error:', err);
       setError(
@@ -360,7 +342,7 @@ export function useWallet() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [customer?.id, fetchTransactions, fetchRedemptions, fetchLifetimePoints]);
+  }, [customerIds, fetchTransactions, fetchRedemptions]);
 
   // ============================================
   // EFFECTS
@@ -368,35 +350,37 @@ export function useWallet() {
 
   // Initial fetch
   useEffect(() => {
-    if (customer?.id) {
+    if (customerIds.length > 0) {
       fetchAllData();
     }
-  }, [customer?.id, fetchAllData]);
+  }, [customerIds, fetchAllData]);
 
-  // Realtime subscription for new transactions
+  // Realtime subscription for new transactions across all customer records
   useEffect(() => {
-    if (!customer?.id) return;
+    if (customerIds.length === 0) return;
 
-    const channel = supabase
-      .channel(`wallet-${customer.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'transactions',
-          filter: `customer_id=eq.${customer.id}`,
-        },
-        () => {
-          fetchAllData();
-        }
-      )
-      .subscribe();
+    const channels = customerIds.map((id) =>
+      supabase
+        .channel(`wallet-${id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'transactions',
+            filter: `customer_id=eq.${id}`,
+          },
+          () => {
+            fetchAllData();
+          }
+        )
+        .subscribe()
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [customer?.id, fetchAllData]);
+  }, [customerIds, fetchAllData]);
 
   // ============================================
   // HANDLERS
