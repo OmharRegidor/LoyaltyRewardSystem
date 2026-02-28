@@ -63,14 +63,14 @@ function ProductCard({
         whileHover={!outOfStock && !disabled ? { y: -2 } : undefined}
         whileTap={!outOfStock && !disabled ? { scale: 0.97 } : undefined}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        className={`relative flex flex-col rounded-xl overflow-hidden transition-shadow text-left w-full ${
+        className={`relative flex flex-col rounded-xl overflow-hidden transition-all text-left w-full ${
           outOfStock
             ? "bg-white border border-gray-200 opacity-70 cursor-not-allowed"
-            : "bg-white shadow-sm hover:shadow-lg border border-gray-200 hover:border-yellow-400"
+            : "bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-gray-200 hover:border-yellow-400"
         }`}
       >
         {/* Image area */}
-        <div className="aspect-square relative w-full bg-gray-100 overflow-hidden">
+        <div className="h-24 relative w-full bg-gray-100 overflow-hidden">
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -112,11 +112,14 @@ function ProductCard({
         </div>
 
         {/* Info area */}
-        <div className="p-2">
-          <p className="text-sm font-medium text-gray-900 truncate">
+        <div className="p-3">
+          <p className="text-sm font-semibold text-gray-900 truncate">
             {product.name}
           </p>
-          <p className="text-sm font-semibold text-yellow-700">
+          {product.category && (
+            <p className="text-xs text-gray-400 truncate">{product.category}</p>
+          )}
+          <p className="text-sm font-bold text-yellow-700 mt-0.5">
             ₱{(product.price_centavos / 100).toFixed(2)}
           </p>
         </div>
@@ -192,19 +195,19 @@ export function ProductSelector({
     <div className="flex flex-col h-full">
       {/* Search Bar */}
       <div className="relative mb-3">
-        <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search products..."
-          className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
+          placeholder="Search products, SKU, or barcode..."
+          className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
         />
       </div>
 
       {/* Category Chips */}
       {categories.length > 2 && (
-        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat;
             const color = cat === "All" ? null : getCategoryColor(cat);
@@ -213,12 +216,12 @@ export function ProductSelector({
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   isActive
                     ? cat === "All"
-                      ? "bg-gray-900 text-white"
+                      ? "bg-slate-900 text-white"
                       : `${color!.activeBg} text-white`
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "border border-gray-300 text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 {cat}
@@ -237,7 +240,7 @@ export function ProductSelector({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
