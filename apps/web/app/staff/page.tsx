@@ -738,6 +738,35 @@ export default function StaffScannerPage() {
           {/* CUSTOMER FOUND STATE — Full POS */}
           {isCustomerFound && customer && staffData && (
             <motion.div key="pos" {...fadeSlide} className="flex flex-col flex-1 min-h-0">
+              {/* Customer Info Banner */}
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-200 flex-wrap">
+                <div className="flex items-center gap-2 font-semibold text-gray-900">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span className="truncate max-w-[160px]">{customer.name}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {customer.currentPoints.toLocaleString()} pts
+                </div>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
+                    customer.tier === "platinum"
+                      ? "bg-purple-100 text-purple-700"
+                      : customer.tier === "gold"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : customer.tier === "silver"
+                          ? "bg-gray-100 text-gray-600"
+                          : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {customer.tier}
+                </span>
+                {customer.isFirstVisit && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    1st visit
+                  </span>
+                )}
+              </div>
+
               {/* Mobile Tab Switcher — hidden on md+ */}
               <div className="flex md:hidden border-b border-gray-200 bg-white">
                 {(["products", "cart"] as const).map((tab) => (
