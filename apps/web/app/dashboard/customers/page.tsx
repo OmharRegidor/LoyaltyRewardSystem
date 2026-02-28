@@ -51,7 +51,7 @@ export default function CustomersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [pointsRange, setPointsRange] = useState<[number, number]>([0, 5000]);
+  const [pointsRange, setPointsRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState('recent');
 
   const handleAddCustomerClick = () => {
