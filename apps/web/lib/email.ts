@@ -46,6 +46,14 @@ interface SendCustomerInviteEmailParams {
   joinUrl: string;
 }
 
+interface SendStaffInviteEmailParams {
+  to: string;
+  staffName: string;
+  businessName: string;
+  inviteUrl: string;
+  role: string;
+}
+
 interface EmailResult {
   success: boolean;
   messageId?: string;
@@ -392,6 +400,94 @@ export async function sendCustomerInviteEmail(
     return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('Send invite email error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ============================================
+// STAFF INVITE EMAIL
+// ============================================
+
+export async function sendStaffInviteEmail(
+  params: SendStaffInviteEmailParams,
+): Promise<EmailResult> {
+  try {
+    const { to, staffName, businessName, inviteUrl, role } = params;
+    const resend = getResend();
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Invited to Join ${businessName}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #5A171E 0%, #751E26 50%, #8B2A33 100%); padding: 24px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">${businessName}</h1>
+              <p style="margin: 6px 0 0 0; color: rgba(255,255,255,0.85); font-size: 13px;">Team Invitation</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #111827; font-size: 20px; font-weight: 700;">You're Invited!</p>
+              <p style="margin: 0 0 24px 0; color: #4b5563; font-size: 15px; line-height: 1.6;">
+                Hi <strong>${staffName}</strong>, you've been invited to join <strong>${businessName}</strong> as a <strong>${role}</strong> on NoxaLoyalty.
+              </p>
+              <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #751E26 0%, #8B2A33 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 14px rgba(117, 30, 38, 0.4);">
+                Accept Invitation
+              </a>
+              <p style="margin: 24px 0 0 0; color: #9ca3af; font-size: 13px;">
+                Or copy this link: <a href="${inviteUrl}" style="color: #751E26;">${inviteUrl}</a>
+              </p>
+              <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px; margin-top: 24px; text-align: left;">
+                <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">
+                  Click the link above to create your account and set your password. Once set up, you can log in and start using the system.
+                </p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f9fafb; padding: 16px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                Powered by <strong style="color: #751E26;">NoxaLoyalty</strong> &mdash; If you didn't expect this, please ignore this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
+
+    const text = `Hi ${staffName}, you've been invited to join ${businessName} as a ${role} on NoxaLoyalty!\n\nAccept your invitation: ${inviteUrl}\n\nClick the link to create your account and set your password.\n\nPowered by NoxaLoyalty`;
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@noxaloyalty.com',
+      to: [to],
+      subject: `You're invited to join ${businessName} on NoxaLoyalty`,
+      html,
+      text,
+    });
+
+    if (error) {
+      console.error('Resend staff invite error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Send staff invite email error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

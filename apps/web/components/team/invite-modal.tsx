@@ -41,6 +41,7 @@ export function InviteModal({
   const [error, setError] = useState("");
   const [inviteLink, setInviteLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
 
   // Form fields
   const [name, setName] = useState("");
@@ -105,6 +106,31 @@ export function InviteModal({
       const link = `${window.location.origin}/invite/${invite.token}`;
       setInviteLink(link);
       setState("success");
+
+      // Send invite email (non-blocking)
+      try {
+        const { data: business } = await supabase
+          .from("businesses")
+          .select("name")
+          .eq("id", businessId)
+          .single();
+
+        const res = await fetch("/api/staff/send-invite-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            staffName: name.trim(),
+            businessName: business?.name || "Your Business",
+            inviteUrl: link,
+            role: "cashier",
+          }),
+        });
+        const result = await res.json();
+        setEmailSent(result.success);
+      } catch {
+        setEmailSent(false);
+      }
     } catch (err) {
       console.error("Invite creation error:", err);
       setError("Failed to create invite. Please try again.");
@@ -162,8 +188,13 @@ export function InviteModal({
                   <CheckCircle className="w-8 h-8 text-green-500" />
                 </div>
                 <p className="text-gray-500">
-                  Invite created for{" "}
-                  <span className="text-gray-900 font-medium">{name}</span>
+                  {emailSent === true ? (
+                    <>Invite sent to <span className="text-gray-900 font-medium">{email}</span></>
+                  ) : emailSent === false ? (
+                    <>Invite created for <span className="text-gray-900 font-medium">{name}</span> <span className="text-amber-600">(email could not be sent)</span></>
+                  ) : (
+                    <>Invite created for <span className="text-gray-900 font-medium">{name}</span></>
+                  )}
                 </p>
                 {branchName && (
                   <p className="text-gray-500 text-sm">Branch: {branchName}</p>
@@ -200,10 +231,10 @@ export function InviteModal({
                   <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="text-amber-800 font-medium">
-                      Share with your cashier:
+                      {emailSent ? "Email sent! As a backup, you can also:" : "Share with your cashier:"}
                     </p>
                     <ul className="text-amber-700 mt-2 space-y-1">
-                      <li>• The invite link above</li>
+                      <li>• {emailSent ? "Copy and share the invite link above" : "The invite link above"}</li>
                       <li>
                         • They will be able to create their own account and
                         password when they open the link.
