@@ -596,7 +596,7 @@ export default function StaffScannerPage() {
       tier_multiplier: 1,
       base_points: pointsUsed,
     });
-    setScannerState("success");
+    resetScanner();
   };
 
   // ============================================

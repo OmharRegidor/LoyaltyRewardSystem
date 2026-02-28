@@ -93,6 +93,7 @@ export function RedeemableRewards() {
 const styles = StyleSheet.create({
   container: {
     marginTop: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   title: {
     fontSize: FONT_SIZE.lg,
