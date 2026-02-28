@@ -53,6 +53,15 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
           </Text>
         </View>
 
+        {brand.min_purchase_for_points != null && brand.min_purchase_for_points > 0 && (
+          <View style={styles.metaRow}>
+            <Ionicons name="cart-outline" size={14} color={COLORS.gray[400]} />
+            <Text style={styles.metaText}>
+              Min. ₱{brand.min_purchase_for_points} per purchase
+            </Text>
+          </View>
+        )}
+
         {brand.points_per_purchase != null && brand.points_per_purchase > 0 && (
           <View style={styles.metaRow}>
             <Ionicons name="star" size={14} color={COLORS.gold} />
