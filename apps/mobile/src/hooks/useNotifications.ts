@@ -79,9 +79,13 @@ export function useNotifications() {
         },
         (payload) => {
           const updated = payload.new as Notification;
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n)),
-          );
+          setNotifications((prev) => {
+            const next = prev.map((n) =>
+              n.id === updated.id ? { ...n, ...updated } : n,
+            );
+            setUnreadCount(next.filter((n) => !n.is_read).length);
+            return next;
+          });
         },
       )
       .subscribe();
