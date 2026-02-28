@@ -6,7 +6,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   LogOut,
-  CheckCircle,
   AlertCircle,
   Loader2,
   User,
@@ -14,6 +13,9 @@ import {
   ShieldOff,
   ShoppingCart,
   LayoutGrid,
+  Monitor,
+  Search,
+  Tag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase";
@@ -26,12 +28,13 @@ import { AddCustomerModal } from "@/components/staff/add-customer-modal";
 import { IdleView } from "@/components/staff/idle-view";
 import { ScannerView } from "@/components/staff/scanner-view";
 import { VerifyRedemptionView } from "@/components/staff/verify-redemption-view";
-import { CustomerInfoBar } from "@/components/staff/pos/customer-info-bar";
 import { ProductSelector } from "@/components/staff/pos/product-selector";
 import { CartSection } from "@/components/staff/pos/cart-section";
-import { DiscountSection } from "@/components/staff/pos/discount-section";
-import { ExchangeSection } from "@/components/staff/pos/exchange-section";
-import { OrderSummary } from "@/components/staff/pos/order-summary";
+import { DiscountModal } from "@/components/staff/pos/discount-modal";
+import { PaymentPanel } from "@/components/staff/pos/payment-panel";
+import { ReceiptModal } from "@/components/staff/pos/receipt-modal";
+import type { PaymentMethod } from "@/types/pos.types";
+import type { StaffCartItem } from "@/types/staff-pos.types";
 
 // ============================================
 // TYPES
@@ -97,8 +100,12 @@ export default function StaffScannerPage() {
   const [error, setError] = useState("");
   const [isDeactivated, setIsDeactivated] = useState(false);
   const [mobileTab, setMobileTab] = useState<"products" | "cart">("products");
-  const [desktopSidebarTab, setDesktopSidebarTab] = useState<"cart" | "payment">("cart");
   const [pendingScan, setPendingScan] = useState(false);
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [paymentView, setPaymentView] = useState(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [receiptPaymentMethod, setReceiptPaymentMethod] = useState<PaymentMethod>("cash");
+  const [receiptCartItems, setReceiptCartItems] = useState<StaffCartItem[]>([]);
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -523,10 +530,12 @@ export default function StaffScannerPage() {
   // COMPLETE SALE
   // ============================================
 
-  const handleCompleteSale = async () => {
+  const handleCompleteSale = async (method: PaymentMethod) => {
     if (!customer || !staffData) return;
 
-    setScannerState("processing");
+    setReceiptPaymentMethod(method);
+    setReceiptCartItems([...pos.cartItems]);
+
     try {
       const result = await pos.completeSale();
       setSaleResult(result);
@@ -537,7 +546,9 @@ export default function StaffScannerPage() {
         pointsAwardedToday: prev.pointsAwardedToday + result.points_earned,
       }));
 
-      setScannerState("success");
+      setScannerState("customer-found");
+      setPaymentView(false);
+      setReceiptModalOpen(true);
     } catch (err) {
       console.error("Complete sale error:", err);
       setError(err instanceof Error ? err.message : "Failed to complete sale");
@@ -555,6 +566,9 @@ export default function StaffScannerPage() {
     setError("");
     setScannerState("idle");
     setMobileTab("products");
+    setPaymentView(false);
+    setReceiptModalOpen(false);
+    setReceiptCartItems([]);
     pos.reset();
   };
 
@@ -636,23 +650,51 @@ export default function StaffScannerPage() {
   return (
     <div className={`${isCustomerFound ? "h-screen flex flex-col overflow-hidden" : "min-h-screen"} bg-white text-gray-900`}>
       {/* Header */}
-      <header className="p-4 flex items-center justify-between border-b border-gray-200 bg-primary shadow-md">
-        <div>
-          <h1 className="text-lg font-bold text-white">
-            {staffData?.businessName}
-          </h1>
-          <p className="text-sm text-white/70">
-            Cashier: {staffData?.userName}
-          </p>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          aria-label="Logout"
-        >
-          <LogOut className="w-5 h-5 text-white/80" />
-        </button>
-      </header>
+      {isCustomerFound ? (
+        <header className="px-5 py-3 flex items-center justify-between bg-primary shadow-md">
+          <div className="flex items-center gap-3">
+            <Monitor className="w-5 h-5 text-secondary" />
+            <div>
+              <h1 className="text-base font-bold text-primary-foreground">
+                {staffData?.businessName} POS
+              </h1>
+              <p className="text-xs text-primary-foreground/60">
+                Cashier: {staffData?.userName}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-primary-foreground/60 hidden sm:block">
+              {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
+        </header>
+      ) : (
+        <header className="p-4 flex items-center justify-between border-b border-gray-200 bg-primary shadow-md">
+          <div>
+            <h1 className="text-lg font-bold text-white">
+              {staffData?.businessName}
+            </h1>
+            <p className="text-sm text-white/70">
+              Cashier: {staffData?.userName}
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Logout"
+          >
+            <LogOut className="w-5 h-5 text-white/80" />
+          </button>
+        </header>
+      )}
 
       {/* Main Content */}
       <main className={isCustomerFound ? "flex-1 min-h-0 flex flex-col" : "p-4 pb-32"}>
@@ -730,154 +772,11 @@ export default function StaffScannerPage() {
                 ))}
               </div>
 
-              {/* Split Panel Layout */}
+              {/* Split Panel Layout — Products LEFT, Cart RIGHT */}
               <div className="flex flex-col md:flex-row flex-1 min-h-0">
-                {/* LEFT PANEL — Cart & Order Sidebar */}
+                {/* LEFT PANEL — Products */}
                 <div
-                  className={`md:w-[380px] lg:w-[400px] bg-white border-r border-gray-200 md:!flex md:flex-col min-h-0 ${
-                    mobileTab === "cart" ? "flex flex-col flex-1" : "hidden"
-                  }`}
-                >
-                  {/* Customer info header */}
-                  <div className="p-4 border-b border-gray-100">
-                    <CustomerInfoBar
-                      name={customer.name}
-                      currentPoints={customer.currentPoints}
-                      tier={customer.tier}
-                      isFirstVisit={customer.isFirstVisit}
-                    />
-                  </div>
-
-                  {/* Desktop-only sub-tab switcher */}
-                  <div className="hidden md:flex items-center gap-1 px-4 pt-3 pb-1">
-                    {(["cart", "payment"] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setDesktopSidebarTab(tab)}
-                        className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-lg transition-all ${
-                          desktopSidebarTab === tab
-                            ? "bg-gray-900 text-white shadow-sm"
-                            : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {tab === "cart" ? "Cart" : "Payment"}
-                        {tab === "cart" && pos.cartItems.length > 0 && (
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
-                            desktopSidebarTab === "cart"
-                              ? "bg-white/20 text-white"
-                              : "bg-gray-200 text-gray-700"
-                          }`}>
-                            {pos.cartItems.length}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Scrollable cart area */}
-                  <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
-                    {/* Mobile: show everything. Desktop: show based on active tab */}
-                    <div className={`space-y-4 ${desktopSidebarTab === "cart" ? "" : "md:hidden"}`}>
-                      <CartSection
-                        items={pos.cartItems}
-                        onUpdateQuantity={pos.updateQuantity}
-                        onRemoveItem={pos.removeItem}
-                        onAddManualItem={pos.addManualItem}
-                        subtotalCentavos={pos.subtotalCentavos}
-                      />
-                    </div>
-
-                    {pos.subtotalCentavos > 0 && (
-                      <>
-                        {/* Desktop payment tab: Discount, Exchange, OrderSummary */}
-                        <div className={`space-y-4 hidden ${desktopSidebarTab === "payment" ? "md:block" : ""}`}>
-                          <DiscountSection
-                            subtotalCentavos={pos.subtotalCentavos}
-                            discount={pos.discount}
-                            onDiscountChange={pos.setDiscount}
-                          />
-
-                          <ExchangeSection
-                            customerPoints={customer.currentPoints}
-                            pesosPerPoint={staffData.pesosPerPoint}
-                            maxExchangePoints={pos.maxExchangePoints}
-                            currentExchangePoints={pos.exchange?.pointsUsed || 0}
-                            onExchangeChange={pos.setExchange}
-                          />
-
-                          <OrderSummary
-                            subtotalCentavos={pos.subtotalCentavos}
-                            discountCentavos={pos.discountCentavos}
-                            exchangeCentavos={pos.exchangeCentavos}
-                            totalDueCentavos={pos.totalDueCentavos}
-                            basePointsToEarn={pos.basePointsToEarn}
-                            pointsToEarn={pos.pointsToEarn}
-                            tierMultiplier={pos.tierMultiplier}
-                            customerTier={customer.tier}
-                            pesosPerPoint={staffData.pesosPerPoint}
-                            cartItemCount={pos.cartItems.length}
-                            amountTenderedCentavos={pos.amountTenderedCentavos}
-                            onTenderedChange={pos.setAmountTenderedCentavos}
-                            isProcessing={pos.isProcessing}
-                            onComplete={handleCompleteSale}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Pinned bottom: Cancel + Mini stats */}
-                  <div className="border-t border-gray-200 bg-gray-50/80 backdrop-blur-sm">
-                    {/* Mobile-only: OrderSummary stays pinned on mobile */}
-                    <div className="md:hidden">
-                      {pos.subtotalCentavos > 0 && (
-                        <OrderSummary
-                        subtotalCentavos={pos.subtotalCentavos}
-                        discountCentavos={pos.discountCentavos}
-                        exchangeCentavos={pos.exchangeCentavos}
-                        totalDueCentavos={pos.totalDueCentavos}
-                        basePointsToEarn={pos.basePointsToEarn}
-                        pointsToEarn={pos.pointsToEarn}
-                        tierMultiplier={pos.tierMultiplier}
-                        customerTier={customer.tier}
-                        pesosPerPoint={staffData.pesosPerPoint}
-                        cartItemCount={pos.cartItems.length}
-                        amountTenderedCentavos={pos.amountTenderedCentavos}
-                        onTenderedChange={pos.setAmountTenderedCentavos}
-                        isProcessing={pos.isProcessing}
-                        onComplete={handleCompleteSale}
-                      />
-                    )}
-                    </div>
-
-                    <div className="px-4 pb-2">
-                      <button
-                        onClick={resetScanner}
-                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors text-gray-500 border border-gray-200"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-
-                    {/* Mini stats row */}
-                    <div className="px-4 pb-3 flex gap-3">
-                      <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
-                        <User className="w-3.5 h-3.5 text-yellow-600" />
-                        <span className="text-xs font-medium text-gray-900">{stats.scansToday}</span>
-                        <span className="text-xs text-gray-500">scans</span>
-                      </div>
-                      <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
-                        <Award className="w-3.5 h-3.5 text-yellow-600" />
-                        <span className="text-xs font-medium text-gray-900">{stats.pointsAwardedToday.toLocaleString()}</span>
-                        <span className="text-xs text-gray-500">pts</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RIGHT PANEL — Product Area */}
-                <div
-                  className={`flex-1 bg-gray-50 md:!flex md:flex-col min-h-0 ${
+                  className={`flex-1 bg-white md:!flex md:flex-col min-h-0 ${
                     mobileTab === "products" ? "flex flex-col" : "hidden"
                   }`}
                 >
@@ -911,6 +810,156 @@ export default function StaffScannerPage() {
                     )}
                   </div>
                 </div>
+
+                {/* RIGHT PANEL — Cart & Checkout / Payment */}
+                <div
+                  className={`md:w-[350px] md:flex-none bg-gray-50 border-l border-gray-200 md:!flex md:flex-col min-h-0 ${
+                    mobileTab === "cart" ? "flex flex-col flex-1" : "hidden"
+                  }`}
+                >
+                  {paymentView ? (
+                    <PaymentPanel
+                      subtotalCentavos={pos.subtotalCentavos}
+                      discountCentavos={pos.discountCentavos}
+                      discountReason={pos.discount?.reason}
+                      totalDueCentavos={pos.totalDueCentavos}
+                      amountTenderedCentavos={pos.amountTenderedCentavos}
+                      onTenderedChange={pos.setAmountTenderedCentavos}
+                      onComplete={handleCompleteSale}
+                      onBack={() => setPaymentView(false)}
+                      isProcessing={pos.isProcessing}
+                      pointsToEarn={pos.pointsToEarn}
+                      customerTier={customer?.tier}
+                    />
+                  ) : (
+                    <>
+                      {/* Search customer placeholder */}
+                      <div className="p-4 pb-2">
+                        <div className="relative">
+                          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            disabled
+                            placeholder="Search customer..."
+                            className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm placeholder-gray-400 cursor-not-allowed opacity-60"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Cart header */}
+                      <div className="px-4 pb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <ShoppingCart className="w-4 h-4 text-gray-600" />
+                          <h3 className="text-sm font-semibold text-gray-700">
+                            Cart ({pos.cartItems.length} item{pos.cartItems.length !== 1 ? "s" : ""})
+                          </h3>
+                        </div>
+                        {pos.cartItems.length > 0 && (
+                          <button
+                            onClick={() => {
+                              for (const item of pos.cartItems) {
+                                pos.removeItem(item.id);
+                              }
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Scrollable cart area */}
+                      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+                        <CartSection
+                          items={pos.cartItems}
+                          onUpdateQuantity={pos.updateQuantity}
+                          onRemoveItem={pos.removeItem}
+                          onAddManualItem={pos.addManualItem}
+                          onClearAll={() => {
+                            for (const item of pos.cartItems) {
+                              pos.removeItem(item.id);
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Bottom: totals + charge button */}
+                      <div className="border-t border-gray-200 bg-white p-4 space-y-3">
+                        {pos.subtotalCentavos > 0 && (
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">Subtotal</span>
+                              <span className="text-gray-700">₱{(pos.subtotalCentavos / 100).toFixed(2)}</span>
+                            </div>
+                            {pos.discount && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-green-600">
+                                  {pos.discount.reason || "Discount"}
+                                </span>
+                                <span className="text-green-600">
+                                  -₱{(pos.discountCentavos / 100).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="border-t border-gray-100 pt-1.5 flex justify-between text-lg font-bold">
+                              <span className="text-gray-900">Total</span>
+                              <span className="text-gray-900">₱{(pos.totalDueCentavos / 100).toFixed(2)}</span>
+                            </div>
+                            {pos.pointsToEarn > 0 && customer && (
+                              <div className="flex items-center gap-1.5 text-xs text-amber-600 pt-1">
+                                <span className="capitalize">{customer.tier}</span>
+                                <span>•</span>
+                                <span>Earn {pos.pointsToEarn} pts</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Add discount button */}
+                        <button
+                          onClick={() => setDiscountModalOpen(true)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-yellow-700 hover:text-yellow-800 transition-colors"
+                        >
+                          <Tag className="w-3.5 h-3.5" />
+                          {pos.discount ? "Discount applied — edit" : "Add discount"}
+                        </button>
+
+                        {/* Charge button — opens payment view */}
+                        <button
+                          onClick={() => setPaymentView(true)}
+                          disabled={pos.cartItems.length === 0 || pos.isProcessing}
+                          className="w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between px-5"
+                        >
+                          {pos.isProcessing ? (
+                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                          ) : (
+                            <>
+                              <span>Charge</span>
+                              <span>₱{(pos.totalDueCentavos / 100).toFixed(2)} ›</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* Cancel */}
+                        <button
+                          onClick={resetScanner}
+                          className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      {/* Discount Modal */}
+                      <DiscountModal
+                        isOpen={discountModalOpen}
+                        onClose={() => setDiscountModalOpen(false)}
+                        subtotalCentavos={pos.subtotalCentavos}
+                        discount={pos.discount}
+                        onDiscountChange={pos.setDiscount}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -923,99 +972,20 @@ export default function StaffScannerPage() {
             </motion.div>
           )}
 
-          {/* SUCCESS STATE */}
-          {scannerState === "success" && saleResult && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-              className="max-w-sm mx-auto text-center"
-            >
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-12 h-12 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2 text-gray-900">
-                {saleResult.points_redeemed > 0 ? "Sale Complete!" : "Points Awarded!"}
-              </h2>
-              {customer && (
-                <p className="text-gray-500 mb-6">{customer.name}</p>
-              )}
-
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                {/* Sale total (if actual sale) */}
-                {saleResult.subtotal_centavos > 0 && (
-                  <div className="mb-4 pb-4 border-b border-gray-200 space-y-1">
-                    {saleResult.discount_centavos > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Discount</span>
-                        <span className="text-green-600">
-                          -₱{(saleResult.discount_centavos / 100).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                    {saleResult.exchange_centavos > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Points Payment</span>
-                        <span className="text-yellow-600">
-                          -₱{(saleResult.exchange_centavos / 100).toFixed(2)} ({saleResult.points_redeemed} pts)
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-base font-bold">
-                      <span className="text-gray-900">Total Due</span>
-                      <span className="text-gray-900">
-                        ₱{(saleResult.total_centavos / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Points earned */}
-                <p className="text-5xl font-bold text-yellow-600 mb-2">
-                  +{saleResult.points_earned.toLocaleString()}
-                </p>
-                <p className="text-gray-500">points earned</p>
-
-                {/* Tier bonus breakdown */}
-                {saleResult.tier_multiplier > 1 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-500">Base points</span>
-                      <span className="text-gray-700">
-                        {saleResult.base_points.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-amber-600">
-                        Tier bonus ({saleResult.tier_multiplier}x)
-                      </span>
-                      <span className="text-amber-600">
-                        +{(saleResult.points_earned - saleResult.base_points).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {saleResult.new_points_balance > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-500">New Balance</p>
-                    <p className="text-xl font-semibold text-gray-900">
-                      {saleResult.new_points_balance.toLocaleString()} points
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <motion.button
-                onClick={resetScanner}
-                whileTap={{ scale: 0.97 }}
-                className="w-full py-4 bg-secondary hover:bg-secondary/90 rounded-xl font-semibold hover:shadow-lg transition-all text-gray-900 border border-gray-900"
-              >
-                Scan Next Customer
-              </motion.button>
-            </motion.div>
+          {/* Receipt Modal — shown after successful payment */}
+          {receiptModalOpen && saleResult && staffData && (
+            <ReceiptModal
+              isOpen={receiptModalOpen}
+              onClose={() => setReceiptModalOpen(false)}
+              onNewSale={resetScanner}
+              saleResult={saleResult}
+              cartItems={receiptCartItems}
+              businessName={staffData.businessName}
+              cashierName={staffData.userName}
+              paymentMethod={receiptPaymentMethod}
+              amountTenderedCentavos={pos.amountTenderedCentavos}
+              discountReason={pos.discount?.reason}
+            />
           )}
 
           {/* ERROR STATE */}

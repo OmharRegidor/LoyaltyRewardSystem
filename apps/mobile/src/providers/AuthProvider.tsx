@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { AppState } from 'react-native';
 import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -185,7 +186,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     realtimeChannelRef.current = channel;
-    channel.subscribe();
+    channel.subscribe((status) => {
+      console.log('[Realtime] Subscription status:', status);
+    });
   }, []);
 
   // Cleanup realtime subscription
@@ -243,6 +246,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cleanupRealtimeSubscription();
     };
   }, [loadCustomer, cleanupRealtimeSubscription]);
+
+  // Keep auth token fresh & reconnect realtime when app returns from background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    });
+    // Start auto-refresh immediately
+    supabase.auth.startAutoRefresh();
+    return () => {
+      sub.remove();
+      supabase.auth.stopAutoRefresh();
+    };
+  }, []);
 
   const signInWithGoogle = useCallback(async () => {
     try {
