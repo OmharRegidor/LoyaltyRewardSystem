@@ -23,7 +23,7 @@ interface BrandDetail {
 }
 
 export function useBrandRewards(businessId: string) {
-  const { customer, points, tier, refreshCustomer } = useCustomer();
+  const { customer, points, tier, customerIds, refreshCustomer } = useCustomer();
   const userTier = (isValidTier(tier) ? tier : 'bronze') as TierLevel;
 
   const [brand, setBrand] = useState<BrandDetail | null>(null);
@@ -32,6 +32,21 @@ export function useBrandRewards(businessId: string) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [businessPoints, setBusinessPoints] = useState<number>(0);
+
+  // Find the customer ID linked to this specific business
+  const getCustomerIdForBusiness = useCallback(async (): Promise<string | null> => {
+    if (customerIds.length === 0) return null;
+
+    const { data } = await supabase
+      .from('customer_businesses')
+      .select('customer_id')
+      .in('customer_id', customerIds)
+      .eq('business_id', businessId)
+      .limit(1)
+      .maybeSingle();
+
+    return data?.customer_id ?? customer?.id ?? null;
+  }, [customerIds, businessId, customer?.id]);
 
   const fetchBrandData = useCallback(async (): Promise<void> => {
     try {
@@ -81,16 +96,16 @@ export function useBrandRewards(businessId: string) {
         rewardsQuery,
       ]);
 
-      // Fetch per-business points balance
-      if (customer?.id) {
-        const { data: cbRow } = await supabase
+      // Fetch per-business points balance across all customer records
+      if (customerIds.length > 0) {
+        const { data: cbRows } = await supabase
           .from('customer_businesses')
           .select('points')
-          .eq('customer_id', customer.id)
-          .eq('business_id', businessId)
-          .maybeSingle();
+          .in('customer_id', customerIds)
+          .eq('business_id', businessId);
 
-        setBusinessPoints(cbRow?.points ?? 0);
+        const total = (cbRows ?? []).reduce((sum, row) => sum + (row.points ?? 0), 0);
+        setBusinessPoints(total);
       }
 
       if (brandResult.error) throw new Error(brandResult.error.message);
@@ -119,7 +134,7 @@ export function useBrandRewards(businessId: string) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [businessId, customer?.id]);
+  }, [businessId, customerIds]);
 
   useEffect(() => {
     fetchBrandData();
@@ -168,10 +183,13 @@ export function useBrandRewards(businessId: string) {
       try {
         setRedeemingId(reward.id);
 
+        // Use the customer ID linked to this business for correct redemption
+        const customerId = await getCustomerIdForBusiness() ?? customer.id;
+
         const { data, error: redeemError } = await supabase.rpc(
           'redeem_reward',
           {
-            p_customer_id: customer.id,
+            p_customer_id: customerId,
             p_reward_id: reward.id,
           },
         );
@@ -182,14 +200,11 @@ export function useBrandRewards(businessId: string) {
         if (!result.success)
           throw new Error(result.error ?? 'Redemption failed');
 
-        // Note: per-business points are deducted automatically by
-        // the trg_auto_link_customer_business trigger when redeem_reward inserts a transaction
-
         await Promise.all([refreshCustomer(), fetchBrandData()]);
 
         return {
           id: result.redemption_id,
-          customer_id: customer.id,
+          customer_id: customerId,
           reward_id: reward.id,
           business_id: reward.business_id,
           points_used: result.points_used,
@@ -203,7 +218,7 @@ export function useBrandRewards(businessId: string) {
         setRedeemingId(null);
       }
     },
-    [customer, canRedeem, refreshCustomer, fetchBrandData, businessId],
+    [customer, canRedeem, getCustomerIdForBusiness, refreshCustomer, fetchBrandData],
   );
 
   const refresh = useCallback(async (): Promise<void> => {
