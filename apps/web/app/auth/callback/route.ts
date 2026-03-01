@@ -229,43 +229,41 @@ async function ensureBusinessAndSubscription(
       return null;
     }
 
-    // Check if subscription exists
-    const { data: existingSub } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('business_id', business.id)
-      .maybeSingle();
-
-    if (!existingSub) {
-      // Get free plan
-      const { data: freePlan } = await supabase
+    // Check subscription and fetch free plan in parallel
+    const [{ data: existingSub }, { data: freePlan }] = await Promise.all([
+      supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('business_id', business.id)
+        .maybeSingle(),
+      supabase
         .from('plans')
         .select('id')
         .eq('name', 'free')
-        .single();
+        .single(),
+    ]);
 
-      if (freePlan) {
-        const { error: subError } = await supabase.from('subscriptions').upsert(
-          {
-            business_id: business.id,
-            plan_id: freePlan.id,
-            status: 'active',
-          },
-          {
-            onConflict: 'business_id',
-          },
+    if (!existingSub && freePlan) {
+      const { error: subError } = await supabase.from('subscriptions').upsert(
+        {
+          business_id: business.id,
+          plan_id: freePlan.id,
+          status: 'active',
+        },
+        {
+          onConflict: 'business_id',
+        },
+      );
+
+      if (subError) {
+        console.error(
+          '[Auth Callback] Subscription error:',
+          subError.message,
         );
-
-        if (subError) {
-          console.error(
-            '[Auth Callback] Subscription error:',
-            subError.message,
-          );
-        } else {
-          console.log('[Auth Callback] Subscription created');
-        }
+      } else {
+        console.log('[Auth Callback] Subscription created');
       }
-    } else {
+    } else if (existingSub) {
       console.log('[Auth Callback] Subscription exists');
     }
 
@@ -284,24 +282,24 @@ async function getRedirectPath(userId: string): Promise<string> {
   );
 
   try {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('roles(name)')
-      .eq('id', userId)
-      .single();
+    // Check business owner and staff in parallel instead of querying roles table
+    const [{ data: business }, { data: staff }] = await Promise.all([
+      supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', userId)
+        .maybeSingle(),
+      supabase
+        .from('staff')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle(),
+    ]);
 
-    const role = (profile?.roles as unknown as { name: string } | null)?.name;
-
-    switch (role) {
-      case 'admin':
-        return '/admin';
-      case 'business_owner':
-        return '/dashboard?welcome=true';
-      case 'staff':
-        return '/staff';
-      default:
-        return '/';
-    }
+    if (business) return '/dashboard?welcome=true';
+    if (staff) return '/staff';
+    return '/';
   } catch (err) {
     console.error('[Auth Callback] Redirect error:', err);
   }

@@ -629,62 +629,67 @@ export default function DashboardPage() {
     businessId: string,
   ) => {
     try {
-      // Get total customers
-      const { count: customerCount } = await supabase
-        .from('customer_businesses')
-        .select('*', { count: 'exact', head: true })
-        .eq('business_id', businessId);
-
-      // Get active rewards count
-      const { count: rewardsCount } = await supabase
-        .from('rewards')
-        .select('*', { count: 'exact', head: true })
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .eq('is_visible', true);
-
-      // Get today's points issued
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data: todayTransactions } = await supabase
-        .from('transactions')
-        .select('points')
-        .eq('business_id', businessId)
-        .gte('created_at', today.toISOString())
-        .eq('type', 'earn');
+      // Run all 5 independent queries in parallel
+      const [
+        { count: customerCount },
+        { count: rewardsCount },
+        { data: todayTransactions },
+        { data: recentTx },
+        { data: topRewardsData },
+      ] = await Promise.all([
+        // Get total customers
+        supabase
+          .from('customer_businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId),
+        // Get active rewards count
+        supabase
+          .from('rewards')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .eq('is_active', true)
+          .eq('is_visible', true),
+        // Get today's points issued
+        supabase
+          .from('transactions')
+          .select('points')
+          .eq('business_id', businessId)
+          .gte('created_at', today.toISOString())
+          .eq('type', 'earn'),
+        // Get recent transactions
+        supabase
+          .from('transactions')
+          .select(
+            `
+            id,
+            type,
+            points,
+            created_at,
+            customer:customers(full_name)
+          `,
+          )
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        // Get top redeemed rewards
+        supabase
+          .from('redemptions')
+          .select(
+            `
+            reward_id,
+            rewards(title)
+          `,
+          )
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false })
+          .limit(100),
+      ]);
 
       const pointsToday =
         todayTransactions?.reduce((sum, t) => sum + (t.points || 0), 0) || 0;
-
-      // Get recent transactions
-      const { data: recentTx } = await supabase
-        .from('transactions')
-        .select(
-          `
-          id,
-          type,
-          points,
-          created_at,
-          customer:customers(full_name)
-        `,
-        )
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      // Get top redeemed rewards
-      const { data: topRewardsData } = await supabase
-        .from('redemptions')
-        .select(
-          `
-          reward_id,
-          rewards(title)
-        `,
-        )
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(100);
 
       // Process top rewards
       const rewardCounts: Record<string, { name: string; count: number }> = {};

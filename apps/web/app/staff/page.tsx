@@ -203,71 +203,61 @@ export default function StaffScannerPage() {
         return;
       }
 
-      // Check if user is staff
-      const { data: staffRecord } = await supabase
-        .from("staff")
-        .select("id, business_id, role, name, is_active")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (!staffRecord) {
-        // Check if staff exists but is deactivated
-        const { data: inactiveRecord } = await supabase
+      // Check active staff, inactive staff, and business owner in parallel
+      const [{ data: staffRecord }, { data: inactiveRecord }, { data: ownerBusiness }] = await Promise.all([
+        supabase
+          .from("staff")
+          .select("id, business_id, role, name, is_active")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle(),
+        supabase
           .from("staff")
           .select("id, name")
           .eq("user_id", user.id)
           .eq("is_active", false)
-          .maybeSingle();
-
-        if (inactiveRecord) {
-          setIsDeactivated(true);
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if owner
-        const { data: business } = await supabase
+          .maybeSingle(),
+        supabase
           .from("businesses")
           .select("id, name, pesos_per_point")
           .eq("owner_id", user.id)
-          .maybeSingle();
+          .maybeSingle(),
+      ]);
 
-        if (business) {
-          setStaffData({
-            staffId: user.id,
-            businessId: business.id,
-            businessName: business.name,
-            userName:
-              user.user_metadata?.full_name ||
-              user.email?.split("@")[0] ||
-              "Owner",
-            pesosPerPoint: business.pesos_per_point || 10,
-          });
-          setIsLoading(false);
-          return;
-        }
+      if (staffRecord) {
+        // Active staff — fetch business info
+        const { data: business } = await supabase
+          .from("businesses")
+          .select("name, pesos_per_point")
+          .eq("id", staffRecord.business_id)
+          .single();
 
+        setStaffData({
+          staffId: staffRecord.id,
+          businessId: staffRecord.business_id,
+          businessName: business?.name || "Business",
+          userName: staffRecord.name || user.user_metadata?.full_name || "Staff",
+          pesosPerPoint: business?.pesos_per_point || 10,
+        });
+
+        await loadTodayStats(staffRecord.id);
+      } else if (inactiveRecord) {
+        setIsDeactivated(true);
+      } else if (ownerBusiness) {
+        setStaffData({
+          staffId: user.id,
+          businessId: ownerBusiness.id,
+          businessName: ownerBusiness.name,
+          userName:
+            user.user_metadata?.full_name ||
+            user.email?.split("@")[0] ||
+            "Owner",
+          pesosPerPoint: ownerBusiness.pesos_per_point || 10,
+        });
+      } else {
         router.push("/login");
         return;
       }
-
-      // Get business info
-      const { data: business } = await supabase
-        .from("businesses")
-        .select("name, pesos_per_point")
-        .eq("id", staffRecord.business_id)
-        .single();
-
-      setStaffData({
-        staffId: staffRecord.id,
-        businessId: staffRecord.business_id,
-        businessName: business?.name || "Business",
-        userName: staffRecord.name || user.user_metadata?.full_name || "Staff",
-        pesosPerPoint: business?.pesos_per_point || 10,
-      });
-
-      await loadTodayStats(staffRecord.id);
       setIsLoading(false);
     } catch (err) {
       console.error("Access check error:", err);
