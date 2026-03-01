@@ -77,34 +77,32 @@ function LoginForm() {
         localStorage.removeItem('rememberMe');
       }
 
-      // Check if user is business owner
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('id, subscription_status')
-        .eq('owner_id', data.user.id)
-        .maybeSingle();
+      // Check business owner and staff in parallel
+      const [{ data: business }, { data: staff }] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', data.user.id)
+          .maybeSingle(),
+        supabase
+          .from('staff')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .eq('is_active', true)
+          .maybeSingle(),
+      ]);
 
       if (business) {
         // Track login (fire-and-forget)
         fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
-        // Business owner - go to dashboard (or requested redirect)
         const destination = redirectTo || '/dashboard';
         window.location.replace(destination);
         return;
       }
 
-      // Check if user is staff (NOT an owner)
-      const { data: staff } = await supabase
-        .from('staff')
-        .select('id, role, is_active, business_id')
-        .eq('user_id', data.user.id)
-        .eq('is_active', true)
-        .maybeSingle();
-
       if (staff) {
         // Track login (fire-and-forget)
         fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
-        // Staff member - go to staff page
         window.location.replace('/staff');
         return;
       }
@@ -339,25 +337,25 @@ function AuthRedirectGuard({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Check if business owner
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('owner_id', user.id)
-        .maybeSingle();
+      // Check business owner and staff in parallel
+      const [{ data: business }, { data: staff }] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('staff')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle(),
+      ]);
 
       if (business) {
         router.replace(redirectTo || '/dashboard');
         return;
       }
-
-      // Check if active staff
-      const { data: staff } = await supabase
-        .from('staff')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
 
       if (staff) {
         router.replace('/staff');

@@ -66,17 +66,33 @@ function getServiceClient() {
   );
 }
 
-/**
- * Check if a business has access to a specific module (loyalty, booking, pos)
- * This is the SERVER-SIDE check that cannot be bypassed
- */
-export async function checkModuleAccess(
-  businessId: string,
-  module: ModuleName
-): Promise<ModuleCheckResult> {
-  const supabase = getServiceClient();
+// ============================================
+// REQUEST-LEVEL SUBSCRIPTION CACHE
+// ============================================
 
-  // Get subscription with module overrides and plan module flags
+interface CachedSubscription {
+  status: string;
+  module_booking_override: boolean | null;
+  module_pos_override: boolean | null;
+  plans: Record<string, unknown> | Record<string, unknown>[] | null;
+}
+
+const subscriptionCache = new Map<string, { data: CachedSubscription | null; timestamp: number }>();
+const CACHE_TTL_MS = 5000; // 5 seconds — covers a single request lifecycle
+
+/**
+ * Fetch subscription with plan data, cached per businessId for deduplication
+ * within the same request cycle.
+ */
+async function getCachedSubscription(businessId: string): Promise<CachedSubscription | null> {
+  const now = Date.now();
+  const cached = subscriptionCache.get(businessId);
+
+  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const supabase = getServiceClient();
   const { data: subscription } = await supabase
     .from('subscriptions')
     .select(
@@ -87,12 +103,38 @@ export async function checkModuleAccess(
       plans (
         has_loyalty,
         has_booking,
-        has_pos
+        has_pos,
+        features,
+        max_customers,
+        max_branches,
+        max_staff_per_branch
       )
     `
     )
     .eq('business_id', businessId)
     .single();
+
+  const result = subscription as CachedSubscription | null;
+  subscriptionCache.set(businessId, { data: result, timestamp: now });
+
+  // Prevent unbounded cache growth
+  if (subscriptionCache.size > 100) {
+    const oldestKey = subscriptionCache.keys().next().value;
+    if (oldestKey) subscriptionCache.delete(oldestKey);
+  }
+
+  return result;
+}
+
+/**
+ * Check if a business has access to a specific module (loyalty, booking, pos)
+ * This is the SERVER-SIDE check that cannot be bypassed
+ */
+export async function checkModuleAccess(
+  businessId: string,
+  module: ModuleName
+): Promise<ModuleCheckResult> {
+  const subscription = await getCachedSubscription(businessId);
 
   // No subscription or not active
   if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
@@ -153,21 +195,7 @@ export async function checkFeatureAccess(
   businessId: string,
   feature: FeatureName
 ): Promise<FeatureCheckResult> {
-  const supabase = getServiceClient();
-
-  // Get subscription and plan features
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select(
-      `
-      status,
-      plans (
-        features
-      )
-    `
-    )
-    .eq('business_id', businessId)
-    .single();
+  const subscription = await getCachedSubscription(businessId);
 
   // No subscription or not active
   if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
@@ -203,23 +231,7 @@ export async function checkLimitAccess(
   businessId: string,
   limitType: LimitType
 ): Promise<LimitCheckResult> {
-  const supabase = getServiceClient();
-
-  // Get subscription and plan limits
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select(
-      `
-      status,
-      plans (
-        max_customers,
-        max_branches,
-        max_staff_per_branch
-      )
-    `
-    )
-    .eq('business_id', businessId)
-    .single();
+  const subscription = await getCachedSubscription(businessId);
 
   // No subscription or not active
   if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
@@ -321,14 +333,7 @@ export async function checkLimitAccess(
 export async function checkSubscriptionAccess(
   businessId: string
 ): Promise<{ hasAccess: boolean; status: string }> {
-  const supabase = getServiceClient();
-
-  // Get subscription status
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('status')
-    .eq('business_id', businessId)
-    .single();
+  const subscription = await getCachedSubscription(businessId);
 
   const status = subscription?.status || 'preview';
   const hasAccess = ['active', 'trialing'].includes(status);

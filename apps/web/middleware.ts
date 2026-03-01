@@ -2,7 +2,6 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { type AppRole, getAllowedRolesForPath } from './lib/rbac';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -87,60 +86,26 @@ export async function middleware(request: NextRequest) {
       error,
     } = await supabase.auth.getUser();
 
-    // Handle auth errors gracefully
+    // Handle auth errors — clean up bad cookies and redirect to login
     if (error) {
       console.log('[Middleware] Auth error:', error.message);
-
-      // Only redirect to login for routes that explicitly require auth
-      const allowedRoles = getAllowedRolesForPath(pathname);
-      if (allowedRoles) {
-        const loginUrl = new URL('/login', request.url);
-        const redirectResponse = NextResponse.redirect(loginUrl);
-        request.cookies.getAll().forEach((cookie) => {
-          if (cookie.name.startsWith('sb-')) {
-            redirectResponse.cookies.delete(cookie.name);
-          }
-        });
-        return redirectResponse;
-      }
-
-      // For other routes, clean up bad cookies but let the request through
       request.cookies.getAll().forEach((cookie) => {
         if (cookie.name.startsWith('sb-')) {
           response.cookies.delete(cookie.name);
         }
       });
-      return response;
+      const loginUrl = new URL('/login', request.url);
+      return NextResponse.redirect(loginUrl);
     }
 
-    // No user — only redirect to login for routes that explicitly require auth
+    // No user — redirect to login
     if (!user) {
-      const allowedRoles = getAllowedRolesForPath(pathname);
-      if (allowedRoles) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('redirect', pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-      return response;
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
-    // Fetch user role from public.users joined with roles
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role_id, roles(name)')
-      .eq('id', user.id)
-      .single();
-
-    const userRole: AppRole =
-      (profile?.roles as unknown as { name: AppRole } | null)?.name ?? 'customer';
-
-    // Check route permissions
-    const allowedRoles = getAllowedRolesForPath(pathname);
-
-    if (allowedRoles && !allowedRoles.includes(userRole)) {
-      return NextResponse.redirect(new URL('/access-denied', request.url));
-    }
-
+    // User is authenticated — role checks are handled by layout-level components
     return response;
   } catch (err) {
     console.error('[Middleware] Unexpected error:', err);
