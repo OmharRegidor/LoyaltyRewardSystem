@@ -245,6 +245,7 @@ export async function checkLimitAccess(
   }
 
   // Get current usage
+  const supabase = getServiceClient();
   const { data: usage } = await supabase
     .from('usage_tracking')
     .select('customer_count, branch_count, staff_count')
