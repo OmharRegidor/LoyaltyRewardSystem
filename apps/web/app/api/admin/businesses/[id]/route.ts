@@ -38,9 +38,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     plansResult,
     newCustomers30dResult,
     pointsIssued30dResult,
-    bookings30dResult,
     activeRewardsResult,
-    activeServicesResult,
   ] = await Promise.all([
     // admin_business_stats view
     service.from('admin_business_stats').select('*').eq('id', id).maybeSingle(),
@@ -53,8 +51,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         business_type, phone, city, address, logo_url, points_per_purchase,
         subscriptions (
           id, plan_id, status, billing_interval, current_period_end,
-          module_booking_override, module_pos_override,
-          plans ( id, display_name, has_booking, has_pos, has_loyalty )
+          module_pos_override,
+          plans ( id, display_name, has_pos, has_loyalty )
         )
       `,
       )
@@ -98,21 +96,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .eq('business_id', id)
       .eq('type', 'earn')
       .gte('created_at', thirtyDaysAgo),
-    // Bookings in last 30 days
-    service
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_id', id)
-      .gte('created_at', thirtyDaysAgo),
     // Active rewards
     service
       .from('rewards')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_id', id)
-      .eq('is_active', true),
-    // Active services
-    service
-      .from('services')
       .select('*', { count: 'exact', head: true })
       .eq('business_id', id)
       .eq('is_active', true),
@@ -185,8 +171,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       billing_interval: sub?.billing_interval ?? null,
       current_period_end: sub?.current_period_end ?? null,
       current_plan_id: sub?.plan_id ?? null,
-      has_booking: ((sub as Record<string, unknown>)?.module_booking_override as boolean | null) ??
-        (planData as Record<string, unknown>)?.has_booking === true,
       has_pos: ((sub as Record<string, unknown>)?.module_pos_override as boolean | null) ??
         (planData as Record<string, unknown>)?.has_pos === true,
       has_loyalty: (planData as Record<string, unknown>)?.has_loyalty !== false,
@@ -200,9 +184,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       points_issued: (statsRow?.points_issued as number) ?? 0,
       new_customers_30d: newCustomers30dResult.count ?? 0,
       points_issued_30d: pointsIssued30d,
-      bookings_30d: bookings30dResult.count ?? 0,
       active_rewards: activeRewardsResult.count ?? 0,
-      active_services: activeServicesResult.count ?? 0,
       last_active_at: (statsRow?.last_active_at as string) ?? null,
     },
     notes: (notesResult.data ?? []) as AdminNote[],

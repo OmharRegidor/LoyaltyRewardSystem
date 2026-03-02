@@ -31,9 +31,7 @@ import {
   ArrowRightLeft,
   Coins,
   GitBranch,
-  CalendarDays,
   Gift,
-  ConciergeBell,
   Mail,
   Phone,
   MapPin,
@@ -126,7 +124,6 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [planChangeReason, setPlanChangeReason] = useState('');
-  const [planModuleBooking, setPlanModuleBooking] = useState(false);
   const [planModulePos, setPlanModulePos] = useState(false);
   const [submittingPlan, setSubmittingPlan] = useState(false);
 
@@ -201,14 +198,13 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
           newPlanId: selectedPlanId,
           reason: planChangeReason.trim() || undefined,
           ...(isTargetEnterprise && {
-            moduleBooking: planModuleBooking,
             modulePos: planModulePos,
           }),
         }),
       });
       if (!res.ok) throw new Error('Failed to change plan');
       setPlanModalOpen(false); setSelectedPlanId(''); setPlanChangeReason('');
-      setPlanModuleBooking(false); setPlanModulePos(false);
+      setPlanModulePos(false);
       await fetchData();
     } catch { /* Keep modal open */ } finally { setSubmittingPlan(false); }
   }
@@ -247,14 +243,12 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
     { label: 'Customers', value: stats.customer_count, subStat: `+${formatNumber(stats.new_customers_30d)} (30d)`, icon: Users, color: 'bg-blue-50 text-blue-600' },
     { label: 'Transactions (30d)', value: stats.transactions_30d, icon: ArrowRightLeft, color: 'bg-purple-50 text-purple-600' },
     { label: 'Points Issued', value: stats.points_issued, subStat: `+${formatNumber(stats.points_issued_30d)} (30d)`, icon: Coins, color: 'bg-yellow-50 text-yellow-600' },
-    { label: 'Bookings (30d)', value: stats.bookings_30d, icon: CalendarDays, color: 'bg-indigo-50 text-indigo-600' },
   ];
 
   const statCardsRow2 = [
     { label: 'Staff', value: stats.staff_count, icon: UsersRound, color: 'bg-green-50 text-green-600' },
     { label: 'Branches', value: stats.branch_count, icon: GitBranch, color: 'bg-cyan-50 text-cyan-600' },
     { label: 'Rewards Active', value: stats.active_rewards, icon: Gift, color: 'bg-orange-50 text-orange-600' },
-    { label: 'Services Active', value: stats.active_services, icon: ConciergeBell, color: 'bg-pink-50 text-pink-600' },
   ];
 
   const featureItems = [
@@ -265,7 +259,6 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
     { label: `Branches (${stats.branch_count})`, enabled: true, icon: GitBranch },
     { label: `Rewards (${stats.active_rewards})`, enabled: true, icon: Gift },
     { label: 'Analytics', enabled: true, icon: BarChart3 },
-    { label: 'Booking System', enabled: business.has_booking, icon: CalendarDays },
     { label: 'POS System', enabled: business.has_pos, icon: ShoppingCart },
   ];
 
@@ -298,7 +291,7 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
           <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
             {business.plan_name}
           </Badge>
-          <Button size="sm" variant="outline" onClick={() => { setPlanModalOpen(true); setSelectedPlanId(''); setPlanChangeReason(''); setPlanModuleBooking(false); setPlanModulePos(false); }} className="gap-1.5 h-7 text-xs">
+          <Button size="sm" variant="outline" onClick={() => { setPlanModalOpen(true); setSelectedPlanId(''); setPlanChangeReason(''); setPlanModulePos(false); }} className="gap-1.5 h-7 text-xs">
             <ArrowUpDown className="w-3 h-3" /> Change Plan
           </Button>
         </div>
@@ -453,14 +446,6 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
                   <div className="flex items-center gap-2">
                     <Checkbox id="plan-mod-loyalty" checked disabled />
                     <label htmlFor="plan-mod-loyalty" className="text-sm text-gray-500">Loyalty (always included)</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="plan-mod-booking"
-                      checked={planModuleBooking}
-                      onCheckedChange={(v) => setPlanModuleBooking(v === true)}
-                    />
-                    <label htmlFor="plan-mod-booking" className="text-sm text-gray-900">Booking System</label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox

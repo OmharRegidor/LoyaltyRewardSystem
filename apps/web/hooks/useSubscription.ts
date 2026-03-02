@@ -9,7 +9,6 @@ interface Plan {
   name: string;
   displayName: string;
   hasLoyalty: boolean;
-  hasBooking: boolean;
   hasPOS: boolean;
 }
 

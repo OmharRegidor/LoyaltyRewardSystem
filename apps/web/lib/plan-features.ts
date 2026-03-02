@@ -13,7 +13,6 @@ export type FeatureName =
   | 'staff'
   | 'branches'
   | 'analytics'
-  | 'booking'
   | 'pos';
 
 export type PlanFeatures = Record<FeatureName, boolean>;
@@ -30,7 +29,6 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     staff: true,
     branches: true,
     analytics: true,
-    booking: false,
     pos: false,
   },
   enterprise: {
@@ -40,7 +38,6 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     staff: true,
     branches: true,
     analytics: true,
-    booking: true,
     pos: true,
   },
 };
@@ -78,10 +75,6 @@ export const FEATURE_DISPLAY_NAMES: Record<FeatureName, FeatureDisplayInfo> = {
   analytics: {
     name: 'Analytics Dashboard',
     description: 'Insights and reporting',
-  },
-  booking: {
-    name: 'Booking System',
-    description: 'Appointment scheduling and management',
   },
   pos: {
     name: 'POS System',

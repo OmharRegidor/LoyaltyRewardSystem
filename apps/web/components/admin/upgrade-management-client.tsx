@@ -82,7 +82,6 @@ export function UpgradeManagementClient() {
   const [dialogAction, setDialogAction] = useState<'upgrade' | 'downgrade'>('upgrade');
   const [dialogBusiness, setDialogBusiness] = useState<{ id: string; name: string } | null>(null);
   const [dialogReason, setDialogReason] = useState('');
-  const [dialogModuleBooking, setDialogModuleBooking] = useState(false);
   const [dialogModulePos, setDialogModulePos] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -153,7 +152,6 @@ export function UpgradeManagementClient() {
     setDialogAction('upgrade');
     setDialogBusiness({ id: businessId, name: businessName });
     setDialogReason('');
-    setDialogModuleBooking(false);
     setDialogModulePos(false);
     setDialogOpen(true);
   }
@@ -182,7 +180,6 @@ export function UpgradeManagementClient() {
           newPlanId: targetPlanId,
           reason: dialogReason.trim() || undefined,
           ...(dialogAction === 'upgrade' && {
-            moduleBooking: dialogModuleBooking,
             modulePos: dialogModulePos,
           }),
         }),
@@ -268,14 +265,6 @@ export function UpgradeManagementClient() {
                 <div className="flex items-center gap-2">
                   <Checkbox id="mod-loyalty" checked disabled />
                   <label htmlFor="mod-loyalty" className="text-sm text-gray-500">Loyalty (always included)</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="mod-booking"
-                    checked={dialogModuleBooking}
-                    onCheckedChange={(v) => setDialogModuleBooking(v === true)}
-                  />
-                  <label htmlFor="mod-booking" className="text-sm text-gray-900">Booking System</label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -500,7 +489,6 @@ function EnterpriseAccountsTable({ accounts, onDowngrade }: EnterpriseAccountsTa
                   <td className="py-3 pr-4">
                     <div className="flex flex-wrap gap-1">
                       <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-300 bg-emerald-50">Loyalty</Badge>
-                      {account.hasBooking && <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50">Booking</Badge>}
                       {account.hasPos && <Badge variant="outline" className="text-xs text-purple-600 border-purple-300 bg-purple-50">POS</Badge>}
                     </div>
                   </td>

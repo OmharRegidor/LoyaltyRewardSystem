@@ -49,7 +49,6 @@ interface PlanConfig {
   };
   modules: {
     has_loyalty: boolean;
-    has_booking: boolean;
     has_pos: boolean;
   };
 }
@@ -67,7 +66,6 @@ const PLANS: Record<string, PlanConfig> = {
     },
     modules: {
       has_loyalty: true,
-      has_booking: false,
       has_pos: false,
     },
   },
@@ -83,7 +81,6 @@ const PLANS: Record<string, PlanConfig> = {
     },
     modules: {
       has_loyalty: true,
-      has_booking: true,
       has_pos: true,
     },
   },
@@ -219,7 +216,6 @@ export async function POST(request: NextRequest) {
           max_branches: plan.limits.branches,
           max_staff_per_branch: plan.limits.staffPerBranch,
           has_loyalty: plan.modules.has_loyalty,
-          has_booking: plan.modules.has_booking,
           has_pos: plan.modules.has_pos,
           is_active: true,
         })

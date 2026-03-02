@@ -12,9 +12,6 @@ import {
   Moon,
   Sun,
   UserRound,
-  CalendarDays,
-  Briefcase,
-  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -59,29 +56,16 @@ export function Sidebar({ onClose }: SidebarProps) {
     }
   };
 
-  const hasBooking = subscription?.plan?.hasBooking ?? false;
-
   const navItems = useMemo(() => {
-    const items = [
+    return [
       { icon: Home, label: 'Dashboard', href: '/dashboard' },
       { icon: Users, label: 'Customers', href: '/dashboard/customers' },
       { icon: Gift, label: 'Rewards', href: '/dashboard/rewards' },
       { icon: UserRound, label: 'Team', href: '/dashboard/team' },
       { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
+      { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
     ];
-
-    if (hasBooking) {
-      items.push(
-        { icon: CalendarDays, label: 'Bookings', href: '/dashboard/booking' },
-        { icon: Briefcase, label: 'Services', href: '/dashboard/booking/services' },
-        { icon: Clock, label: 'Availability', href: '/dashboard/booking/availability' },
-      );
-    }
-
-    items.push({ icon: Settings, label: 'Settings', href: '/dashboard/settings' });
-
-    return items;
-  }, [hasBooking]);
+  }, []);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
