@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/privacy',
   '/book-call',
+  '/business',
   '/access-denied',
 ];
 
