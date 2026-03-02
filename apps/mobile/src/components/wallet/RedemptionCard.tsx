@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: 90,
-    height: 90,
+    alignSelf: 'stretch',
     backgroundColor: COLORS.gray[200],
   },
   content: {

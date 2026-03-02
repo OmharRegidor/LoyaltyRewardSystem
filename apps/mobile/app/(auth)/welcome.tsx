@@ -137,15 +137,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   logoContainer: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    padding: SPACING.base,
     marginBottom: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   logoImage: {
     width: 80,
