@@ -9,6 +9,8 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
+import { OfflineQRScreen } from '../../src/components/OfflineQRScreen';
+import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
 
 import {
   EarnPointsProvider,
@@ -294,6 +296,12 @@ function PhoneModalWrapper() {
 }
 
 function MainLayoutContent() {
+  const { isOnline } = useNetworkStatus();
+
+  if (!isOnline) {
+    return <OfflineQRScreen />;
+  }
+
   return (
     <View style={styles.container}>
       <Tabs
