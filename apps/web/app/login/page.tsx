@@ -77,20 +77,36 @@ function LoginForm() {
         localStorage.removeItem('rememberMe');
       }
 
-      // Check business owner and staff in parallel
-      const [{ data: business }, { data: staff }] = await Promise.all([
-        supabase
-          .from('businesses')
-          .select('id')
-          .eq('owner_id', data.user.id)
-          .maybeSingle(),
-        supabase
-          .from('staff')
-          .select('id')
-          .eq('user_id', data.user.id)
-          .eq('is_active', true)
-          .maybeSingle(),
-      ]);
+      // Check admin, business owner, and staff in parallel
+      const [{ data: adminUser }, { data: business }, { data: staff }] =
+        await Promise.all([
+          supabase
+            .from('users')
+            .select('role_id, roles(name)')
+            .eq('id', data.user.id)
+            .single(),
+          supabase
+            .from('businesses')
+            .select('id')
+            .eq('owner_id', data.user.id)
+            .maybeSingle(),
+          supabase
+            .from('staff')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .eq('is_active', true)
+            .maybeSingle(),
+        ]);
+
+      const role = (
+        adminUser?.roles as unknown as { name: string } | null
+      )?.name;
+
+      if (role === 'admin') {
+        fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
+        window.location.replace('/admin');
+        return;
+      }
 
       if (business) {
         // Track login (fire-and-forget)
@@ -107,7 +123,7 @@ function LoginForm() {
         return;
       }
 
-      // Not owner and not staff - this is a customer trying web login
+      // Not admin, owner, or staff - this is a customer trying web login
       setError(
         'This login is for business accounts only. Please use the mobile app.',
       );

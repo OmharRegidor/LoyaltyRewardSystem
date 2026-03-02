@@ -53,9 +53,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Always allow public routes
+  // Admin subdomain detection
+  const hostname = request.headers.get('host') || '';
+  const isAdminSubdomain = hostname.startsWith('admin.');
+
+  // If on admin subdomain, rewrite non-public paths to /admin/* internally
+  if (isAdminSubdomain && !pathname.startsWith('/admin')) {
+    // Let public routes through normally (e.g. /login, /auth/callback) except `/`
+    if (isPublicRoute(pathname) && pathname !== '/') {
+      return NextResponse.next();
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = `/admin${pathname === '/' ? '' : pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // Always allow public routes on non-admin subdomains
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
+  }
+
+  // Block /admin routes on non-admin subdomains
+  if (pathname.startsWith('/admin') && !isAdminSubdomain) {
+    return NextResponse.redirect(new URL('/access-denied', request.url));
   }
 
   // For protected routes, check auth

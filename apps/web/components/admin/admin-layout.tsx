@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -22,16 +22,31 @@ interface AdminLayoutProps {
   adminEmail: string;
 }
 
-const navigation = [
-  { name: 'Overview', href: '/admin', icon: LayoutDashboard },
-  { name: 'Businesses', href: '/admin/businesses', icon: Building2 },
-  { name: 'Upgrades', href: '/admin/upgrades', icon: ArrowUpCircle },
-  { name: 'Audit Logs', href: '/admin/audit-logs', icon: ScrollText },
+const baseNavigation = [
+  { name: 'Overview', path: '', icon: LayoutDashboard },
+  { name: 'Businesses', path: '/businesses', icon: Building2 },
+  { name: 'Upgrades', path: '/upgrades', icon: ArrowUpCircle },
+  { name: 'Audit Logs', path: '/audit-logs', icon: ScrollText },
 ];
+
+function useAdminSubdomain() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    setIsAdmin(window.location.hostname.startsWith('admin.'));
+  }, []);
+  return isAdmin;
+}
 
 export function AdminLayout({ children, adminEmail }: AdminLayoutProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isAdminSubdomain = useAdminSubdomain();
+
+  const prefix = isAdminSubdomain ? '' : '/admin';
+  const navigation = baseNavigation.map((item) => ({
+    ...item,
+    href: prefix + item.path || '/',
+  }));
 
   const handleLogout = async () => {
     await logout();
@@ -39,7 +54,8 @@ export function AdminLayout({ children, adminEmail }: AdminLayoutProps) {
   };
 
   const isActive = (href: string) => {
-    if (href === '/admin') return pathname === '/admin';
+    const root = isAdminSubdomain ? '/' : '/admin';
+    if (href === root || href === '') return pathname === root || pathname === '/admin';
     return pathname.startsWith(href);
   };
 
@@ -62,7 +78,7 @@ export function AdminLayout({ children, adminEmail }: AdminLayoutProps) {
         {/* Header */}
         <div className="p-6 flex items-center justify-between">
           <Link
-            href="/admin"
+            href={isAdminSubdomain ? '/' : '/admin'}
             className="flex items-center gap-2 text-xl font-bold text-orange-500"
           >
             <Shield className="w-6 h-6" />

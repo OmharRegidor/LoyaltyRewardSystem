@@ -72,6 +72,7 @@ const PLANS: Plan[] = [
     featuresLabel: 'Includes everything in Express, plus:',
     features: [
       'POS System',
+      'Inventory System',
       'Unlimited Branches',
       'Unlimited Staff',
       'Priority Support',
