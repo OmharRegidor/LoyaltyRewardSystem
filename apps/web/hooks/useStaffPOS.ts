@@ -18,6 +18,8 @@ interface UseStaffPOSOptions {
   customerTier: TierKey;
   customerId: string;
   businessId?: string;
+  minPurchaseForPoints: number;
+  maxPointsPerTransaction: number | null;
 }
 
 interface UseStaffPOSReturn {
@@ -62,7 +64,7 @@ interface UseStaffPOSReturn {
 }
 
 export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
-  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId } = options;
+  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId, minPurchaseForPoints, maxPointsPerTransaction } = options;
 
   // Product state
   const [products, setProducts] = useState<Product[]>([]);
@@ -194,8 +196,13 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
   const basePointsToEarn = useMemo(() => {
     const totalPesos = totalDueCentavos / 100;
-    return Math.floor(totalPesos / pesosPerPoint);
-  }, [totalDueCentavos, pesosPerPoint]);
+    if (totalPesos < minPurchaseForPoints) return 0;
+    const points = Math.floor(totalPesos / pesosPerPoint);
+    if (maxPointsPerTransaction !== null && maxPointsPerTransaction !== undefined) {
+      return Math.min(points, maxPointsPerTransaction);
+    }
+    return points;
+  }, [totalDueCentavos, pesosPerPoint, minPurchaseForPoints, maxPointsPerTransaction]);
 
   const pointsToEarn = useMemo(
     () => Math.floor(basePointsToEarn * tierMultiplier),

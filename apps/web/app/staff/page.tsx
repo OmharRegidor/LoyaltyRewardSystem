@@ -46,6 +46,8 @@ interface StaffData {
   businessName: string;
   userName: string;
   pesosPerPoint: number;
+  minPurchaseForPoints: number;
+  maxPointsPerTransaction: number | null;
 }
 
 interface CustomerData {
@@ -118,6 +120,8 @@ export default function StaffScannerPage() {
     customerTier: customer?.tier || "bronze",
     customerId: customer?.id || "",
     businessId: staffData?.businessId,
+    minPurchaseForPoints: staffData?.minPurchaseForPoints ?? 0,
+    maxPointsPerTransaction: staffData?.maxPointsPerTransaction ?? null,
   });
 
   // ============================================
@@ -219,7 +223,7 @@ export default function StaffScannerPage() {
           .maybeSingle(),
         supabase
           .from("businesses")
-          .select("id, name, pesos_per_point")
+          .select("id, name, pesos_per_point, min_purchase_for_points, max_points_per_transaction")
           .eq("owner_id", user.id)
           .maybeSingle(),
       ]);
@@ -228,7 +232,7 @@ export default function StaffScannerPage() {
         // Active staff — fetch business info
         const { data: business } = await supabase
           .from("businesses")
-          .select("name, pesos_per_point")
+          .select("name, pesos_per_point, min_purchase_for_points, max_points_per_transaction")
           .eq("id", staffRecord.business_id)
           .single();
 
@@ -238,6 +242,8 @@ export default function StaffScannerPage() {
           businessName: business?.name || "Business",
           userName: staffRecord.name || user.user_metadata?.full_name || "Staff",
           pesosPerPoint: business?.pesos_per_point || 10,
+          minPurchaseForPoints: business?.min_purchase_for_points ?? 0,
+          maxPointsPerTransaction: business?.max_points_per_transaction ?? null,
         });
 
         await loadTodayStats(staffRecord.id);
@@ -253,6 +259,8 @@ export default function StaffScannerPage() {
             user.email?.split("@")[0] ||
             "Owner",
           pesosPerPoint: ownerBusiness.pesos_per_point || 10,
+          minPurchaseForPoints: ownerBusiness.min_purchase_for_points ?? 0,
+          maxPointsPerTransaction: ownerBusiness.max_points_per_transaction ?? null,
         });
       } else {
         router.push("/login");
