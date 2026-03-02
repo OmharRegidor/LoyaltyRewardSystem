@@ -58,6 +58,15 @@ const initialState: AuthState = {
 
 const PHONE_PROMPT_SKIP_KEY = 'phone_prompt_skip_count';
 const MAX_PHONE_PROMPTS = 3;
+const CACHED_CUSTOMER_KEY = 'cached_customer_data';
+
+interface CachedCustomerData {
+  customer: Customer;
+  totalPoints: number;
+  lifetimePoints: number;
+  customerIds: string[];
+  userMetadata: Record<string, string> | null;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -144,6 +153,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           customerIds,
         });
 
+        // Cache customer data for offline use
+        if (customer) {
+          const cacheData: CachedCustomerData = {
+            customer,
+            totalPoints: aggregated.totalPoints,
+            lifetimePoints: aggregated.lifetimePoints,
+            customerIds,
+            userMetadata: user.user_metadata as Record<string, string> | null,
+          };
+          AsyncStorage.setItem(CACHED_CUSTOMER_KEY, JSON.stringify(cacheData)).catch(() => {});
+        }
+
         if (customer?.id) {
           setupRealtimeSubscription(user.id);
 
@@ -154,6 +175,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('[AuthProvider] Load customer error:', error);
+
+        // Try to load cached customer data for offline use
+        try {
+          const cachedJson = await AsyncStorage.getItem(CACHED_CUSTOMER_KEY);
+          if (cachedJson) {
+            const cached: CachedCustomerData = JSON.parse(cachedJson);
+            setState({
+              user,
+              customer: cached.customer,
+              session,
+              isLoading: false,
+              isInitialized: true,
+              isNewCustomer: false,
+              needsPhone: false,
+              totalPoints: cached.totalPoints,
+              lifetimePoints: cached.lifetimePoints,
+              customerIds: cached.customerIds,
+            });
+            return;
+          }
+        } catch {
+          // Cache read failed, fall through to empty state
+        }
+
         setState({
           user,
           customer: null,
@@ -318,7 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       cleanupRealtimeSubscription();
-      await GoogleSignin.revokeAccess();
+      await AsyncStorage.removeItem(CACHED_CUSTOMER_KEY);
       await GoogleSignin.signOut();
       await supabase.auth.signOut();
     } catch (error) {
