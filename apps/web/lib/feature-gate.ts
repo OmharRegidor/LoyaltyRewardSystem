@@ -18,7 +18,7 @@ export type FeatureName =
   | 'webhook_notifications'
   | 'dedicated_account_manager';
 
-export type ModuleName = 'loyalty' | 'booking' | 'pos';
+export type ModuleName = 'loyalty' | 'pos';
 
 export interface ModuleCheckResult {
   allowed: boolean;
@@ -27,7 +27,6 @@ export interface ModuleCheckResult {
 
 export interface PlanModuleFlags {
   has_loyalty: boolean | null;
-  has_booking: boolean | null;
   has_pos: boolean | null;
 }
 
@@ -72,7 +71,6 @@ function getServiceClient() {
 
 interface CachedSubscription {
   status: string;
-  module_booking_override: boolean | null;
   module_pos_override: boolean | null;
   plans: Record<string, unknown> | Record<string, unknown>[] | null;
 }
@@ -98,11 +96,9 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
     .select(
       `
       status,
-      module_booking_override,
       module_pos_override,
       plans (
         has_loyalty,
-        has_booking,
         has_pos,
         features,
         max_customers,
@@ -127,7 +123,7 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
 }
 
 /**
- * Check if a business has access to a specific module (loyalty, booking, pos)
+ * Check if a business has access to a specific module (loyalty, pos)
  * This is the SERVER-SIDE check that cannot be bypassed
  */
 export async function checkModuleAccess(
@@ -158,20 +154,17 @@ export async function checkModuleAccess(
 
   const plan: PlanModuleFlags = {
     has_loyalty: 'has_loyalty' in planData ? (planData.has_loyalty as boolean | null) : null,
-    has_booking: 'has_booking' in planData ? (planData.has_booking as boolean | null) : null,
     has_pos: 'has_pos' in planData ? (planData.has_pos as boolean | null) : null,
   };
 
   // Per-business overrides: NULL = use plan default, true/false = override
   const overrideMap: Record<ModuleName, boolean | null> = {
     loyalty: null, // loyalty has no override, always use plan default
-    booking: subscription.module_booking_override ?? null,
     pos: subscription.module_pos_override ?? null,
   };
 
   const moduleColumnMap: Record<ModuleName, keyof PlanModuleFlags> = {
     loyalty: 'has_loyalty',
-    booking: 'has_booking',
     pos: 'has_pos',
   };
 
@@ -449,7 +442,7 @@ export async function requireWithinLimit(
 }
 
 /**
- * Middleware helper to require module access (loyalty, booking, pos)
+ * Middleware helper to require module access (loyalty, pos)
  */
 export async function requireModule(
   businessId: string,

@@ -70,7 +70,6 @@ export async function GET(request: Request) {
           name: 'free',
           displayName: 'Free',
           hasLoyalty: true,
-          hasBooking: false,
           hasPOS: false,
         },
         limits: {
@@ -127,7 +126,6 @@ export async function GET(request: Request) {
             name: subscription.plan.name,
             displayName: subscription.plan.display_name,
             hasLoyalty: subscription.plan.has_loyalty,
-            hasBooking: subscription.module_booking_override ?? subscription.plan.has_booking,
             hasPOS: subscription.module_pos_override ?? subscription.plan.has_pos,
           }
         : null,

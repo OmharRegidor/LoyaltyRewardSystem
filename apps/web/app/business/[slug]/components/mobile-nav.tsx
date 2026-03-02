@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Home, Gift, CreditCard, CalendarDays } from 'lucide-react';
+import { Menu, Home, Gift, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -17,24 +17,18 @@ import {
 interface MobileNavProps {
   slug: string;
   businessName: string;
-  hasBooking: boolean;
 }
 
 const navItems = [
   { label: 'About', path: '', icon: Home },
-  { label: 'My Bookings', path: '/my-bookings', icon: CalendarDays },
   { label: 'Rewards', path: '/rewards', icon: Gift },
   { label: 'Get Card', path: '/card', icon: CreditCard },
 ];
 
-export function MobileNav({ slug, businessName, hasBooking }: MobileNavProps) {
+export function MobileNav({ slug, businessName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const basePath = `/business/${slug}`;
-
-  const filteredNavItems = !hasBooking
-    ? navItems.filter((item) => item.path !== '/my-bookings')
-    : navItems;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -49,7 +43,7 @@ export function MobileNav({ slug, businessName, hasBooking }: MobileNavProps) {
           <SheetTitle>{businessName}</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-2 mt-6">
-          {filteredNavItems.map((item) => {
+          {navItems.map((item) => {
             const href = `${basePath}${item.path}`;
             const isActive = pathname === href;
             const Icon = item.icon;

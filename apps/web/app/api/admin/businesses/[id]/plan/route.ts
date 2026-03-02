@@ -10,7 +10,6 @@ interface RouteParams {
 interface PlanChangeBody {
   newPlanId: string;
   reason?: string;
-  moduleBooking?: boolean;
   modulePos?: boolean;
 }
 
@@ -23,7 +22,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const body = (await request.json()) as PlanChangeBody;
-  const { newPlanId, reason, moduleBooking, modulePos } = body;
+  const { newPlanId, reason, modulePos } = body;
 
   if (!newPlanId || typeof newPlanId !== 'string') {
     return NextResponse.json(
@@ -58,11 +57,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const isEnterprise = plan.name === 'enterprise';
   const moduleOverrides = isEnterprise
     ? {
-        module_booking_override: moduleBooking ?? null,
         module_pos_override: modulePos ?? null,
       }
     : {
-        module_booking_override: null as boolean | null,
         module_pos_override: null as boolean | null,
       };
 

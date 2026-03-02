@@ -15,9 +15,6 @@ import {
   UsersRound,
   Menu,
   X,
-  CalendarDays,
-  FileEdit,
-  Clock,
   ShoppingCart,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,7 +38,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { subscription } = useSubscription();
-  const hasBooking = subscription?.plan?.hasBooking ?? false;
   const hasPOS = subscription?.plan?.hasPOS ?? false;
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -126,22 +122,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Full navigation with conditional feature-gated items
   const navigation = [
     ...coreNavigation,
-    // Booking items - only show if plan has booking feature
-    ...(hasBooking
-      ? [
-          { name: 'Bookings', href: '/dashboard/booking', icon: CalendarDays },
-          {
-            name: 'Business Form',
-            href: '/dashboard/booking/business-form',
-            icon: FileEdit,
-          },
-          {
-            name: 'Availability',
-            href: '/dashboard/booking/availability',
-            icon: Clock,
-          },
-        ]
-      : []),
     // POS items - only show if plan has POS feature
     ...(hasPOS
       ? [
@@ -161,11 +141,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/dashboard/team') return pathname === '/dashboard/team';
     if (href === '/dashboard/settings')
       return pathname === '/dashboard/settings';
-    if (href === '/dashboard/booking') return pathname === '/dashboard/booking';
-    if (href === '/dashboard/booking/business-form')
-      return pathname === '/dashboard/booking/business-form';
-    if (href === '/dashboard/booking/availability')
-      return pathname === '/dashboard/booking/availability';
     if (href === '/dashboard/pos') return pathname.startsWith('/dashboard/pos');
     return pathname.startsWith(href);
   };

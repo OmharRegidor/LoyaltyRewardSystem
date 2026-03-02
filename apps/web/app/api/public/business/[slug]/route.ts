@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getBusinessBySlug,
-  getPublicAvailability,
-} from '@/lib/services/public-business.service';
+import { getBusinessBySlug } from '@/lib/services/public-business.service';
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -21,14 +18,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const availability = await getPublicAvailability(business.id);
-
     return NextResponse.json({
       success: true,
-      data: {
-        ...business,
-        availability,
-      },
+      data: business,
     });
   } catch (error) {
     console.error('Error fetching business:', error);

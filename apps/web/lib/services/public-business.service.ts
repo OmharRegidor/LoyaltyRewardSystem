@@ -9,9 +9,7 @@ import {
 } from '@/lib/qr-code';
 
 type Business = Database['public']['Tables']['businesses']['Row'];
-type Service = Database['public']['Tables']['services']['Row'];
 type Reward = Database['public']['Tables']['rewards']['Row'];
-type Availability = Database['public']['Tables']['availability']['Row'];
 
 // ============================================
 // TYPES
@@ -31,25 +29,6 @@ export interface PublicBusiness {
   pesos_per_point: number | null;
 }
 
-export interface PublicPriceVariant {
-  id: string;
-  name: string;
-  price_centavos: number;
-  description: string | null;
-  capacity: number | null;
-}
-
-export interface PublicService {
-  id: string;
-  name: string;
-  description: string | null;
-  duration_minutes: number;
-  price_centavos: number | null;
-  pricing_type: string | null;
-  config: Record<string, unknown> | null;
-  price_variants: PublicPriceVariant[];
-}
-
 export interface PublicReward {
   id: string;
   title: string;
@@ -58,30 +37,6 @@ export interface PublicReward {
   category: string | null;
   image_url: string | null;
   stock: number | null;
-}
-
-export interface PublicAvailability {
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-}
-
-export interface PublicAddonOption {
-  id: string;
-  name: string;
-  price_centavos: number;
-  description: string | null;
-}
-
-export interface PublicAddon {
-  id: string;
-  name: string;
-  description: string | null;
-  price_centavos: number;
-  duration_minutes: number | null;
-  category: string | null;
-  options: PublicAddonOption[];
 }
 
 // ============================================
@@ -270,79 +225,6 @@ export async function getBusinessByJoinCode(
 }
 
 // ============================================
-// GET PUBLIC SERVICES
-// ============================================
-
-export async function getPublicServices(
-  businessId: string
-): Promise<PublicService[]> {
-  const supabase = createServiceClient();
-
-  const { data, error } = await supabase
-    .from('services')
-    .select(
-      `
-      id,
-      name,
-      description,
-      duration_minutes,
-      price_centavos,
-      pricing_type,
-      config
-    `
-    )
-    .eq('business_id', businessId)
-    .eq('is_active', true)
-    .order('name');
-
-  if (error) {
-    console.error('Error fetching public services:', error);
-    return [];
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  // Fetch price variants for all services
-  const serviceIds = data.map((s) => s.id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: variants } = await (supabase as any)
-    .from('service_price_variants')
-    .select('id, service_id, name, price_centavos, description, capacity')
-    .in('service_id', serviceIds)
-    .eq('is_active', true)
-    .order('sort_order');
-
-  // Group variants by service_id
-  const variantsByService = new Map<string, PublicPriceVariant[]>();
-  for (const variant of variants || []) {
-    const serviceId = variant.service_id;
-    if (!variantsByService.has(serviceId)) {
-      variantsByService.set(serviceId, []);
-    }
-    variantsByService.get(serviceId)!.push({
-      id: variant.id,
-      name: variant.name,
-      price_centavos: variant.price_centavos,
-      description: variant.description,
-      capacity: variant.capacity,
-    });
-  }
-
-  return data.map((service) => ({
-    id: service.id,
-    name: service.name,
-    description: service.description,
-    duration_minutes: service.duration_minutes,
-    price_centavos: service.price_centavos,
-    pricing_type: (service as Record<string, unknown>).pricing_type as string | null,
-    config: (service as Record<string, unknown>).config as Record<string, unknown> | null,
-    price_variants: variantsByService.get(service.id) || [],
-  }));
-}
-
-// ============================================
 // GET PUBLIC REWARDS
 // ============================================
 
@@ -376,109 +258,6 @@ export async function getPublicRewards(
   }
 
   return data || [];
-}
-
-// ============================================
-// GET PUBLIC AVAILABILITY
-// ============================================
-
-export async function getPublicAvailability(
-  businessId: string
-): Promise<PublicAvailability[]> {
-  const supabase = createServiceClient();
-
-  const { data, error } = await supabase
-    .from('availability')
-    .select(
-      `
-      day_of_week,
-      start_time,
-      end_time,
-      is_available
-    `
-    )
-    .eq('business_id', businessId)
-    .is('branch_id', null)
-    .is('staff_id', null)
-    .order('day_of_week');
-
-  if (error) {
-    console.error('Error fetching public availability:', error);
-    return [];
-  }
-
-  return data || [];
-}
-
-// ============================================
-// GET PUBLIC ADDONS
-// ============================================
-
-export async function getPublicAddons(
-  businessId: string
-): Promise<PublicAddon[]> {
-  const supabase = createServiceClient();
-
-  const { data, error } = await supabase
-    .from('booking_addons')
-    .select(
-      `
-      id,
-      name,
-      description,
-      price_centavos,
-      duration_minutes,
-      category
-    `
-    )
-    .eq('business_id', businessId)
-    .eq('is_active', true)
-    .order('sort_order')
-    .order('name');
-
-  if (error) {
-    console.error('Error fetching public addons:', error);
-    return [];
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  // Fetch addon options for all addons
-  const addonIds = data.map((a) => a.id);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: options } = await (supabase as any)
-    .from('booking_addon_options')
-    .select('id, addon_id, name, price_centavos, description')
-    .in('addon_id', addonIds)
-    .eq('is_active', true)
-    .order('sort_order');
-
-  // Group options by addon_id
-  const optionsByAddon = new Map<string, PublicAddonOption[]>();
-  for (const option of options || []) {
-    const addonId = option.addon_id;
-    if (!optionsByAddon.has(addonId)) {
-      optionsByAddon.set(addonId, []);
-    }
-    optionsByAddon.get(addonId)!.push({
-      id: option.id,
-      name: option.name,
-      price_centavos: option.price_centavos,
-      description: option.description,
-    });
-  }
-
-  return data.map((addon) => ({
-    id: addon.id,
-    name: addon.name,
-    description: addon.description,
-    price_centavos: addon.price_centavos,
-    duration_minutes: addon.duration_minutes,
-    category: addon.category,
-    options: optionsByAddon.get(addon.id) || [],
-  }));
 }
 
 // ============================================

@@ -17,8 +17,6 @@ export interface AdminPlatformStats {
   transactions_30d: number;
   total_points_issued: number;
   points_issued_30d: number;
-  total_bookings: number;
-  bookings_30d: number;
   active_subscriptions: number;
 }
 
@@ -117,7 +115,6 @@ export interface EnterpriseAccount {
   ownerEmail: string | null;
   upgradedAt: string;
   planName: string;
-  hasBooking: boolean;
   hasPos: boolean;
 }
 
@@ -165,7 +162,6 @@ export interface BusinessDetailResponse {
     billing_interval: string | null;
     current_period_end: string | null;
     current_plan_id: string | null;
-    has_booking: boolean;
     has_pos: boolean;
     has_loyalty: boolean;
   };
@@ -178,9 +174,7 @@ export interface BusinessDetailResponse {
     points_issued: number;
     new_customers_30d: number;
     points_issued_30d: number;
-    bookings_30d: number;
     active_rewards: number;
-    active_services: number;
     last_active_at: string | null;
   };
   notes: AdminNote[];

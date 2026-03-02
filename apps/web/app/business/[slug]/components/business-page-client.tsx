@@ -12,25 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Building2,
   MapPin,
   Phone,
-  Calendar,
   Gift,
   Star,
-  Clock,
-  ArrowRight,
 } from 'lucide-react';
-import type {
-  PublicBusiness,
-  PublicAvailability,
-  PublicService,
-  PublicAddon,
-} from '@/lib/services/public-business.service';
-import { BookingModal } from '@/components/booking';
+import type { PublicBusiness } from '@/lib/services/public-business.service';
 
 // ============================================
 // TYPES
@@ -38,26 +28,8 @@ import { BookingModal } from '@/components/booking';
 
 interface BusinessPageClientProps {
   business: PublicBusiness;
-  availability: PublicAvailability[];
-  services: PublicService[];
-  addons: PublicAddon[];
   slug: string;
-  hasBooking: boolean;
 }
-
-// ============================================
-// CONSTANTS
-// ============================================
-
-const DAY_NAMES = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
 
 // ============================================
 // ANIMATION VARIANTS
@@ -83,46 +55,15 @@ const cardVariants: Variants = {
   },
 };
 
-const dayItemVariants: Variants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.3 },
-  },
-};
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-function formatTime(time: string): string {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minutes} ${ampm}`;
-}
-
-function getTodayIndex(): number {
-  return new Date().getDay();
-}
-
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 export function BusinessPageClient({
   business,
-  availability,
-  services,
-  addons,
   slug,
-  hasBooking,
 }: BusinessPageClientProps) {
   const [mounted, setMounted] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const todayIndex = getTodayIndex();
 
   useEffect(() => {
     setMounted(true);
@@ -201,20 +142,8 @@ export function BusinessPageClient({
                 )}
               </div>
 
-              {/* Action Buttons - Yellow CTA, Maroon Outline */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 mt-2">
-                {hasBooking && (
-                  <Button
-                    size="lg"
-                    className="bg-secondary text-secondary-foreground rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-secondary/90 transition-all font-bold"
-                    onClick={() => setBookingOpen(true)}
-                    disabled={services.length === 0}
-                  >
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Book Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
                 <Button
                   variant="outline"
                   asChild
@@ -323,150 +252,8 @@ export function BusinessPageClient({
               </Card>
             </motion.div>
           </div>
-
-          {/* Business Hours Card - Full width at bottom */}
-          <motion.div className="mt-6" variants={cardVariants}>
-            <Card className="overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 border-t-primary rounded-2xl bg-white shadow-md border border-gray-100">
-              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
-              <CardHeader className="relative pb-2 sm:pb-6 px-3 sm:px-6">
-                <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg text-gray-900">
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </div>
-                  Business Hours
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative pt-0 px-3 sm:px-6">
-                {availability.length > 0 ? (
-                  <motion.div
-                    className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
-                    initial="hidden"
-                    animate="visible"
-                    variants={staggerContainerVariants}
-                  >
-                    {DAY_NAMES.map((dayName, index) => {
-                      const dayAvailability = availability.find(
-                        (a) => a.day_of_week === index,
-                      );
-                      const isToday = index === todayIndex;
-                      const isOpen =
-                        dayAvailability && dayAvailability.is_available;
-                      // Abbreviated day name for mobile
-                      const shortDayName = dayName.slice(0, 3);
-
-                      return (
-                        <motion.div
-                          key={index}
-                          variants={dayItemVariants}
-                          className={`relative flex flex-col p-2 sm:p-4 rounded-lg sm:rounded-xl transition-all min-w-0 ${
-                            isToday
-                              ? 'bg-linear-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 shadow-md'
-                              : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-1 mb-1 sm:mb-2">
-                            <span
-                              className={`font-semibold text-xs sm:text-base truncate ${isToday ? 'text-primary' : 'text-gray-900'}`}
-                            >
-                              <span className="sm:hidden">{shortDayName}</span>
-                              <span className="hidden sm:inline">
-                                {dayName}
-                              </span>
-                            </span>
-                            {isToday && (
-                              <span className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-primary shrink-0">
-                                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary" />
-                                </span>
-                                <span className="hidden sm:inline">Today</span>
-                              </span>
-                            )}
-                          </div>
-                          {isOpen ? (
-                            <span className="text-[10px] sm:text-sm text-gray-600">
-                              {formatTime(dayAvailability.start_time)} -{' '}
-                              {formatTime(dayAvailability.end_time)}
-                            </span>
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="w-fit text-[10px] sm:text-xs px-1.5 sm:px-2.5"
-                            >
-                              Closed
-                            </Badge>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
-                ) : (
-                  <p className="text-gray-500 text-sm p-3">
-                    Business hours not available. Please contact the business
-                    for their schedule.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
         </motion.div>
       </div>
-
-      {/* Booking Modal - New Full-Screen Design */}
-      {hasBooking && <BookingModal
-        open={bookingOpen}
-        onOpenChange={setBookingOpen}
-        business={{
-          id: business.id,
-          name: business.name,
-          slug: business.slug,
-          logo_url: business.logo_url,
-          phone: business.phone,
-          address: business.address,
-          points_per_purchase: business.points_per_purchase,
-          pesos_per_point: business.pesos_per_point,
-          business_type: business.business_type as
-            | 'retail'
-            | 'restaurant'
-            | 'salon'
-            | 'hotel'
-            | null,
-        }}
-        services={services.map((s) => ({
-          id: s.id,
-          name: s.name,
-          description: s.description,
-          price_centavos: s.price_centavos,
-          duration_minutes: s.duration_minutes,
-          max_guests: 1,
-          requires_time_slot: s.duration_minutes < 1440,
-          price_type: s.duration_minutes >= 1440 ? 'per_night' : 'per_session',
-          config: s.config,
-          price_variants: s.price_variants?.map((v) => ({
-            id: v.id,
-            name: v.name,
-            price_centavos: v.price_centavos,
-            description: v.description,
-            capacity: v.capacity,
-          })),
-        }))}
-        addons={addons.map((a) => ({
-          id: a.id,
-          name: a.name,
-          description: a.description,
-          price_centavos: a.price_centavos,
-          price_type: 'fixed' as const,
-          service_id: null,
-          category: a.category,
-          options: a.options?.map((o) => ({
-            id: o.id,
-            name: o.name,
-            price_centavos: o.price_centavos,
-            description: o.description,
-          })),
-        }))}
-        availability={availability}
-      />}
     </div>
   );
 }

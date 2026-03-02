@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
-import { checkModuleAccess } from '@/lib/feature-gate';
 import { Building2 } from 'lucide-react';
 import { NavLink } from './components/nav-link';
 import { MobileNav } from './components/mobile-nav';
@@ -24,8 +23,6 @@ export default async function BusinessLayout({
   if (!business) {
     notFound();
   }
-
-  const { allowed: hasBooking } = await checkModuleAccess(business.id, 'booking');
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
@@ -65,17 +62,12 @@ export default async function BusinessLayout({
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
               <NavLink href={`/business/${slug}`}>About</NavLink>
-              {hasBooking && (
-                <NavLink href={`/business/${slug}/my-bookings`}>
-                  My Bookings
-                </NavLink>
-              )}
               <NavLink href={`/business/${slug}/rewards`}>Rewards</NavLink>
               <NavLink href={`/business/${slug}/card`}>Get Card</NavLink>
             </nav>
 
             {/* Mobile Navigation */}
-            <MobileNav slug={slug} businessName={business.name} hasBooking={hasBooking} />
+            <MobileNav slug={slug} businessName={business.name} />
           </div>
         </div>
       </header>
