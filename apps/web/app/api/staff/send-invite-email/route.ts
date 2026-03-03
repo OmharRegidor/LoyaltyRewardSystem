@@ -37,6 +37,24 @@ export async function POST(request: NextRequest) {
 
     const { email, staffName, businessName, inviteUrl, role } = parsed.data;
 
+    // Validate inviteUrl matches our app domain to prevent phishing
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const allowedOrigin = new URL(appUrl).origin;
+    try {
+      const inviteOrigin = new URL(inviteUrl).origin;
+      if (inviteOrigin !== allowedOrigin) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid invite URL' },
+          { status: 400 },
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid invite URL' },
+        { status: 400 },
+      );
+    }
+
     const result = await sendStaffInviteEmail({
       to: email,
       staffName,

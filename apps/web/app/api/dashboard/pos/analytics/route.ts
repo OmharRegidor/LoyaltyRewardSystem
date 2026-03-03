@@ -54,14 +54,22 @@ export async function GET(request: NextRequest) {
     // Check POS module access
     await requireModule(businessId, 'pos');
 
-    // Get date range from query params
+    // Get date range from query params (max 90 days)
     const { searchParams } = new URL(request.url);
     const endDate = searchParams.get('end_date') || new Date().toISOString().split('T')[0];
 
-    // Default to last 7 days
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 6);
-    const startDate = searchParams.get('start_date') || defaultStartDate.toISOString().split('T')[0];
+    let startDate = searchParams.get('start_date') || defaultStartDate.toISOString().split('T')[0];
+
+    // Cap date range to 90 days to prevent unbounded queries
+    const maxRangeMs = 90 * 24 * 60 * 60 * 1000;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end.getTime() - start.getTime() > maxRangeMs) {
+      const capped = new Date(end.getTime() - maxRangeMs);
+      startDate = capped.toISOString().split('T')[0];
+    }
 
     const analytics = await getSalesAnalytics(businessId, startDate, endDate);
 

@@ -1,7 +1,7 @@
 // apps/web/lib/security.ts
 
 import { headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from './supabase-server';
 
 // ============================================
 // TYPES
@@ -154,10 +154,7 @@ export async function checkQRAbuse(
   qrCodeId: string,
   businessId: string
 ): Promise<AbuseCheckResult> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceClient();
 
   // Check for same QR scanned at multiple businesses
   const { data: recentScans } = await supabase
@@ -206,10 +203,7 @@ export async function checkStaffAbuse(
   staffId: string,
   businessId: string
 ): Promise<AbuseCheckResult> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceClient();
 
   // Get staff's recent transactions
   const { data: recentTransactions } = await supabase
@@ -303,19 +297,15 @@ export async function logSecurityEvent(event: {
   businessId?: string;
   userId?: string;
   ip?: string;
-  details: Record<string, unknown>;
+  details: Record<string, string | number | boolean | null>;
 }): Promise<void> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceClient();
 
   await supabase.from('audit_logs').insert({
     event_type: event.type,
     severity: event.severity,
     business_id: event.businessId,
     user_id: event.userId,
-    ip_address: event.ip,
     details: event.details,
     created_at: new Date().toISOString(),
   });
@@ -370,10 +360,7 @@ export async function verifyBusinessAccess(
   userId: string,
   businessId: string
 ): Promise<boolean> {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceClient();
 
   // Check if user is owner
   const { data: business } = await supabase

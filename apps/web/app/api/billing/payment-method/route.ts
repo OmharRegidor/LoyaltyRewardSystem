@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase-server';
 import {
   getPaymentMethod,
   getPaymentMethodDisplay,
@@ -13,10 +13,7 @@ import {
 import { z } from 'zod';
 
 function getServiceSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  return createServiceClient();
 }
 
 // GET: Retrieve current payment method

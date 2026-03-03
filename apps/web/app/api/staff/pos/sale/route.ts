@@ -1,6 +1,7 @@
 // apps/web/app/api/staff/pos/sale/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { createServiceClient } from "@/lib/supabase-server";
 import { createStaffSale } from "@/lib/services/pos.service";
 import { z } from "zod";
@@ -121,7 +122,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Create the sale
+    // 4. Create the sale with idempotency key
+    const idempotencyKey = (request.headers.get("x-idempotency-key") || randomUUID());
     const result = await createStaffSale(
       staffInfo.businessId,
       staffInfo.staffId,
@@ -130,6 +132,7 @@ export async function POST(request: NextRequest) {
         ...validation.data,
         tier: validation.data.tier as TierKey,
       },
+      idempotencyKey,
     );
 
     return NextResponse.json({ success: true, data: result });
@@ -141,6 +144,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: "Insufficient points for exchange" },
           { status: 400 },
+        );
+      }
+      if (error.message === "Duplicate sale submission") {
+        return NextResponse.json(
+          { error: "Duplicate sale submission" },
+          { status: 409 },
         );
       }
     }

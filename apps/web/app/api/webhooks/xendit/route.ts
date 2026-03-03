@@ -2,7 +2,7 @@
 // Handles all Xendit webhook events for billing
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase-server';
 import {
   verifyWebhookSignature,
   mapXenditStatusToInternal,
@@ -10,14 +10,11 @@ import {
 } from '@/lib/xendit';
 
 // ============================================
-// SUPABASE SERVICE CLIENT
+// SUPABASE SERVICE CLIENT (singleton)
 // ============================================
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  return createServiceClient();
 }
 // ============================================
 // WEBHOOK HANDLER
@@ -405,12 +402,12 @@ function calculatePeriodEnd(startDate: string, interval?: string): string {
 async function logAuditEvent(
   eventType: string,
   businessId: string,
-  data: unknown,
+  data: Record<string, unknown>,
 ) {
   await getSupabase().from('audit_logs').insert({
     event_type: eventType,
     severity: eventType.includes('failed') ? 'warning' : 'info',
     business_id: businessId,
-    details: data,
+    details: data as Record<string, string | number | boolean | null>,
   });
 }

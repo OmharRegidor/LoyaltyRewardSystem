@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase-server';
 import { z } from 'zod';
 
 // ============================================
@@ -14,7 +14,7 @@ import { z } from 'zod';
 const SubscribeSchema = z.object({
   planId: z.string(),
   interval: z.enum(['monthly', 'annual']),
-  testMode: z.boolean().optional(),
+  // testMode removed from client input — determined server-side only
   paymentMethod: z.enum(['card', 'gcash', 'maya']).optional(),
   card: z
     .object({
@@ -112,11 +112,7 @@ async function getServerSupabase() {
   );
 }
 
-const getServiceSupabase = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+const getServiceSupabase = () => createServiceClient();
 
 // ============================================
 // POST: Create Subscription
@@ -146,7 +142,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { planId, interval, testMode } = validation.data;
+    const { planId, interval } = validation.data;
+    const testMode = process.env.NODE_ENV !== 'production' && !process.env.XENDIT_SECRET_KEY;
 
     // 3. Get plan
     const plan = PLANS[planId];
@@ -233,7 +230,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 8. Handle TEST MODE - simulate successful payment
-    if (testMode || !process.env.XENDIT_SECRET_KEY) {
+    if (testMode) {
       // Create subscription directly (bypassing Xendit)
       await serviceSupabase.from('subscriptions').upsert(
         {
@@ -253,8 +250,9 @@ export async function POST(request: NextRequest) {
         },
       );
 
-      // Update plan limits
-      await serviceSupabase.from('plan_limits').upsert(
+      // Update plan limits (table may not exist yet in all environments)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (serviceSupabase as unknown as { from: (table: string) => { upsert: (data: Record<string, unknown>, opts: Record<string, string>) => Promise<unknown> } }).from('plan_limits').upsert(
         {
           business_id: business.id,
           max_customers: plan.limits.customers,
