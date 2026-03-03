@@ -6,8 +6,8 @@ import { ArrowLeft, Check } from 'lucide-react';
 
 const BENEFITS = [
   'Full platform demo',
-  'Booking System walkthrough',
   'POS System features',
+  'Inventory Management',
   'Custom pricing for your business',
   'Implementation timeline',
   'Q&A with our team',
