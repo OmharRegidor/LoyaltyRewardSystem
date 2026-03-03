@@ -1,6 +1,7 @@
 // apps/web/lib/auth.ts
 
 import { createClient } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../../../packages/shared/types/database';
 
 // ============================================
@@ -20,12 +21,23 @@ function generateJoinCode(): string {
   return code;
 }
 
-function generateSlug(name: string): string {
+async function generateSlug(name: string, supabase: SupabaseClient): Promise<string> {
   const base = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 40);
+
+  // Try the clean slug first
+  const { data: existing } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('slug', base)
+    .maybeSingle();
+
+  if (!existing) return base;
+
+  // If taken, append random suffix
   const random = Math.random().toString(36).substring(2, 8);
   return `${base}-${random}`;
 }
@@ -286,7 +298,7 @@ export async function completeSignupAfterVerification(): Promise<AuthResponse> {
       .insert({
         owner_id: user.id,
         name: businessName,
-        slug: generateSlug(businessName),
+        slug: await generateSlug(businessName, supabase),
         points_per_purchase: 10,
         business_type: metadata?.business_type || null,
         phone: metadata?.phone || null,
@@ -423,7 +435,7 @@ export async function loginBusinessOwner(
           .insert({
             owner_id: authData.user.id,
             name: businessName,
-            slug: generateSlug(businessName),
+            slug: await generateSlug(businessName, supabase),
             points_per_purchase: 10,
             business_type: metadata?.business_type || null,
             phone: metadata?.phone || null,
