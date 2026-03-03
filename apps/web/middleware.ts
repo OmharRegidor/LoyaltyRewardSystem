@@ -2,6 +2,8 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -22,7 +24,10 @@ const PUBLIC_PREFIXES = [
   '/invite/',
   '/checkout/',
   '/card/',
-  '/api/',
+  '/api/public/',
+  '/api/webhooks/',
+  '/api/qr/',
+  '/api/auth/',
   '/qr/',
   '/business/',
   '/join/',
@@ -33,6 +38,50 @@ function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)))
     return true;
   return false;
+}
+
+// Redis rate limiters (initialized lazily, no-op if env vars missing)
+const rateLimiters = new Map<string, Ratelimit>();
+
+function getRateLimiter(prefix: string, tokens: number, window: string): Ratelimit | null {
+  if (rateLimiters.has(prefix)) return rateLimiters.get(prefix)!;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  const limiter = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(tokens, window as Parameters<typeof Ratelimit.slidingWindow>[1]),
+    prefix: `rl:${prefix}`,
+  });
+  rateLimiters.set(prefix, limiter);
+  return limiter;
+}
+
+// Sensitive endpoints get tighter limits (tokens per window)
+const ENDPOINT_LIMITS: Record<string, { tokens: number; window: string }> = {
+  '/api/auth/':     { tokens: 10, window: '60 s' },   // login/check-email: 10/min
+  '/api/billing/':  { tokens: 10, window: '60 s' },   // billing ops: 10/min
+  '/api/staff/pos/': { tokens: 30, window: '60 s' },  // POS sales: 30/min
+  '/api/public/':   { tokens: 30, window: '60 s' },   // public endpoints: 30/min
+};
+
+function getEndpointLimiter(pathname: string): Ratelimit | null {
+  for (const [prefix, config] of Object.entries(ENDPOINT_LIMITS)) {
+    if (pathname.startsWith(prefix)) {
+      return getRateLimiter(prefix, config.tokens, config.window);
+    }
+  }
+  // Default global API limiter
+  return getRateLimiter('mw', 100, '60 s');
+}
+
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0] ||
+    'unknown'
+  );
 }
 
 function isStaticAsset(pathname: string): boolean {
@@ -50,6 +99,26 @@ export async function middleware(request: NextRequest) {
 
   // Always allow static assets
   if (isStaticAsset(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Rate limit API routes, then let them through (they handle their own auth)
+  if (pathname.startsWith('/api/')) {
+    const limiter = getEndpointLimiter(pathname);
+    if (limiter) {
+      const ip = getClientIp(request);
+      const result = await limiter.limit(ip);
+      if (!result.success) {
+        return new NextResponse(JSON.stringify({ error: 'Too many requests' }), {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(Math.ceil((result.reset - Date.now()) / 1000)),
+          },
+        });
+      }
+    }
+    // API routes handle their own auth via Bearer tokens — don't apply cookie-based auth
     return NextResponse.next();
   }
 

@@ -1,21 +1,11 @@
 // apps/web/app/api/staff/create-account/route.ts
 
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import type { Database } from '../../../../../packages/shared/types/database';
+import { createServiceClient } from '@/lib/supabase-server';
 
 // Create Supabase Admin client with service role key
 function getSupabaseAdmin() {
-  return createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
+  return createServiceClient();
 }
 
 interface CreateStaffAccountRequest {

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase-server';
 import { z } from 'zod';
 
 const EmailSchema = z.object({
@@ -13,13 +12,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ exists: false }, { status: 400 });
   }
 
-  const serviceClient = createServiceClient();
-  const email = parsed.data.email;
-
-  const [businessResult, staffResult] = await Promise.all([
-    serviceClient.from('businesses').select('id').eq('owner_email', email).maybeSingle(),
-    serviceClient.from('staff').select('id').eq('email', email).maybeSingle(),
-  ]);
-
-  return NextResponse.json({ exists: !!(businessResult.data || staffResult.data) });
+  // Always return the same response to prevent user enumeration.
+  // Supabase's resetPasswordForEmail already handles non-existent emails
+  // gracefully (silently no-ops), so the caller doesn't need to pre-check.
+  return NextResponse.json({ exists: true });
 }

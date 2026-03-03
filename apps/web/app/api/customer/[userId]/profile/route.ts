@@ -1,18 +1,7 @@
 // apps/web/app/api/customer/[userId]/profile/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// ============================================
-// SUPABASE SERVICE CLIENT (lazy initialization)
-// ============================================
-
-function getServiceSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { createServiceClient } from '@/lib/supabase-server';
 
 // ============================================
 // GET: Get customer profile by user ID
@@ -23,6 +12,26 @@ export async function GET(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    // 1. Authenticate the caller
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = createServiceClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { userId } = await params;
 
     if (!userId) {
@@ -32,10 +41,48 @@ export async function GET(
       );
     }
 
-    const supabase = getServiceSupabase();
+    // 2. Authorization: caller must be the user themselves, or a business owner/staff
+    //    whose business the customer belongs to
+    if (user.id !== userId) {
+      // Check if caller is a business owner or staff with access to this customer
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('created_by_business_id')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    // First try to get user metadata from auth.users
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+      if (customer?.created_by_business_id) {
+        // Check if caller owns the business
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('id', customer.created_by_business_id)
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (!business) {
+          // Check if caller is active staff at the business
+          const { data: staff } = await supabase
+            .from('staff')
+            .select('id')
+            .eq('business_id', customer.created_by_business_id)
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (!staff) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          }
+        }
+      } else {
+        // Customer not linked to any business, only the user themselves can access
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // 3. Fetch profile data
+    // First try auth.users metadata
+    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
 
     if (authUser?.user) {
       const metadata = authUser.user.user_metadata || {};
@@ -48,23 +95,22 @@ export async function GET(
       });
     }
 
-    // If not found in auth, try customers table
-    const { data: customer, error: customerError } = await supabase
+    // Fallback to customers table
+    const { data: customerData } = await supabase
       .from('customers')
       .select('id, full_name, email, phone')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (customer) {
+    if (customerData) {
       return NextResponse.json({
-        id: customer.id,
-        name: customer.full_name,
-        email: customer.email,
-        phone: customer.phone,
+        id: customerData.id,
+        name: customerData.full_name,
+        email: customerData.email,
+        phone: customerData.phone,
       });
     }
 
-    // Not found
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }

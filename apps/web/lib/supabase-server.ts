@@ -15,7 +15,12 @@ import type { AdminDatabase } from './admin-database';
  * USE ONLY in server-side code (API routes, server actions)
  * NEVER expose to client
  */
+// Singleton service client to avoid creating new connections per request
+let serviceClientInstance: ReturnType<typeof createClient<Database>> | null = null;
+
 export function createServiceClient() {
+  if (serviceClientInstance) return serviceClientInstance;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -23,12 +28,14 @@ export function createServiceClient() {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
 
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+  serviceClientInstance = createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+
+  return serviceClientInstance;
 }
 
 // ============================================
@@ -40,7 +47,12 @@ export function createServiceClient() {
  * Includes admin views and tables not in the auto-generated types
  * USE ONLY in admin API routes
  */
+// Singleton admin service client
+let adminClientInstance: ReturnType<typeof createClient<AdminDatabase>> | null = null;
+
 export function createAdminServiceClient() {
+  if (adminClientInstance) return adminClientInstance;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -48,12 +60,14 @@ export function createAdminServiceClient() {
     throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
 
-  return createClient<AdminDatabase>(supabaseUrl, serviceRoleKey, {
+  adminClientInstance = createClient<AdminDatabase>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+
+  return adminClientInstance;
 }
 
 // ============================================

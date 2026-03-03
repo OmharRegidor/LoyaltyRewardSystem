@@ -218,366 +218,6 @@ export type Database = {
           },
         ]
       }
-      availability: {
-        Row: {
-          branch_id: string | null
-          business_id: string
-          created_at: string
-          day_of_week: number
-          end_time: string
-          id: string
-          is_available: boolean
-          staff_id: string | null
-          start_time: string
-          updated_at: string
-        }
-        Insert: {
-          branch_id?: string | null
-          business_id: string
-          created_at?: string
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_available?: boolean
-          staff_id?: string | null
-          start_time: string
-          updated_at?: string
-        }
-        Update: {
-          branch_id?: string | null
-          business_id?: string
-          created_at?: string
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_available?: boolean
-          staff_id?: string | null
-          start_time?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "availability_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addon_options: {
-        Row: {
-          addon_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          addon_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          addon_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addon_options_addon_id_fkey"
-            columns: ["addon_id"]
-            isOneToOne: false
-            referencedRelation: "booking_addons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addon_selections: {
-        Row: {
-          addon_id: string
-          booking_id: string
-          created_at: string | null
-          id: string
-          quantity: number | null
-          unit_price_centavos: number
-        }
-        Insert: {
-          addon_id: string
-          booking_id: string
-          created_at?: string | null
-          id?: string
-          quantity?: number | null
-          unit_price_centavos: number
-        }
-        Update: {
-          addon_id?: string
-          booking_id?: string
-          created_at?: string | null
-          id?: string
-          quantity?: number | null
-          unit_price_centavos?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addon_selections_addon_id_fkey"
-            columns: ["addon_id"]
-            isOneToOne: false
-            referencedRelation: "booking_addons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_addon_selections_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addons: {
-        Row: {
-          business_id: string
-          category: string | null
-          created_at: string | null
-          description: string | null
-          duration_minutes: number | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_id: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_id?: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bookings: {
-        Row: {
-          addons_json: Json | null
-          addons_total_centavos: number | null
-          booking_date: string
-          branch_id: string | null
-          business_id: string
-          cancellation_reason: string | null
-          cancelled_at: string | null
-          confirmation_code: string | null
-          created_at: string
-          customer_email: string | null
-          customer_id: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          end_date: string | null
-          end_time: string
-          guests_adults: number | null
-          guests_children: number | null
-          id: string
-          nights: number | null
-          notes: string | null
-          party_size: number | null
-          service_id: string
-          special_requests: string | null
-          staff_id: string | null
-          start_time: string
-          status: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos: number | null
-          total_price_centavos: number | null
-          updated_at: string
-          variant_id: string | null
-        }
-        Insert: {
-          addons_json?: Json | null
-          addons_total_centavos?: number | null
-          booking_date: string
-          branch_id?: string | null
-          business_id: string
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          confirmation_code?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          end_date?: string | null
-          end_time: string
-          guests_adults?: number | null
-          guests_children?: number | null
-          id?: string
-          nights?: number | null
-          notes?: string | null
-          party_size?: number | null
-          service_id: string
-          special_requests?: string | null
-          staff_id?: string | null
-          start_time: string
-          status?: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos?: number | null
-          total_price_centavos?: number | null
-          updated_at?: string
-          variant_id?: string | null
-        }
-        Update: {
-          addons_json?: Json | null
-          addons_total_centavos?: number | null
-          booking_date?: string
-          branch_id?: string | null
-          business_id?: string
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          confirmation_code?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          end_date?: string | null
-          end_time?: string
-          guests_adults?: number | null
-          guests_children?: number | null
-          id?: string
-          nights?: number | null
-          notes?: string | null
-          party_size?: number | null
-          service_id?: string
-          special_requests?: string | null
-          staff_id?: string | null
-          start_time?: string
-          status?: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos?: number | null
-          total_price_centavos?: number | null
-          updated_at?: string
-          variant_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "service_price_variants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       branches: {
         Row: {
           address: string | null
@@ -1190,7 +830,6 @@ export type Database = {
           description: string | null
           display_name: string
           features: Json | null
-          has_booking: boolean
           has_loyalty: boolean
           has_pos: boolean
           id: string
@@ -1208,7 +847,6 @@ export type Database = {
           description?: string | null
           display_name: string
           features?: Json | null
-          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -1226,7 +864,6 @@ export type Database = {
           description?: string | null
           display_name?: string
           features?: Json | null
-          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -1910,252 +1547,6 @@ export type Database = {
           },
         ]
       }
-      service_addons: {
-        Row: {
-          business_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          price_type: string | null
-          service_id: string | null
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          price_type?: string | null
-          service_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          price_type?: string | null
-          service_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_addons_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_price_variants: {
-        Row: {
-          capacity: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          service_id: string
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          capacity?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          service_id: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          capacity?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          service_id?: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_price_variants_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_questions: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_required: boolean | null
-          options: Json | null
-          question: string
-          question_type: string
-          service_id: string
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_required?: boolean | null
-          options?: Json | null
-          question: string
-          question_type?: string
-          service_id: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_required?: boolean | null
-          options?: Json | null
-          question?: string
-          question_type?: string
-          service_id?: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_questions_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      services: {
-        Row: {
-          allow_staff_selection: boolean | null
-          branch_id: string | null
-          buffer_minutes: number | null
-          business_id: string
-          category: string | null
-          config: Json | null
-          created_at: string
-          deposit_percentage: number | null
-          description: string | null
-          duration_minutes: number
-          id: string
-          image_url: string | null
-          inventory_count: number | null
-          is_active: boolean
-          max_guests: number | null
-          name: string
-          price_centavos: number | null
-          pricing_type: string | null
-          requires_time_slot: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          allow_staff_selection?: boolean | null
-          branch_id?: string | null
-          buffer_minutes?: number | null
-          business_id: string
-          category?: string | null
-          config?: Json | null
-          created_at?: string
-          deposit_percentage?: number | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          image_url?: string | null
-          inventory_count?: number | null
-          is_active?: boolean
-          max_guests?: number | null
-          name: string
-          price_centavos?: number | null
-          pricing_type?: string | null
-          requires_time_slot?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          allow_staff_selection?: boolean | null
-          branch_id?: string | null
-          buffer_minutes?: number | null
-          business_id?: string
-          category?: string | null
-          config?: Json | null
-          created_at?: string
-          deposit_percentage?: number | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          image_url?: string | null
-          inventory_count?: number | null
-          is_active?: boolean
-          max_guests?: number | null
-          name?: string
-          price_centavos?: number | null
-          pricing_type?: string | null
-          requires_time_slot?: boolean | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "services_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "services_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "services_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       staff: {
         Row: {
           branch_id: string | null
@@ -2319,13 +1710,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "staff_services_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "staff_services_staff_id_fkey"
             columns: ["staff_id"]
             isOneToOne: false
@@ -2417,7 +1801,6 @@ export type Database = {
           current_period_start: string | null
           id: string
           is_free_forever: boolean | null
-          module_booking_override: boolean | null
           module_pos_override: boolean | null
           plan_id: string | null
           status: string
@@ -2438,7 +1821,6 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
-          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
@@ -2459,7 +1841,6 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
-          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
@@ -2527,6 +1908,7 @@ export type Database = {
           customer_id: string
           description: string | null
           id: string
+          idempotency_key: string | null
           points: number
           reward_id: string | null
           type: Database["public"]["Enums"]["transaction_type"]
@@ -2538,6 +1920,7 @@ export type Database = {
           customer_id: string
           description?: string | null
           id?: string
+          idempotency_key?: string | null
           points: number
           reward_id?: string | null
           type: Database["public"]["Enums"]["transaction_type"]
@@ -2549,6 +1932,7 @@ export type Database = {
           customer_id?: string
           description?: string | null
           id?: string
+          idempotency_key?: string | null
           points?: number
           reward_id?: string | null
           type?: Database["public"]["Enums"]["transaction_type"]
@@ -2756,25 +2140,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_platform_stats: {
-        Row: {
-          active_subscriptions: number | null
-          bookings_30d: number | null
-          businesses_30d: number | null
-          businesses_7d: number | null
-          customers_30d: number | null
-          enterprise_count: number | null
-          free_count: number | null
-          points_issued_30d: number | null
-          total_bookings: number | null
-          total_businesses: number | null
-          total_customers: number | null
-          total_points_issued: number | null
-          total_transactions: number | null
-          transactions_30d: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       accept_staff_invite: {
@@ -2855,7 +2220,6 @@ export type Database = {
           qr_code_url: string
         }[]
       }
-      generate_booking_code: { Args: never; Returns: string }
       generate_business_slug: {
         Args: { business_name: string }
         Returns: string
@@ -2945,6 +2309,25 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
+      }
+      process_staff_sale: {
+        Args: {
+          p_amount_tendered_centavos?: number
+          p_business_id: string
+          p_customer_id: string
+          p_discount_centavos?: number
+          p_discount_reason?: string
+          p_discount_type?: string
+          p_exchange_points?: number
+          p_idempotency_key?: string
+          p_sale_items?: Json
+          p_staff_id: string
+          p_staff_name: string
+          p_subtotal_centavos: number
+          p_tier_multiplier?: number
+          p_tier_name?: string
+        }
+        Returns: Json
       }
       recalculate_usage_counts: {
         Args: { p_business_id: string }

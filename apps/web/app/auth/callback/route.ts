@@ -174,11 +174,8 @@ async function ensureBusinessAndSubscription(
   userEmail: string | null,
   userMetadata?: Record<string, unknown>,
 ) {
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const { createServiceClient } = await import('@/lib/supabase-server');
+  const supabase = createServiceClient();
 
   try {
     // Check if business exists
@@ -193,11 +190,20 @@ async function ensureBusinessAndSubscription(
       const businessName =
         (userMetadata?.business_name as string) || 'My Business';
 
+      // Generate a unique slug from the business name
+      const baseSlug = businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        || 'my-business';
+      const slug = `${baseSlug}-${Date.now().toString(36)}`;
+
       const { data: newBiz, error: bizError } = await supabase
         .from('businesses')
         .insert({
           owner_id: userId,
           name: businessName,
+          slug,
           owner_email: userEmail || '',
           subscription_status: 'active',
           points_per_purchase: 1,
@@ -275,11 +281,8 @@ async function ensureBusinessAndSubscription(
 }
 
 async function getRedirectPath(userId: string): Promise<string> {
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const { createServiceClient } = await import('@/lib/supabase-server');
+  const supabase = createServiceClient();
 
   try {
     // Check business owner and staff in parallel instead of querying roles table

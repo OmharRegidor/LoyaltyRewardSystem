@@ -3,15 +3,12 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase-server';
 import { cancelRecurringSubscription } from '@/lib/xendit';
 
 // ✅ Helper function - only runs when called
 function getServiceSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  return createServiceClient();
 }
 
 export async function POST(request: Request) {

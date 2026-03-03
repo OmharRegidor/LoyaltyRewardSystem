@@ -1,6 +1,6 @@
 // apps/web/lib/feature-gate.ts
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from './supabase-server';
 
 // ============================================
 // TYPES
@@ -50,19 +50,10 @@ export interface LimitCheckResult {
 // ============================================
 
 /**
- * Create a service-role Supabase client for server-side operations
+ * Get singleton service-role Supabase client
  */
 function getServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+  return createServiceClient();
 }
 
 // ============================================
