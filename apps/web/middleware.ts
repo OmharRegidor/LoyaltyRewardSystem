@@ -18,6 +18,7 @@ const PUBLIC_ROUTES = [
   '/book-call',
   '/business',
   '/access-denied',
+  '/staff/create-account',
 ];
 
 const PUBLIC_PREFIXES = [

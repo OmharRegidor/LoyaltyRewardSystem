@@ -217,7 +217,7 @@ export default function InvitePage() {
         }
       } catch (createErr) {
         console.error('Account create error:', createErr);
-        setError('Failed to create account. Please try again.');
+        setError('Failed to create account. The server may be unavailable. Please try again.');
         setStatus('ready');
         return;
       }
