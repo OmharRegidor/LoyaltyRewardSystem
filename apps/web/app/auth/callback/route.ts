@@ -3,7 +3,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import type { Database } from '../../../../../packages/shared/types/database';
+
+function generateJoinCode(): string {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -209,6 +214,7 @@ async function ensureBusinessAndSubscription(
           points_per_purchase: 1,
           pesos_per_point: 100,
           min_purchase_for_points: 0,
+          join_code: generateJoinCode(),
         })
         .select('id')
         .single();
