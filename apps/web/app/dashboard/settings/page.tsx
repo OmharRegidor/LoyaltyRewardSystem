@@ -281,6 +281,17 @@ export default function SettingsPage() {
           previewAmount: '500',
         });
 
+        setLoyalty({
+          pesosPerPoint: business.pesos_per_point || 10,
+          minPurchase: business.min_purchase_for_points || 0,
+          maxPointsPerTransaction: business.max_points_per_transaction
+            ? String(business.max_points_per_transaction)
+            : '',
+          pointsExpiryDays: (business as Record<string, unknown>).points_expiry_days
+            ? String((business as Record<string, unknown>).points_expiry_days)
+            : '',
+        });
+
         // Set preset selection
         const matchingPreset = POINTS_RATE_PRESETS.find(
           (p) => p.value === business.pesos_per_point,
