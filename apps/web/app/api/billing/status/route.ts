@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     // Get current usage
     const [customersResult, branchesResult, staffResult] = await Promise.all([
       supabase
-        .from('customers')
+        .from('customer_businesses')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id),
       supabase
