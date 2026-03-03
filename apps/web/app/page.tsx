@@ -369,7 +369,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
             </a>
 
             {/* CENTER: Navigation Links - Hidden on mobile/tablet, shown on lg+ */}
-            <nav className="hidden md:flex items-center gap-4 lg:gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               {NAV_LINKS.map((link) =>
                 link.href.startsWith('#') ? (
                   <a
@@ -397,7 +397,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
             {/* RIGHT: CTA Buttons (Desktop) + Hamburger (Mobile/Tablet) */}
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Desktop Auth Buttons - Hidden on mobile/tablet */}
-              <div className="hidden md:flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-3">
                 <Link href="/login">
                   <Button
                     variant="ghost"
@@ -416,7 +416,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
               {/* Mobile/Tablet Hamburger Button - Shown below lg */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors bg-white/10 border border-white/20 hover:bg-white/20"
+                className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors bg-white/10 border border-white/20 hover:bg-white/20"
                 aria-label="Open menu"
               >
                 <Menu className="w-5 h-5 text-white" />
