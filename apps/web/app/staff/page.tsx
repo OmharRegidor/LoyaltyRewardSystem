@@ -309,12 +309,29 @@ export default function StaffScannerPage() {
       const html5QrCode = new Html5Qrcode(scannerContainerId);
       scannerRef.current = html5QrCode;
 
-      await html5QrCode.start(
-        { facingMode: cameraFacing },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
-        onScanSuccess,
-        () => {},
-      );
+      const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+
+      try {
+        await html5QrCode.start(
+          { facingMode: cameraFacing },
+          config,
+          onScanSuccess,
+          () => {},
+        );
+      } catch {
+        // Fallback: try any available camera if preferred facing mode fails
+        const devices = await Html5Qrcode.getCameras();
+        if (devices.length > 0) {
+          await html5QrCode.start(
+            devices[0].id,
+            config,
+            onScanSuccess,
+            () => {},
+          );
+        } else {
+          throw new Error("No camera found on this device");
+        }
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to start camera";
@@ -346,12 +363,26 @@ export default function StaffScannerPage() {
       const html5QrCode = new Html5Qrcode(scannerContainerId);
       scannerRef.current = html5QrCode;
 
-      await html5QrCode.start(
-        { facingMode: facing },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
-        onScanSuccess,
-        () => {},
-      );
+      const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+
+      try {
+        await html5QrCode.start(
+          { facingMode: facing },
+          config,
+          onScanSuccess,
+          () => {},
+        );
+      } catch {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices.length > 0) {
+          await html5QrCode.start(
+            devices[0].id,
+            config,
+            onScanSuccess,
+            () => {},
+          );
+        }
+      }
     } catch (err) {
       console.error("Scanner restart error:", err);
     }
