@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Warehouse,
-  Loader2,
   Package,
   AlertTriangle,
   PackageX,
@@ -12,7 +11,6 @@ import {
   SlidersHorizontal,
   MoreHorizontal,
   ArrowDownToLine,
-  DatabaseZap,
 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase';
@@ -70,8 +68,6 @@ export default function InventoryPage() {
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [preselectedProductId, setPreselectedProductId] = useState<string | undefined>();
 
-  // Seed state
-  const [isSeeding, setIsSeeding] = useState(false);
 
   // Movement filter state
   const [filterProductId, setFilterProductId] = useState<string>('all');
@@ -205,24 +201,6 @@ export default function InventoryPage() {
   const handleDialogSuccess = () => {
     loadInventory();
     loadMovements();
-  };
-
-  const handleSeedData = async () => {
-    setIsSeeding(true);
-    try {
-      const response = await fetch('/api/dashboard/pos/seed', { method: 'POST' });
-      if (response.ok) {
-        loadInventory();
-        loadMovements();
-      } else {
-        const data = await response.json();
-        console.error('Seed failed:', data.error);
-      }
-    } catch (err) {
-      console.error('Failed to seed data:', err);
-    } finally {
-      setIsSeeding(false);
-    }
   };
 
   if (isLoadingSubscription) {
@@ -390,19 +368,6 @@ export default function InventoryPage() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-10 w-10 mx-auto mb-2" />
                     <p>No products yet. Add products in the Products tab.</p>
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={handleSeedData}
-                      disabled={isSeeding}
-                    >
-                      {isSeeding ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <DatabaseZap className="h-4 w-4 mr-2" />
-                      )}
-                      {isSeeding ? 'Seeding...' : 'Seed Demo Data'}
-                    </Button>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
