@@ -369,7 +369,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
             </a>
 
             {/* CENTER: Navigation Links - Hidden on mobile/tablet, shown on lg+ */}
-            <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <nav className="hidden md:flex items-center gap-4 lg:gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               {NAV_LINKS.map((link) =>
                 link.href.startsWith('#') ? (
                   <a
@@ -397,7 +397,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
             {/* RIGHT: CTA Buttons (Desktop) + Hamburger (Mobile/Tablet) */}
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Desktop Auth Buttons - Hidden on mobile/tablet */}
-              <div className="hidden lg:flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3">
                 <Link href="/login">
                   <Button
                     variant="ghost"
@@ -416,7 +416,7 @@ function Header({ showBanner, onDismissBanner }: HeaderProps) {
               {/* Mobile/Tablet Hamburger Button - Shown below lg */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors bg-white/10 border border-white/20 hover:bg-white/20"
+                className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-xl transition-colors bg-white/10 border border-white/20 hover:bg-white/20"
                 aria-label="Open menu"
               >
                 <Menu className="w-5 h-5 text-white" />
@@ -800,10 +800,10 @@ export default function Home() {
       {/* Hero Section - Split Layout */}
       <section
         id="home"
-        className={`relative overflow-hidden pb-20 lg:pb-24 px-5 sm:px-6 lg:px-8 transition-[padding] duration-300 ${
+        className={`relative overflow-hidden pb-20 lg:pb-24 px-5 sm:px-6 md:px-8 lg:px-8 transition-[padding] duration-300 ${
           showBanner
-            ? 'pt-[9rem] sm:pt-[8.5rem] lg:pt-[9.5rem]'
-            : 'pt-32 sm:pt-32 lg:pt-36'
+            ? 'pt-[9rem] sm:pt-[8.5rem] md:pt-[9rem] lg:pt-[9.5rem]'
+            : 'pt-32 sm:pt-32 md:pt-34 lg:pt-36'
         }`}
       >
         {/* Background gradient */}
@@ -814,7 +814,7 @@ export default function Home() {
         </div>
 
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-[1fr_0.85fr] gap-12 lg:gap-16 items-center">
+          <div className="grid md:grid-cols-[1fr_0.85fr] gap-8 md:gap-10 lg:gap-16 items-center">
             {/* Left Column - Text */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -822,7 +822,7 @@ export default function Home() {
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
               <motion.h1
-                className="font-display text-[42px] sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center sm:text-left"
+                className="font-display text-[42px] sm:text-6xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.3] sm:leading-tight mb-8 sm:mb-6 text-center sm:text-left"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
@@ -831,7 +831,7 @@ export default function Home() {
                 <br />
                 <span className="text-gray-900">Customers Into</span>
                 <br />
-                <span className="text-secondary text-[38px] sm:text-5xl lg:text-5xl xl:text-6xl block sm:inline lg:min-w-[530px]">
+                <span className="text-secondary text-[38px] sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl block sm:inline md:block lg:min-w-[530px]">
                   {displayText}
                   <span
                     className={`inline-block w-[3px] h-[0.85em] bg-secondary ml-0.5 rounded-sm align-baseline ${
@@ -854,7 +854,7 @@ export default function Home() {
 
               {/* Mobile Dashboard Preview - shown before CTAs on mobile only */}
               <motion.div
-                className="lg:hidden mb-8"
+                className="md:hidden mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.25 }}
@@ -1020,16 +1020,16 @@ export default function Home() {
 
             {/* Right Column - Dashboard Mockup (desktop only) */}
             <motion.div
-              className="hidden lg:block relative"
+              className="hidden md:block relative"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
             >
-              <div className="relative lg:-rotate-1 lg:hover:rotate-0 transition-transform duration-500">
+              <div className="relative md:-rotate-1 md:hover:rotate-0 transition-transform duration-500">
                 {/* Main dashboard card */}
                 <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/80 overflow-hidden">
                   {/* Dashboard header */}
-                  <div className="bg-primary px-6 py-4 flex items-center justify-between">
+                  <div className="bg-primary px-4 md:px-5 lg:px-6 py-3 md:py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-white/30" />
                       <div className="w-3 h-3 rounded-full bg-white/30" />
@@ -1042,7 +1042,7 @@ export default function Home() {
                   </div>
 
                   {/* Dashboard content */}
-                  <div className="p-5 sm:p-6 space-y-5">
+                  <div className="p-3.5 md:p-4 lg:p-6 space-y-4 lg:space-y-5">
                     {/* Stat cards row */}
                     <div className="grid grid-cols-3 gap-3">
                       {[
@@ -1272,7 +1272,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-10 lg:gap-16 items-center">
             {/* Left — Phone Mockup */}
             <motion.div
               className="relative flex justify-center"
