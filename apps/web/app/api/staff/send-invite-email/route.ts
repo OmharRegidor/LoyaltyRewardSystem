@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
 
     // Validate inviteUrl matches our app domain to prevent phishing
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const allowedOrigin = new URL(appUrl).origin;
+    const allowedHost = new URL(appUrl).hostname.replace(/^www\./, '');
     try {
-      const inviteOrigin = new URL(inviteUrl).origin;
-      if (inviteOrigin !== allowedOrigin) {
+      const inviteHost = new URL(inviteUrl).hostname.replace(/^www\./, '');
+      if (inviteHost !== allowedHost) {
         return NextResponse.json(
           { success: false, error: 'Invalid invite URL' },
           { status: 400 },
