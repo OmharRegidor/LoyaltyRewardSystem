@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import type { Database } from '../../../../../packages/shared/types/database';
 import {
@@ -302,13 +301,17 @@ export default function InvitePage() {
             </h1>
             <p className="text-gray-600 mb-6">{error}</p>
 
-            <Link
-              href="/login"
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
               className="inline-flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium transition-colors shadow-lg shadow-primary/30"
             >
               <LogIn className="w-5 h-5" />
               Go to Login
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -484,13 +487,17 @@ export default function InvitePage() {
             <p className="text-gray-500 text-sm mb-2">
               Already accepted your invite?
             </p>
-            <Link
-              href="/login"
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
               className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium"
             >
               <LogIn className="w-4 h-4" />
               Go to Login
-            </Link>
+            </button>
           </div>
         </div>
       </div>
