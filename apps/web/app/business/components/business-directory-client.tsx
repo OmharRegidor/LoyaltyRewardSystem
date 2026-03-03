@@ -18,13 +18,15 @@ import {
 import type { PublicBusiness } from '@/lib/services/public-business.service';
 
 const BUSINESS_TYPES = [
-  'Retail',
-  'Food & Beverage',
-  'Salon & Spa',
-  'Health & Wellness',
-  'Services',
-  'Other',
+  { value: 'retail', label: 'Retail Stores' },
+  { value: 'restaurant', label: 'Restaurants & Cafés' },
+  { value: 'salon', label: 'Salons & Spas' },
+  { value: 'hotel', label: 'Hotels & Travel' },
 ];
+
+const BUSINESS_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  BUSINESS_TYPES.map((t) => [t.value, t.label]),
+);
 
 const ITEMS_PER_PAGE = 12;
 
@@ -152,8 +154,8 @@ export function BusinessDirectoryClient({
               >
                 <option value="">All Types</option>
                 {BUSINESS_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                  <option key={type.value} value={type.value}>
+                    {type.label}
                   </option>
                 ))}
               </select>
@@ -219,6 +221,7 @@ export function BusinessDirectoryClient({
         ) : (
           <>
             <motion.div
+              key={`${initialSearch}-${initialType}-${initialPage}`}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
               variants={containerVariants}
               initial="hidden"
@@ -254,7 +257,7 @@ export function BusinessDirectoryClient({
                           </h3>
                           {biz.business_type && (
                             <span className="inline-block mt-0.5 text-[11px] font-medium text-primary/70 bg-primary/8 px-2 py-0.5 rounded-md">
-                              {biz.business_type}
+                              {BUSINESS_TYPE_LABELS[biz.business_type!] || biz.business_type}
                             </span>
                           )}
                         </div>
