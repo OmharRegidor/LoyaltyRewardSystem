@@ -126,12 +126,12 @@ export function CustomerDetailModal({
       }
 
       const supabase = createClient();
-      const { data } = await supabase
-        .from('customers')
-        .select('id')
-        .or(`full_name.ilike.%${customer.name}%,phone.eq.${customer.phone}`)
-        .limit(1)
-        .maybeSingle();
+      const { data: byPhone } = customer.phone
+        ? await supabase.from('customers').select('id').eq('phone', customer.phone).maybeSingle()
+        : { data: null };
+      const { data } = byPhone
+        ? { data: byPhone }
+        : await supabase.from('customers').select('id').ilike('full_name', `%${customer.name}%`).limit(1).maybeSingle();
 
       if (data) {
         setCustomerId(data.id);

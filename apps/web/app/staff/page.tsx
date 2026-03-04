@@ -435,11 +435,12 @@ export default function StaffScannerPage() {
 
       // Fallback: direct DB lookup if RPC returned nothing
       if (!customerData) {
-        const { data: fallback } = await supabase
-          .from("customers")
-          .select("id, user_id, full_name, email, total_points, lifetime_points, tier, card_token, created_by_business_id, qr_code_url")
-          .or(`qr_code_url.eq.${scannedCode},qr_code_url.eq.NoxaLoyalty://customer/${scannedCode}`)
-          .maybeSingle();
+        const selectFields = "id, user_id, full_name, email, total_points, lifetime_points, tier, card_token, created_by_business_id, qr_code_url";
+        const [byCode, byUrl] = await Promise.all([
+          supabase.from("customers").select(selectFields).eq("qr_code_url", scannedCode).maybeSingle(),
+          supabase.from("customers").select(selectFields).eq("qr_code_url", `NoxaLoyalty://customer/${scannedCode}`).maybeSingle(),
+        ]);
+        const fallback = byCode.data ?? byUrl.data;
 
         if (fallback) {
           customerData = fallback as typeof rpcResult;

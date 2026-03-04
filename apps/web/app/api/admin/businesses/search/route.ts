@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await service
     .from('admin_business_stats')
     .select('id, name, owner_email, plan_name')
-    .or(`name.ilike.%${q}%,owner_email.ilike.%${q}%`)
+    .or(`name.ilike.%${q.replace(/[,().]/g, '')}%,owner_email.ilike.%${q.replace(/[,().]/g, '')}%`)
     .limit(5);
 
   if (error) {

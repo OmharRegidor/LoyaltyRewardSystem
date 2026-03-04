@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' });
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,owner_email.ilike.%${search}%`);
+    const sanitized = search.replace(/[,().]/g, '');
+    query = query.or(`name.ilike.%${sanitized}%,owner_email.ilike.%${sanitized}%`);
   }
 
   if (plan) {
