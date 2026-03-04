@@ -144,11 +144,14 @@ export async function POST(
     let updateError = null;
     const { error: scopedError, count: scopedCount } = await serviceClient
       .from('customers')
-      .update({
-        pin_hash: pinHash,
-        failed_pin_attempts: 0,
-        pin_locked_until: null,
-      })
+      .update(
+        {
+          pin_hash: pinHash,
+          failed_pin_attempts: 0,
+          pin_locked_until: null,
+        },
+        { count: 'exact' }
+      )
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id);
 
