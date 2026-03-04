@@ -108,6 +108,8 @@ export default function StaffScannerPage() {
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [receiptPaymentMethod, setReceiptPaymentMethod] = useState<PaymentMethod>("cash");
   const [receiptCartItems, setReceiptCartItems] = useState<StaffCartItem[]>([]);
+  const [receiptAmountTendered, setReceiptAmountTendered] = useState(0);
+  const [receiptDiscountReason, setReceiptDiscountReason] = useState<string | undefined>();
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -564,10 +566,16 @@ export default function StaffScannerPage() {
 
     setReceiptPaymentMethod(method);
     setReceiptCartItems([...pos.cartItems]);
+    setReceiptAmountTendered(pos.amountTenderedCentavos);
+    setReceiptDiscountReason(pos.discount?.reason);
 
     try {
       const result = await pos.completeSale();
       setSaleResult(result);
+
+      // Clear the cart so realtime stock updates aren't double-counted
+      // (receipt snapshots already captured above)
+      pos.reset();
 
       // Update stats
       setStats((prev) => ({
@@ -598,6 +606,8 @@ export default function StaffScannerPage() {
     setPaymentView(false);
     setReceiptModalOpen(false);
     setReceiptCartItems([]);
+    setReceiptAmountTendered(0);
+    setReceiptDiscountReason(undefined);
     pos.reset();
   };
 
@@ -1041,8 +1051,8 @@ export default function StaffScannerPage() {
               businessName={staffData.businessName}
               cashierName={staffData.userName}
               paymentMethod={receiptPaymentMethod}
-              amountTenderedCentavos={pos.amountTenderedCentavos}
-              discountReason={pos.discount?.reason}
+              amountTenderedCentavos={receiptAmountTendered}
+              discountReason={receiptDiscountReason}
             />
           )}
 
