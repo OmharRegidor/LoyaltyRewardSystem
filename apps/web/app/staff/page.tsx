@@ -277,13 +277,14 @@ export default function StaffScannerPage() {
 
   const loadTodayStats = async (staffId: string) => {
     const supabase = createClient();
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+    const startOfDayPHT = `${today}T00:00:00+08:00`;
 
     const { data } = await supabase
       .from("scan_logs")
       .select("points_awarded")
       .eq("staff_id", staffId)
-      .gte("scanned_at", today);
+      .gte("scanned_at", startOfDayPHT);
 
     if (data) {
       setStats({
