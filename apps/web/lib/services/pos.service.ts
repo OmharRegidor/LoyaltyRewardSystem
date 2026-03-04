@@ -563,9 +563,13 @@ export async function getDailySummary(
 ): Promise<DailySummary> {
   const supabase = createServiceClient();
 
-  const targetDate = date || new Date().toISOString().split("T")[0];
-  const startOfDay = `${targetDate}T00:00:00.000Z`;
-  const endOfDay = `${targetDate}T23:59:59.999Z`;
+  // Use Asia/Manila (PHT, UTC+8) for "today" so the dashboard matches the
+  // business owner's local date instead of UTC.
+  const targetDate =
+    date ||
+    new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+  const startOfDay = `${targetDate}T00:00:00+08:00`;
+  const endOfDay = `${targetDate}T23:59:59.999+08:00`;
 
   // Get all sales for the day
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
