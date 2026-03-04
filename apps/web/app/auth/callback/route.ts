@@ -196,12 +196,22 @@ async function ensureBusinessAndSubscription(
         (userMetadata?.business_name as string) || 'My Business';
 
       // Generate a unique slug from the business name
-      const baseSlug = businessName
+      const baseSlug = (businessName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
-        || 'my-business';
-      const slug = `${baseSlug}-${Date.now().toString(36)}`;
+        || 'my-business').slice(0, 40);
+
+      // Try clean slug first, only append random suffix if taken
+      const { data: existingSlug } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('slug', baseSlug)
+        .maybeSingle();
+
+      const slug = existingSlug
+        ? `${baseSlug}-${Math.random().toString(36).substring(2, 8)}`
+        : baseSlug;
 
       const { data: newBiz, error: bizError } = await supabase
         .from('businesses')

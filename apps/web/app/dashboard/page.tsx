@@ -146,7 +146,7 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+      <div className="relative bg-white rounded-2xl p-5 sm:p-8 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -157,20 +157,20 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
 
         {/* Content */}
         <div className="text-center">
-          <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">🎉</div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
             Welcome to NoxaLoyalty!
           </h2>
           <p className="text-green-600 font-semibold mb-2">
             Your Free plan is now active.
           </p>
-          <p className="text-gray-600 mb-6">
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
             You have access to our full loyalty and rewards system.
           </p>
 
           {/* Public business link */}
           {publicUrl && (
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200 text-left">
+            <div className="bg-gray-50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-200 text-left">
               <p className="text-sm font-semibold text-gray-700 mb-2">Your public business page</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-sm bg-white rounded-lg px-3 py-2 border border-gray-200 text-gray-800 truncate">
@@ -194,7 +194,7 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
           )}
 
           {/* Upsell */}
-          <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-4 mb-6 border border-primary/10">
+          <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-primary/10">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-4 h-4 text-primary" />
               <p className="text-sm text-gray-700">
