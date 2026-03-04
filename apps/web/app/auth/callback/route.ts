@@ -225,6 +225,8 @@ async function ensureBusinessAndSubscription(
           pesos_per_point: 100,
           min_purchase_for_points: 0,
           join_code: generateJoinCode(),
+          business_type: (userMetadata?.business_type as string) || null,
+          phone: (userMetadata?.phone as string) || null,
         })
         .select('id')
         .single();
