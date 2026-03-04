@@ -325,14 +325,6 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
       const { data } = await res.json();
       setSaleResult(data);
 
-      // Instant local stock deduction for immediate UI feedback
-      setProducts((prev) =>
-        prev.map((p) => {
-          const sold = cartItems.find((i) => i.product_id === p.id);
-          return sold ? { ...p, stock_quantity: p.stock_quantity - sold.quantity } : p;
-        }),
-      );
-
       return data;
     } finally {
       setIsProcessing(false);
