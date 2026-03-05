@@ -87,7 +87,12 @@ export async function getPublicBusinesses(
     .order('name');
 
   if (search) {
-    query = query.ilike('name', `%${search}%`);
+    const sanitizedSearch = search
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_')
+      .trim()
+      .slice(0, 100);
+    query = query.ilike('name', `%${sanitizedSearch}%`);
   }
 
   if (businessType) {

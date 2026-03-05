@@ -19,10 +19,16 @@ export async function GET(request: NextRequest) {
 
   const service = createAdminServiceClient();
 
+  const sanitized = q
+    .replace(/[,().]/g, '')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .slice(0, 100);
+
   const { data, error } = await service
     .from('admin_business_stats')
     .select('id, name, owner_email, plan_name')
-    .or(`name.ilike.%${q.replace(/[,().]/g, '')}%,owner_email.ilike.%${q.replace(/[,().]/g, '')}%`)
+    .or(`name.ilike.%${sanitized}%,owner_email.ilike.%${sanitized}%`)
     .limit(5);
 
   if (error) {

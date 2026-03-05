@@ -26,10 +26,14 @@ export async function GET(request: NextRequest) {
   // If searching by business name, resolve matching business IDs first
   let businessIds: string[] | null = null;
   if (businessSearch) {
+    const sanitizedBizSearch = businessSearch
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_')
+      .slice(0, 100);
     const { data: matchedBusinesses } = await service
       .from('businesses')
       .select('id')
-      .ilike('name', `%${businessSearch}%`);
+      .ilike('name', `%${sanitizedBizSearch}%`);
 
     businessIds = (matchedBusinesses ?? []).map((b) => b.id);
 

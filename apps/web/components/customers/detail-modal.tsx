@@ -131,7 +131,7 @@ export function CustomerDetailModal({
         : { data: null };
       const { data } = byPhone
         ? { data: byPhone }
-        : await supabase.from('customers').select('id').ilike('full_name', `%${customer.name}%`).limit(1).maybeSingle();
+        : await supabase.from('customers').select('id').ilike('full_name', `%${customer.name.replace(/%/g, '\\%').replace(/_/g, '\\_').slice(0, 100)}%`).limit(1).maybeSingle();
 
       if (data) {
         setCustomerId(data.id);

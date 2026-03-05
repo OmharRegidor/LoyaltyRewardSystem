@@ -50,6 +50,16 @@ export const rewardsService = {
    * Search rewards by title or description
    */
   async search(query: string): Promise<Reward[]> {
+    // Sanitize: strip PostgREST filter operators and ILIKE wildcards
+    const sanitized = query
+      .replace(/[,().%_*\[\]{}!&|]/g, '')
+      .trim()
+      .slice(0, 100);
+
+    if (!sanitized) {
+      return this.getAll();
+    }
+
     const { data, error } = await supabase
       .from('rewards')
       .select(`
@@ -58,7 +68,7 @@ export const rewardsService = {
       `)
       .eq('active', true)
       .gt('stock', 0)
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+      .or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;

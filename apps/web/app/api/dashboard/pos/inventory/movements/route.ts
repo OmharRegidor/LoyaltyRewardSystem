@@ -55,7 +55,9 @@ export async function GET(request: NextRequest) {
     await requireModule(businessId, "pos");
 
     const { searchParams } = new URL(request.url);
-    const product_id = searchParams.get("product_id") || undefined;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rawProductId = searchParams.get("product_id") || undefined;
+    const product_id = rawProductId && UUID_RE.test(rawProductId) ? rawProductId : undefined;
     const movement_type_raw = searchParams.get("movement_type") || undefined;
     const start_date = searchParams.get("start_date") || undefined;
     const end_date = searchParams.get("end_date") || undefined;

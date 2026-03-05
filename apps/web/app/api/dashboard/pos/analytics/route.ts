@@ -56,11 +56,15 @@ export async function GET(request: NextRequest) {
 
     // Get date range from query params (max 90 days)
     const { searchParams } = new URL(request.url);
-    const endDate = searchParams.get('end_date') || new Date().toISOString().split('T')[0];
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    const rawEnd = searchParams.get('end_date') || '';
+    const rawStart = searchParams.get('start_date') || '';
+
+    const endDate = ISO_DATE_RE.test(rawEnd) ? rawEnd : new Date().toISOString().split('T')[0];
 
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 6);
-    let startDate = searchParams.get('start_date') || defaultStartDate.toISOString().split('T')[0];
+    let startDate = ISO_DATE_RE.test(rawStart) ? rawStart : defaultStartDate.toISOString().split('T')[0];
 
     // Cap date range to 90 days to prevent unbounded queries
     const maxRangeMs = 90 * 24 * 60 * 60 * 1000;

@@ -48,7 +48,12 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' });
 
   if (search) {
-    const sanitized = search.replace(/[,().]/g, '');
+    const sanitized = search
+      .replace(/[,().]/g, '')
+      .replace(/%/g, '\\%')
+      .replace(/_/g, '\\_')
+      .trim()
+      .slice(0, 100);
     query = query.or(`name.ilike.%${sanitized}%,owner_email.ilike.%${sanitized}%`);
   }
 

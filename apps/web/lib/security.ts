@@ -259,6 +259,37 @@ export function sanitizeString(input: string): string {
 }
 
 /**
+ * Sanitize search input for use in PostgREST .or() filter strings.
+ * Strips characters that could inject additional filter conditions.
+ */
+export function sanitizePostgrestFilter(input: string): string {
+  return input
+    .replace(/[,().%_*\[\]{}!&|]/g, '')
+    .trim()
+    .slice(0, 100);
+}
+
+/**
+ * Escape ILIKE wildcard characters (% and _) so they are treated as literals.
+ * Also strips PostgREST operator delimiters for .or() safety.
+ */
+export function sanitizeIlikeSearch(input: string): string {
+  return input
+    .replace(/[,().]/g, '')       // prevent PostgREST filter injection
+    .replace(/%/g, '\\%')         // escape ILIKE wildcard
+    .replace(/_/g, '\\_')         // escape ILIKE single-char wildcard
+    .trim()
+    .slice(0, 100);
+}
+
+/**
+ * Validate ISO date string format (YYYY-MM-DD)
+ */
+export function isValidISODate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value));
+}
+
+/**
  * Validate email format
  */
 export function isValidEmail(email: string): boolean {
