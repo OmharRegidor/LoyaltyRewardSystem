@@ -12,7 +12,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { requestPasswordReset } from '@/lib/auth';
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams();
@@ -43,14 +42,19 @@ function ForgotPasswordContent() {
     setError('');
 
     try {
-      const result = await requestPasswordReset(email.toLowerCase().trim());
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
 
-      if (!result.success) {
-        setError(result.error || 'Failed to send reset email');
+      if (!res.ok && res.status === 429) {
+        setError('Too many reset attempts. Please try again later.');
         setIsLoading(false);
         return;
       }
 
+      // Always show success — never reveal whether email exists
       setIsSent(true);
       setCountdown(60);
     } catch {
@@ -68,10 +72,14 @@ function ForgotPasswordContent() {
     setResendSuccess(false);
 
     try {
-      const result = await requestPasswordReset(email.toLowerCase().trim());
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
 
-      if (!result.success) {
-        setError(result.error || 'Failed to resend reset email');
+      if (!res.ok && res.status === 429) {
+        setError('Too many reset attempts. Please try again later.');
         setIsLoading(false);
         return;
       }

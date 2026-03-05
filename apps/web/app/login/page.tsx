@@ -45,26 +45,32 @@ function LoginForm() {
     setError('');
     setIsLoading(true);
 
-    const supabase = createClient();
-
     try {
-      const { data, error: signInError } =
-        await supabase.auth.signInWithPassword({
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: email.toLowerCase().trim(),
           password,
-        });
+        }),
+      });
 
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password');
+      if (!res.ok) {
+        const body = await res.json();
+        if (res.status === 429) {
+          setError('Too many login attempts. Please try again later.');
         } else {
-          setError(signInError.message);
+          setError(body.error || 'Login failed. Please try again.');
         }
         setIsLoading(false);
         return;
       }
 
-      if (!data.user) {
+      // Session cookie is set by the server — refresh client auth state
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
         setError('Login failed. Please try again.');
         setIsLoading(false);
         return;
@@ -83,17 +89,17 @@ function LoginForm() {
           supabase
             .from('users')
             .select('role_id, roles(name)')
-            .eq('id', data.user.id)
+            .eq('id', user.id)
             .single(),
           supabase
             .from('businesses')
             .select('id')
-            .eq('owner_id', data.user.id)
+            .eq('owner_id', user.id)
             .maybeSingle(),
           supabase
             .from('staff')
             .select('id')
-            .eq('user_id', data.user.id)
+            .eq('user_id', user.id)
             .eq('is_active', true)
             .maybeSingle(),
         ]);

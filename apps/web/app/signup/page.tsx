@@ -14,7 +14,6 @@ import {
   EyeOff,
   ArrowLeft,
 } from 'lucide-react';
-import { signupBusinessOwner } from '@/lib/auth';
 import Link from 'next/link';
 
 // ============================================
@@ -207,16 +206,26 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await signupBusinessOwner({
-        email,
-        password,
-        businessName: businessName.trim(),
-        businessType,
-        phone: `+63${phone}`,
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          businessName: businessName.trim(),
+          businessType,
+          phone: `+63${phone}`,
+        }),
       });
 
-      if (!response.success) {
-        setError(response.error || 'Signup failed. Please try again.');
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setError('Too many signup attempts. Please try again later.');
+        } else {
+          setError(data.error || 'Signup failed. Please try again.');
+        }
         setIsLoading(false);
         return;
       }
@@ -228,12 +237,10 @@ export default function SignupPage() {
 
       // Redirect to verify email page with email param
       const params = new URLSearchParams({ email });
-      if (response.emailSendFailed) params.set('emailFailed', '1');
+      if (data.emailSendFailed) params.set('emailFailed', '1');
       router.push(`/verify-email?${params.toString()}`);
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
+    } catch {
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
