@@ -12,8 +12,7 @@ export const viewport: Viewport = {
   themeColor: "#7F0404",
 };
 
-const APK_DOWNLOAD_URL =
-  "https://expo.dev/artifacts/eas/NF66BsKUw6UceFzKHXa82.apk";
+const APK_DOWNLOAD_URL = "/api/download/apk";
 
 export default function DownloadPage() {
   return (
@@ -75,8 +74,7 @@ export default function DownloadPage() {
         {/* Download button */}
         <Link
           href={APK_DOWNLOAD_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+          download="NoxaLoyalty.apk"
           className="group relative mb-6"
         >
           {/* Button glow */}
@@ -144,7 +142,7 @@ export default function DownloadPage() {
               <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-[#7F0404]/[0.06] text-[#7F0404]">
                 {feature.icon}
               </div>
-              <h3 className="mb-1 font-[var(--font-space-grotesk)] text-sm font-bold text-[#1a0a0a]">
+              <h3 className="mb-1 font-[var(--font-ace-grotesk)] text-sm font-bold text-[#1a0a0a]">
                 {feature.title}
               </h3>
               <p className="font-[var(--font-plus-jakarta-sans)] text-xs leading-relaxed text-[#1a0a0a]/45">
