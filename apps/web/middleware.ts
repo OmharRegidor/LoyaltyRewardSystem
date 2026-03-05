@@ -19,6 +19,7 @@ const PUBLIC_ROUTES = [
   '/business',
   '/access-denied',
   '/staff/create-account',
+  '/download',
 ];
 
 const PUBLIC_PREFIXES = [
