@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
   '/access-denied',
   '/staff/create-account',
   '/download',
+  '/delete-account',
 ];
 
 const PUBLIC_PREFIXES = [
