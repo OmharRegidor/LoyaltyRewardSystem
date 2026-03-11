@@ -27,7 +27,6 @@ import {
   Loader2,
   Building2,
   Mail,
-  DollarSign,
   Eye,
   Ban,
   CreditCard,
@@ -605,7 +604,7 @@ function CreateInvoiceDialog({
                 className="!bg-white border-gray-200 text-gray-900 pl-8"
                 min={1}
               />
-              <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">&#8369;</span>
             </div>
             {amount && parseInt(amount, 10) > 0 && (
               <p className="text-xs text-gray-400 mt-1">
