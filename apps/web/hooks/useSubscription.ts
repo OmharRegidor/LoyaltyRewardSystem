@@ -16,6 +16,7 @@ interface SubscriptionData {
   status: string;
   hasAccess: boolean;
   isFreeForever: boolean;
+  isAdminManaged: boolean;
   plan: Plan | null;
   billingInterval: 'monthly' | 'annual' | null;
   currentPeriodStart: string | null;

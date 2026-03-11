@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Usage & Model Strategy
+
+- When Claude Code usage is above 60%: use Opus for thinking/planning, then Sonnet for executing code.
+
 ## Coding Rules
 
 - Never use `any` type for type declarations. Create type interfaces instead.
@@ -87,10 +91,11 @@ supabase/
 - Module flags: `has_loyalty`, `has_booking`, `has_pos`
 - Gates: customer limits, branch limits, staff limits, API access, custom branding
 
-**Payment Processing:**
-- Xendit SDK for Philippines/Indonesia payments
-- Webhooks at `/api/webhooks/xendit` with signature validation
-- Subscription lifecycle: active → cancelled → expired
+**Billing (Admin-Managed):**
+- Enterprise upgrades are done manually by admin from the Admin Portal
+- Admin creates manual invoices (`manual_invoices` table) and records payments (`manual_invoice_payments` table)
+- Business owners see their invoices and balance in Settings > Billing (read-only)
+- Payments happen outside the system (cash, bank transfer, GCash, Maya) — admin records them in the system
 
 **Real-time:**
 - Supabase Realtime subscriptions for customer points updates
@@ -107,14 +112,13 @@ supabase/
 | Forms | React Hook Form + Zod | React Hook Form + Zod |
 | Backend | Supabase (PostgreSQL) | Supabase |
 | Auth | Supabase Auth | Google OAuth → Supabase |
-| Payments | Xendit | - |
+| Billing | Admin-managed invoices | - |
 
 ### Environment Variables
 
 **Web** (`apps/web/.env.local`):
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `XENDIT_SECRET_KEY`, `NEXT_PUBLIC_XENDIT_PUBLIC_KEY`
 
 **Mobile** (`apps/mobile/.env` or via EAS):
 - `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`

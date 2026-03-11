@@ -65,6 +65,8 @@ export async function GET(request: Request) {
       return NextResponse.json({
         status: 'free',
         hasAccess: true,
+        isFreeForever: true,
+        isAdminManaged: false,
         plan: {
           id: 'free',
           name: 'free',
@@ -116,10 +118,13 @@ export async function GET(request: Request) {
         };
 
     const hasAccess = ['active', 'trialing'].includes(subscription.status);
+    const isAdminManaged = !subscription.xendit_subscription_id;
 
     return NextResponse.json({
       status: subscription.status,
       hasAccess,
+      isFreeForever: false,
+      isAdminManaged,
       plan: subscription.plan
         ? {
             id: subscription.plan.id,
