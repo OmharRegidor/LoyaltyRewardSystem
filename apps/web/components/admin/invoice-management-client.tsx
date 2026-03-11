@@ -398,7 +398,7 @@ function CreateInvoiceDialog({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [description, setDescription] = useState('Enterprise Annual Subscription');
-  const [amount, setAmount] = useState('99990');
+  const [amount, setAmount] = useState('999.90');
   const [dueDate, setDueDate] = useState('');
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
@@ -449,7 +449,7 @@ function CreateInvoiceDialog({
     setSearchResults([]);
     setSelectedBusiness(null);
     setDescription('Enterprise Annual Subscription');
-    setAmount('99990');
+    setAmount('999.90');
     setDueDate('');
     setPeriodStart('');
     setPeriodEnd('');
@@ -459,11 +459,12 @@ function CreateInvoiceDialog({
 
   const handleSubmit = async () => {
     if (!selectedBusiness) return;
-    const amountCentavos = parseInt(amount, 10);
-    if (!amountCentavos || amountCentavos <= 0) {
+    const amountPHP = parseFloat(amount);
+    if (!amountPHP || amountPHP <= 0) {
       setError('Amount must be a positive number');
       return;
     }
+    const amountCentavos = Math.round(amountPHP * 100);
 
     setSubmitting(true);
     setError(null);
@@ -595,22 +596,18 @@ function CreateInvoiceDialog({
 
           {/* Amount */}
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">Amount (in centavos)</label>
+            <label className="text-sm text-gray-500 mb-1.5 block">Amount (PHP)</label>
             <div className="relative">
               <Input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="!bg-white border-gray-200 text-gray-900 pl-8"
-                min={1}
+                min={0.01}
+                step={0.01}
               />
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">&#8369;</span>
             </div>
-            {amount && parseInt(amount, 10) > 0 && (
-              <p className="text-xs text-gray-400 mt-1">
-                = {formatCurrency(parseInt(amount, 10))}
-              </p>
-            )}
           </div>
 
           {/* Due Date */}
@@ -883,7 +880,7 @@ function RecordPaymentDialog({
   remainingCentavos: number;
   onRecorded: () => void;
 }) {
-  const [amount, setAmount] = useState(String(remainingCentavos));
+  const [amount, setAmount] = useState(String(remainingCentavos / 100));
   const [paymentMethod, setPaymentMethod] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
@@ -893,11 +890,11 @@ function RecordPaymentDialog({
 
   // Reset amount when remaining changes
   useEffect(() => {
-    setAmount(String(remainingCentavos));
+    setAmount(String(remainingCentavos / 100));
   }, [remainingCentavos]);
 
   const resetForm = () => {
-    setAmount(String(remainingCentavos));
+    setAmount(String(remainingCentavos / 100));
     setPaymentMethod('');
     setReferenceNumber('');
     setPaymentDate(new Date().toISOString().slice(0, 10));
@@ -906,11 +903,12 @@ function RecordPaymentDialog({
   };
 
   const handleSubmit = async () => {
-    const amountCentavos = parseInt(amount, 10);
-    if (!amountCentavos || amountCentavos <= 0) {
+    const amountPHP = parseFloat(amount);
+    if (!amountPHP || amountPHP <= 0) {
       setError('Amount must be a positive number');
       return;
     }
+    const amountCentavos = Math.round(amountPHP * 100);
     if (amountCentavos > remainingCentavos) {
       setError(`Amount cannot exceed remaining balance of ${formatCurrency(remainingCentavos)}`);
       return;
@@ -963,20 +961,19 @@ function RecordPaymentDialog({
 
         <div className="space-y-4 py-2">
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">Amount (centavos)</label>
-            <Input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="!bg-white border-gray-200 text-gray-900"
-              min={1}
-              max={remainingCentavos}
-            />
-            {amount && parseInt(amount, 10) > 0 && (
-              <p className="text-xs text-gray-400 mt-1">
-                = {formatCurrency(parseInt(amount, 10))}
-              </p>
-            )}
+            <label className="text-sm text-gray-500 mb-1.5 block">Amount (PHP)</label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="!bg-white border-gray-200 text-gray-900 pl-8"
+                min={0.01}
+                step={0.01}
+                max={remainingCentavos / 100}
+              />
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">&#8369;</span>
+            </div>
           </div>
 
           <div>
