@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { createServiceClient } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   try {
@@ -48,7 +49,10 @@ export async function GET(request: Request) {
     }
 
     // Get subscription with plan details
-    const { data: subscription } = await supabase
+    // Use service role client to bypass RLS — user is already authenticated
+    // and business ownership verified above
+    const service = createServiceClient();
+    const { data: subscription } = await service
       .from('subscriptions')
       .select(
         `
@@ -82,17 +86,17 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get current usage
+    // Get current usage (service client for consistent access)
     const [customersResult, branchesResult, staffResult] = await Promise.all([
-      supabase
+      service
         .from('customer_businesses')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id),
-      supabase
+      service
         .from('branches')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id),
-      supabase
+      service
         .from('staff')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id),

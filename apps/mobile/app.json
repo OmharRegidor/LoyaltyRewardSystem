@@ -22,7 +22,7 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.NoxaLoyalty.app",
       "newArchEnabled": true,
       "infoPlist": {
@@ -30,6 +30,7 @@
       }
     },
     "android": {
+      "versionCode": 4,
       "package": "com.NoxaLoyalty.app",
       "newArchEnabled": true,
       "adaptiveIcon": {
