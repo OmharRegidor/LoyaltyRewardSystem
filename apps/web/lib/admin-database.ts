@@ -14,6 +14,8 @@ import type {
   AdminNote,
   AdminTag,
   AdminPlanChange,
+  ManualInvoice,
+  ManualInvoicePayment,
 } from './admin';
 
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
@@ -91,6 +93,72 @@ export type AdminDatabase = {
           old_plan_name?: string | null;
           new_plan_name?: string | null;
           reason?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      manual_invoices: {
+        Row: Expand<ManualInvoice>;
+        Insert: {
+          id?: string;
+          business_id: string;
+          invoice_number: string;
+          description?: string | null;
+          amount_centavos: number;
+          amount_paid_centavos?: number;
+          currency?: string;
+          status?: string;
+          period_start?: string | null;
+          period_end?: string | null;
+          due_date?: string | null;
+          created_by_email: string;
+          notes?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          invoice_number?: string;
+          description?: string | null;
+          amount_centavos?: number;
+          amount_paid_centavos?: number;
+          currency?: string;
+          status?: string;
+          period_start?: string | null;
+          period_end?: string | null;
+          due_date?: string | null;
+          created_by_email?: string;
+          notes?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      manual_invoice_payments: {
+        Row: Expand<ManualInvoicePayment>;
+        Insert: {
+          id?: string;
+          invoice_id: string;
+          amount_centavos: number;
+          payment_method?: string | null;
+          reference_number?: string | null;
+          notes?: string | null;
+          recorded_by_email: string;
+          payment_date?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          invoice_id?: string;
+          amount_centavos?: number;
+          payment_method?: string | null;
+          reference_number?: string | null;
+          notes?: string | null;
+          recorded_by_email?: string;
+          payment_date?: string;
           created_at?: string;
         };
         Relationships: [];

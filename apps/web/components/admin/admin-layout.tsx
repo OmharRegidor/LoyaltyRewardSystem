@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Building2,
   ArrowUpCircle,
+  Receipt,
   ScrollText,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ const baseNavigation = [
   { name: 'Overview', path: '', icon: LayoutDashboard },
   { name: 'Businesses', path: '/businesses', icon: Building2 },
   { name: 'Upgrades', path: '/upgrades', icon: ArrowUpCircle },
+  { name: 'Invoices', path: '/invoices', icon: Receipt },
   { name: 'Audit Logs', path: '/audit-logs', icon: ScrollText },
 ];
 

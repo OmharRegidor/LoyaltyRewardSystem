@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ManualInvoiceSection } from '@/components/dashboard/manual-invoice-section';
 
 // ============================================
 // TYPES
@@ -1022,6 +1023,9 @@ function BillingContent() {
           </div>
         </div>
       )}
+
+      {/* Manual Invoices (enterprise billing) */}
+      <ManualInvoiceSection />
 
       {/* Security */}
       <div className="flex items-center justify-center gap-2 text-sm text-gray-500 pb-8">

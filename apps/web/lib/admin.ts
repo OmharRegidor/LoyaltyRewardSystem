@@ -129,6 +129,42 @@ export interface AuditLogEntry {
   createdAt: string;
 }
 
+export interface ManualInvoice {
+  id: string;
+  business_id: string;
+  invoice_number: string;
+  description: string | null;
+  amount_centavos: number;
+  amount_paid_centavos: number;
+  currency: string;
+  status: 'open' | 'partially_paid' | 'paid' | 'void';
+  period_start: string | null;
+  period_end: string | null;
+  due_date: string | null;
+  created_by_email: string;
+  notes: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ManualInvoicePayment {
+  id: string;
+  invoice_id: string;
+  amount_centavos: number;
+  payment_method: string | null;
+  reference_number: string | null;
+  notes: string | null;
+  recorded_by_email: string;
+  payment_date: string;
+  created_at: string;
+}
+
+export interface ManualInvoiceWithBusiness extends ManualInvoice {
+  business_name: string;
+  owner_email: string | null;
+}
+
 export interface AuditLogsResponse {
   logs: AuditLogEntry[];
   totalCount: number;
