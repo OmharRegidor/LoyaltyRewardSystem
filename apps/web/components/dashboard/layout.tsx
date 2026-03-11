@@ -37,7 +37,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { subscription } = useSubscription();
+  const { subscription, isLoading: subscriptionLoading } = useSubscription();
   const hasPOS = subscription?.plan?.hasPOS ?? false;
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -132,7 +132,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   // While loading, show only core nav (skip feature-gated items that depend on subscription)
-  const visibleNavigation = isLoading
+  const visibleNavigation = (isLoading || subscriptionLoading)
     ? [...coreNavigation, { name: 'Settings', href: '/dashboard/settings', icon: Settings }]
     : navigation;
 
