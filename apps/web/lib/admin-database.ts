@@ -16,6 +16,7 @@ import type {
   AdminPlanChange,
   ManualInvoice,
   ManualInvoicePayment,
+  UpgradeRequest,
 } from './admin';
 
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
@@ -24,7 +25,20 @@ export type AdminDatabase = {
   __InternalSupabase: Database['__InternalSupabase'];
   graphql_public: Database['graphql_public'];
   public: {
-    Tables: Database['public']['Tables'] & {
+    Tables: Omit<Database['public']['Tables'], 'subscriptions'> & {
+      // Override subscriptions to include upgrade_acknowledged column
+      subscriptions: {
+        Row: Database['public']['Tables']['subscriptions']['Row'] & {
+          upgrade_acknowledged: boolean | null;
+        };
+        Insert: Database['public']['Tables']['subscriptions']['Insert'] & {
+          upgrade_acknowledged?: boolean | null;
+        };
+        Update: Database['public']['Tables']['subscriptions']['Update'] & {
+          upgrade_acknowledged?: boolean | null;
+        };
+        Relationships: Database['public']['Tables']['subscriptions']['Relationships'];
+      };
       admin_platform_stats: {
         Row: Expand<AdminPlatformStats>;
         Insert: never;
@@ -160,6 +174,36 @@ export type AdminDatabase = {
           recorded_by_email?: string;
           payment_date?: string;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      upgrade_requests: {
+        Row: Expand<UpgradeRequest>;
+        Insert: {
+          id?: string;
+          business_id: string;
+          owner_id: string;
+          owner_email: string;
+          screenshot_url: string;
+          status?: string;
+          reviewed_by_email?: string | null;
+          reviewed_at?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          owner_id?: string;
+          owner_email?: string;
+          screenshot_url?: string;
+          status?: string;
+          reviewed_by_email?: string | null;
+          reviewed_at?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

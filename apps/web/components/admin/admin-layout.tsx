@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { logout } from '@/lib/auth';
+import { NotificationBell } from '@/components/admin/notification-bell';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -151,8 +152,13 @@ export function AdminLayout({ children, adminEmail }: AdminLayoutProps) {
           <Shield className="w-5 h-5" />
           NoxaAdmin
         </span>
-        <div className="w-10" />
+        <NotificationBell />
       </header>
+
+      {/* Desktop Notification Bell */}
+      <div className="hidden lg:block fixed top-4 right-6 z-20">
+        <NotificationBell />
+      </div>
 
       {/* Main Content */}
       <main className="lg:ml-64 min-h-screen">

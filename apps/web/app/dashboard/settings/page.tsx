@@ -28,6 +28,8 @@ import {
   MapPin,
   Briefcase,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Camera,
   Users,
   Pencil,
@@ -46,6 +48,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { createClient } from '@/lib/supabase';
+import { BillingSection } from '@/components/dashboard/billing-section';
+import { AnimatePresence } from 'framer-motion';
 
 // ============================================
 // TYPES
@@ -129,6 +133,9 @@ export default function SettingsPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [businessId, setBusinessId] = useState<string | null>(null);
+
+  // Billing section toggle
+  const [billingExpanded, setBillingExpanded] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -1112,7 +1119,7 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          {/* Billing Card */}
+          {/* Billing Card (Inline Dropdown) */}
           <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-green-500/10 rounded-xl">
@@ -1127,7 +1134,7 @@ export default function SettingsPage() {
             </div>
 
             <button
-              onClick={() => router.push('/dashboard/settings/billing')}
+              onClick={() => setBillingExpanded(!billingExpanded)}
               className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition group"
             >
               <div className="flex items-center gap-3">
@@ -1141,8 +1148,26 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
+              {billingExpanded ? (
+                <ChevronUp className="w-5 h-5 text-gray-500 transition-transform" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-500 transition-transform" />
+              )}
             </button>
+
+            <AnimatePresence>
+              {billingExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <BillingSection />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </Card>
 
           {/* Security Card */}

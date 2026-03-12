@@ -165,6 +165,24 @@ export interface ManualInvoiceWithBusiness extends ManualInvoice {
   owner_email: string | null;
 }
 
+export interface UpgradeRequest {
+  id: string;
+  business_id: string;
+  owner_id: string;
+  owner_email: string;
+  screenshot_url: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by_email: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpgradeRequestWithBusiness extends UpgradeRequest {
+  business_name: string;
+}
+
 export interface AuditLogsResponse {
   logs: AuditLogEntry[];
   totalCount: number;

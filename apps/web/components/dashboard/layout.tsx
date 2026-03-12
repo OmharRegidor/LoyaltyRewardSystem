@@ -22,6 +22,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
 import { User } from '@supabase/supabase-js';
+import { UpgradeCongratsModal } from '@/components/dashboard/upgrade-congrats-modal';
 
 interface UserData {
   name: string;
@@ -37,8 +38,12 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { subscription, isLoading: subscriptionLoading } = useSubscription();
+  const { subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
   const hasPOS = subscription?.plan?.hasPOS ?? false;
+  const showCongratsModal =
+    !subscriptionLoading &&
+    subscription?.upgradeAcknowledged === false &&
+    subscription?.plan?.name === 'enterprise';
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
@@ -254,6 +259,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="lg:ml-64 min-h-[100dvh] bg-background">
         <div className="p-4 pt-20 lg:p-8 lg:pt-8">{children}</div>
       </main>
+
+      {/* Upgrade Congratulations Modal */}
+      {showCongratsModal && (
+        <UpgradeCongratsModal
+          open={true}
+          onDismiss={refetch}
+        />
+      )}
     </div>
   );
 }

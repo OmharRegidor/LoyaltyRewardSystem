@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
-import { createServiceClient } from '@/lib/supabase-server';
+import { createServiceClient, createAdminServiceClient } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   try {
@@ -64,6 +64,15 @@ export async function GET(request: Request) {
       .single();
 
     if (!subscription) {
+      // Check for pending upgrade request (use admin client for extended types)
+      const adminService = createAdminServiceClient();
+      const { data: pendingUpgrade } = await adminService
+        .from('upgrade_requests')
+        .select('id')
+        .eq('business_id', business.id)
+        .eq('status', 'pending')
+        .maybeSingle();
+
       // Free plan limits - matches landing page promises:
       // Unlimited customers, 3 branches, 5 staff per branch
       return NextResponse.json({
@@ -71,6 +80,8 @@ export async function GET(request: Request) {
         hasAccess: true,
         isFreeForever: true,
         isAdminManaged: false,
+        upgradeAcknowledged: true,
+        pendingUpgradeRequest: !!pendingUpgrade,
         plan: {
           id: 'free',
           name: 'free',
@@ -124,11 +135,29 @@ export async function GET(request: Request) {
     const hasAccess = ['active', 'trialing'].includes(subscription.status);
     const isAdminManaged = !subscription.xendit_subscription_id;
 
+    // Check for pending upgrade request and upgrade_acknowledged (use admin client for extended types)
+    const adminService = createAdminServiceClient();
+    const [{ data: pendingUpgrade }, { data: subExtra }] = await Promise.all([
+      adminService
+        .from('upgrade_requests')
+        .select('id')
+        .eq('business_id', business.id)
+        .eq('status', 'pending')
+        .maybeSingle(),
+      adminService
+        .from('subscriptions')
+        .select('upgrade_acknowledged')
+        .eq('business_id', business.id)
+        .maybeSingle(),
+    ]);
+
     return NextResponse.json({
       status: subscription.status,
       hasAccess,
       isFreeForever: false,
       isAdminManaged,
+      upgradeAcknowledged: subExtra?.upgrade_acknowledged ?? true,
+      pendingUpgradeRequest: !!pendingUpgrade,
       plan: subscription.plan
         ? {
             id: subscription.plan.id,

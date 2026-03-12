@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.1"
   }
   graphql_public: {
     Tables: {
@@ -556,21 +556,6 @@ export type Database = {
         }
         Relationships: []
       }
-      instruments: {
-        Row: {
-          id: number
-          name: string
-        }
-        Insert: {
-          id?: never
-          name: string
-        }
-        Update: {
-          id?: never
-          name?: string
-        }
-        Relationships: []
-      }
       invoices: {
         Row: {
           amount_due_centavos: number
@@ -636,6 +621,122 @@ export type Database = {
           },
           {
             foreignKeyName: "invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_invoice_payments: {
+        Row: {
+          amount_centavos: number
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string | null
+          recorded_by_email: string
+          reference_number: string | null
+        }
+        Insert: {
+          amount_centavos: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by_email: string
+          reference_number?: string | null
+        }
+        Update: {
+          amount_centavos?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          recorded_by_email?: string
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "manual_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_invoices: {
+        Row: {
+          amount_centavos: number
+          amount_paid_centavos: number
+          business_id: string
+          created_at: string
+          created_by_email: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_centavos: number
+          amount_paid_centavos?: number
+          business_id: string
+          created_at?: string
+          created_by_email: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_centavos?: number
+          amount_paid_centavos?: number
+          business_id?: string
+          created_at?: string
+          created_by_email?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_invoices_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -830,6 +931,7 @@ export type Database = {
           description: string | null
           display_name: string
           features: Json | null
+          has_booking: boolean
           has_loyalty: boolean
           has_pos: boolean
           id: string
@@ -847,6 +949,7 @@ export type Database = {
           description?: string | null
           display_name: string
           features?: Json | null
+          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -864,6 +967,7 @@ export type Database = {
           description?: string | null
           display_name?: string
           features?: Json | null
+          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -1689,35 +1793,6 @@ export type Database = {
           },
         ]
       }
-      staff_services: {
-        Row: {
-          created_at: string
-          id: string
-          service_id: string
-          staff_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          service_id: string
-          staff_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          service_id?: string
-          staff_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_services_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       stock_movements: {
         Row: {
           business_id: string
@@ -1801,6 +1876,7 @@ export type Database = {
           current_period_start: string | null
           id: string
           is_free_forever: boolean | null
+          module_booking_override: boolean | null
           module_pos_override: boolean | null
           plan_id: string | null
           status: string
@@ -1821,6 +1897,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
+          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
@@ -1841,6 +1918,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
+          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
@@ -2140,6 +2218,23 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_platform_stats: {
+        Row: {
+          active_subscriptions: number | null
+          businesses_30d: number | null
+          businesses_7d: number | null
+          customers_30d: number | null
+          enterprise_count: number | null
+          free_count: number | null
+          points_issued_30d: number | null
+          total_businesses: number | null
+          total_customers: number | null
+          total_points_issued: number | null
+          total_transactions: number | null
+          transactions_30d: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_staff_invite: {
@@ -2234,6 +2329,10 @@ export type Database = {
           points_earned: number
           transactions: number
         }[]
+      }
+      get_business_customer_ids: {
+        Args: { p_business_id: string }
+        Returns: string[]
       }
       get_customer_tier: {
         Args: { p_lifetime_points: number }
