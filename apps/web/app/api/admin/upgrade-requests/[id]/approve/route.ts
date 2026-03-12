@@ -99,6 +99,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   // 5. Create paid invoice + payment record
+  // ₱17,880 annual (₱1,490/mo x 12) — stored in centavos for existing invoice system
+  const annualPesos = 17880;
+  const amountCentavos = annualPesos * 100;
+
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
   const { data: seqResult } = await service.rpc('nextval' as never, {
     seq_name: 'manual_invoice_seq',
@@ -111,9 +115,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     .insert({
       business_id: upgradeReq.business_id,
       invoice_number: invoiceNumber,
-      description: 'Enterprise Plan - Annual Subscription',
-      amount_centavos: 149000,
-      amount_paid_centavos: 149000,
+      description: 'Enterprise Plan — ₱1,490/mo billed annually at ₱17,880',
+      amount_centavos: amountCentavos,
+      amount_paid_centavos: amountCentavos,
       currency: 'PHP',
       status: 'paid',
       period_start: now.toISOString(),
@@ -133,9 +137,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (invoice) {
     await service.from('manual_invoice_payments').insert({
       invoice_id: invoice.id,
-      amount_centavos: 149000,
+      amount_centavos: amountCentavos,
       payment_method: 'self-service',
-      notes: 'Self-service upgrade payment via screenshot verification',
+      notes: 'Self-service upgrade — ₱17,880 via screenshot verification',
       recorded_by_email: user.email,
       payment_date: now.toISOString(),
     });

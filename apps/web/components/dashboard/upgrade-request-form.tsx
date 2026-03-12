@@ -14,7 +14,6 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
-import Image from 'next/image';
 
 interface UpgradeRequestData {
   id: string;
@@ -97,8 +96,10 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
 
       setScreenshotUrl(urlData.publicUrl);
       setScreenshotPreview(URL.createObjectURL(file));
-    } catch {
-      setError('Failed to upload screenshot. Please try again.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Screenshot upload error:', err);
+      setError(`Failed to upload screenshot: ${message}`);
     } finally {
       setUploading(false);
     }
@@ -156,13 +157,17 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
             </div>
           </div>
 
-          <div className="flex items-baseline gap-1 mb-4">
-            <span className="text-3xl font-bold">&#8369;1,490</span>
-            <span className="text-gray-500">/year</span>
-            <span className="text-sm text-gray-400 ml-2">(~$25 USD)</span>
+          <div className="mb-1">
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold">&#8369;1,490</span>
+              <span className="text-gray-500">/month</span>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Billed annually at <span className="font-semibold text-gray-700">&#8369;17,880</span>/year
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-4">
             {[
               { icon: ShoppingCart, label: 'Point-of-Sale System' },
               { icon: Users, label: 'Unlimited Staff' },
@@ -180,7 +185,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
             onClick={() => setStep('payment')}
             className="w-full bg-gradient-to-r from-secondary to-yellow-500 hover:from-secondary/90 hover:to-yellow-500/90 text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
           >
-            Subscribe Now
+            Pay &#8369;17,880 Annually
           </button>
         </div>
       </div>
@@ -194,7 +199,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
         <div className="p-4 sm:p-6 border-b border-gray-200">
           <h3 className="font-bold text-lg">Complete Your Payment</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Scan the QR code to pay &#8369;1,490, then upload a screenshot of your payment
+            Scan the QR code to pay <span className="font-semibold text-gray-700">&#8369;17,880</span> (annual), then upload a screenshot of your payment
           </p>
         </div>
 
@@ -205,18 +210,11 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
               <p className="text-sm font-medium text-gray-700 mb-3">
                 Scan to Pay
               </p>
-              <div className="w-48 h-48 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <Image
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <img
                   src="/cashG.jfif"
                   alt="GCash Payment QR Code"
-                  width={192}
-                  height={192}
-                  className="rounded-xl object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).parentElement!.innerHTML =
-                      '<p class="text-sm text-gray-400 text-center px-4">QR code will be available soon</p>';
-                  }}
+                  className="w-48 h-auto object-contain"
                 />
               </div>
               <p className="text-xs text-gray-400 mt-2 text-center">
