@@ -58,20 +58,6 @@ export default function ProfileScreen() {
       subtitle: 'Get bonus pts per friend',
       onPress: () => router.push('/referral'),
     },
-    {
-      icon: '🏆',
-      iconBg: '#F3E5F5',
-      title: 'Rewards History',
-      subtitle: 'Coming Soon',
-      disabled: true,
-    },
-    {
-      icon: '💳',
-      iconBg: '#E3F2FD',
-      title: 'Linked Cards',
-      subtitle: 'Coming Soon',
-      disabled: true,
-    },
   ];
 
   return (

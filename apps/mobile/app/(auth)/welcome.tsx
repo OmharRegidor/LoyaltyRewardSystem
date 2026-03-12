@@ -9,13 +9,14 @@ import {
   SafeAreaView,
   Alert,
   ScrollView,
-  TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
 import { GoogleSignInButton } from '../../src/components/auth/GoogleSignInButton';
+import { AppleSignInButton } from '../../src/components/auth/AppleSignInButton';
 import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
 
 const FEATURES = [
@@ -25,7 +26,7 @@ const FEATURES = [
 ];
 
 export default function WelcomeScreen() {
-  const { signInWithGoogle, isLoading, user } = useAuth();
+  const { signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,17 @@ export default function WelcomeScreen() {
     try {
       setError(null);
       await signInWithGoogle();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed';
+      setError(message);
+      Alert.alert('Sign In Failed', message);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    try {
+      setError(null);
+      await signInWithApple();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);
@@ -92,6 +104,10 @@ export default function WelcomeScreen() {
 
           {/* Action Section */}
           <View style={styles.actions}>
+            {Platform.OS === 'ios' && (
+              <AppleSignInButton onPress={handleAppleSignIn} />
+            )}
+
             <GoogleSignInButton
               onPress={handleGoogleSignIn}
               loading={isLoading}

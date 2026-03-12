@@ -108,12 +108,12 @@ export default function PrivacyPolicyScreen() {
 
         {/* Section 4 */}
         <View style={styles.card}>
-          <SectionHeader number={4} title="Google Sign-In Data" />
+          <SectionHeader number={4} title="Sign-In Data" />
           <Text style={styles.bodyText}>
-            When you sign in with Google, we receive your name, email address,
-            and profile picture. We use this information solely for
-            authentication and account creation. We do not access your Google
-            contacts, files, or other Google services data.
+            When you sign in with Google or Apple, we receive your name, email
+            address, and profile picture. We use this information solely for
+            authentication and account creation. We do not access your
+            contacts, files, or other account data from these providers.
           </Text>
         </View>
 

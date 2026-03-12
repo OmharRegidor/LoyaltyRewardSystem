@@ -9,8 +9,11 @@ import React, {
   useRef,
 } from 'react';
 import { AppState } from 'react-native';
+import { Platform } from 'react-native';
 import { Session, User, RealtimeChannel } from '@supabase/supabase-js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { customerService } from '../services/customer.service';
@@ -36,6 +39,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshCustomer: () => Promise<void>;
   clearNewCustomerFlag: () => void;
@@ -344,7 +348,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       // onAuthStateChange handles the rest
     } catch (error) {
-      console.error('[AuthProvider] Sign in error:', error);
+      console.error('[AuthProvider] Google sign in error:', error);
+      setState((prev) => ({ ...prev, isLoading: false }));
+      throw error;
+    }
+  }, []);
+
+  const signInWithApple = useCallback(async () => {
+    try {
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      const rawNonce = Array.from(
+        await Crypto.getRandomBytesAsync(32),
+        (byte) => byte.toString(16).padStart(2, '0'),
+      ).join('');
+
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      const identityToken = credential.identityToken;
+      if (!identityToken) throw new Error('No identity token returned from Apple');
+
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: identityToken,
+        nonce: rawNonce,
+      });
+
+      if (error) throw error;
+      // onAuthStateChange handles the rest
+    } catch (error) {
+      console.error('[AuthProvider] Apple sign in error:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
@@ -364,7 +408,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       cleanupRealtimeSubscription();
       await AsyncStorage.removeItem(CACHED_CUSTOMER_KEY);
-      await GoogleSignin.signOut();
+
+      // Only call Google signOut if user signed in with Google
+      const provider = state.session?.user?.app_metadata?.provider;
+      if (provider === 'google') {
+        await GoogleSignin.signOut();
+      }
+
       await supabase.auth.signOut();
     } catch (error) {
       console.error('[AuthProvider] Sign out error:', error);
@@ -381,7 +431,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         customerIds: [],
       });
     }
-  }, [cleanupRealtimeSubscription, state.customer?.id]);
+  }, [cleanupRealtimeSubscription, state.customer?.id, state.session?.user?.app_metadata?.provider]);
 
   const clearNewCustomerFlag = useCallback(() => {
     setState((prev) => ({ ...prev, isNewCustomer: false }));
@@ -432,6 +482,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         signInWithGoogle,
+        signInWithApple,
         signOut,
         refreshCustomer,
         clearNewCustomerFlag,

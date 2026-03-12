@@ -154,8 +154,9 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc pl-6 space-y-2 text-foreground/80 mt-4">
             <li>
               <strong>Social Login Providers:</strong> If you sign in with
-              Google, we receive your name, email, and profile picture from
-              Google
+              Google or Apple, we receive your name, email, and profile
+              picture. We do not access your contacts, files, or other
+              account data from these providers
             </li>
             <li>
               <strong>Analytics Providers:</strong> Aggregated usage statistics
