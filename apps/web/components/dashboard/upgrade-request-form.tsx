@@ -212,7 +212,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
               </p>
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <img
-                  src="/cashG.jfif"
+                  src="/cashG.png"
                   alt="GCash Payment QR Code"
                   className="w-48 h-auto object-contain"
                 />
