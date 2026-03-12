@@ -15,6 +15,7 @@ import {
   Building2,
   Coins,
   Shield,
+  CreditCard,
   Save,
   Upload,
   Loader2,
@@ -1109,6 +1110,39 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+          </Card>
+
+          {/* Billing Card */}
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-green-500/10 rounded-xl">
+                <CreditCard className="w-5 h-5 text-green-500" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold">Billing</h2>
+                <p className="text-sm text-gray-500">
+                  Manage your plan and invoices
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push('/dashboard/settings/billing')}
+              className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-background rounded-lg">
+                  <CreditCard className="w-4 h-4 text-gray-500" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Plan & Invoices</p>
+                  <p className="text-sm text-gray-500">
+                    View your subscription and billing history
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
+            </button>
           </Card>
 
           {/* Security Card */}
