@@ -121,14 +121,19 @@ export async function POST(request: Request) {
     const service = createServiceClient();
     const adminService = createAdminServiceClient();
 
-    // Check user is on Free plan (no active subscription)
+    // Check user is not already on a paid (enterprise) plan
     const { data: existingSub } = await service
       .from('subscriptions')
-      .select('id, status')
+      .select('id, status, plan_id, plans:plan_id(name)')
       .eq('business_id', business.id)
       .maybeSingle();
 
-    if (existingSub && ['active', 'trialing'].includes(existingSub.status)) {
+    if (
+      existingSub &&
+      ['active', 'trialing'].includes(existingSub.status) &&
+      existingSub.plans &&
+      (existingSub.plans as unknown as { name: string }).name !== 'free'
+    ) {
       return NextResponse.json(
         { error: 'You already have an active subscription' },
         { status: 400 }
