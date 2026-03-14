@@ -28,6 +28,7 @@ interface UserData {
   name: string;
   email: string;
   businessName: string;
+  logoUrl: string | null;
   role: 'owner' | 'manager' | 'cashier';
 }
 
@@ -50,6 +51,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     name: '',
     email: '',
     businessName: '',
+    logoUrl: null,
     role: 'owner',
   });
 
@@ -79,7 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         const { data: business } = await supabase
           .from('businesses')
-          .select('name')
+          .select('name, logo_url')
           .eq('owner_id', user.id)
           .maybeSingle();
 
@@ -94,6 +96,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           email: user.email || '',
           businessName:
             business?.name || metadata.business_name || 'My Business',
+          logoUrl: business?.logo_url || null,
           role: 'owner',
         });
 
@@ -214,11 +217,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           ) : (
             <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
-                <span className="text-sidebar-primary-foreground font-bold">
-                  {userData.businessName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {userData.logoUrl ? (
+                <img
+                  src={userData.logoUrl}
+                  alt={userData.businessName}
+                  className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
+                  <span className="text-sidebar-primary-foreground font-bold">
+                    {userData.businessName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
                   {userData.businessName}
