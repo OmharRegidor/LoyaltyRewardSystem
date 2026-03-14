@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Reward {
   id: string;
@@ -40,6 +51,8 @@ export function RewardsGrid({
   onView,
   onEdit,
 }: RewardsGridProps) {
+  const [deleteTarget, setDeleteTarget] = useState<Reward | null>(null);
+
   if (rewards.length === 0) {
     return (
       <Card className="p-12 text-center bg-white">
@@ -77,7 +90,7 @@ export function RewardsGrid({
           {viewMode === 'grid' ? (
             <RewardCard
               reward={reward}
-              onDelete={onDelete}
+              onDelete={() => setDeleteTarget(reward)}
               onToggleStatus={onToggleStatus}
               onView={onView}
               onEdit={onEdit}
@@ -85,7 +98,7 @@ export function RewardsGrid({
           ) : (
             <RewardListItem
               reward={reward}
-              onDelete={onDelete}
+              onDelete={() => setDeleteTarget(reward)}
               onToggleStatus={onToggleStatus}
               onView={onView}
               onEdit={onEdit}
@@ -93,6 +106,41 @@ export function RewardsGrid({
           )}
         </motion.div>
       ))}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reward</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-gray-700">
+                &ldquo;{deleteTarget?.title}&rdquo;
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                if (deleteTarget) {
+                  onDelete(deleteTarget.id);
+                  setDeleteTarget(null);
+                }
+              }}
+            >
+              Delete Forever
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
@@ -105,7 +153,7 @@ function RewardCard({
   onEdit,
 }: {
   reward: Reward;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
   onToggleStatus: (id: string) => void;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -197,7 +245,7 @@ function RewardCard({
               Edit
             </button>
             <button
-              onClick={() => onDelete(reward.id)}
+              onClick={onDelete}
               className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
             >
               <Trash2 className="w-4 h-4" />
@@ -230,7 +278,7 @@ function RewardCard({
                   <Edit className="w-4 h-4" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onClick={() => onDelete(reward.id)}>
+                <DropdownMenuItem variant="destructive" onClick={onDelete}>
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </DropdownMenuItem>
@@ -251,7 +299,7 @@ function RewardListItem({
   onEdit,
 }: {
   reward: Reward;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
   onToggleStatus: (id: string) => void;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
@@ -335,7 +383,7 @@ function RewardListItem({
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => onDelete(reward.id)}
+                  onClick={onDelete}
                   className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -368,7 +416,7 @@ function RewardListItem({
                       <Edit className="w-4 h-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(reward.id)}>
+                    <DropdownMenuItem variant="destructive" onClick={onDelete}>
                       <Trash2 className="w-4 h-4" />
                       Delete
                     </DropdownMenuItem>
