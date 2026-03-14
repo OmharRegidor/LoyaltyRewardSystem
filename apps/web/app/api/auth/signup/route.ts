@@ -13,7 +13,7 @@ const signupSchema = z.object({
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/[0-9]/, 'Password must contain a number'),
   businessName: z.string().min(2).max(100),
-  businessType: z.enum(['retail', 'restaurant', 'salon', 'hotel']),
+  businessType: z.enum(['retail', 'restaurant', 'salon', 'hotel', 'healthcare', 'barbershop', 'rice_business']),
   phone: z.string().regex(/^\+63\d{10}$/, 'Invalid Philippine phone number'),
 });
 

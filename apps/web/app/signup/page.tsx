@@ -558,6 +558,9 @@ export default function SignupPage() {
                   <option value="restaurant">Restaurants & Cafés</option>
                   <option value="salon">Salons & Spas</option>
                   <option value="hotel">Hotels & Travel</option>
+                  <option value="healthcare">Health Care</option>
+                  <option value="barbershop">Barber Shop</option>
+                  <option value="rice_business">Rice Business</option>
                 </select>
                 {validationErrors.businessType && (
                   <p className="text-red-500 text-sm mt-1">

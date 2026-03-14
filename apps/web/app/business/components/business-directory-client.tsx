@@ -22,6 +22,9 @@ const BUSINESS_TYPES = [
   { value: 'restaurant', label: 'Restaurants & Cafés' },
   { value: 'salon', label: 'Salons & Spas' },
   { value: 'hotel', label: 'Hotels & Travel' },
+  { value: 'healthcare', label: 'Health Care' },
+  { value: 'barbershop', label: 'Barber Shop' },
+  { value: 'rice_business', label: 'Rice Business' },
 ];
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = Object.fromEntries(

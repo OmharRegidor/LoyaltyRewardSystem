@@ -38,6 +38,9 @@ import {
   UtensilsCrossed,
   Scissors,
   Hotel,
+  HeartPulse,
+  ScissorsLineDashed,
+  Wheat,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -100,6 +103,9 @@ const BUSINESS_TYPES = [
   { value: 'restaurant', label: 'Restaurants & Cafés', icon: UtensilsCrossed },
   { value: 'salon', label: 'Salons & Spas', icon: Scissors },
   { value: 'hotel', label: 'Hotels & Travel', icon: Hotel },
+  { value: 'healthcare', label: 'Health Care', icon: HeartPulse },
+  { value: 'barbershop', label: 'Barber Shop', icon: ScissorsLineDashed },
+  { value: 'rice_business', label: 'Rice Business', icon: Wheat },
 ];
 
 const POINTS_RATE_PRESETS = [

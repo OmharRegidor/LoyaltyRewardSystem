@@ -61,7 +61,12 @@ export function CreateRewardModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.pointsCost || !formData.stock) {
+    if (
+      !formData.title ||
+      !formData.pointsCost ||
+      !formData.stock ||
+      isUploadingImage
+    ) {
       return;
     }
 
@@ -146,6 +151,9 @@ export function CreateRewardModal({
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
+
+      // Reset file input so the same file can be re-selected
+      e.target.value = '';
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -355,6 +363,7 @@ export function CreateRewardModal({
               type="submit"
               disabled={
                 isSubmitting ||
+                isUploadingImage ||
                 !formData.title ||
                 !formData.pointsCost ||
                 !formData.stock
@@ -364,6 +373,11 @@ export function CreateRewardModal({
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
+                </>
+              ) : isUploadingImage ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading image...
                 </>
               ) : (
                 'Save Reward'
