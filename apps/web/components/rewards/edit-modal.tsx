@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
+
 interface Reward {
   id: string;
   title: string;
@@ -33,6 +35,7 @@ interface Reward {
   image: string;
   isVisible: boolean;
   expiryDate?: string;
+  tierRequired: TierLevel;
 }
 
 interface UpdateRewardData {
@@ -45,6 +48,7 @@ interface UpdateRewardData {
   expiryDate?: string;
   image?: string;
   isVisible: boolean;
+  tierRequired: TierLevel;
 }
 
 interface EditRewardModalProps {
@@ -73,6 +77,7 @@ export function EditRewardModal({
     expiryDate: '',
     image: '/reward-item.png',
     isVisible: true,
+    tierRequired: 'bronze' as TierLevel,
   });
 
   // Populate form when reward changes
@@ -88,6 +93,7 @@ export function EditRewardModal({
         expiryDate: reward.expiryDate ? reward.expiryDate.split('T')[0] : '',
         image: reward.image || '/reward-item.png',
         isVisible: reward.isVisible,
+        tierRequired: reward.tierRequired || 'bronze',
       });
       // Set initial image preview from existing reward
       setImagePreview(reward.image || null);
@@ -120,6 +126,7 @@ export function EditRewardModal({
         expiryDate: formData.expiryDate || undefined,
         image: formData.image,
         isVisible: formData.isVisible,
+        tierRequired: formData.tierRequired,
       });
     } catch (error) {
       console.error('Error updating reward:', error);
@@ -353,6 +360,32 @@ export function EditRewardModal({
                     <SelectItem value="Product">Product</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Tier Required
+                </label>
+                <Select
+                  value={formData.tierRequired}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tierRequired: value as TierLevel })
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bronze">🥉 Bronze (All members)</SelectItem>
+                    <SelectItem value="silver">🥈 Silver (500+ pts)</SelectItem>
+                    <SelectItem value="gold">🥇 Gold (2,000+ pts)</SelectItem>
+                    <SelectItem value="platinum">💎 Platinum (5,000+ pts)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Only members at this tier or above can redeem
+                </p>
               </div>
 
               <div>

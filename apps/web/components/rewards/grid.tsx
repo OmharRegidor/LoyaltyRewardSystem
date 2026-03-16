@@ -22,6 +22,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
+
+const TIER_CONFIG: Record<TierLevel, { label: string; emoji: string; color: string }> = {
+  bronze: { label: 'Bronze', emoji: '🥉', color: 'bg-amber-100 text-amber-800' },
+  silver: { label: 'Silver', emoji: '🥈', color: 'bg-gray-200 text-gray-700' },
+  gold: { label: 'Gold', emoji: '🥇', color: 'bg-yellow-100 text-yellow-800' },
+  platinum: { label: 'Platinum', emoji: '💎', color: 'bg-purple-100 text-purple-800' },
+};
+
 interface Reward {
   id: string;
   title: string;
@@ -32,6 +41,7 @@ interface Reward {
   status: 'active' | 'inactive';
   image: string;
   isVisible?: boolean;
+  tierRequired?: TierLevel;
 }
 
 interface RewardsGridProps {
@@ -183,6 +193,14 @@ function RewardCard({
           alt={reward.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
         />
+        {/* Tier Badge */}
+        {reward.tierRequired && reward.tierRequired !== 'bronze' && (
+          <div className="absolute top-3 left-3">
+            <Badge className={TIER_CONFIG[reward.tierRequired].color}>
+              {TIER_CONFIG[reward.tierRequired].emoji} {TIER_CONFIG[reward.tierRequired].label}
+            </Badge>
+          </div>
+        )}
         {/* Status Badge */}
         <div className="absolute top-3 right-3">
           <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>

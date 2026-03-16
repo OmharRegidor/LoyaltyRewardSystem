@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
+
 interface CreateRewardData {
   title: string;
   description: string;
@@ -31,6 +33,7 @@ interface CreateRewardData {
   category: string;
   expiryDate?: string;
   image?: string;
+  tierRequired: TierLevel;
 }
 
 interface CreateRewardModalProps {
@@ -56,6 +59,7 @@ export function CreateRewardModal({
     category: 'Food',
     expiryDate: '',
     image: '/reward-item.png',
+    tierRequired: 'bronze' as TierLevel,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,6 +85,7 @@ export function CreateRewardModal({
         category: formData.category,
         expiryDate: formData.expiryDate || undefined,
         image: formData.image,
+        tierRequired: formData.tierRequired,
       });
 
       // Reset form after successful creation
@@ -92,6 +97,7 @@ export function CreateRewardModal({
         category: 'Food',
         expiryDate: '',
         image: '/reward-item.png',
+        tierRequired: 'bronze' as TierLevel,
       });
 
       setImagePreview(null);
@@ -327,6 +333,32 @@ export function CreateRewardModal({
                     <SelectItem value="Product">Product</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Tier Required
+                </label>
+                <Select
+                  value={formData.tierRequired}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tierRequired: value as TierLevel })
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bronze">🥉 Bronze (All members)</SelectItem>
+                    <SelectItem value="silver">🥈 Silver (500+ pts)</SelectItem>
+                    <SelectItem value="gold">🥇 Gold (2,000+ pts)</SelectItem>
+                    <SelectItem value="platinum">💎 Platinum (5,000+ pts)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Only members at this tier or above can redeem
+                </p>
               </div>
 
               <div>

@@ -17,6 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 // TYPES
 // ============================================
 
+export type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
+
 export interface Reward {
   id: string;
   title: string;
@@ -28,6 +30,7 @@ export interface Reward {
   image: string;
   isVisible: boolean;
   expiryDate?: string;
+  tierRequired: TierLevel;
 }
 
 interface RewardFromDB {
@@ -42,6 +45,7 @@ interface RewardFromDB {
   image_url: string | null;
   created_at: string | null;
   valid_until: string | null;
+  tier_required: string | null;
 }
 
 export interface CreateRewardData {
@@ -52,6 +56,7 @@ export interface CreateRewardData {
   category: string;
   expiryDate?: string;
   image?: string;
+  tierRequired: TierLevel;
 }
 
 export interface UpdateRewardData extends CreateRewardData {
@@ -127,6 +132,7 @@ export default function RewardsPage() {
           image: r.image_url || '/reward-item.png',
           isVisible: r.is_visible ?? true,
           expiryDate: r.valid_until || undefined,
+          tierRequired: (r.tier_required as TierLevel) || 'bronze',
         }),
       );
 
@@ -169,6 +175,7 @@ export default function RewardsPage() {
           is_active: true,
           is_visible: true,
           valid_until: newReward.expiryDate || null,
+          tier_required: newReward.tierRequired,
         })
         .select()
         .single();
@@ -189,6 +196,7 @@ export default function RewardsPage() {
         image: data.image_url || '/reward-item.png',
         isVisible: true,
         expiryDate: data.valid_until || undefined,
+        tierRequired: newReward.tierRequired,
       };
 
       setRewards([createdReward, ...rewards]);
@@ -217,6 +225,7 @@ export default function RewardsPage() {
           image_url: updatedReward.image || null,
           is_visible: updatedReward.isVisible,
           valid_until: updatedReward.expiryDate || null,
+          tier_required: updatedReward.tierRequired,
         })
         .eq('id', updatedReward.id)
         .select()
@@ -245,6 +254,7 @@ export default function RewardsPage() {
                     ? 'active'
                     : 'inactive',
                 expiryDate: data.valid_until || undefined,
+                tierRequired: updatedReward.tierRequired,
               }
             : r,
         ),
