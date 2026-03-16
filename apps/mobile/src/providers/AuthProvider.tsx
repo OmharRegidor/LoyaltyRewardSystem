@@ -22,6 +22,7 @@ import type { Customer } from '../types/database.types';
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
 });
 
 interface AuthState {
@@ -334,7 +335,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      await GoogleSignin.hasPlayServices();
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices();
+      }
       const signInResult = await GoogleSignin.signIn();
       const idToken = signInResult.data?.idToken;
 

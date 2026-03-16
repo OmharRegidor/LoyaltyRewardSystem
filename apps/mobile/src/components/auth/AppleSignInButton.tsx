@@ -6,9 +6,10 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 
 interface AppleSignInButtonProps {
   onPress: () => void;
+  disabled?: boolean;
 }
 
-export function AppleSignInButton({ onPress }: AppleSignInButtonProps) {
+export function AppleSignInButton({ onPress, disabled = false }: AppleSignInButtonProps) {
   const [isAvailable, setIsAvailable] = useState(false);
 
   useEffect(() => {
@@ -20,13 +21,13 @@ export function AppleSignInButton({ onPress }: AppleSignInButtonProps) {
   if (!isAvailable) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, disabled && styles.disabled]}>
       <AppleAuthentication.AppleAuthenticationButton
         buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
         buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
         cornerRadius={16}
         style={styles.button}
-        onPress={onPress}
+        onPress={disabled ? undefined : onPress}
       />
     </View>
   );
@@ -39,5 +40,9 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 52,
+  },
+  disabled: {
+    opacity: 0.5,
+    pointerEvents: 'none' as const,
   },
 });

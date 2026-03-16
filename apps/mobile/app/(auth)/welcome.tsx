@@ -26,9 +26,10 @@ const FEATURES = [
 ];
 
 export default function WelcomeScreen() {
-  const { signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
+  const { signInWithGoogle, signInWithApple, user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [signingIn, setSigningIn] = useState<'google' | 'apple' | null>(null);
 
   React.useEffect(() => {
     if (user) {
@@ -39,22 +40,28 @@ export default function WelcomeScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setError(null);
+      setSigningIn('google');
       await signInWithGoogle();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);
       Alert.alert('Sign In Failed', message);
+    } finally {
+      setSigningIn(null);
     }
   };
 
   const handleAppleSignIn = async () => {
     try {
       setError(null);
+      setSigningIn('apple');
       await signInWithApple();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);
       Alert.alert('Sign In Failed', message);
+    } finally {
+      setSigningIn(null);
     }
   };
 
@@ -105,12 +112,13 @@ export default function WelcomeScreen() {
           {/* Action Section */}
           <View style={styles.actions}>
             {Platform.OS === 'ios' && (
-              <AppleSignInButton onPress={handleAppleSignIn} />
+              <AppleSignInButton onPress={handleAppleSignIn} disabled={signingIn !== null} />
             )}
 
             <GoogleSignInButton
               onPress={handleGoogleSignIn}
-              loading={isLoading}
+              loading={signingIn === 'google'}
+              disabled={signingIn !== null}
             />
 
             {error && <Text style={styles.errorText}>{error}</Text>}
