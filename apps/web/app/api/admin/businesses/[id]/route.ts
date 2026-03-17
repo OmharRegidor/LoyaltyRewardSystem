@@ -218,108 +218,109 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Business not found' }, { status: 404 });
   }
 
-  // Get IDs needed for cascading deletes
-  const [salesRes, invoicesRes, customerBizRes] = await Promise.all([
-    service.from('sales').select('id').eq('business_id', id),
-    service.from('manual_invoices').select('id').eq('business_id', id),
-    service.from('customer_businesses').select('customer_id').eq('business_id', id),
-  ]);
+  try {
+    // Get IDs needed for cascading deletes
+    const [salesRes, invoicesRes, customerBizRes, staffRes] = await Promise.all([
+      service.from('sales').select('id').eq('business_id', id),
+      service.from('manual_invoices').select('id').eq('business_id', id),
+      service.from('customer_businesses').select('customer_id').eq('business_id', id),
+      service.from('staff').select('id').eq('business_id', id),
+    ]);
 
-  const saleIds = (salesRes.data ?? []).map((s: { id: string }) => s.id);
-  const invoiceIds = (invoicesRes.data ?? []).map((i: { id: string }) => i.id);
-  const customerIds = (customerBizRes.data ?? []).map((c: { customer_id: string }) => c.customer_id);
+    const saleIds = (salesRes.data ?? []).map((s: { id: string }) => s.id);
+    const invoiceIds = (invoicesRes.data ?? []).map((i: { id: string }) => i.id);
+    const customerIds = (customerBizRes.data ?? []).map((c: { customer_id: string }) => c.customer_id);
+    const staffIds = (staffRes.data ?? []).map((s: { id: string }) => s.id);
 
-  // Delete in correct FK dependency order (deepest children first)
-  // Layer 1: Tables referencing sales, manual_invoices
-  if (saleIds.length > 0) {
-    await service.from('sale_items').delete().in('sale_id', saleIds);
-  }
-  if (invoiceIds.length > 0) {
-    await service.from('manual_invoice_payments').delete().in('invoice_id', invoiceIds);
-  }
-
-  // Layer 2: Tables referencing rewards, customers, products, branches (via business_id)
-  await Promise.all([
-    service.from('stock_movements').delete().eq('business_id', id),
-    service.from('sales').delete().eq('business_id', id),
-    service.from('referral_completions').delete().eq('business_id', id),
-    service.from('scan_logs').delete().eq('business_id', id),
-    service.from('verification_codes').delete().eq('business_id', id),
-  ]);
-
-  // Layer 3: Tables with FK to rewards/customers that also reference business_id
-  await Promise.all([
-    service.from('redemptions').delete().eq('business_id', id),
-    service.from('transactions').delete().eq('business_id', id),
-    service.from('notifications').delete().eq('business_id', id),
-  ]);
-
-  // Layer 4: push_tokens for customers of this business (references customers, not business_id)
-  if (customerIds.length > 0) {
-    await service.from('push_tokens').delete().in('customer_id', customerIds);
-  }
-
-  // Layer 5: rewards, referral_codes, customer_businesses
-  await Promise.all([
-    service.from('rewards').delete().eq('business_id', id),
-    service.from('referral_codes').delete().eq('business_id', id),
-    service.from('customer_businesses').delete().eq('business_id', id),
-  ]);
-
-  // Layer 6: customers created by this business (only orphans not linked to other businesses)
-  if (customerIds.length > 0) {
-    // Re-check which customers still have links to other businesses
-    const { data: stillLinked } = await service
-      .from('customer_businesses')
-      .select('customer_id')
-      .in('customer_id', customerIds);
-    const stillLinkedIds = new Set((stillLinked ?? []).map((c: { customer_id: string }) => c.customer_id));
-    const orphanIds = customerIds.filter((cid: string) => !stillLinkedIds.has(cid));
-    if (orphanIds.length > 0) {
-      await service.from('customers').delete().in('id', orphanIds);
+    // Layer 1: Deepest children (sale_items → sales, manual_invoice_payments → manual_invoices, staff_services → staff)
+    if (saleIds.length > 0) {
+      await service.from('sale_items').delete().in('sale_id', saleIds);
     }
-  }
+    if (invoiceIds.length > 0) {
+      await service.from('manual_invoice_payments').delete().in('invoice_id', invoiceIds);
+    }
+    if (staffIds.length > 0) {
+      await (service.from as (table: string) => ReturnType<typeof service.from>)('staff_services').delete().in('staff_id', staffIds);
+    }
 
-  // Layer 7: staff, staff_invites (staff references branches)
-  await Promise.all([
-    service.from('staff_invites').delete().eq('business_id', id),
-    service.from('staff').delete().eq('business_id', id),
-  ]);
+    // Layer 2: Tables with business_id that are referenced by nothing or already cleared
+    await service.from('stock_movements').delete().eq('business_id', id);
+    await service.from('sales').delete().eq('business_id', id);
+    await service.from('referral_completions').delete().eq('business_id', id);
+    await service.from('scan_logs').delete().eq('business_id', id);
+    await service.from('verification_codes').delete().eq('business_id', id);
 
-  // Layer 8: branches, products, invoices, payments, subscriptions, etc.
-  await Promise.all([
-    service.from('branches').delete().eq('business_id', id),
-    service.from('products').delete().eq('business_id', id),
-    service.from('manual_invoices').delete().eq('business_id', id),
-    service.from('invoices').delete().eq('business_id', id),
-    service.from('payment_history').delete().eq('business_id', id),
-    service.from('payments').delete().eq('business_id', id),
-    service.from('subscriptions').delete().eq('business_id', id),
-    service.from('upgrade_requests').delete().eq('business_id', id),
-    service.from('usage_tracking').delete().eq('business_id', id),
-    service.from('audit_logs').delete().eq('business_id', id),
-    service.from('admin_notes').delete().eq('business_id', id),
-    service.from('admin_tags').delete().eq('business_id', id),
-    service.from('admin_plan_changes').delete().eq('business_id', id),
-  ]);
+    // Layer 3: Tables with FK to rewards/customers
+    await service.from('redemptions').delete().eq('business_id', id);
+    await service.from('transactions').delete().eq('business_id', id);
+    await service.from('notifications').delete().eq('business_id', id);
 
-  // Layer 9: Delete the business itself
-  const { error: bizError } = await service
-    .from('businesses')
-    .delete()
-    .eq('id', id);
+    // Layer 4: push_tokens for customers of this business
+    if (customerIds.length > 0) {
+      await service.from('push_tokens').delete().in('customer_id', customerIds);
+    }
 
-  if (bizError) {
+    // Layer 5: rewards, referral_codes, customer_businesses
+    await service.from('rewards').delete().eq('business_id', id);
+    await service.from('referral_codes').delete().eq('business_id', id);
+    await service.from('customer_businesses').delete().eq('business_id', id);
+
+    // Layer 6: orphaned customers
+    if (customerIds.length > 0) {
+      const { data: stillLinked } = await service
+        .from('customer_businesses')
+        .select('customer_id')
+        .in('customer_id', customerIds);
+      const stillLinkedIds = new Set((stillLinked ?? []).map((c: { customer_id: string }) => c.customer_id));
+      const orphanIds = customerIds.filter((cid: string) => !stillLinkedIds.has(cid));
+      if (orphanIds.length > 0) {
+        await service.from('customers').delete().in('id', orphanIds);
+      }
+    }
+
+    // Layer 7: staff_invites, staff (staff_services already cleared)
+    await service.from('staff_invites').delete().eq('business_id', id);
+    await service.from('staff').delete().eq('business_id', id);
+
+    // Layer 8: Everything else
+    await service.from('branches').delete().eq('business_id', id);
+    await service.from('products').delete().eq('business_id', id);
+    await service.from('manual_invoices').delete().eq('business_id', id);
+    await service.from('invoices').delete().eq('business_id', id);
+    await service.from('payment_history').delete().eq('business_id', id);
+    await service.from('payments').delete().eq('business_id', id);
+    await service.from('subscriptions').delete().eq('business_id', id);
+    await service.from('upgrade_requests').delete().eq('business_id', id);
+    await service.from('usage_tracking').delete().eq('business_id', id);
+    await service.from('audit_logs').delete().eq('business_id', id);
+    await service.from('admin_notes').delete().eq('business_id', id);
+    await service.from('admin_tags').delete().eq('business_id', id);
+    await service.from('admin_plan_changes').delete().eq('business_id', id);
+
+    // Layer 9: Delete the business itself
+    const { error: bizError } = await service
+      .from('businesses')
+      .delete()
+      .eq('id', id);
+
+    if (bizError) {
+      return NextResponse.json(
+        { error: `Failed to delete business: ${bizError.message}` },
+        { status: 500 },
+      );
+    }
+
+    // Delete the auth user if owner_id exists
+    if (business.owner_id) {
+      await service.auth.admin.deleteUser(business.owner_id);
+    }
+
+    return NextResponse.json({ success: true, name: business.name });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to delete business: ${bizError.message}` },
+      { error: `Delete failed: ${message}` },
       { status: 500 },
     );
   }
-
-  // Delete the auth user if owner_id exists
-  if (business.owner_id) {
-    await service.auth.admin.deleteUser(business.owner_id);
-  }
-
-  return NextResponse.json({ success: true, name: business.name });
 }

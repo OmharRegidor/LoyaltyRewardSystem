@@ -109,17 +109,21 @@ export function BusinessListTable({
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const results = await Promise.all(
-        deleteTarget.ids.map((id) =>
-          fetch(`/api/admin/businesses/${id}`, { method: 'DELETE' }),
-        ),
-      );
-      const allOk = results.every((r) => r.ok);
-      if (allOk) {
+      const errors: string[] = [];
+      for (const id of deleteTarget.ids) {
+        const res = await fetch(`/api/admin/businesses/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: 'Unknown error' }));
+          const name = deleteTarget.names[deleteTarget.ids.indexOf(id)];
+          errors.push(`${name}: ${body.error ?? 'Unknown error'}`);
+        }
+      }
+      if (errors.length === 0) {
         onClearSelected();
         onRefresh();
       } else {
-        window.alert('Some businesses failed to delete. Please try again.');
+        window.alert(`Failed to delete:\n\n${errors.join('\n')}`);
+        onRefresh();
       }
     } catch {
       window.alert('Failed to delete. Please try again.');
