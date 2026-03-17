@@ -116,22 +116,22 @@ export default function WelcomeScreen() {
 
           {/* Action Section */}
           <View style={styles.actions}>
-            {isSigningIn && (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Signing you in...</Text>
-              </View>
-            )}
-
             {Platform.OS === 'ios' && (
               <AppleSignInButton onPress={handleAppleSignIn} disabled={isSigningIn} />
             )}
 
             <GoogleSignInButton
               onPress={handleGoogleSignIn}
-              loading={signingIn === 'google'}
+              loading={signingIn === 'google' || (isLoading && signingIn !== 'apple')}
               disabled={isSigningIn}
             />
+
+            {signingIn === 'apple' && isLoading && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Signing you in...</Text>
+              </View>
+            )}
 
             {error && <Text style={styles.errorText}>{error}</Text>}
 
