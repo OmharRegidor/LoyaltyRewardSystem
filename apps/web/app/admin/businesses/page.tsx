@@ -144,7 +144,7 @@ function AdminBusinessesContent() {
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
-        <BusinessListTable data={data} filters={filters} searchInput={searchInput} selected={selected} onSearchInput={setSearchInput} onFilterChange={handleFilterChange} onToggleSelect={handleToggleSelect} onToggleSelectAll={handleToggleSelectAll} onClearSelected={handleClearSelected} />
+        <BusinessListTable data={data} filters={filters} searchInput={searchInput} selected={selected} onSearchInput={setSearchInput} onFilterChange={handleFilterChange} onToggleSelect={handleToggleSelect} onToggleSelectAll={handleToggleSelectAll} onClearSelected={handleClearSelected} onRefresh={() => fetchData(true)} />
       </div>
     </AdminLayout>
   );

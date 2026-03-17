@@ -196,3 +196,70 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   return NextResponse.json(response);
 }
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const user = await getApiUser();
+
+  if (!user || !isAdmin(user.role)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const service = createAdminServiceClient();
+
+  // Verify business exists
+  const { data: business } = await service
+    .from('businesses')
+    .select('id, name, owner_id')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!business) {
+    return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+  }
+
+  // Delete related data in order (child tables first)
+  const deletions = [
+    service.from('admin_notes').delete().eq('business_id', id),
+    service.from('admin_tags').delete().eq('business_id', id),
+    service.from('admin_plan_changes').delete().eq('business_id', id),
+    service.from('notifications').delete().eq('business_id', id),
+    service.from('redemptions').delete().eq('business_id', id),
+    service.from('transactions').delete().eq('business_id', id),
+    service.from('rewards').delete().eq('business_id', id),
+    service.from('customer_businesses').delete().eq('business_id', id),
+    service.from('staff').delete().eq('business_id', id),
+    service.from('branches').delete().eq('business_id', id),
+    service.from('subscriptions').delete().eq('business_id', id),
+    service.from('manual_invoice_payments').delete().in(
+      'invoice_id',
+      (await service.from('manual_invoices').select('id').eq('business_id', id)).data?.map((i: { id: string }) => i.id) ?? [],
+    ),
+    service.from('manual_invoices').delete().eq('business_id', id),
+    service.from('invoices').delete().eq('business_id', id),
+    service.from('referral_codes').delete().eq('business_id', id),
+    service.from('products').delete().eq('business_id', id),
+  ];
+
+  await Promise.all(deletions);
+
+  // Delete the business itself
+  const { error: bizError } = await service
+    .from('businesses')
+    .delete()
+    .eq('id', id);
+
+  if (bizError) {
+    return NextResponse.json(
+      { error: `Failed to delete business: ${bizError.message}` },
+      { status: 500 },
+    );
+  }
+
+  // Delete the auth user if owner_id exists
+  if (business.owner_id) {
+    await service.auth.admin.deleteUser(business.owner_id);
+  }
+
+  return NextResponse.json({ success: true, name: business.name });
+}

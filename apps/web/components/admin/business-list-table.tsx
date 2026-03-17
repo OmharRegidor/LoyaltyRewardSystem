@@ -1,7 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Search,
   ChevronUp,
@@ -12,6 +23,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import type {
   AdminBusinessStats,
@@ -42,6 +55,12 @@ interface BusinessListTableProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onClearSelected: () => void;
+  onRefresh: () => void;
+}
+
+interface DeleteTarget {
+  ids: string[];
+  names: string[];
 }
 
 // ============================================
@@ -58,6 +77,7 @@ export function BusinessListTable({
   onToggleSelect,
   onToggleSelectAll,
   onClearSelected,
+  onRefresh,
 }: BusinessListTableProps) {
   const { businesses, totalCount, facets } = data;
   const pageSize = 20;
@@ -68,6 +88,46 @@ export function BusinessListTable({
 
   const allOnPageSelected =
     businesses.length > 0 && businesses.every((b) => selected.has(b.id));
+
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteSingle = (biz: AdminBusinessStats) => {
+    setDeleteTarget({ ids: [biz.id], names: [biz.name] });
+  };
+
+  const handleDeleteSelected = () => {
+    const targets = businesses.filter((b) => selected.has(b.id));
+    if (targets.length === 0) return;
+    setDeleteTarget({
+      ids: targets.map((b) => b.id),
+      names: targets.map((b) => b.name),
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const results = await Promise.all(
+        deleteTarget.ids.map((id) =>
+          fetch(`/api/admin/businesses/${id}`, { method: 'DELETE' }),
+        ),
+      );
+      const allOk = results.every((r) => r.ok);
+      if (allOk) {
+        onClearSelected();
+        onRefresh();
+      } else {
+        window.alert('Some businesses failed to delete. Please try again.');
+      }
+    } catch {
+      window.alert('Failed to delete. Please try again.');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -183,6 +243,13 @@ export function BusinessListTable({
             Tag
           </button>
           <button
+            onClick={handleDeleteSelected}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-sm rounded-md border border-red-200 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete
+          </button>
+          <button
             onClick={onClearSelected}
             className="text-sm text-gray-400 hover:text-gray-700 transition-colors ml-auto"
           >
@@ -248,6 +315,7 @@ export function BusinessListTable({
                   currentOrder={filters.order}
                   onSort={(col) => handleSort(col, filters, onFilterChange)}
                 />
+                <th className="px-4 py-4 text-gray-500 font-medium w-16"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -297,12 +365,21 @@ export function BusinessListTable({
                       ? new Date(biz.created_at).toLocaleDateString()
                       : '-'}
                   </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteSingle(biz); }}
+                      className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete business"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {businesses.length === 0 && (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-6 py-12 text-center text-gray-400"
                   >
                     {hasActiveFilters
@@ -326,6 +403,46 @@ export function BusinessListTable({
           onPageChange={(p) => onFilterChange('page', p)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget && deleteTarget.ids.length > 1 ? `${deleteTarget.ids.length} businesses` : 'business'}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will permanently delete {deleteTarget && deleteTarget.ids.length > 1 ? 'these businesses' : 'this business'}, including all customers, transactions, rewards, staff, and the owner account. This action cannot be undone.
+                </p>
+                {deleteTarget && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-32 overflow-y-auto">
+                    {deleteTarget.names.map((name, i) => (
+                      <p key={i} className="text-sm font-medium text-red-700">{name}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                'Delete permanently'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
