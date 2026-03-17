@@ -794,13 +794,18 @@ export default function SettingsPage() {
                           {profile.businessType && (() => {
                             const selected = BUSINESS_TYPES.find(t => t.value === profile.businessType);
                             if (!selected) return 'Select type';
+                            if (selected.value === 'others' && customBusinessType) {
+                              return (
+                                <span className="flex items-center gap-2">
+                                  {customBusinessType}
+                                </span>
+                              );
+                            }
                             const Icon = selected.icon;
                             return (
                               <span className="flex items-center gap-2">
                                 <Icon className="w-4 h-4 text-muted-foreground" />
-                                {selected.value === 'others' && customBusinessType
-                                  ? customBusinessType
-                                  : selected.label}
+                                {selected.label}
                               </span>
                             );
                           })()}
@@ -833,9 +838,6 @@ export default function SettingsPage() {
                         placeholder="Please specify your business type"
                         maxLength={100}
                       />
-                    )}
-                    {profile.businessType === 'others' && !isEditing && customBusinessType && (
-                      <p className="text-sm text-muted-foreground mt-1">{customBusinessType}</p>
                     )}
                   </div>
                 </div>
