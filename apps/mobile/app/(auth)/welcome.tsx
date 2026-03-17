@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,10 +27,13 @@ const FEATURES = [
 ];
 
 export default function WelcomeScreen() {
-  const { signInWithGoogle, signInWithApple, user } = useAuth();
+  const { signInWithGoogle, signInWithApple, isLoading, user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState<'google' | 'apple' | null>(null);
+
+  // Track if sign-in was initiated (stays true until redirect)
+  const isSigningIn = signingIn !== null || isLoading;
 
   React.useEffect(() => {
     if (user) {
@@ -42,12 +46,13 @@ export default function WelcomeScreen() {
       setError(null);
       setSigningIn('google');
       await signInWithGoogle();
+      // Don't clear signingIn here — let isLoading from AuthProvider keep the loading state
+      // until loadCustomer completes and user is set, triggering the redirect
     } catch (err) {
+      setSigningIn(null);
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);
       Alert.alert('Sign In Failed', message);
-    } finally {
-      setSigningIn(null);
     }
   };
 
@@ -56,12 +61,12 @@ export default function WelcomeScreen() {
       setError(null);
       setSigningIn('apple');
       await signInWithApple();
+      // Don't clear signingIn — keep loading until redirect
     } catch (err) {
+      setSigningIn(null);
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);
       Alert.alert('Sign In Failed', message);
-    } finally {
-      setSigningIn(null);
     }
   };
 
@@ -111,14 +116,21 @@ export default function WelcomeScreen() {
 
           {/* Action Section */}
           <View style={styles.actions}>
+            {isSigningIn && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Signing you in...</Text>
+              </View>
+            )}
+
             {Platform.OS === 'ios' && (
-              <AppleSignInButton onPress={handleAppleSignIn} disabled={signingIn !== null} />
+              <AppleSignInButton onPress={handleAppleSignIn} disabled={isSigningIn} />
             )}
 
             <GoogleSignInButton
               onPress={handleGoogleSignIn}
               loading={signingIn === 'google'}
-              disabled={signingIn !== null}
+              disabled={isSigningIn}
             />
 
             {error && <Text style={styles.errorText}>{error}</Text>}
@@ -211,6 +223,18 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xl,
     paddingBottom: SPACING['2xl'],
     gap: SPACING.base,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.gray[600],
+    fontWeight: '500',
   },
   errorText: {
     color: COLORS.error,
