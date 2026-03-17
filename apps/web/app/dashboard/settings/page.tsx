@@ -41,6 +41,7 @@ import {
   HeartPulse,
   ScissorsLineDashed,
   Wheat,
+  MoreHorizontal,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -90,6 +91,7 @@ interface EditSnapshot {
   inputValues: InputValues;
   selectedPreset: number;
   showCustomInput: boolean;
+  customBusinessType: string;
 }
 
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -106,7 +108,10 @@ const BUSINESS_TYPES = [
   { value: 'healthcare', label: 'Health Care', icon: HeartPulse },
   { value: 'barbershop', label: 'Barber Shop', icon: ScissorsLineDashed },
   { value: 'rice_business', label: 'Rice Business', icon: Wheat },
+  { value: 'others', label: 'Others', icon: MoreHorizontal },
 ];
+
+const KNOWN_BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map((t) => t.value);
 
 const POINTS_RATE_PRESETS = [
   {
@@ -158,6 +163,7 @@ export default function SettingsPage() {
     description: '',
     logoUrl: null,
   });
+  const [customBusinessType, setCustomBusinessType] = useState('');
 
   // Loyalty Settings State
   const [loyalty, setLoyalty] = useState<LoyaltySettings>({
@@ -202,6 +208,7 @@ export default function SettingsPage() {
       inputValues: { ...inputValues },
       selectedPreset,
       showCustomInput,
+      customBusinessType,
     });
     setIsEditing(true);
     setSaveStatus('idle');
@@ -216,6 +223,7 @@ export default function SettingsPage() {
       setInputValues(snapshot.inputValues);
       setSelectedPreset(snapshot.selectedPreset);
       setShowCustomInput(snapshot.showCustomInput);
+      setCustomBusinessType(snapshot.customBusinessType);
     }
     setIsEditing(false);
     setSnapshot(null);
@@ -262,9 +270,12 @@ export default function SettingsPage() {
         const rawPhone = business.phone || metadata.phone || '';
         const cleanPhone = rawPhone.replace(/^\+?63/, '');
 
+        const loadedType = business.business_type || metadata.business_type || '';
+        const isKnownType = KNOWN_BUSINESS_TYPE_VALUES.includes(loadedType);
+
         setProfile({
           businessName: business.name || '',
-          businessType: business.business_type || metadata.business_type || '',
+          businessType: isKnownType ? loadedType : (loadedType ? 'others' : ''),
           phone: cleanPhone,
           ownerEmail: user.email || '',
           address: business.address || '',
@@ -272,6 +283,10 @@ export default function SettingsPage() {
           description: business.description || '',
           logoUrl: business.logo_url,
         });
+
+        if (!isKnownType && loadedType) {
+          setCustomBusinessType(loadedType);
+        }
 
         // Backfill missing fields from auth metadata for existing accounts
         if (!business.business_type || !business.phone || !business.owner_email) {
@@ -407,7 +422,7 @@ export default function SettingsPage() {
         .from('businesses')
         .update({
           name: profile.businessName,
-          business_type: profile.businessType,
+          business_type: profile.businessType === 'others' ? customBusinessType.trim() : profile.businessType,
           phone: profile.phone,
           address: profile.address,
           city: profile.city,
@@ -764,12 +779,15 @@ export default function SettingsPage() {
                     <Select
                       value={profile.businessType}
                       disabled={!isEditing}
-                      onValueChange={(value) =>
+                      onValueChange={(value) => {
                         setProfile((prev) => ({
                           ...prev,
                           businessType: value,
-                        }))
-                      }
+                        }));
+                        if (value !== 'others') {
+                          setCustomBusinessType('');
+                        }
+                      }}
                     >
                       <SelectTrigger className={`w-full px-4 py-2.5 h-auto border rounded-xl transition ${editableStyle} disabled:opacity-100 disabled:cursor-default [&>svg]:opacity-${isEditing ? '50' : '0'}`}>
                         <SelectValue placeholder="Select type">
@@ -780,7 +798,9 @@ export default function SettingsPage() {
                             return (
                               <span className="flex items-center gap-2">
                                 <Icon className="w-4 h-4 text-muted-foreground" />
-                                {selected.label}
+                                {selected.value === 'others' && customBusinessType
+                                  ? customBusinessType
+                                  : selected.label}
                               </span>
                             );
                           })()}
@@ -804,6 +824,19 @@ export default function SettingsPage() {
                         })}
                       </SelectContent>
                     </Select>
+                    {profile.businessType === 'others' && isEditing && (
+                      <input
+                        type="text"
+                        value={customBusinessType}
+                        onChange={(e) => setCustomBusinessType(e.target.value)}
+                        className={`w-full mt-2 px-4 py-2.5 border rounded-xl transition ${editableStyle}`}
+                        placeholder="Please specify your business type"
+                        maxLength={100}
+                      />
+                    )}
+                    {profile.businessType === 'others' && !isEditing && customBusinessType && (
+                      <p className="text-sm text-muted-foreground mt-1">{customBusinessType}</p>
+                    )}
                   </div>
                 </div>
               </div>
