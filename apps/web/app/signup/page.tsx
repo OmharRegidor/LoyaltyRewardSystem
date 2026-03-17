@@ -35,6 +35,7 @@ interface ValidationErrors {
 function validateStep1(
   businessName: string,
   businessType: string,
+  customBusinessType: string,
   phone: string,
 ): ValidationErrors {
   const errors: ValidationErrors = {};
@@ -49,6 +50,8 @@ function validateStep1(
 
   if (!businessType) {
     errors.businessType = 'Please select a business type';
+  } else if (businessType === 'others' && !customBusinessType.trim()) {
+    errors.businessType = 'Please specify your business type';
   }
 
   if (!phone) {
@@ -102,6 +105,7 @@ export default function SignupPage() {
   // Step 1: Business Information
   const [businessName, setBusinessName] = useState('');
   const [businessType, setBusinessType] = useState('');
+  const [customBusinessType, setCustomBusinessType] = useState('');
   const [phone, setPhone] = useState('');
 
   // Step 2: Account Details
@@ -169,7 +173,7 @@ export default function SignupPage() {
     setError('');
 
     if (step === 1) {
-      const errors = validateStep1(businessName, businessType, phone);
+      const errors = validateStep1(businessName, businessType, customBusinessType, phone);
       if (Object.keys(errors).length > 0) {
         setValidationErrors(errors);
         return;
@@ -213,7 +217,7 @@ export default function SignupPage() {
           email,
           password,
           businessName: businessName.trim(),
-          businessType,
+          businessType: businessType === 'others' ? customBusinessType.trim() : businessType,
           phone: `+63${phone}`,
         }),
       });
@@ -280,7 +284,10 @@ export default function SignupPage() {
 
   // Check if step can proceed
   const canProceedStep1 =
-    businessName.trim() && businessType && phone.length === 10;
+    businessName.trim() &&
+    businessType &&
+    (businessType !== 'others' || customBusinessType.trim()) &&
+    phone.length === 10;
   const canProceedStep2 =
     email &&
     password &&
@@ -539,6 +546,9 @@ export default function SignupPage() {
                   value={businessType}
                   onChange={(e) => {
                     setBusinessType(e.target.value);
+                    if (e.target.value !== 'others') {
+                      setCustomBusinessType('');
+                    }
                     if (validationErrors.businessType) {
                       setValidationErrors((prev) => ({
                         ...prev,
@@ -561,7 +571,30 @@ export default function SignupPage() {
                   <option value="healthcare">Health Care</option>
                   <option value="barbershop">Barber Shop</option>
                   <option value="rice_business">Rice Business</option>
+                  <option value="others">Others</option>
                 </select>
+                {businessType === 'others' && (
+                  <input
+                    type="text"
+                    value={customBusinessType}
+                    onChange={(e) => {
+                      setCustomBusinessType(e.target.value);
+                      if (validationErrors.businessType) {
+                        setValidationErrors((prev) => ({
+                          ...prev,
+                          businessType: undefined,
+                        }));
+                      }
+                    }}
+                    placeholder="Please specify your business type"
+                    className={`w-full mt-3 px-4 py-3.5 rounded-xl bg-white border-2 ${
+                      validationErrors.businessType
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-gray-200 focus:border-primary'
+                    } focus:ring-4 focus:ring-primary/10 transition-all text-gray-900`}
+                    maxLength={100}
+                  />
+                )}
                 {validationErrors.businessType && (
                   <p className="text-red-500 text-sm mt-1">
                     {validationErrors.businessType}
@@ -770,7 +803,7 @@ export default function SignupPage() {
                         Business Information
                       </p>
                       <p className="text-sm text-gray-600 mt-1">
-                        {businessName} • {businessType}
+                        {businessName} • {businessType === 'others' ? customBusinessType : businessType}
                       </p>
                     </div>
                   </div>
