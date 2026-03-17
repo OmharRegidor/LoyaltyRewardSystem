@@ -265,7 +265,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     await service.from('referral_codes').delete().eq('business_id', id);
     await service.from('customer_businesses').delete().eq('business_id', id);
 
-    // Layer 6: orphaned customers
+    // Layer 6: Nullify created_by_business_id on customers still linked to other businesses, delete orphans
+    await service.from('customers').update({ created_by_business_id: null }).eq('created_by_business_id', id);
     if (customerIds.length > 0) {
       const { data: stillLinked } = await service
         .from('customer_businesses')
