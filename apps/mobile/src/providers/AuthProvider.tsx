@@ -338,14 +338,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (Platform.OS === 'android') {
         await GoogleSignin.hasPlayServices();
       }
-      const signInResult = await GoogleSignin.signIn();
-      const idToken = signInResult.data?.idToken;
 
+      // iOS Google Sign-In includes a nonce in the id_token,
+      // so we must generate and pass one to both Google and Supabase
+      let rawNonce: string | undefined;
+      let signInResult;
+
+      if (Platform.OS === 'ios') {
+        rawNonce = Array.from(
+          await Crypto.getRandomBytesAsync(32),
+          (byte) => byte.toString(16).padStart(2, '0'),
+        ).join('');
+
+        const hashedNonce = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          rawNonce,
+        );
+
+        signInResult = await GoogleSignin.signIn({ nonce: hashedNonce });
+      } else {
+        signInResult = await GoogleSignin.signIn();
+      }
+
+      const idToken = signInResult.data?.idToken;
       if (!idToken) throw new Error('No ID token returned from Google');
 
       const { error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: idToken,
+        ...(rawNonce ? { nonce: rawNonce } : {}),
       });
 
       if (error) throw error;
