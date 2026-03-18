@@ -1,12 +1,13 @@
 // app/(main)/profile.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +16,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Badge } from '../../src/components/ui/Badge';
+import { supabase } from '../../src/lib/supabase';
 import {
   COLORS,
   SPACING,
@@ -42,11 +44,74 @@ export default function ProfileScreen() {
   const email = user?.email || '';
   const avatarUrl = user?.user_metadata?.avatar_url || null;
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleSignOut = async () => {
     try {
       await signOut();
     } catch (error) {
       console.error('Sign out error:', error);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? All your points, rewards, and data will be lost. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => confirmDeleteAccount(),
+        },
+      ],
+    );
+  };
+
+  const confirmDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        Alert.alert('Error', 'Please sign in again to delete your account.');
+        return;
+      }
+
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        // Fallback: try the web API
+        const webResponse = await fetch(
+          'https://noxaloyalty.com/api/account/delete',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        if (!webResponse.ok) throw new Error('Failed to delete account');
+      }
+
+      await signOut();
+      Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+    } catch (error) {
+      console.error('Delete account error:', error);
+      Alert.alert('Error', 'Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -151,10 +216,22 @@ export default function ProfileScreen() {
         style={styles.signOutButton}
         onPress={handleSignOut}
         activeOpacity={0.7}
-        disabled={isLoading}
+        disabled={isLoading || isDeleting}
       >
         <Text style={styles.signOutText}>
           {isLoading ? 'Signing Out...' : 'Sign Out'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Delete Account Button */}
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={handleDeleteAccount}
+        activeOpacity={0.7}
+        disabled={isLoading || isDeleting}
+      >
+        <Text style={styles.deleteText}>
+          {isDeleting ? 'Deleting Account...' : 'Delete Account'}
         </Text>
       </TouchableOpacity>
 
@@ -276,6 +353,22 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.base,
     fontWeight: '700',
     color: COLORS.primary,
+  },
+
+  // Delete Account
+  deleteButton: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: BORDER_RADIUS.xl,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.sm,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: {
+    fontSize: FONT_SIZE.base,
+    fontWeight: '700',
+    color: '#DC2626',
   },
 
   // Version
