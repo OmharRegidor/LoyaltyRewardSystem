@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  InteractionManager,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,13 @@ export default function WelcomeScreen() {
 
   React.useEffect(() => {
     if (user) {
-      router.replace('/(main)');
+      // Delay navigation to let native touch handlers fully register
+      // Prevents freeze on first sign-in with New Architecture
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          router.replace('/(main)');
+        }, 300);
+      });
     }
   }, [user]);
 
