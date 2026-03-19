@@ -174,7 +174,7 @@ function CustomTabBar() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { openModal } = useEarnPoints();
-  const { isNewCustomer } = useAuth();
+  const { isNewCustomer, needsPhone } = useAuth();
 
   const tabs = [
     { name: 'index', label: 'Home', Icon: HomeIcon, route: '/(main)' },
@@ -205,10 +205,12 @@ function CustomTabBar() {
     return pathname.includes(name);
   };
 
+  // Block Earn while any onboarding modal is pending (prevents modal overlap → touch freeze)
+  const onboardingPending = isNewCustomer || needsPhone;
+
   const handlePress = (route: string | null, name: string) => {
     if (name === 'earn') {
-      // Block QR modal during new customer onboarding to prevent modal overlap
-      if (!isNewCustomer) openModal();
+      if (!onboardingPending) openModal();
       return;
     }
     if (route) {
