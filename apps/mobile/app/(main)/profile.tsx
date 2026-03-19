@@ -75,12 +75,12 @@ export default function ProfileScreen() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         Alert.alert('Error', 'Please sign in again to delete your account.');
+        setIsDeleting(false);
         return;
       }
 
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/delete-account`,
+        'https://noxaloyalty.com/api/account/delete',
         {
           method: 'POST',
           headers: {
@@ -91,18 +91,8 @@ export default function ProfileScreen() {
       );
 
       if (!response.ok) {
-        // Fallback: try the web API
-        const webResponse = await fetch(
-          'https://noxaloyalty.com/api/account/delete',
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-        if (!webResponse.ok) throw new Error('Failed to delete account');
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to delete account');
       }
 
       await signOut();
