@@ -24,7 +24,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.NoxaLoyalty.app",
-      "newArchEnabled": false,
+      "newArchEnabled": true,
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

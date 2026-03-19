@@ -1,8 +1,9 @@
 // app/_layout.tsx
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { InteractionManager } from 'react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -39,10 +40,16 @@ export default function RootLayout() {
     'Inter-SemiBold': Inter_600SemiBold,
     'Inter-Bold': Inter_700Bold,
   });
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync().catch(() => {});
+      // Wait for all interactions/animations to complete before hiding splash
+      // This ensures touch handlers are fully registered on first install
+      InteractionManager.runAfterInteractions(() => {
+        SplashScreen.hideAsync().catch(() => {});
+        setAppReady(true);
+      });
     }
   }, [fontsLoaded]);
 
@@ -50,11 +57,12 @@ export default function RootLayout() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
+      setAppReady(true);
     }, 3000);
     return () => clearTimeout(timeout);
   }, []);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !appReady) {
     return null;
   }
 
