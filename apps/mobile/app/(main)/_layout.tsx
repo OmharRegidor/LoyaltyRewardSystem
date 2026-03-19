@@ -1,6 +1,6 @@
 // app/(main)/_layout.tsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Tabs, Redirect, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -285,10 +285,22 @@ function QRModalWrapper() {
 // ============================================
 
 function PhoneModalWrapper() {
-  const { needsPhone, dismissPhonePrompt, submitPhone } = useAuth();
+  const { needsPhone, isNewCustomer, dismissPhonePrompt, submitPhone } = useAuth();
+  const [delayedShow, setDelayedShow] = useState(false);
+
+  useEffect(() => {
+    if (needsPhone && !isNewCustomer) {
+      // Delay to let the referral modal finish its close animation
+      // Prevents two modals overlapping which causes iOS touch freeze
+      const timer = setTimeout(() => setDelayedShow(true), 600);
+      return () => clearTimeout(timer);
+    }
+    setDelayedShow(false);
+  }, [needsPhone, isNewCustomer]);
+
   return (
     <PhoneCompletionModal
-      visible={needsPhone}
+      visible={delayedShow}
       onSubmit={submitPhone}
       onSkip={dismissPhonePrompt}
     />
