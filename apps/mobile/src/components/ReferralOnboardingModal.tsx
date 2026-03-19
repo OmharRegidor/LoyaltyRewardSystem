@@ -42,6 +42,17 @@ export function ReferralOnboardingModal() {
   } = useRedeemReferral();
 
   const [modalStep, setModalStep] = useState<ModalStep>('prompt');
+  // Delay modal show to let the main screen fully render and register touch handlers
+  const [delayedVisible, setDelayedVisible] = useState(false);
+
+  useEffect(() => {
+    if (isNewCustomer) {
+      const timer = setTimeout(() => setDelayedVisible(true), 800);
+      return () => clearTimeout(timer);
+    } else {
+      setDelayedVisible(false);
+    }
+  }, [isNewCustomer]);
   const keyboardOffset = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -113,7 +124,7 @@ export function ReferralOnboardingModal() {
 
   return (
     <Modal
-      visible={isNewCustomer}
+      visible={delayedVisible}
       animationType="slide"
       transparent
       onRequestClose={handleSkip}
