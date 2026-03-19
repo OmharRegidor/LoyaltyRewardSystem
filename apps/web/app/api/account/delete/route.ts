@@ -14,18 +14,14 @@ export async function POST(req: NextRequest) {
 
     const token = authHeader.split(' ')[1];
 
-    // Create a client with the user's token to verify identity
-    const userClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
+    // Use admin client for all operations
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    // Verify the user's token
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
-
-    // Use service role client to delete user data and auth account
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // 1. Get all customer IDs for this user
     const { data: customers } = await adminClient
