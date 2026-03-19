@@ -350,12 +350,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           (byte) => byte.toString(16).padStart(2, '0'),
         ).join('');
 
-        const hashedNonce = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          rawNonce,
-        );
-
-        signInResult = await GoogleSignin.signIn({ nonce: hashedNonce });
+        // Google puts nonce directly in id_token (unlike Apple which hashes it)
+        // So pass the same raw nonce to both Google and Supabase
+        signInResult = await GoogleSignin.signIn({ nonce: rawNonce });
       } else {
         signInResult = await GoogleSignin.signIn();
       }
