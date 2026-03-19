@@ -74,7 +74,7 @@ export default function ProfileScreen() {
       }
 
       const response = await fetch(
-        'https://noxaloyalty.com/api/account/delete',
+        'https://www.noxaloyalty.com/api/account/delete',
         {
           method: 'POST',
           headers: {

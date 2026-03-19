@@ -31,6 +31,8 @@ const PUBLIC_PREFIXES = [
   '/api/webhooks/',
   '/api/qr/',
   '/api/auth/',
+  '/api/account/',
+  '/api/download/',
   '/qr/',
   '/business/',
   '/join/',
