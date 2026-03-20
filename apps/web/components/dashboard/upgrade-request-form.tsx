@@ -156,8 +156,8 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
               <Crown className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">Upgrade to Enterprise</h3>
-              <p className="text-sm text-gray-600">Unlock all features for your business</p>
+              <h3 className="font-bold text-lg">Upgrade to POS + Inventory</h3>
+              <p className="text-sm text-gray-600">Unlock POS, inventory, and all premium features</p>
             </div>
           </div>
 
@@ -167,7 +167,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
               <span className="text-gray-500">/month</span>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              Billed annually at <span className="font-semibold text-gray-700">&#8369;17,880</span>/year
+              Billed annually at <span className="font-semibold text-gray-700">&#8369;14,900</span>/year &mdash; save &#8369;2,980
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
             onClick={() => setStep('payment')}
             className="w-full bg-gradient-to-r from-secondary to-yellow-500 hover:from-secondary/90 hover:to-yellow-500/90 text-white font-semibold py-3 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
           >
-            Pay &#8369;17,880 Annually
+            Pay &#8369;14,900 Annually
           </button>
         </div>
       </div>
@@ -215,7 +215,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <h3 className="font-bold text-lg">Complete Your Payment</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Scan the QR code to pay <span className="font-semibold text-gray-700">&#8369;17,880</span> (annual), then upload a screenshot of your payment
+              Scan the QR code to pay <span className="font-semibold text-gray-700">&#8369;14,900</span> (annual), then upload a screenshot of your payment
             </p>
           </div>
 

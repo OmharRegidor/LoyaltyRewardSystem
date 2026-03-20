@@ -10,6 +10,7 @@ import { POSInterface, POSNavTabs } from '@/components/pos';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase';
+import { UpgradeRequestForm } from '@/components/dashboard/upgrade-request-form';
 import type { DailySummary } from '@/types/pos.types';
 
 interface BusinessSettings {
@@ -107,22 +108,19 @@ export default function POSPage() {
   if (!hasPOS) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-          <Card className="max-w-md">
-            <CardContent className="flex flex-col items-center text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">POS Not Available</h2>
-              <p className="text-muted-foreground mb-6">
-                Point of Sale is available on the Enterprise plan. Upgrade to access
-                POS features and streamline your sales.
-              </p>
-              <Button onClick={() => router.push('/dashboard/settings')}>
-                View Plans
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="max-w-xl mx-auto py-8 sm:py-12 px-4">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="h-7 w-7 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              Point of Sale + Inventory
+            </h1>
+            <p className="text-gray-500">
+              Process sales, track inventory, and manage your store — all in one place.
+            </p>
+          </div>
+          <UpgradeRequestForm onUpgradeSubmitted={() => router.refresh()} />
         </div>
       </DashboardLayout>
     );
