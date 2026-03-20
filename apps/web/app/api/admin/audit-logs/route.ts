@@ -79,10 +79,11 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  // Fetch distinct event types for filter dropdown
+  // Fetch distinct event types for filter dropdown (capped to avoid full table scan)
   const eventTypesQuery = service
     .from('audit_logs')
-    .select('event_type');
+    .select('event_type')
+    .limit(5000);
 
   const [dataResult, eventTypesResult] = await Promise.all([
     query,

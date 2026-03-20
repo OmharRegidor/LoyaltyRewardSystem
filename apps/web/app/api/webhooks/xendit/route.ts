@@ -27,8 +27,12 @@ export async function POST(request: NextRequest) {
     const callbackToken = request.headers.get('x-callback-token') || '';
     const webhookToken = process.env.XENDIT_WEBHOOK_TOKEN;
 
-    // Verify webhook token (Xendit uses callback token, not signature)
-    if (webhookToken && callbackToken !== webhookToken) {
+    // Verify webhook token — REQUIRED. Reject if env var is missing.
+    if (!webhookToken) {
+      console.error('XENDIT_WEBHOOK_TOKEN is not configured');
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    }
+    if (callbackToken !== webhookToken) {
       console.error('Invalid Xendit webhook token');
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -116,8 +120,10 @@ async function handleInvoiceEvent(invoice: {
   const externalId = invoice.external_id;
   const status = invoice.status;
 
-  // Extract business_id from external_id (format: business_id-timestamp)
-  const businessId = externalId.split('-')[0];
+  // Extract business_id from external_id (format: uuid-timestamp)
+  // UUIDs contain hyphens, so split on the last hyphen to get the full UUID
+  const lastHyphen = externalId.lastIndexOf('-');
+  const businessId = lastHyphen > 0 ? externalId.slice(0, lastHyphen) : externalId;
 
   if (status === 'PAID' || status === 'SETTLED') {
     // Payment successful - activate subscription

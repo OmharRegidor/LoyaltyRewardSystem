@@ -148,7 +148,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       invoice_id: invoice.id,
       amount_centavos: amountCentavos,
       payment_method: 'self-service',
-      notes: 'Self-service upgrade — ₱17,880 via screenshot verification',
+      notes: 'Self-service upgrade — ₱14,900 via screenshot verification',
       recorded_by_email: user.email,
       payment_date: now.toISOString(),
     });
