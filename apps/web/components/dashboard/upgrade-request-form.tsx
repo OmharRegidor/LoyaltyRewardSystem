@@ -11,6 +11,9 @@ import {
   BarChart3,
   Clock,
   ImageIcon,
+  Copy,
+  Check,
+  Package,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import {
@@ -41,11 +44,36 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [businessId, setBusinessId] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchExistingRequest();
+    fetchBusinessId();
   }, []);
+
+  const fetchBusinessId = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+      if (business) setBusinessId(business.id);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const fetchExistingRequest = async () => {
     try {
@@ -174,9 +202,9 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-4">
             {[
               { icon: ShoppingCart, label: 'Point-of-Sale System' },
-              { icon: Users, label: 'Unlimited Staff' },
+              { icon: Package, label: 'Inventory Management' },
+              { icon: Users, label: 'Unlimited Staff & Branches' },
               { icon: BarChart3, label: 'Advanced Analytics' },
-              { icon: Crown, label: 'Custom Branding' },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-2 text-sm">
                 <Icon className="w-4 h-4 text-amber-600 shrink-0" />
@@ -198,6 +226,8 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
 
   // Payment Step
   if (step === 'payment') {
+    const referenceId = businessId ? businessId.slice(0, 8).toUpperCase() : '—';
+
     return (
       <>
         {/* QR Code Zoom Modal */}
@@ -215,16 +245,17 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <h3 className="font-bold text-lg">Complete Your Payment</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Scan the QR code to pay <span className="font-semibold text-gray-700">&#8369;14,900</span> (annual), then upload a screenshot of your payment
+              Send <span className="font-semibold text-gray-700">&#8369;14,900</span> via any method below, then upload a screenshot of your payment.
             </p>
           </div>
 
-          <div className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* QR Code — clickable to zoom */}
+          <div className="p-4 sm:p-6 space-y-5">
+            {/* Payment Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Left: QR Code */}
               <div className="flex flex-col items-center">
                 <p className="text-sm font-medium text-gray-700 mb-3">
-                  Scan to Pay
+                  Scan to Pay via GCash
                 </p>
                 <button
                   type="button"
@@ -238,76 +269,148 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
                   />
                 </button>
                 <p className="text-xs text-gray-400 mt-2 text-center">
-                  Tap QR to enlarge &middot; GCash, Maya, or Bank Transfer
+                  Tap QR to enlarge
                 </p>
               </div>
 
-              {/* Upload Area */}
-              <div className="flex flex-col">
-                <p className="text-sm font-medium text-gray-700 mb-3">
-                  Upload Payment Screenshot
+              {/* Right: Payment Instructions */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-gray-700">
+                  Or send manually:
                 </p>
 
-                {screenshotPreview ? (
-                  <div className="relative">
-                    <img
-                      src={screenshotPreview}
-                      alt="Payment screenshot"
-                      className="w-full h-48 object-cover rounded-xl border border-gray-200"
-                    />
-                    <button
-                      onClick={() => {
-                        setScreenshotUrl(null);
-                        setScreenshotPreview(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
-                      }}
-                      className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white transition"
-                    >
-                      <XCircle className="w-5 h-5 text-gray-500" />
-                    </button>
+                {/* Amount */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs text-amber-700 font-medium">Amount</p>
+                  <p className="text-lg font-bold text-amber-900">&#8369;14,900.00</p>
+                </div>
+
+                {/* GCash */}
+                <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">GCash / Maya</p>
+                    <p className="text-sm font-semibold text-gray-900">0917 XXX XXXX</p>
+                    <p className="text-xs text-gray-500">NoxaLoyalty</p>
                   </div>
-                ) : (
                   <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="flex-1 min-h-[180px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={() => copyToClipboard('0917XXXXXXX', 'gcash')}
+                    className="p-2 hover:bg-gray-200 rounded-lg transition"
                   >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                        <span className="text-sm text-gray-500">Uploading...</span>
-                      </>
+                    {copiedField === 'gcash' ? (
+                      <Check className="w-4 h-4 text-green-600" />
                     ) : (
-                      <>
-                        <ImageIcon className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          Click to upload screenshot
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          PNG, JPG up to 5MB
-                        </span>
-                      </>
+                      <Copy className="w-4 h-4 text-gray-400" />
                     )}
                   </button>
-                )}
+                </div>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
+                {/* Bank Transfer */}
+                <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Bank Transfer</p>
+                    <p className="text-sm font-semibold text-gray-900">BDO / BPI</p>
+                    <p className="text-xs text-gray-500">Acct: XXXX-XXXX-XXXX</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard('XXXXXXXXXXXX', 'bank')}
+                    className="p-2 hover:bg-gray-200 rounded-lg transition"
+                  >
+                    {copiedField === 'bank' ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Reference */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-blue-600 font-medium">Reference (put in message)</p>
+                    <p className="text-sm font-bold font-mono text-blue-900">{referenceId}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(referenceId, 'ref')}
+                    className="p-2 hover:bg-blue-100 rounded-lg transition"
+                  >
+                    {copiedField === 'ref' ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-blue-400" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* Upload Screenshot */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-3">
+                Upload Payment Screenshot
+              </p>
+
+              {screenshotPreview ? (
+                <div className="relative">
+                  <img
+                    src={screenshotPreview}
+                    alt="Payment screenshot"
+                    className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                  />
+                  <button
+                    onClick={() => {
+                      setScreenshotUrl(null);
+                      setScreenshotPreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white transition"
+                  >
+                    <XCircle className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full min-h-[120px] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-gray-50 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                      <span className="text-sm text-gray-500">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-gray-400" />
+                      <span className="text-sm text-gray-500">
+                        Click to upload screenshot
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        PNG, JPG up to 5MB
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
                 {error}
               </div>
             )}
 
-            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
               <button
                 onClick={() => setStep('cta')}
                 className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition"

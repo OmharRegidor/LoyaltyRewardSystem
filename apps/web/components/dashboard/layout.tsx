@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ShoppingCart,
+  Lock,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -127,15 +128,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   ];
 
-  // Full navigation with conditional feature-gated items
+  // Full navigation — POS always visible, locked state handled on the page
   const navigation = [
     ...coreNavigation,
-    // POS items - only show if plan has POS feature
-    ...(hasPOS
-      ? [
-          { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart },
-        ]
-      : []),
+    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: !hasPOS },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
@@ -200,6 +196,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <item.icon className="w-5 h-5" />
               {item.name}
+              {'locked' in item && item.locked && (
+                <Lock className="w-3.5 h-3.5 ml-auto opacity-50" />
+              )}
             </Link>
           ))}
         </nav>
