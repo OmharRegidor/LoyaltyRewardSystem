@@ -33,6 +33,13 @@ interface UserData {
   role: 'owner' | 'manager' | 'cashier';
 }
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  locked?: boolean;
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -120,7 +127,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   // Core navigation items (always visible)
-  const coreNavigation = [
+  const coreNavigation: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Customers', href: '/dashboard/customers', icon: Users },
     { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
@@ -129,14 +136,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   // Full navigation — POS always visible, locked state handled on the page
-  const navigation = [
+  const navigation: NavItem[] = [
     ...coreNavigation,
     { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: !hasPOS },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   // While loading, show only core nav (skip feature-gated items that depend on subscription)
-  const visibleNavigation = (isLoading || subscriptionLoading)
+  const visibleNavigation: NavItem[] = (isLoading || subscriptionLoading)
     ? [...coreNavigation, { name: 'Settings', href: '/dashboard/settings', icon: Settings }]
     : navigation;
 
@@ -196,7 +203,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <item.icon className="w-5 h-5" />
               {item.name}
-              {'locked' in item && item.locked && (
+              {item.locked && (
                 <Lock className="w-3.5 h-3.5 ml-auto opacity-50" />
               )}
             </Link>

@@ -16,6 +16,7 @@ import {
   Package,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
+import { useBusinessContext } from '@/hooks/useBusinessContext';
 import {
   Dialog,
   DialogContent,
@@ -30,12 +31,56 @@ interface UpgradeRequestData {
 }
 
 type FormStep = 'cta' | 'payment' | 'pending' | 'rejected';
+type CopyField = 'gcash' | 'bank' | 'ref';
+
+function CopyableField({
+  label,
+  value,
+  sublabel,
+  copyValue,
+  fieldKey,
+  copiedField,
+  onCopy,
+  variant = 'gray',
+}: {
+  label: string;
+  value: string;
+  sublabel?: string;
+  copyValue: string;
+  fieldKey: CopyField;
+  copiedField: CopyField | null;
+  onCopy: (text: string, field: CopyField) => void;
+  variant?: 'gray' | 'blue';
+}) {
+  const isBlue = variant === 'blue';
+  return (
+    <div className={`${isBlue ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'} rounded-xl p-3 flex items-center justify-between`}>
+      <div>
+        <p className={`text-xs ${isBlue ? 'text-blue-600' : 'text-gray-500'} font-medium`}>{label}</p>
+        <p className={`text-sm ${isBlue ? 'font-bold font-mono text-blue-900' : 'font-semibold text-gray-900'}`}>{value}</p>
+        {sublabel && <p className="text-xs text-gray-500">{sublabel}</p>}
+      </div>
+      <button
+        type="button"
+        onClick={() => onCopy(copyValue, fieldKey)}
+        className={`p-2 ${isBlue ? 'hover:bg-blue-100' : 'hover:bg-gray-200'} rounded-lg transition`}
+      >
+        {copiedField === fieldKey ? (
+          <Check className="w-4 h-4 text-green-600" />
+        ) : (
+          <Copy className={`w-4 h-4 ${isBlue ? 'text-blue-400' : 'text-gray-400'}`} />
+        )}
+      </button>
+    </div>
+  );
+}
 
 interface UpgradeRequestFormProps {
   onUpgradeSubmitted: () => void;
 }
 
 export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormProps) {
+  const { business } = useBusinessContext();
   const [step, setStep] = useState<FormStep>('cta');
   const [existingRequest, setExistingRequest] = useState<UpgradeRequestData | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -44,35 +89,25 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [businessId, setBusinessId] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<CopyField | null>(null);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchExistingRequest();
-    fetchBusinessId();
   }, []);
 
-  const fetchBusinessId = async () => {
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('owner_id', user.id)
-        .maybeSingle();
-      if (business) setBusinessId(business.id);
-    } catch {
-      // Non-critical
-    }
-  };
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
-  const copyToClipboard = (text: string, field: string) => {
+  const copyToClipboard = (text: string, field: CopyField) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => setCopiedField(null), 2000);
   };
 
   const fetchExistingRequest = async () => {
@@ -226,7 +261,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
 
   // Payment Step
   if (step === 'payment') {
-    const referenceId = businessId ? businessId.slice(0, 8).toUpperCase() : '—';
+    const referenceId = business?.id ? business.id.slice(0, 8).toUpperCase() : '—';
 
     return (
       <>
@@ -285,64 +320,35 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
                   <p className="text-lg font-bold text-amber-900">&#8369;14,900.00</p>
                 </div>
 
-                {/* GCash */}
-                <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">GCash / Maya</p>
-                    <p className="text-sm font-semibold text-gray-900">0917 XXX XXXX</p>
-                    <p className="text-xs text-gray-500">NoxaLoyalty</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard('0917XXXXXXX', 'gcash')}
-                    className="p-2 hover:bg-gray-200 rounded-lg transition"
-                  >
-                    {copiedField === 'gcash' ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-gray-400" />
-                    )}
-                  </button>
-                </div>
+                <CopyableField
+                  label="GCash / Maya"
+                  value="0917 XXX XXXX"
+                  sublabel="NoxaLoyalty"
+                  copyValue="0917XXXXXXX"
+                  fieldKey="gcash"
+                  copiedField={copiedField}
+                  onCopy={copyToClipboard}
+                />
 
-                {/* Bank Transfer */}
-                <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">Bank Transfer</p>
-                    <p className="text-sm font-semibold text-gray-900">BDO / BPI</p>
-                    <p className="text-xs text-gray-500">Acct: XXXX-XXXX-XXXX</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard('XXXXXXXXXXXX', 'bank')}
-                    className="p-2 hover:bg-gray-200 rounded-lg transition"
-                  >
-                    {copiedField === 'bank' ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-gray-400" />
-                    )}
-                  </button>
-                </div>
+                <CopyableField
+                  label="Bank Transfer"
+                  value="BDO / BPI"
+                  sublabel="Acct: XXXX-XXXX-XXXX"
+                  copyValue="XXXXXXXXXXXX"
+                  fieldKey="bank"
+                  copiedField={copiedField}
+                  onCopy={copyToClipboard}
+                />
 
-                {/* Reference */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-blue-600 font-medium">Reference (put in message)</p>
-                    <p className="text-sm font-bold font-mono text-blue-900">{referenceId}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(referenceId, 'ref')}
-                    className="p-2 hover:bg-blue-100 rounded-lg transition"
-                  >
-                    {copiedField === 'ref' ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Copy className="w-4 h-4 text-blue-400" />
-                    )}
-                  </button>
-                </div>
+                <CopyableField
+                  label="Reference (put in message)"
+                  value={referenceId}
+                  copyValue={referenceId}
+                  fieldKey="ref"
+                  copiedField={copiedField}
+                  onCopy={copyToClipboard}
+                  variant="blue"
+                />
               </div>
             </div>
 
