@@ -77,10 +77,11 @@ export async function GET(request: NextRequest) {
     .order(sort, { ascending: order })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  // Facet query (all rows, just the columns we need for counts)
+  // Facet query (capped at 5000 rows for count aggregation)
   const facetQuery = service
     .from('admin_business_stats')
-    .select('plan_name, business_type, subscription_status');
+    .select('plan_name, business_type, subscription_status')
+    .limit(5000);
 
   const [dataResult, facetResult] = await Promise.all([query, facetQuery]);
 

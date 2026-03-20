@@ -14,6 +14,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+
+  // Validate UUID format
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json({ error: 'Invalid request ID' }, { status: 400 });
+  }
+
   const service = createAdminServiceClient();
 
   // 1. Get the upgrade request
@@ -99,11 +106,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   // 5. Create paid invoice + payment record
-  // ₱17,880 annual (₱1,490/mo x 12) — stored in centavos for existing invoice system
-  const annualPesos = 17880;
+  // ₱14,900 annual (₱1,490/mo x 10 months — 2 months free) — stored in centavos
+  const annualPesos = 14900;
   const amountCentavos = annualPesos * 100;
 
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+  // nextval is a raw Postgres function not in the generated Supabase types.
+  // The `as never` casts are required to call untyped RPC functions through the typed client.
   const { data: seqResult } = await service.rpc('nextval' as never, {
     seq_name: 'manual_invoice_seq',
   } as never) as { data: number | null };
@@ -115,7 +124,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     .insert({
       business_id: upgradeReq.business_id,
       invoice_number: invoiceNumber,
-      description: 'Enterprise Plan — ₱1,490/mo billed annually at ₱17,880',
+      description: 'POS + Inventory — ₱1,490/mo billed annually at ₱14,900',
       amount_centavos: amountCentavos,
       amount_paid_centavos: amountCentavos,
       currency: 'PHP',

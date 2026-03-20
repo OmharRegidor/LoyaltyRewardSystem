@@ -18,6 +18,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+
+  // Validate UUID format
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(id)) {
+    return NextResponse.json({ error: 'Invalid request ID' }, { status: 400 });
+  }
+
   const body = (await request.json()) as RejectBody;
 
   const service = createAdminServiceClient();
