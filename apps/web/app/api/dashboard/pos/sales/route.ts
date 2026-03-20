@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
       payment_method: searchParams.get('payment_method') as PaymentMethod | undefined,
       status: searchParams.get('status') as 'completed' | 'voided' | undefined,
       customer_id: searchParams.get('customer_id') || undefined,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50,
+      limit: Math.min(searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50, 100),
       offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
     };
 

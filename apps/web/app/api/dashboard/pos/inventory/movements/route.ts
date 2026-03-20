@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     const start_date = searchParams.get("start_date") || undefined;
     const end_date = searchParams.get("end_date") || undefined;
     const limit = searchParams.get("limit")
-      ? parseInt(searchParams.get("limit")!, 10)
+      ? Math.min(parseInt(searchParams.get("limit")!, 10), 100)
       : undefined;
     const offset = searchParams.get("offset")
       ? parseInt(searchParams.get("offset")!, 10)

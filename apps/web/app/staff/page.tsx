@@ -430,9 +430,6 @@ export default function StaffScannerPage() {
 
       let customerData = rpcResult ?? null;
 
-      console.log("[DEBUG] RPC result:", JSON.stringify(rpcResult));
-      console.log("[DEBUG] businessId used:", businessId);
-
       // Fallback: direct DB lookup if RPC returned nothing
       if (!customerData) {
         const selectFields = "id, user_id, full_name, email, total_points, lifetime_points, tier, card_token, created_by_business_id, qr_code_url";

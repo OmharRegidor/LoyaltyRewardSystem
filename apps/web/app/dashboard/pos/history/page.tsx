@@ -90,10 +90,10 @@ export default function POSHistoryPage() {
         params.set('limit', limit.toString());
         params.set('offset', ((page - 1) * limit).toString());
 
-        if (filter.payment_method) {
+        if (filter.payment_method && filter.payment_method !== 'all') {
           params.set('payment_method', filter.payment_method);
         }
-        if (filter.status) {
+        if (filter.status && filter.status !== 'all') {
           params.set('status', filter.status);
         }
 
