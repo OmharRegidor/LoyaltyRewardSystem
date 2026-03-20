@@ -199,7 +199,7 @@ export default function RewardsPage() {
         tierRequired: newReward.tierRequired,
       };
 
-      setRewards([createdReward, ...rewards]);
+      setRewards(prev => [createdReward, ...prev]);
       setIsCreateOpen(false);
     } catch (error) {
       console.error('Create reward error:', error);
@@ -236,8 +236,8 @@ export default function RewardsPage() {
         return;
       }
 
-      setRewards(
-        rewards.map((r) =>
+      setRewards(prev =>
+        prev.map((r) =>
           r.id === updatedReward.id
             ? {
                 ...r,
@@ -282,7 +282,7 @@ export default function RewardsPage() {
         return;
       }
 
-      setRewards(rewards.filter((r) => r.id !== id));
+      setRewards(prev => prev.filter((r) => r.id !== id));
     } catch (error) {
       console.error('Delete reward error:', error);
     }
@@ -310,8 +310,8 @@ export default function RewardsPage() {
         return;
       }
 
-      setRewards(
-        rewards.map((r) =>
+      setRewards(prev =>
+        prev.map((r) =>
           r.id === id
             ? {
                 ...r,

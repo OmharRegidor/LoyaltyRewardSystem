@@ -97,34 +97,27 @@ export default function AnalyticsPage() {
     supabase: ReturnType<typeof createClient>,
     businessId: string,
   ) => {
-    // Get transactions
+    // Get transactions from last 12 months only
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
     const { data: transactions } = await supabase
       .from('transactions')
       .select('points, created_at')
-      .eq('business_id', businessId);
+      .eq('business_id', businessId)
+      .gte('created_at', twelveMonthsAgo.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(10000);
 
     if (transactions && transactions.length > 0) {
-      // Group by month
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
+      // Group by month-year to avoid cross-year collisions
       const monthlyStats: Record<string, number> = {};
 
       transactions.forEach((tx) => {
         if (!tx.created_at) return;
-        const month = months[new Date(tx.created_at).getMonth()];
-        monthlyStats[month] = (monthlyStats[month] || 0) + (tx.points || 0);
+        const d = new Date(tx.created_at);
+        const key = `${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+        monthlyStats[key] = (monthlyStats[key] || 0) + (tx.points || 0);
       });
 
       const data = Object.entries(monthlyStats).map(([month, points]) => ({
@@ -167,7 +160,6 @@ export default function AnalyticsPage() {
 
         let highValue = 0,
           regular = 0,
-          atRisk = 0,
           inactive = 0;
         customers.forEach((c) => {
           const lastVisit = c.last_visit ? new Date(c.last_visit) : null;
