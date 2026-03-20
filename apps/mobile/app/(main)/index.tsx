@@ -19,7 +19,6 @@ import {
   HeaderSection,
   BalanceCard,
   MemberQRCard,
-  NearbyBusinesses,
   RedeemableRewards,
 } from '../../src/components/home';
 import { COLORS, SPACING } from '../../src/lib/constants';

@@ -61,7 +61,8 @@ export function useRewards() {
         )
         .eq('is_active', true)
         .eq('is_visible', true)
-        .order('points_cost', { ascending: true });
+        .order('points_cost', { ascending: true })
+        .limit(200);
 
       if (fetchError) throw new Error(fetchError.message);
 

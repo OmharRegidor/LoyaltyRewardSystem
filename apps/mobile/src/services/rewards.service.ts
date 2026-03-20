@@ -17,7 +17,8 @@ export const rewardsService = {
       `)
       .eq('active', true)
       .gt('stock', 0)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error) throw error;
     return data || [];
@@ -40,7 +41,8 @@ export const rewardsService = {
       .eq('active', true)
       .eq('category', category)
       .gt('stock', 0)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (error) throw error;
     return data || [];

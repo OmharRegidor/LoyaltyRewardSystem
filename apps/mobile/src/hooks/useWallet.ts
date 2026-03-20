@@ -311,7 +311,8 @@ export function useWallet() {
         .from('redemptions')
         .select(REDEMPTION_SELECT)
         .in('customer_id', ids)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (error) throw error;
 
