@@ -34,12 +34,13 @@ function ForgotPasswordContent() {
     }
   }, [countdown]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  const sendResetEmail = async ({ isResend }: { isResend: boolean }) => {
+    if (isResend && countdown > 0) return;
+    if (!isResend && !email.trim()) return;
 
     setIsLoading(true);
     setError('');
+    if (isResend) setResendSuccess(false);
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -54,8 +55,11 @@ function ForgotPasswordContent() {
         return;
       }
 
-      // Always show success — never reveal whether email exists
-      setIsSent(true);
+      if (isResend) {
+        setResendSuccess(true);
+      } else {
+        setIsSent(true);
+      }
       setCountdown(60);
     } catch {
       setError('An unexpected error occurred. Please try again.');
@@ -64,33 +68,13 @@ function ForgotPasswordContent() {
     }
   };
 
-  const handleResend = async () => {
-    if (countdown > 0) return;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendResetEmail({ isResend: false });
+  };
 
-    setIsLoading(true);
-    setError('');
-    setResendSuccess(false);
-
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
-      });
-
-      if (!res.ok && res.status === 429) {
-        setError('Too many reset attempts. Please try again later.');
-        setIsLoading(false);
-        return;
-      }
-
-      setResendSuccess(true);
-      setCountdown(60);
-    } catch {
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleResend = () => {
+    sendResetEmail({ isResend: true });
   };
 
   const maskedEmail = email

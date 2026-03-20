@@ -104,9 +104,8 @@ function LoginForm() {
             .maybeSingle(),
         ]);
 
-      const role = (
-        adminUser?.roles as unknown as { name: string } | null
-      )?.name;
+      const roleData = adminUser?.roles as { name: string } | null;
+      const role = roleData?.name;
 
       if (role === 'admin') {
         fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
@@ -117,8 +116,11 @@ function LoginForm() {
       if (business) {
         // Track login (fire-and-forget)
         fetch('/api/auth/track-login', { method: 'POST' }).catch(() => {});
-        const destination = redirectTo || '/dashboard';
-        window.location.replace(destination);
+        // Validate redirect to prevent open redirect attacks
+        const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+          ? redirectTo
+          : '/dashboard';
+        window.location.replace(safeRedirect);
         return;
       }
 
@@ -253,6 +255,7 @@ function LoginForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               disabled={isLoading}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5" />
