@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Package,
@@ -12,6 +12,8 @@ import {
   Upload,
   X,
   ImageIcon,
+  Search,
+  Tag,
 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { DashboardLayout } from '@/components/dashboard/layout';
@@ -45,6 +47,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { createClient } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { POSNavTabs } from '@/components/pos';
@@ -79,8 +89,34 @@ export default function POSProductsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
 
   const hasPOS = subscription?.plan?.hasPOS ?? false;
+
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const p of products) {
+      cats.add(p.category || 'Uncategorized');
+    }
+    return ['All', ...Array.from(cats).sort()];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let filtered = products;
+    if (activeCategory !== 'All') {
+      filtered = filtered.filter(p => (p.category || 'Uncategorized') === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q))
+      );
+    }
+    return filtered;
+  }, [products, activeCategory, searchQuery]);
 
   // Load products
   useEffect(() => {
@@ -308,19 +344,6 @@ export default function POSProductsPage() {
     );
   }
 
-  // Group products by category
-  const categories = products.reduce(
-    (acc, product) => {
-      const category = product.category || 'Uncategorized';
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(product);
-      return acc;
-    },
-    {} as Record<string, Product[]>
-  );
-
   return (
     <DashboardLayout>
       <div className="space-y-3 sm:space-y-4">
@@ -328,7 +351,11 @@ export default function POSProductsPage() {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold">Products</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Manage your product catalog for POS</p>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {products.length > 0
+                ? `${products.length} product${products.length === 1 ? '' : 's'} in your catalog`
+                : 'Manage your product catalog for POS'}
+            </p>
           </div>
           <Button onClick={() => handleOpenDialog()} size="sm" className="shrink-0 sm:size-default">
             <Plus className="h-4 w-4 mr-1.5 sm:mr-2" />
@@ -342,14 +369,17 @@ export default function POSProductsPage() {
 
         {/* Products */}
         {isLoading ? (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 sm:p-4 border rounded-lg">
-                <Skeleton className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full max-w-sm" />
+            <Skeleton className="h-8 w-64" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-4">
+                <Skeleton className="w-10 h-10 rounded-lg" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-12" />
               </div>
             ))}
           </div>
@@ -366,79 +396,135 @@ export default function POSProductsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
-            {Object.entries(categories).map(([category, categoryProducts]) => (
-              <Card key={category}>
-                <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
-                  <CardTitle className="text-sm sm:text-base">{category}</CardTitle>
-                </CardHeader>
-                <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
-                  <div className="grid gap-2.5 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {categoryProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center gap-3 p-3 sm:p-4 border rounded-lg active:bg-muted/50 transition-colors"
-                      >
-                        {/* Product Image Thumbnail */}
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                          {product.image_url ? (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <p className="text-sm sm:text-base font-medium truncate">{product.name}</p>
-                            {!product.is_active && (
-                              <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">Inactive</Badge>
-                            )}
-                          </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {formatPrice(product.price_centavos)}
-                          </p>
-                          {product.sku && (
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              SKU: {product.sku}
-                            </p>
-                          )}
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenDialog(product)}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
+          <>
+            {/* Search */}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products or SKU..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Category Filter Buttons */}
+            <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={activeCategory === cat ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveCategory(cat)}
+                  className="h-8 text-xs sm:text-sm"
+                >
+                  {cat !== 'All' && <Tag className="h-3 w-3 mr-1.5" />}
+                  {cat}
+                </Button>
+              ))}
+            </div>
+
+            {/* Product Table */}
+            <Card>
+              <CardContent className="p-0">
+                {filteredProducts.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Package className="h-10 w-10 mb-2" />
+                    <p>No products match your filters</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Product</TableHead>
+                          <TableHead className="hidden sm:table-cell">SKU</TableHead>
+                          <TableHead className="hidden sm:table-cell">Category</TableHead>
+                          <TableHead className="text-right">Price</TableHead>
+                          <TableHead className="text-right">Stock</TableHead>
+                          <TableHead className="w-[50px]" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredProducts.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                  {product.image_url ? (
+                                    <img
+                                      src={product.image_url}
+                                      alt={product.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Package className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate">{product.name}</p>
+                                  {!product.is_active && (
+                                    <Badge variant="secondary" className="text-[10px] mt-0.5">Inactive</Badge>
+                                  )}
+                                  <p className="text-xs text-muted-foreground sm:hidden">
+                                    {product.sku || '—'} · {product.category || 'Uncategorized'}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground hidden sm:table-cell">
+                              {product.sku || '—'}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground hidden sm:table-cell">
+                              {product.category || 'Uncategorized'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatPrice(product.price_centavos)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              <span className={cn(
+                                product.stock_quantity <= product.low_stock_threshold && 'text-amber-600 font-semibold',
+                                product.stock_quantity === 0 && 'text-red-600 font-semibold'
+                              )}>
+                                {product.stock_quantity}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon-sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleOpenDialog(product)}>
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedProduct(product);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 

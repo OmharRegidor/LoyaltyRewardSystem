@@ -39,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { POSNavTabs } from '@/components/pos';
 import type { Sale, SaleWithItems, PaymentMethod } from '@/types/pos.types';
 
 function formatPrice(centavos: number): string {
@@ -211,16 +212,13 @@ export default function POSHistoryPage() {
     <DashboardLayout>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Sales History</h1>
-            <p className="text-muted-foreground">View and manage your sales transactions</p>
-          </div>
-          <Button onClick={() => router.push('/dashboard/pos')}>
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            New Sale
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Sales History</h1>
+          <p className="text-muted-foreground">View and manage your sales transactions</p>
         </div>
+
+        {/* Sub-Navigation */}
+        <POSNavTabs />
 
         {/* Filters */}
         <Card>

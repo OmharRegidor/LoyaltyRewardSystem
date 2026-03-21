@@ -181,25 +181,6 @@ export interface CartItem {
   unit_price_centavos: number;
 }
 
-export interface LinkedCustomer {
-  id: string;
-  fullName: string;
-  phone: string;
-  totalPoints: number;
-  tier: string;
-}
-
-export interface POSState {
-  items: CartItem[];
-  linkedCustomer: LinkedCustomer | null;
-  discount: {
-    amount_centavos: number;
-    type: DiscountType;
-    reason?: string;
-  } | null;
-  notes: string;
-}
-
 // ============================================
 // ANALYTICS TYPES
 // ============================================

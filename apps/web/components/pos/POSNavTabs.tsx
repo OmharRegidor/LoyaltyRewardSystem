@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Package, Warehouse, BarChart3 } from 'lucide-react';
+import { Package, Warehouse, BarChart3, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
-  { href: '/dashboard/pos', label: 'Register', icon: ShoppingCart },
   { href: '/dashboard/pos/products', label: 'Products', icon: Package },
   { href: '/dashboard/pos/inventory', label: 'Inventory', icon: Warehouse },
   { href: '/dashboard/pos/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/dashboard/pos/history', label: 'History', icon: Receipt },
 ];
 
 export function POSNavTabs() {
