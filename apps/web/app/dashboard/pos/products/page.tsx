@@ -450,7 +450,7 @@ export default function POSProductsPage() {
                           <TableRow key={product.id}>
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                                   {product.image_url ? (
                                     <img
                                       src={product.image_url}
@@ -459,7 +459,7 @@ export default function POSProductsPage() {
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <Package className="h-4 w-4 text-muted-foreground" />
+                                      <Package className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                   )}
                                 </div>
