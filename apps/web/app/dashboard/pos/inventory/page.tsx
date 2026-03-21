@@ -381,46 +381,43 @@ export default function InventoryPage() {
               </Card>
             </div>
 
-            {/* Search + Stock Filter */}
-            <Card>
-              <CardContent className="py-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by product or SKU..."
-                      value={stockSearch}
-                      onChange={(e) => setStockSearch(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  <div className="flex gap-1.5 sm:ml-auto">
-                    {([
-                      { value: 'all', label: 'All' },
-                      { value: 'low', label: 'Low Stock' },
-                      { value: 'in-stock', label: 'In Stock' },
-                    ] as const).map((f) => (
-                      <Button
-                        key={f.value}
-                        variant={stockFilter === f.value ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setStockFilter(f.value)}
-                        className="h-8 text-xs sm:text-sm"
-                      >
-                        {f.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {filteredProducts.length} of {products.length} items
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Products Stock Table */}
+            {/* Stock Table with Search + Filters */}
             <Card>
               <CardContent className="p-0">
+                {/* Search + Stock Filter */}
+                <div className="px-4 pt-4 pb-3 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="relative flex-1 max-w-sm">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by product or SKU..."
+                        value={stockSearch}
+                        onChange={(e) => setStockSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <div className="flex gap-1.5 sm:ml-auto">
+                      {([
+                        { value: 'all', label: 'All' },
+                        { value: 'low', label: 'Low Stock' },
+                        { value: 'in-stock', label: 'In Stock' },
+                      ] as const).map((f) => (
+                        <Button
+                          key={f.value}
+                          variant={stockFilter === f.value ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setStockFilter(f.value)}
+                          className="h-8 text-xs sm:text-sm"
+                        >
+                          {f.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {filteredProducts.length} of {products.length} items
+                  </p>
+                </div>
                 {products.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-10 w-10 mx-auto mb-2" />
