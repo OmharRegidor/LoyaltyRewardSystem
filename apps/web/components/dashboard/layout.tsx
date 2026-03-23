@@ -227,7 +227,7 @@ function SidebarBody({
                   <img
                     src={userData.logoUrl}
                     alt={userData.businessName}
-                    className="size-8 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
+                    className="size-8 aspect-square rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
                   />
                 ) : (
                   <div className="size-8 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
@@ -374,8 +374,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     document.documentElement.classList.remove('dark');
   }, [router]);
 
+  // Read the sidebar cookie so collapsed state persists across navigation
+  const defaultOpen = typeof document !== 'undefined'
+    ? document.cookie.split('; ').find(c => c.startsWith('sidebar_state='))?.split('=')[1] !== 'false'
+    : true;
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <div className="flex min-h-svh w-full overflow-x-hidden">
         <Sidebar collapsible="icon" className="border-r border-sidebar-border overflow-hidden">
           <CollapseToggle />
