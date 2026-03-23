@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Circle, Gift, Settings, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, Gift, ChevronRight } from 'lucide-react';
 
 interface OnboardingBannerProps {
   activeRewardCount: number;
   pesosPerPoint: number | null;
   referralRewardPoints: number | null;
+  businessSlug?: string | null;
+  hasFirstTransaction?: boolean;
 }
 
 interface ChecklistItem {
@@ -19,6 +21,8 @@ export function OnboardingBanner({
   activeRewardCount,
   pesosPerPoint,
   referralRewardPoints,
+  businessSlug,
+  hasFirstTransaction = false,
 }: OnboardingBannerProps) {
   const items: ChecklistItem[] = [
     {
@@ -35,6 +39,21 @@ export function OnboardingBanner({
       label: 'Configure referral points',
       href: '/dashboard/settings',
       completed: referralRewardPoints !== null,
+    },
+    {
+      label: 'Download the customer app',
+      href: '/download',
+      completed: false,
+    },
+    {
+      label: 'Share your business page',
+      href: businessSlug ? `/business/${businessSlug}` : '/dashboard/settings',
+      completed: false,
+    },
+    {
+      label: 'Award your first customer points',
+      href: '/dashboard/customers',
+      completed: hasFirstTransaction,
     },
   ];
 

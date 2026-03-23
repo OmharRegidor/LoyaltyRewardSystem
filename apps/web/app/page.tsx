@@ -11,7 +11,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Play,
   Star,
   Users,
   Store,
@@ -34,6 +33,7 @@ interface Plan {
   id: string;
   name: string;
   price: string;
+  priceSubtext?: string;
   accentText?: string;
   subtitle: string;
   featuresLabel: string;
@@ -67,7 +67,9 @@ const PLANS: Plan[] = [
   {
     id: 'premium',
     name: 'Loyalty Premium',
-    price: 'Contact for Pricing',
+    price: '₱1,490/mo',
+    priceSubtext: 'Billed annually at ₱14,900 — save ₱2,980',
+    accentText: '14-day free trial',
     subtitle: 'Best for growing multi-location businesses',
     featuresLabel: 'Includes everything in Express, plus:',
     features: [
@@ -79,9 +81,9 @@ const PLANS: Plan[] = [
       'Custom Integrations',
       'Dedicated Account Manager',
     ],
-    cta: 'Schedule a Demo',
-    href: '/book-call',
-    filled: false,
+    cta: 'Start 14-Day Free Trial',
+    href: '/signup',
+    filled: true,
   },
 ];
 
@@ -496,6 +498,11 @@ function PricingSection({
                   >
                     {plan.price}
                   </p>
+                  {plan.priceSubtext && (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {plan.priceSubtext}
+                    </p>
+                  )}
                   {plan.accentText && (
                     <p className="text-sm font-medium text-primary mt-0.5">
                       {plan.accentText}
@@ -541,7 +548,7 @@ function PricingSection({
         </div>
 
         <p className="text-sm text-gray-500 mt-8 text-center">
-          No credit card required for free plan
+          No credit card required — free plan forever, premium starts with a 14-day free trial
         </p>
       </div>
     </section>
@@ -607,12 +614,12 @@ function TestimonialsSection({
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
             Real Stories, Real Results
           </h2>
-          <Link href="/book-call">
+          <Link href="#pricing">
             <Button
               variant="outline"
               className="rounded-lg px-6 h-10 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold text-sm transition-all"
             >
-              Request a demo
+              View Pricing
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </Link>
@@ -983,14 +990,14 @@ export default function Home() {
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/book-call" className="w-full sm:w-auto">
+                <Link href="#pricing" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
                     className="w-full sm:w-auto rounded-lg px-8 h-13 border-2 border-gray-300 text-gray-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all font-bold text-base gap-2"
                   >
-                    <Play className="w-4 h-4" />
-                    Book a Demo
+                    View Pricing
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
               </motion.div>
@@ -1871,10 +1878,10 @@ export default function Home() {
                 </li>
                 <li>
                   <Link
-                    href="/book-call"
+                    href="/#pricing"
                     className="text-white/60 hover:text-white transition-colors"
                   >
-                    Book a Demo
+                    View Pricing
                   </Link>
                 </li>
                 <li>

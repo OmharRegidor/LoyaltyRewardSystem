@@ -82,6 +82,11 @@ export async function GET(request: Request) {
         isAdminManaged: false,
         upgradeAcknowledged: true,
         pendingUpgradeRequest: !!pendingUpgrade,
+        trialEndsAt: null,
+        isTrialing: false,
+        hasUsedTrial: false,
+        trialDaysRemaining: null,
+        isTrialExpired: false,
         plan: {
           id: 'free',
           name: 'free',
@@ -132,6 +137,22 @@ export async function GET(request: Request) {
           staff: 5,
         };
 
+    const isTrialing = subscription.status === 'trialing';
+    const trialEndsAt = subscription.trial_ends_at ?? null;
+    const hasUsedTrial = trialEndsAt !== null;
+    const isTrialExpired =
+      isTrialing && trialEndsAt ? new Date(trialEndsAt) < new Date() : false;
+    const trialDaysRemaining =
+      isTrialing && trialEndsAt && !isTrialExpired
+        ? Math.max(
+            0,
+            Math.ceil(
+              (new Date(trialEndsAt).getTime() - Date.now()) /
+                (1000 * 60 * 60 * 24)
+            )
+          )
+        : null;
+
     const hasAccess = ['active', 'trialing'].includes(subscription.status);
     const isAdminManaged = !subscription.xendit_subscription_id;
 
@@ -158,13 +179,20 @@ export async function GET(request: Request) {
       isAdminManaged,
       upgradeAcknowledged: subExtra?.upgrade_acknowledged ?? true,
       pendingUpgradeRequest: !!pendingUpgrade,
+      trialEndsAt,
+      isTrialing,
+      hasUsedTrial,
+      trialDaysRemaining,
+      isTrialExpired,
       plan: subscription.plan
         ? {
             id: subscription.plan.id,
             name: subscription.plan.name,
             displayName: subscription.plan.display_name,
             hasLoyalty: subscription.plan.has_loyalty,
-            hasPOS: subscription.module_pos_override ?? subscription.plan.has_pos,
+            hasPOS: isTrialExpired
+              ? false
+              : (subscription.module_pos_override ?? subscription.plan.has_pos),
           }
         : null,
       billingInterval: subscription.billing_interval,

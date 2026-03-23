@@ -76,42 +76,99 @@ function BillingContent() {
             </div>
           )}
 
-          {subscription?.hasAccess && (
+          {subscription?.isTrialExpired && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Trial Ended</h3>
+              <p className="text-gray-600 mb-6">
+                Your 14-day POS & Inventory trial has ended. Upgrade to continue
+                using these features.
+              </p>
+              <Link
+                href="/#pricing"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-medium"
+              >
+                <Crown className="w-5 h-5" />
+                Upgrade — ₱1,490/mo
+              </Link>
+            </div>
+          )}
+
+          {subscription?.isTrialing && !subscription.isTrialExpired && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3 sm:gap-4">
-                  <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${
-                      subscription.plan?.name === 'enterprise'
-                        ? 'bg-gradient-to-br from-secondary to-yellow-500'
-                        : 'bg-gradient-to-br from-primary to-primary/70'
-                    }`}
-                  >
-                    {subscription.plan?.name === 'enterprise' ? (
-                      <Crown className="w-7 h-7 text-white" />
-                    ) : (
-                      <Zap className="w-7 h-7 text-white" />
-                    )}
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center shrink-0">
+                    <Zap className="w-7 h-7 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-bold">
-                        {subscription.plan?.displayName || 'Plan'}
-                      </h3>
-                      <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
-                        Active
+                      <h3 className="text-xl font-bold">Enterprise Trial</h3>
+                      <span className="bg-amber-100 text-amber-700 text-xs font-medium px-2 py-1 rounded-full">
+                        {subscription.trialDaysRemaining} day
+                        {subscription.trialDaysRemaining === 1 ? '' : 's'} left
                       </span>
                     </div>
                     <p className="text-gray-600">
-                      {subscription.isFreeForever
-                        ? 'Unlimited loyalty features'
-                        : 'Managed by NoxaLoyalty team'}
+                      POS & Inventory access until{' '}
+                      {new Date(subscription.trialEndsAt!).toLocaleDateString(
+                        'en-US',
+                        { month: 'long', day: 'numeric', year: 'numeric' }
+                      )}
                     </p>
                   </div>
                 </div>
+                <Link
+                  href="/#pricing"
+                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-medium text-sm shrink-0"
+                >
+                  <Crown className="w-4 h-4" />
+                  Upgrade Now
+                </Link>
               </div>
             </div>
           )}
+
+          {subscription?.hasAccess &&
+            !subscription.isTrialing &&
+            !subscription.isTrialExpired && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div
+                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center shrink-0 ${
+                        subscription.plan?.name === 'enterprise'
+                          ? 'bg-gradient-to-br from-secondary to-yellow-500'
+                          : 'bg-gradient-to-br from-primary to-primary/70'
+                      }`}
+                    >
+                      {subscription.plan?.name === 'enterprise' ? (
+                        <Crown className="w-7 h-7 text-white" />
+                      ) : (
+                        <Zap className="w-7 h-7 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold">
+                          {subscription.plan?.displayName || 'Plan'}
+                        </h3>
+                        <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">
+                          Active
+                        </span>
+                      </div>
+                      <p className="text-gray-600">
+                        {subscription.isFreeForever
+                          ? 'Unlimited loyalty features'
+                          : 'Managed by NoxaLoyalty team'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
       </div>
 

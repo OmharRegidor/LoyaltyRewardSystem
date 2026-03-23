@@ -19,6 +19,11 @@ interface SubscriptionData {
   isAdminManaged: boolean;
   upgradeAcknowledged: boolean;
   pendingUpgradeRequest: boolean;
+  trialEndsAt: string | null;
+  isTrialing: boolean;
+  hasUsedTrial: boolean;
+  trialDaysRemaining: number | null;
+  isTrialExpired: boolean;
   plan: Plan | null;
   billingInterval: 'monthly' | 'annual' | null;
   currentPeriodStart: string | null;

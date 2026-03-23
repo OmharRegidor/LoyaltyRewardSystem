@@ -63,6 +63,7 @@ function getServiceClient() {
 interface CachedSubscription {
   status: string;
   module_pos_override: boolean | null;
+  trial_ends_at: string | null;
   plans: Record<string, unknown> | Record<string, unknown>[] | null;
 }
 
@@ -88,6 +89,7 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
       `
       status,
       module_pos_override,
+      trial_ends_at,
       plans (
         has_loyalty,
         has_pos,
@@ -129,6 +131,21 @@ export async function checkModuleAccess(
       allowed: false,
       reason: 'No active subscription',
     };
+  }
+
+  // Check if trial has expired — loyalty stays free, POS gets locked
+  if (
+    subscription.status === 'trialing' &&
+    subscription.trial_ends_at &&
+    new Date(subscription.trial_ends_at) < new Date()
+  ) {
+    if (module === 'pos') {
+      return {
+        allowed: false,
+        reason: 'Your 14-day trial has ended. Upgrade to keep POS & Inventory access.',
+      };
+    }
+    // Loyalty remains allowed (free forever)
   }
 
   // Check module access in plan

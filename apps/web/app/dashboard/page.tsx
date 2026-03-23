@@ -25,6 +25,8 @@ import {
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
 import { OnboardingBanner } from '@/components/dashboard/onboarding-banner';
+import { TrialBanner } from '@/components/dashboard/trial-banner';
+import { useSubscription } from '@/hooks/useSubscription';
 import {
   Dialog,
   DialogContent,
@@ -132,6 +134,9 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 
 function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: string | null }) {
   const [copied, setCopied] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialError, setTrialError] = useState<string | null>(null);
+  const [trialStarted, setTrialStarted] = useState(false);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const appHost = new URL(appUrl).host;
@@ -142,6 +147,28 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
     await navigator.clipboard.writeText(`https://${publicUrl}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleStartTrial = async () => {
+    setTrialLoading(true);
+    setTrialError(null);
+    try {
+      const res = await fetch('/api/billing/trial/start', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setTrialError(data.error || 'Failed to start trial');
+        return;
+      }
+      setTrialStarted(true);
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 1500);
+    } catch {
+      setTrialError('Failed to start trial. Please try again.');
+    } finally {
+      setTrialLoading(false);
+    }
   };
 
   return (
@@ -193,23 +220,36 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
             </div>
           )}
 
-          {/* Upsell */}
+          {/* Trial upsell */}
           <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-primary/10">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-4 h-4 text-primary" />
-              <p className="text-sm text-gray-700">
+              <p className="text-sm font-semibold text-gray-700">
                 Want POS + Inventory Management?
               </p>
             </div>
-            <p className="text-sm text-gray-600 mb-2">
-              Upgrade to Enterprise anytime.
+            <p className="text-sm text-gray-600 mb-3">
+              Try Enterprise features free for 14 days — no credit card needed.
             </p>
-            <Link
-              href="/book-call"
-              className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              Book a Call <ChevronRight className="w-4 h-4" />
-            </Link>
+            {trialStarted ? (
+              <p className="text-green-600 font-semibold text-sm">
+                Trial activated! Redirecting...
+              </p>
+            ) : (
+              <>
+                <button
+                  onClick={handleStartTrial}
+                  disabled={trialLoading}
+                  className="bg-primary text-white font-semibold px-5 py-2 rounded-xl hover:bg-primary/90 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
+                >
+                  {trialLoading ? 'Activating...' : 'Start 14-Day Free Trial'}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                {trialError && (
+                  <p className="text-red-500 text-xs mt-2">{trialError}</p>
+                )}
+              </>
+            )}
           </div>
 
           <button
@@ -547,6 +587,7 @@ export default function DashboardPage() {
   const [pesosPerPoint, setPesosPerPoint] = useState<number | null>(null);
   const [referralRewardPoints, setReferralRewardPoints] = useState<number | null>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const { subscription } = useSubscription();
 
   useEffect(() => {
     const loadData = async () => {
@@ -876,11 +917,20 @@ export default function DashboardPage() {
       </Suspense>
 
       {/* Onboarding Banner for new businesses */}
-      {stats.activeRewards === 0 && (
-        <OnboardingBanner
-          activeRewardCount={stats.activeRewards}
-          pesosPerPoint={pesosPerPoint}
-          referralRewardPoints={referralRewardPoints}
+      <OnboardingBanner
+        activeRewardCount={stats.activeRewards}
+        pesosPerPoint={pesosPerPoint}
+        referralRewardPoints={referralRewardPoints}
+        businessSlug={businessSlug}
+        hasFirstTransaction={transactions.length > 0}
+      />
+
+      {/* Trial Banner */}
+      {(subscription?.isTrialing || subscription?.isTrialExpired) && (
+        <TrialBanner
+          trialDaysRemaining={subscription.trialDaysRemaining}
+          isTrialing={subscription.isTrialing}
+          isTrialExpired={subscription.isTrialExpired}
         />
       )}
 
