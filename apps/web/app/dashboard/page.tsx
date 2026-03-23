@@ -132,7 +132,7 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 // WELCOME MODAL COMPONENT
 // ============================================
 
-function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: string | null }) {
+function WelcomeModalContent({ onClose, slug, isTrialActive }: { onClose: () => void; slug: string | null; isTrialActive: boolean }) {
   const [copied, setCopied] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
@@ -225,18 +225,22 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-4 h-4 text-primary" />
               <p className="text-sm font-semibold text-gray-700">
-                Want POS + Inventory Management?
+                {isTrialActive ? 'POS + Inventory Unlocked!' : 'Want POS + Inventory Management?'}
               </p>
             </div>
-            <p className="text-sm text-gray-600 mb-3">
-              Try Enterprise features free for 14 days — no credit card needed.
-            </p>
-            {trialStarted ? (
+            {isTrialActive ? (
+              <p className="text-sm text-green-600 font-medium">
+                Your 14-day Enterprise trial is active. Explore POS & Inventory from the sidebar.
+              </p>
+            ) : trialStarted ? (
               <p className="text-green-600 font-semibold text-sm">
                 Trial activated! Redirecting...
               </p>
             ) : (
               <>
+                <p className="text-sm text-gray-600 mb-3">
+                  Try Enterprise features free for 14 days — no credit card needed.
+                </p>
                 <button
                   onClick={handleStartTrial}
                   disabled={trialLoading}
@@ -265,7 +269,7 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
 }
 
 // Component that handles welcome param detection (uses useSearchParams)
-function WelcomeModalHandler({ businessSlug }: { businessSlug: string | null }) {
+function WelcomeModalHandler({ businessSlug, isTrialActive }: { businessSlug: string | null; isTrialActive: boolean }) {
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -279,7 +283,7 @@ function WelcomeModalHandler({ businessSlug }: { businessSlug: string | null }) 
 
   if (!showWelcome) return null;
 
-  return <WelcomeModalContent onClose={() => setShowWelcome(false)} slug={businessSlug} />;
+  return <WelcomeModalContent onClose={() => setShowWelcome(false)} slug={businessSlug} isTrialActive={isTrialActive} />;
 }
 
 // ============================================
@@ -913,7 +917,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       {/* Welcome Modal for new signups (wrapped in Suspense for useSearchParams) */}
       <Suspense fallback={null}>
-        <WelcomeModalHandler businessSlug={businessSlug} />
+        <WelcomeModalHandler businessSlug={businessSlug} isTrialActive={subscription?.isTrialing === true && !subscription?.isTrialExpired} />
       </Suspense>
 
       {/* Onboarding Banner for new businesses */}

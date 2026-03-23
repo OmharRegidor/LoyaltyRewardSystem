@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, Gift, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, Gift, ChevronRight, X } from 'lucide-react';
 
 interface OnboardingBannerProps {
   activeRewardCount: number;
@@ -17,6 +18,8 @@ interface ChecklistItem {
   completed: boolean;
 }
 
+const DISMISS_KEY = 'noxa_onboarding_dismissed';
+
 export function OnboardingBanner({
   activeRewardCount,
   pesosPerPoint,
@@ -24,6 +27,11 @@ export function OnboardingBanner({
   businessSlug,
   hasFirstTransaction = false,
 }: OnboardingBannerProps) {
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(DISMISS_KEY) === 'true';
+  });
+
   const items: ChecklistItem[] = [
     {
       label: 'Create your first reward',
@@ -59,11 +67,31 @@ export function OnboardingBanner({
 
   const completedCount = items.filter((i) => i.completed).length;
 
-  // Hide banner when all items complete
-  if (completedCount === items.length) return null;
+  // Hide if dismissed or all trackable items complete (first 3 core items)
+  const coreComplete =
+    activeRewardCount > 0 &&
+    pesosPerPoint !== null &&
+    pesosPerPoint > 0 &&
+    referralRewardPoints !== null;
+
+  if (dismissed || coreComplete) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem(DISMISS_KEY, 'true');
+  };
 
   return (
-    <div className="bg-gradient-to-r from-primary/5 to-secondary/10 border border-primary/20 rounded-2xl p-5 sm:p-6">
+    <div className="bg-gradient-to-r from-primary/5 to-secondary/10 border border-primary/20 rounded-2xl p-5 sm:p-6 relative">
+      {/* Dismiss button */}
+      <button
+        onClick={handleDismiss}
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+        title="Dismiss"
+      >
+        <X className="w-4 h-4" />
+      </button>
+
       <div className="flex items-start gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Gift className="w-5 h-5 text-primary" />
