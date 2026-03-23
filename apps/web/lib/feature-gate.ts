@@ -116,6 +116,17 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
 }
 
 /**
+ * Check if a trialing subscription has expired
+ */
+function isTrialExpired(subscription: CachedSubscription): boolean {
+  return (
+    subscription.status === 'trialing' &&
+    !!subscription.trial_ends_at &&
+    new Date(subscription.trial_ends_at) < new Date()
+  );
+}
+
+/**
  * Check if a business has access to a specific module (loyalty, pos)
  * This is the SERVER-SIDE check that cannot be bypassed
  */
@@ -134,11 +145,7 @@ export async function checkModuleAccess(
   }
 
   // Check if trial has expired — loyalty stays free, POS gets locked
-  if (
-    subscription.status === 'trialing' &&
-    subscription.trial_ends_at &&
-    new Date(subscription.trial_ends_at) < new Date()
-  ) {
+  if (isTrialExpired(subscription)) {
     if (module === 'pos') {
       return {
         allowed: false,
@@ -206,6 +213,23 @@ export async function checkFeatureAccess(
     };
   }
 
+  // Expired trial — only allow free-tier features
+  if (isTrialExpired(subscription)) {
+    const freeFeatures: FeatureName[] = [
+      'qr_loyalty',
+      'email_onboarding',
+      'basic_analytics',
+      'standard_support',
+    ];
+    const allowed = freeFeatures.includes(feature);
+    return {
+      allowed,
+      reason: allowed
+        ? undefined
+        : 'Your trial has ended. Upgrade to access this feature.',
+    };
+  }
+
   // Check feature in plan
   const plan = Array.isArray(subscription.plans)
     ? subscription.plans[0]
@@ -245,6 +269,10 @@ export async function checkLimitAccess(
     };
   }
 
+  // Expired trial — revert to free plan limits
+  const trialExpired = isTrialExpired(subscription);
+  const freePlanLimits = { max_customers: null, max_branches: 3, max_staff_per_branch: 5 };
+
   // Get current usage
   const supabase = getServiceClient();
   const { data: usage } = await supabase
@@ -274,6 +302,9 @@ export async function checkLimitAccess(
         max_staff_per_branch: null,
       };
 
+  // Use free plan limits when trial has expired
+  const effectivePlan = trialExpired ? freePlanLimits : plan;
+
   // Determine limit and current based on type
   let current: number;
   let limit: number | null;
@@ -281,18 +312,18 @@ export async function checkLimitAccess(
   switch (limitType) {
     case 'customers':
       current = usage?.customer_count || 0;
-      limit = plan?.max_customers || null;
+      limit = effectivePlan?.max_customers || null;
       break;
     case 'branches':
       current = usage?.branch_count || 0;
-      limit = plan?.max_branches || null;
+      limit = effectivePlan?.max_branches || null;
       break;
     case 'staff':
       current = usage?.staff_count || 0;
       // Staff limit is per branch * number of branches
       limit =
-        plan?.max_staff_per_branch && plan?.max_branches
-          ? plan.max_staff_per_branch * plan.max_branches
+        effectivePlan?.max_staff_per_branch && effectivePlan?.max_branches
+          ? effectivePlan.max_staff_per_branch * effectivePlan.max_branches
           : null;
       break;
     default:
