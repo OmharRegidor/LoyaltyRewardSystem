@@ -224,11 +224,13 @@ function SidebarBody({
             <TooltipTrigger asChild>
               <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:bg-transparent">
                 {userData.logoUrl ? (
-                  <img
-                    src={userData.logoUrl}
-                    alt={userData.businessName}
-                    className="size-8 aspect-square rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
-                  />
+                  <div className="size-8 shrink-0 rounded-full overflow-hidden ring-1 ring-sidebar-accent/30">
+                    <img
+                      src={userData.logoUrl}
+                      alt={userData.businessName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="size-8 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
                     <span className="text-sidebar-primary-foreground font-bold text-xs leading-none">

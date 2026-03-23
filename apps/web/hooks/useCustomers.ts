@@ -456,24 +456,16 @@ async function getLinkedCustomerIds(
   supabase: ReturnType<typeof createClient>,
   businessId: string,
 ): Promise<string> {
-  // Fetch from both transactions and customer_businesses
-  const [txResult, cbResult] = await Promise.all([
-    supabase
-      .from('transactions')
-      .select('customer_id')
-      .eq('business_id', businessId),
-    supabase
-      .from('customer_businesses')
-      .select('customer_id')
-      .eq('business_id', businessId),
-  ]);
+  // Use customer_businesses as the single source of truth.
+  // This ensures that unlinked (removed) customers stay removed.
+  const { data: cbData } = await supabase
+    .from('customer_businesses')
+    .select('customer_id')
+    .eq('business_id', businessId);
 
   const ids = new Set<string>();
-  if (txResult.data) {
-    for (const t of txResult.data) ids.add(t.customer_id);
-  }
-  if (cbResult.data) {
-    for (const cb of cbResult.data) ids.add(cb.customer_id);
+  if (cbData) {
+    for (const cb of cbData) ids.add(cb.customer_id);
   }
 
   if (ids.size === 0) {

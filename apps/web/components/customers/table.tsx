@@ -17,6 +17,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BulkDeleteDialog } from '@/components/customers/bulk-delete-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Customer, TierLevel } from '@/hooks/useCustomers';
 
 // ============================================
@@ -86,7 +93,8 @@ interface CustomersTableProps {
 // CONSTANTS
 // ============================================
 
-const ITEMS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
 
 // ============================================
 // COMPONENT
@@ -105,6 +113,7 @@ export const CustomersTable = memo(function CustomersTable({
 }: CustomersTableProps) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Reset to page 1 when filters change
@@ -151,11 +160,11 @@ export const CustomersTable = memo(function CustomersTable({
   });
 
   // Pagination
-  const totalPages = Math.ceil(sortedCustomers.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const totalPages = Math.ceil(sortedCustomers.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedCustomers = sortedCustomers.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE
+    startIndex + pageSize
   );
 
   const paginatedIds = paginatedCustomers.map((c) => c.id);
@@ -447,11 +456,35 @@ export const CustomersTable = memo(function CustomersTable({
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-gray-500">
-            Showing {paginatedCustomers.length > 0 ? startIndex + 1 : 0}-
-            {Math.min(startIndex + ITEMS_PER_PAGE, sortedCustomers.length)} of{' '}
-            {sortedCustomers.length} customers
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-500">
+              Showing {paginatedCustomers.length > 0 ? startIndex + 1 : 0}-
+              {Math.min(startIndex + pageSize, sortedCustomers.length)} of{' '}
+              {sortedCustomers.length} customers
+            </p>
+            <div className="flex items-center gap-2">
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1);
+                  setSelectedRows([]);
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-gray-400">per page</span>
+            </div>
+          </div>
           {totalPages > 1 && (
             <div className="flex gap-2">
               <button
