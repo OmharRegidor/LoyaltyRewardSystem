@@ -82,7 +82,7 @@ const PLANS: Plan[] = [
       'Dedicated Account Manager',
     ],
     cta: 'Start 14-Day Free Trial',
-    href: '/signup',
+    href: '/signup?plan=trial',
     filled: true,
   },
 ];
