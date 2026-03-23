@@ -13,10 +13,9 @@ import {
   Settings,
   LogOut,
   UsersRound,
-  Menu,
-  X,
   ShoppingCart,
   Lock,
+  ChevronsLeft,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -24,6 +23,29 @@ import { createClient } from '@/lib/supabase';
 import { logout } from '@/lib/auth';
 import { User } from '@supabase/supabase-js';
 import { UpgradeCongratsModal } from '@/components/dashboard/upgrade-congrats-modal';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuBadge,
+  SidebarSeparator,
+  SidebarInset,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface UserData {
   name: string;
@@ -44,9 +66,225 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+// Core navigation items (always visible)
+const coreNavigation: NavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Customers', href: '/dashboard/customers', icon: Users },
+  { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
+  { name: 'Team', href: '/dashboard/team', icon: UsersRound },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+];
+
+function SidebarBody({
+  userData,
+  isLoading,
+  subscriptionLoading,
+  hasPOS,
+}: {
+  userData: UserData;
+  isLoading: boolean;
+  subscriptionLoading: boolean;
+  hasPOS: boolean;
+}) {
+  const pathname = usePathname();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
+
+  const navigation: NavItem[] = [
+    ...coreNavigation,
+    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: !hasPOS },
+  ];
+
+  const settingsItem: NavItem = { name: 'Settings', href: '/dashboard/settings', icon: Settings };
+
+  const visibleNavigation = (isLoading || subscriptionLoading)
+    ? coreNavigation
+    : navigation;
+
+  const isActive = (href: string) => {
+    if (href === '/dashboard') return pathname === '/dashboard';
+    if (href === '/dashboard/team') return pathname === '/dashboard/team';
+    if (href === '/dashboard/settings') return pathname === '/dashboard/settings';
+    if (href === '/dashboard/pos') return pathname.startsWith('/dashboard/pos');
+    return pathname.startsWith(href);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/login';
+  };
+
+  return (
+    <>
+      {/* Header — Logo */}
+      <SidebarHeader className="px-5 py-6">
+        <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
+          {/* Icon mark — always visible */}
+          <div className="size-9 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
+            <span className="text-sidebar-primary-foreground font-bold text-base leading-none">N</span>
+          </div>
+          {/* Word mark — hidden when collapsed */}
+          <span className="text-xl font-bold text-sidebar-foreground italic truncate group-data-[collapsible=icon]:hidden">
+            NoxaLoyalty
+          </span>
+        </Link>
+      </SidebarHeader>
+
+      <SidebarSeparator />
+
+      {/* Main Navigation */}
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="uppercase text-[11px] tracking-wider font-semibold text-sidebar-foreground/50">
+            Menu
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {visibleNavigation.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.name}
+                    size="default"
+                    className={
+                      isActive(item.href)
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-md'
+                        : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                    }
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="size-[18px]" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {item.locked && !isCollapsed && (
+                    <SidebarMenuBadge>
+                      <Lock className="size-3.5 opacity-50" />
+                    </SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="uppercase text-[11px] tracking-wider font-semibold text-sidebar-foreground/50">
+            General
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive(settingsItem.href)}
+                  tooltip={settingsItem.name}
+                  size="default"
+                  className={
+                    isActive(settingsItem.href)
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-md'
+                      : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                  }
+                >
+                  <Link href={settingsItem.href}>
+                    <settingsItem.icon className="size-[18px]" />
+                    <span>{settingsItem.name}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {/* Footer — User Profile + Logout */}
+      <SidebarFooter className="p-3">
+        <SidebarSeparator className="mb-2" />
+
+        {/* User info */}
+        {isLoading ? (
+          <div className="flex items-center gap-3 px-2 py-2">
+            <Skeleton className="size-9 rounded-full shrink-0 bg-sidebar-accent/20" />
+            <div className="flex-1 min-w-0 space-y-1.5 group-data-[collapsible=icon]:hidden">
+              <Skeleton className="h-3.5 w-24 rounded bg-sidebar-accent/20" />
+              <Skeleton className="h-3 w-14 rounded bg-sidebar-accent/20" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-sidebar-accent/10">
+            {userData.logoUrl ? (
+              <img
+                src={userData.logoUrl}
+                alt={userData.businessName}
+                className="size-9 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
+              />
+            ) : (
+              <div className="size-9 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
+                <span className="text-sidebar-primary-foreground font-bold text-sm leading-none">
+                  {userData.businessName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {userData.businessName}
+              </p>
+              <p className="text-xs text-sidebar-foreground/60 capitalize truncate">
+                {userData.role}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Logout */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Logout"
+              size="default"
+              onClick={handleLogout}
+              className="text-sidebar-foreground/60 hover:text-red-300 hover:bg-sidebar-accent/20"
+            >
+              <LogOut className="size-[18px]" />
+              <span>Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </>
+  );
+}
+
+function CollapseToggle() {
+  const { toggleSidebar, state } = useSidebar();
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={toggleSidebar}
+          className="absolute -right-3 top-7 z-20 hidden md:flex size-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 hover:text-sidebar-foreground shadow-sm transition-colors"
+        >
+          <ChevronsLeft
+            className={`size-3.5 transition-transform duration-200 ${
+              state === 'collapsed' ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" className="text-xs">
+        {state === 'collapsed' ? 'Expand' : 'Collapse'} <kbd className="ml-1 text-[10px] opacity-60">Ctrl+B</kbd>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
   const hasPOS = subscription?.plan?.hasPOS ?? false;
   const showCongratsModal =
@@ -54,7 +292,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     subscription?.upgradeAcknowledged === false &&
     subscription?.plan?.name === 'enterprise';
   const [isLoading, setIsLoading] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
@@ -68,12 +305,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       try {
         const supabase = createClient();
 
-        // First try getSession (reads from cookie directly)
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
-        // If no session, try getUser as fallback
         let user: User | null = session?.user ?? null;
         if (!user) {
           const {
@@ -117,165 +352,38 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     loadUserData();
 
-    // Force light mode only - dark mode disabled
+    // Force light mode only
     document.documentElement.classList.remove('dark');
   }, [router]);
 
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = '/login';
-  };
-
-  // Core navigation items (always visible)
-  const coreNavigation: NavItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Customers', href: '/dashboard/customers', icon: Users },
-    { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
-    { name: 'Team', href: '/dashboard/team', icon: UsersRound },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  ];
-
-  // Full navigation — POS always visible, locked state handled on the page
-  const navigation: NavItem[] = [
-    ...coreNavigation,
-    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: !hasPOS },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-  ];
-
-  // While loading, show only core nav (skip feature-gated items that depend on subscription)
-  const visibleNavigation: NavItem[] = (isLoading || subscriptionLoading)
-    ? [...coreNavigation, { name: 'Settings', href: '/dashboard/settings', icon: Settings }]
-    : navigation;
-
-  const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
-    if (href === '/dashboard/team') return pathname === '/dashboard/team';
-    if (href === '/dashboard/settings')
-      return pathname === '/dashboard/settings';
-    if (href === '/dashboard/pos') return pathname.startsWith('/dashboard/pos');
-    return pathname.startsWith(href);
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+    <SidebarProvider>
+      <div className="flex min-h-svh w-full">
+        <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+          <CollapseToggle />
+          <SidebarBody
+            userData={userData}
+            isLoading={isLoading}
+            subscriptionLoading={subscriptionLoading}
+            hasPOS={hasPOS}
+          />
+        </Sidebar>
 
-      {/* Sidebar - Black for brand presence */}
-      <aside
-        className={`fixed top-0 left-0 z-50 w-64 h-full bg-sidebar flex flex-col transition-transform duration-300 lg:translate-x-0 ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {/* Logo */}
-        <div className="p-6 flex items-center justify-between">
-          <Link
-            href="/dashboard"
-            className="text-2xl font-bold text-sidebar-primary italic"
-          >
-            NoxaLoyalty
-          </Link>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        <SidebarInset>
+          {/* Mobile header */}
+          <header className="md:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-sidebar px-4">
+            <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/20 size-8" />
+            <span className="text-lg font-bold text-sidebar-primary italic">
+              NoxaLoyalty
+            </span>
+          </header>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-          {visibleNavigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                isActive(item.href)
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg'
-                  : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/20'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.name}
-              {item.locked && (
-                <Lock className="w-3.5 h-3.5 ml-auto opacity-50" />
-              )}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Bottom Section */}
-        <div className="p-4 space-y-2 border-t border-sidebar-border">
-          {/* User Info */}
-          {isLoading ? (
-            <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
-              <Skeleton className="w-10 h-10 rounded-full shrink-0 bg-sidebar-accent/20" />
-              <div className="flex-1 min-w-0 space-y-1.5">
-                <Skeleton className="h-4 w-24 rounded bg-sidebar-accent/20" />
-                <Skeleton className="h-3 w-14 rounded bg-sidebar-accent/20" />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/10 rounded-xl">
-              {userData.logoUrl ? (
-                <img
-                  src={userData.logoUrl}
-                  alt={userData.businessName}
-                  className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
-                  <span className="text-sidebar-primary-foreground font-bold">
-                    {userData.businessName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {userData.businessName}
-                </p>
-                <p className="text-xs text-sidebar-foreground/70 capitalize">
-                  {userData.role}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sidebar-foreground/70 hover:text-red-300 hover:bg-sidebar-accent/20 transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Header - Maroon for brand consistency */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 z-30">
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-        <span className="text-lg font-bold text-sidebar-primary italic">
-          NoxaLoyalty
-        </span>
-        <div className="w-10" /> {/* Spacer for centering */}
-      </header>
-
-      {/* Main Content - White background */}
-      <main className="lg:ml-64 min-h-[100dvh] bg-background">
-        <div className="p-4 pt-20 lg:p-8 lg:pt-8">{children}</div>
-      </main>
+          {/* Main content */}
+          <main className="flex-1 bg-background">
+            <div className="p-4 md:p-8">{children}</div>
+          </main>
+        </SidebarInset>
+      </div>
 
       {/* Upgrade Congratulations Modal */}
       {showCongratsModal && (
@@ -284,6 +392,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           onDismiss={refetch}
         />
       )}
-    </div>
+    </SidebarProvider>
   );
 }
