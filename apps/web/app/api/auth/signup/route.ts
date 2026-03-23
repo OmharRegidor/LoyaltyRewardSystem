@@ -15,7 +15,6 @@ const signupSchema = z.object({
   businessName: z.string().min(2).max(100),
   businessType: z.string().min(1, 'Business type is required').max(100),
   phone: z.string().regex(/^\+63\d{10}$/, 'Invalid Philippine phone number'),
-  plan: z.enum(['trial']).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -57,7 +56,6 @@ export async function POST(request: NextRequest) {
           role: 'business_owner',
           business_name: parsed.data.businessName,
           business_type: parsed.data.businessType,
-          signup_plan: parsed.data.plan ?? 'free',
         },
         emailRedirectTo: `${siteUrl}/auth/callback`,
       },

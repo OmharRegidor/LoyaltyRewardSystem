@@ -79,13 +79,11 @@ function SidebarBody({
   isLoading,
   subscriptionLoading,
   hasPOS,
-  hasUsedTrial,
 }: {
   userData: UserData;
   isLoading: boolean;
   subscriptionLoading: boolean;
   hasPOS: boolean;
-  hasUsedTrial: boolean;
 }) {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -166,11 +164,7 @@ function SidebarBody({
                   </SidebarMenuButton>
                   {item.locked && !isCollapsed && (
                     <SidebarMenuBadge>
-                      {hasUsedTrial ? (
-                        <span className="text-[10px] font-medium text-amber-600">Expired</span>
-                      ) : (
-                        <span className="text-[10px] font-medium text-primary">Try Free</span>
-                      )}
+                      <span className="text-[10px] font-medium text-primary">Upgrade</span>
                     </SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
@@ -312,7 +306,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { subscription, isLoading: subscriptionLoading, refetch } = useSubscription();
   const hasPOS = subscription?.plan?.hasPOS ?? false;
-  const hasUsedTrial = subscription?.hasUsedTrial ?? false;
   const showCongratsModal =
     !subscriptionLoading &&
     subscription?.upgradeAcknowledged === false &&
@@ -397,7 +390,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             isLoading={isLoading}
             subscriptionLoading={subscriptionLoading}
             hasPOS={hasPOS}
-            hasUsedTrial={hasUsedTrial}
           />
         </Sidebar>
 

@@ -291,38 +291,6 @@ async function ensureBusinessAndSubscription(
       console.log('[Auth Callback] Subscription exists');
     }
 
-    // Auto-activate trial if user signed up from Premium CTA
-    const signupPlan = userMetadata?.signup_plan as string | undefined;
-    if (signupPlan === 'trial' && business) {
-      const { data: enterprisePlan } = await supabase
-        .from('plans')
-        .select('id')
-        .eq('name', 'enterprise')
-        .single();
-
-      if (enterprisePlan) {
-        const trialEndsAt = new Date();
-        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
-
-        const { error: trialError } = await supabase
-          .from('subscriptions')
-          .update({
-            plan_id: enterprisePlan.id,
-            status: 'trialing',
-            trial_ends_at: trialEndsAt.toISOString(),
-            module_pos_override: true,
-            billing_interval: 'annual',
-          })
-          .eq('business_id', business.id);
-
-        if (trialError) {
-          console.error('[Auth Callback] Trial activation error:', trialError.message);
-        } else {
-          console.log('[Auth Callback] Trial auto-activated, ends:', trialEndsAt.toISOString());
-        }
-      }
-    }
-
     return business;
   } catch (err) {
     console.error('[Auth Callback] Setup error:', err);

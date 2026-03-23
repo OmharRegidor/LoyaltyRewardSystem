@@ -25,8 +25,6 @@ import {
 import { createClient } from '@/lib/supabase';
 import Link from 'next/link';
 import { OnboardingBanner } from '@/components/dashboard/onboarding-banner';
-import { TrialBanner } from '@/components/dashboard/trial-banner';
-import { useSubscription } from '@/hooks/useSubscription';
 import {
   Dialog,
   DialogContent,
@@ -132,11 +130,8 @@ function StatCard({ title, value, growth, icon, iconBg }: StatCardProps) {
 // WELCOME MODAL COMPONENT
 // ============================================
 
-function WelcomeModalContent({ onClose, slug, isTrialActive }: { onClose: () => void; slug: string | null; isTrialActive: boolean }) {
+function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: string | null }) {
   const [copied, setCopied] = useState(false);
-  const [trialLoading, setTrialLoading] = useState(false);
-  const [trialError, setTrialError] = useState<string | null>(null);
-  const [trialStarted, setTrialStarted] = useState(false);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const appHost = new URL(appUrl).host;
@@ -147,28 +142,6 @@ function WelcomeModalContent({ onClose, slug, isTrialActive }: { onClose: () => 
     await navigator.clipboard.writeText(`https://${publicUrl}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleStartTrial = async () => {
-    setTrialLoading(true);
-    setTrialError(null);
-    try {
-      const res = await fetch('/api/billing/trial/start', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        setTrialError(data.error || 'Failed to start trial');
-        return;
-      }
-      setTrialStarted(true);
-      setTimeout(() => {
-        onClose();
-        window.location.reload();
-      }, 1500);
-    } catch {
-      setTrialError('Failed to start trial. Please try again.');
-    } finally {
-      setTrialLoading(false);
-    }
   };
 
   return (
@@ -220,40 +193,23 @@ function WelcomeModalContent({ onClose, slug, isTrialActive }: { onClose: () => 
             </div>
           )}
 
-          {/* Trial upsell */}
+          {/* Enterprise upsell */}
           <div className="bg-gradient-to-r from-primary/5 to-secondary/10 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-primary/10">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-4 h-4 text-primary" />
               <p className="text-sm font-semibold text-gray-700">
-                {isTrialActive ? 'POS + Inventory Unlocked!' : 'Want POS + Inventory Management?'}
+                Want POS + Inventory Management?
               </p>
             </div>
-            {isTrialActive ? (
-              <p className="text-sm text-green-600 font-medium">
-                Your 14-day Enterprise trial is active. Explore POS & Inventory from the sidebar.
-              </p>
-            ) : trialStarted ? (
-              <p className="text-green-600 font-semibold text-sm">
-                Trial activated! Redirecting...
-              </p>
-            ) : (
-              <>
-                <p className="text-sm text-gray-600 mb-3">
-                  Try Enterprise features free for 14 days — no credit card needed.
-                </p>
-                <button
-                  onClick={handleStartTrial}
-                  disabled={trialLoading}
-                  className="bg-primary text-white font-semibold px-5 py-2 rounded-xl hover:bg-primary/90 transition-colors inline-flex items-center gap-1 disabled:opacity-50"
-                >
-                  {trialLoading ? 'Activating...' : 'Start 14-Day Free Trial'}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                {trialError && (
-                  <p className="text-red-500 text-xs mt-2">{trialError}</p>
-                )}
-              </>
-            )}
+            <p className="text-sm text-gray-600 mb-2">
+              Upgrade to Enterprise — ₱1,490/mo billed annually.
+            </p>
+            <Link
+              href="/dashboard/settings/billing"
+              className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
+            >
+              View Plans <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
 
           <button
@@ -269,7 +225,7 @@ function WelcomeModalContent({ onClose, slug, isTrialActive }: { onClose: () => 
 }
 
 // Component that handles welcome param detection (uses useSearchParams)
-function WelcomeModalHandler({ businessSlug, isTrialActive }: { businessSlug: string | null; isTrialActive: boolean }) {
+function WelcomeModalHandler({ businessSlug }: { businessSlug: string | null }) {
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -283,7 +239,7 @@ function WelcomeModalHandler({ businessSlug, isTrialActive }: { businessSlug: st
 
   if (!showWelcome) return null;
 
-  return <WelcomeModalContent onClose={() => setShowWelcome(false)} slug={businessSlug} isTrialActive={isTrialActive} />;
+  return <WelcomeModalContent onClose={() => setShowWelcome(false)} slug={businessSlug} />;
 }
 
 // ============================================
@@ -591,7 +547,6 @@ export default function DashboardPage() {
   const [pesosPerPoint, setPesosPerPoint] = useState<number | null>(null);
   const [referralRewardPoints, setReferralRewardPoints] = useState<number | null>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
-  const { subscription } = useSubscription();
 
   useEffect(() => {
     const loadData = async () => {
@@ -917,7 +872,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       {/* Welcome Modal for new signups (wrapped in Suspense for useSearchParams) */}
       <Suspense fallback={null}>
-        <WelcomeModalHandler businessSlug={businessSlug} isTrialActive={subscription?.isTrialing === true && !subscription?.isTrialExpired} />
+        <WelcomeModalHandler businessSlug={businessSlug} />
       </Suspense>
 
       {/* Onboarding Banner for new businesses */}
@@ -928,15 +883,6 @@ export default function DashboardPage() {
         businessSlug={businessSlug}
         hasFirstTransaction={transactions.length > 0}
       />
-
-      {/* Trial Banner */}
-      {(subscription?.isTrialing || subscription?.isTrialExpired) && (
-        <TrialBanner
-          trialDaysRemaining={subscription.trialDaysRemaining}
-          isTrialing={subscription.isTrialing}
-          isTrialExpired={subscription.isTrialExpired}
-        />
-      )}
 
       <div className="space-y-6">
         {/* Header */}

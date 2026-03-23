@@ -69,7 +69,6 @@ const PLANS: Plan[] = [
     name: 'Loyalty Premium',
     price: '₱1,490/mo',
     priceSubtext: 'Billed annually at ₱14,900 — save ₱2,980',
-    accentText: '14-day free trial',
     subtitle: 'Best for growing multi-location businesses',
     featuresLabel: 'Includes everything in Express, plus:',
     features: [
@@ -81,8 +80,8 @@ const PLANS: Plan[] = [
       'Custom Integrations',
       'Dedicated Account Manager',
     ],
-    cta: 'Start 14-Day Free Trial',
-    href: '/signup?plan=trial',
+    cta: 'Get Started',
+    href: '/signup',
     filled: true,
   },
 ];
@@ -548,7 +547,7 @@ function PricingSection({
         </div>
 
         <p className="text-sm text-gray-500 mt-8 text-center">
-          No credit card required — free plan forever, premium starts with a 14-day free trial
+          No credit card required for free plan
         </p>
       </div>
     </section>

@@ -95,10 +95,6 @@ function validateStep2(
 
 export default function SignupPage() {
   const router = useRouter();
-  const [plan] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    return new URLSearchParams(window.location.search).get('plan');
-  });
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -223,7 +219,6 @@ export default function SignupPage() {
           businessName: businessName.trim(),
           businessType: businessType === 'others' ? customBusinessType.trim() : businessType,
           phone: `+63${phone}`,
-          ...(plan === 'trial' ? { plan: 'trial' } : {}),
         }),
       });
 
