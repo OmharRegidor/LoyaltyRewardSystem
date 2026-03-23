@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Users,
@@ -66,7 +67,6 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-// Core navigation items (always visible)
 const coreNavigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Customers', href: '/dashboard/customers', icon: Users },
@@ -117,13 +117,18 @@ function SidebarBody({
   return (
     <>
       {/* Header — Logo */}
-      <SidebarHeader className="px-5 py-6">
-        <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
-          {/* Icon mark — always visible */}
-          <div className="size-9 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-            <span className="text-sidebar-primary-foreground font-bold text-base leading-none">N</span>
-          </div>
-          {/* Word mark — hidden when collapsed */}
+      <SidebarHeader className="p-3 group-data-[collapsible=icon]:p-2">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 min-w-0 group-data-[collapsible=icon]:justify-center"
+        >
+          <Image
+            src="/logoloyalty.png"
+            alt="NoxaLoyalty"
+            width={36}
+            height={36}
+            className="shrink-0 rounded-lg object-contain group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
+          />
           <span className="text-xl font-bold text-sidebar-foreground italic truncate group-data-[collapsible=icon]:hidden">
             NoxaLoyalty
           </span>
@@ -133,7 +138,7 @@ function SidebarBody({
       <SidebarSeparator />
 
       {/* Main Navigation */}
-      <SidebarContent>
+      <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
           <SidebarGroupLabel className="uppercase text-[11px] tracking-wider font-semibold text-sidebar-foreground/50">
             Menu
@@ -202,42 +207,55 @@ function SidebarBody({
       </SidebarContent>
 
       {/* Footer — User Profile + Logout */}
-      <SidebarFooter className="p-3">
-        <SidebarSeparator className="mb-2" />
+      <SidebarFooter className="p-2 overflow-hidden">
+        <SidebarSeparator className="mb-1" />
 
         {/* User info */}
         {isLoading ? (
-          <div className="flex items-center gap-3 px-2 py-2">
-            <Skeleton className="size-9 rounded-full shrink-0 bg-sidebar-accent/20" />
+          <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
+            <Skeleton className="size-8 rounded-full shrink-0 bg-sidebar-accent/20" />
             <div className="flex-1 min-w-0 space-y-1.5 group-data-[collapsible=icon]:hidden">
               <Skeleton className="h-3.5 w-24 rounded bg-sidebar-accent/20" />
               <Skeleton className="h-3 w-14 rounded bg-sidebar-accent/20" />
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-sidebar-accent/10">
-            {userData.logoUrl ? (
-              <img
-                src={userData.logoUrl}
-                alt={userData.businessName}
-                className="size-9 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
-              />
-            ) : (
-              <div className="size-9 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
-                <span className="text-sidebar-primary-foreground font-bold text-sm leading-none">
-                  {userData.businessName.charAt(0).toUpperCase()}
-                </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:bg-transparent">
+                {userData.logoUrl ? (
+                  <img
+                    src={userData.logoUrl}
+                    alt={userData.businessName}
+                    className="size-8 rounded-full object-cover shrink-0 ring-1 ring-sidebar-accent/30"
+                  />
+                ) : (
+                  <div className="size-8 rounded-full bg-linear-to-br from-sidebar-primary to-sidebar-accent flex items-center justify-center shrink-0">
+                    <span className="text-sidebar-primary-foreground font-bold text-xs leading-none">
+                      {userData.businessName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {userData.businessName}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 capitalize truncate">
+                    {userData.role}
+                  </p>
+                </div>
               </div>
-            )}
-            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {userData.businessName}
-              </p>
-              <p className="text-xs text-sidebar-foreground/60 capitalize truncate">
-                {userData.role}
-              </p>
-            </div>
-          </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              align="center"
+              hidden={!isCollapsed}
+              className="text-xs"
+            >
+              <p className="font-medium">{userData.businessName}</p>
+              <p className="text-muted-foreground capitalize">{userData.role}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* Logout */}
@@ -267,7 +285,7 @@ function CollapseToggle() {
       <TooltipTrigger asChild>
         <button
           onClick={toggleSidebar}
-          className="absolute -right-3 top-7 z-20 hidden md:flex size-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/70 hover:text-sidebar-foreground shadow-sm transition-colors"
+          className="absolute -right-3 top-6 z-20 hidden md:flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground shadow-sm transition-all hover:shadow-md"
         >
           <ChevronsLeft
             className={`size-3.5 transition-transform duration-200 ${
@@ -358,8 +376,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-svh w-full">
-        <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <div className="flex min-h-svh w-full overflow-x-hidden">
+        <Sidebar collapsible="icon" className="border-r border-sidebar-border overflow-hidden">
           <CollapseToggle />
           <SidebarBody
             userData={userData}
@@ -373,6 +391,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Mobile header */}
           <header className="md:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-sidebar px-4">
             <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-foreground/80 hover:bg-sidebar-accent/20 size-8" />
+            <Image
+              src="/logoloyalty.png"
+              alt="NoxaLoyalty"
+              width={28}
+              height={28}
+              className="object-contain"
+            />
             <span className="text-lg font-bold text-sidebar-primary italic">
               NoxaLoyalty
             </span>
