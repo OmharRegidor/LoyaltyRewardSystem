@@ -124,16 +124,12 @@ export async function POST(request: Request) {
     // Check user is not already on a paid (enterprise) plan
     const { data: existingSub } = await service
       .from('subscriptions')
-      .select('id, status, trial_ends_at, plan_id, plans:plan_id(name)')
+      .select('id, status, plan_id, plans:plan_id(name)')
       .eq('business_id', business.id)
       .maybeSingle();
 
-    // Allow trial users (active or expired) to submit upgrade requests
-    const isTrialUser = existingSub?.trial_ends_at !== null && existingSub?.trial_ends_at !== undefined;
-
     if (
       existingSub &&
-      !isTrialUser &&
       ['active', 'trialing'].includes(existingSub.status) &&
       existingSub.plans &&
       (existingSub.plans as unknown as { name: string }).name !== 'free'

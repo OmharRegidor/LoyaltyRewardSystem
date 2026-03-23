@@ -12,7 +12,6 @@ import {
   ArrowUpCircle,
   Receipt,
   ScrollText,
-  Timer,
   LogOut,
   Menu,
   X,
@@ -28,7 +27,6 @@ interface AdminLayoutProps {
 const baseNavigation = [
   { name: 'Overview', path: '', icon: LayoutDashboard },
   { name: 'Businesses', path: '/businesses', icon: Building2 },
-  { name: 'Trials', path: '/trials', icon: Timer },
   { name: 'Upgrades', path: '/upgrades', icon: ArrowUpCircle },
   { name: 'Invoices', path: '/invoices', icon: Receipt },
   { name: 'Audit Logs', path: '/audit-logs', icon: ScrollText },
