@@ -148,13 +148,15 @@ export default function SettingsPage() {
   // Billing section toggle
   const [billingExpanded, setBillingExpanded] = useState(false);
 
-  // Auto-expand billing and smooth scroll when navigating with #billing hash
+  // Auto-expand billing and smooth scroll when navigating with ?section=billing
   useEffect(() => {
-    if (window.location.hash === '#billing') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('section') === 'billing') {
       setBillingExpanded(true);
+      // Wait for accordion to expand, then smooth scroll
       setTimeout(() => {
-        document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
+        document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
     }
   }, []);
 
