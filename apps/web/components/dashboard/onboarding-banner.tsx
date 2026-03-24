@@ -8,8 +8,6 @@ interface OnboardingBannerProps {
   activeRewardCount: number;
   pesosPerPoint: number | null;
   referralRewardPoints: number | null;
-  businessSlug?: string | null;
-  hasFirstTransaction?: boolean;
 }
 
 interface ChecklistItem {
@@ -24,8 +22,6 @@ export function OnboardingBanner({
   activeRewardCount,
   pesosPerPoint,
   referralRewardPoints,
-  businessSlug,
-  hasFirstTransaction = false,
 }: OnboardingBannerProps) {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -48,33 +44,12 @@ export function OnboardingBanner({
       href: '/dashboard/settings',
       completed: referralRewardPoints !== null,
     },
-    {
-      label: 'Download the customer app',
-      href: '/download',
-      completed: false,
-    },
-    {
-      label: 'Share your business page',
-      href: businessSlug ? `/business/${businessSlug}` : '/dashboard/settings',
-      completed: false,
-    },
-    {
-      label: 'Award your first customer points',
-      href: '/dashboard/customers',
-      completed: hasFirstTransaction,
-    },
   ];
 
   const completedCount = items.filter((i) => i.completed).length;
 
-  // Hide if dismissed or all trackable items complete (first 3 core items)
-  const coreComplete =
-    activeRewardCount > 0 &&
-    pesosPerPoint !== null &&
-    pesosPerPoint > 0 &&
-    referralRewardPoints !== null;
-
-  if (dismissed || coreComplete) return null;
+  // Hide if dismissed or all items complete
+  if (dismissed || completedCount === items.length) return null;
 
   const handleDismiss = () => {
     setDismissed(true);

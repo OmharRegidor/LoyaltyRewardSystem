@@ -15,6 +15,7 @@ import {
   LogOut,
   UsersRound,
   ShoppingCart,
+  Lock,
   ChevronsLeft,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -148,8 +149,8 @@ function SidebarBody({
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive(item.href)}
-                    tooltip={item.name}
+                    isActive={isActive(item.locked ? '/dashboard/settings/billing' : item.href)}
+                    tooltip={item.locked ? `${item.name} (Upgrade Required)` : item.name}
                     size="default"
                     className={
                       isActive(item.href)
@@ -157,14 +158,14 @@ function SidebarBody({
                         : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
                     }
                   >
-                    <Link href={item.href}>
+                    <Link href={item.locked ? '/dashboard/settings/billing' : item.href}>
                       <item.icon className="size-[18px]" />
                       <span>{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
                   {item.locked && !isCollapsed && (
                     <SidebarMenuBadge>
-                      <span className="text-[10px] font-medium text-primary">Upgrade</span>
+                      <Lock className="size-3.5 opacity-50" />
                     </SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>

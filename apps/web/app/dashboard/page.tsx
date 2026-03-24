@@ -880,8 +880,6 @@ export default function DashboardPage() {
         activeRewardCount={stats.activeRewards}
         pesosPerPoint={pesosPerPoint}
         referralRewardPoints={referralRewardPoints}
-        businessSlug={businessSlug}
-        hasFirstTransaction={transactions.length > 0}
       />
 
       <div className="space-y-6">
