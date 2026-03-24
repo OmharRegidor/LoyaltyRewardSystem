@@ -338,8 +338,8 @@ export async function POST(request: NextRequest) {
         } Subscription`,
         customerEmail: user.email || business.owner_email,
         customerName: validation.data.billingDetails?.fullName,
-        successRedirectUrl: `${appUrl}/dashboard/settings/billing?success=true`,
-        failureRedirectUrl: `${appUrl}/dashboard/settings/billing?failed=true`,
+        successRedirectUrl: `${appUrl}/dashboard/settings?success=true`,
+        failureRedirectUrl: `${appUrl}/dashboard/settings?failed=true`,
         currency: 'PHP',
         invoiceDuration: 86400,
         metadata: {

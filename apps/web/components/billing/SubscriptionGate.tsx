@@ -77,7 +77,7 @@ export function PastDueBanner() {
           </div>
         </div>
         <Link
-          href="/dashboard/settings/billing"
+          href="/dashboard/settings"
           className="bg-white text-red-600 px-4 py-1.5 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors flex items-center gap-2"
         >
           <CreditCard className="w-4 h-4" />

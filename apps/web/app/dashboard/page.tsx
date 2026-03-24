@@ -205,7 +205,7 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
               Upgrade to Enterprise for POS, Inventory, and more.
             </p>
             <Link
-              href="/dashboard/settings/billing"
+              href="/dashboard/settings"
               className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
             >
               View Plans <ChevronRight className="w-4 h-4" />

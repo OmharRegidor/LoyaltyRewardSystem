@@ -173,8 +173,8 @@ export async function POST(request: Request) {
       newPaymentMethod = await createEWalletPaymentMethod({
         customerId: business.xendit_customer_id,
         channelCode: type === 'gcash' ? 'GCASH' : 'PAYMAYA',
-        successReturnUrl: `${appUrl}/dashboard/settings/billing?pm_updated=true`,
-        failureReturnUrl: `${appUrl}/dashboard/settings/billing?pm_failed=true`,
+        successReturnUrl: `${appUrl}/dashboard/settings?pm_updated=true`,
+        failureReturnUrl: `${appUrl}/dashboard/settings?pm_failed=true`,
       });
 
       // E-wallet requires authorization

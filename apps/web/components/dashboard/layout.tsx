@@ -149,7 +149,7 @@ function SidebarBody({
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive(item.locked ? '/dashboard/settings/billing' : item.href)}
+                    isActive={isActive(item.locked ? '/dashboard/settings' : item.href)}
                     tooltip={item.locked ? `${item.name} (Upgrade Required)` : item.name}
                     size="default"
                     className={
@@ -158,7 +158,7 @@ function SidebarBody({
                         : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
                     }
                   >
-                    <Link href={item.locked ? '/dashboard/settings/billing' : item.href}>
+                    <Link href={item.locked ? '/dashboard/settings' : item.href}>
                       <item.icon className="size-[18px]" />
                       <span>{item.name}</span>
                     </Link>

@@ -301,7 +301,7 @@ export function EmbeddedCheckout({
         window.location.href = data.paymentUrl;
       } else {
         onSuccess?.();
-        router.push('/dashboard/settings/billing?success=true');
+        router.push('/dashboard/settings?success=true');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
