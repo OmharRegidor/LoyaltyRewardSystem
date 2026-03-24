@@ -33,7 +33,7 @@ export default async function POSLayout({
 
 function POSLockedOverlay() {
   return (
-    <div className="relative min-h-[calc(100vh-8rem)] overflow-hidden">
+    <div className="relative isolate min-h-[calc(100vh-8rem)] overflow-hidden">
       {/* Blurred mock POS background */}
       <div className="absolute inset-0 blur-[6px] opacity-60 pointer-events-none select-none" aria-hidden="true">
         <div className="p-6 space-y-6">

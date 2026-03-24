@@ -148,13 +148,10 @@ export default function SettingsPage() {
   // Billing section toggle
   const [billingExpanded, setBillingExpanded] = useState(false);
 
-  // Auto-expand billing and scroll when navigating with #billing hash
+  // Auto-expand billing when navigating with #billing hash
   useEffect(() => {
     if (window.location.hash === '#billing') {
       setBillingExpanded(true);
-      setTimeout(() => {
-        document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
     }
   }, []);
 
