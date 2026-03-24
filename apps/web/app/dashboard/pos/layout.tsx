@@ -33,10 +33,10 @@ export default async function POSLayout({
 
 function POSLockedOverlay() {
   return (
-    <div className="relative isolate min-h-[calc(100vh-8rem)] overflow-hidden">
+    <div className="relative min-h-[calc(100vh-8rem)]">
       {/* Blurred mock POS background */}
-      <div className="absolute inset-0 blur-[6px] opacity-60 pointer-events-none select-none" aria-hidden="true">
-        <div className="p-6 space-y-6">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
+        <div className="p-6 space-y-6 blur-[6px] opacity-50">
           {/* Mock header */}
           <div className="flex items-center justify-between">
             <div>
@@ -67,9 +67,6 @@ function POSLockedOverlay() {
           </div>
         </div>
       </div>
-
-      {/* Frosted overlay */}
-      <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
 
       {/* Centered upgrade card */}
       <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-8rem)] p-4">
