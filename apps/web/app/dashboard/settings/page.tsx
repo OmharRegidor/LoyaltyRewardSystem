@@ -148,6 +148,16 @@ export default function SettingsPage() {
   // Billing section toggle
   const [billingExpanded, setBillingExpanded] = useState(false);
 
+  // Auto-expand billing and scroll when navigating with #billing hash
+  useEffect(() => {
+    if (window.location.hash === '#billing') {
+      setBillingExpanded(true);
+      setTimeout(() => {
+        document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, []);
+
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [snapshot, setSnapshot] = useState<EditSnapshot | null>(null);
@@ -1161,7 +1171,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Billing Card (Inline Dropdown) */}
-          <Card className="p-4 sm:p-6">
+          <Card id="billing" className="p-4 sm:p-6 scroll-mt-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-green-500/10 rounded-xl">
                 <CreditCard className="w-5 h-5 text-green-500" />

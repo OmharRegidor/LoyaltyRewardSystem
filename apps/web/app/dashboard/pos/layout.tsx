@@ -108,10 +108,10 @@ function POSLockedOverlay() {
 
           {/* CTA */}
           <Link
-            href="/book-call"
+            href="/dashboard/settings#billing"
             className="inline-flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors text-base"
           >
-            Contact Us to Upgrade
+            View Upgrade Options
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
