@@ -33,7 +33,6 @@ interface Plan {
   id: string;
   name: string;
   price: string;
-  priceSubtext?: string;
   accentText?: string;
   subtitle: string;
   featuresLabel: string;
@@ -67,8 +66,7 @@ const PLANS: Plan[] = [
   {
     id: 'premium',
     name: 'Loyalty Premium',
-    price: '₱1,490/mo',
-    priceSubtext: 'Billed annually at ₱14,900 — save ₱2,980',
+    price: 'Custom',
     subtitle: 'Best for growing multi-location businesses',
     featuresLabel: 'Includes everything in Express, plus:',
     features: [
@@ -80,9 +78,9 @@ const PLANS: Plan[] = [
       'Custom Integrations',
       'Dedicated Account Manager',
     ],
-    cta: 'Get Started',
-    href: '/signup',
-    filled: true,
+    cta: 'Contact Us',
+    href: '/book-call',
+    filled: false,
   },
 ];
 
@@ -497,11 +495,6 @@ function PricingSection({
                   >
                     {plan.price}
                   </p>
-                  {plan.priceSubtext && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {plan.priceSubtext}
-                    </p>
-                  )}
                   {plan.accentText && (
                     <p className="text-sm font-medium text-primary mt-0.5">
                       {plan.accentText}

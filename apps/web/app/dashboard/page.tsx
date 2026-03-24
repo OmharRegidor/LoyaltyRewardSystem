@@ -202,7 +202,7 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
               </p>
             </div>
             <p className="text-sm text-gray-600 mb-2">
-              Upgrade to Enterprise — ₱1,490/mo billed annually.
+              Upgrade to Enterprise for POS, Inventory, and more.
             </p>
             <Link
               href="/dashboard/settings/billing"
