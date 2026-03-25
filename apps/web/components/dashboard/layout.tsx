@@ -410,10 +410,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </span>
           </header>
 
-          {/* Main content */}
-          <main className="flex-1 bg-background">
+          {/* Main content — SidebarInset is already <main>, avoid nesting */}
+          <div className="flex-1 bg-background">
             <div className="p-4 md:p-8">{children}</div>
-          </main>
+          </div>
         </SidebarInset>
       </div>
 
