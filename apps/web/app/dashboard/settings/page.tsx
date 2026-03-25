@@ -149,16 +149,17 @@ export default function SettingsPage() {
   const [billingExpanded, setBillingExpanded] = useState(false);
 
   // Auto-expand billing and smooth scroll when navigating with ?section=billing
+  // Must wait for isLoading to become false so the billing element exists in DOM
   useEffect(() => {
+    if (isLoading) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('section') === 'billing') {
       setBillingExpanded(true);
-      // Wait for accordion to expand, then smooth scroll
       setTimeout(() => {
         document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
+      }, 400);
     }
-  }, []);
+  }, [isLoading]);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
