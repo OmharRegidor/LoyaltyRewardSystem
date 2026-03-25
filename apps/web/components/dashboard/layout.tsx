@@ -90,16 +90,13 @@ function SidebarBody({
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
+  // Always show POS — locked state depends on subscription (default locked while loading)
   const navigation: NavItem[] = [
     ...coreNavigation,
-    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: !hasPOS },
+    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: subscriptionLoading || !hasPOS },
   ];
 
   const settingsItem: NavItem = { name: 'Settings', href: '/dashboard/settings', icon: Settings };
-
-  const visibleNavigation = (isLoading || subscriptionLoading)
-    ? coreNavigation
-    : navigation;
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -145,7 +142,7 @@ function SidebarBody({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {visibleNavigation.map((item) => (
+              {navigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton
                     asChild
