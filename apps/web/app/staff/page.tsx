@@ -413,7 +413,7 @@ export default function StaffScannerPage() {
     }
 
     try {
-      // Step 1: Resolve customer via RPC (must be first — everything depends on this)
+      // Resolve to the correct business-specific customer record
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc("resolve_customer_for_business", {
           p_scanned_code: scannedCode,
@@ -456,40 +456,58 @@ export default function StaffScannerPage() {
         return;
       }
 
-      // Step 2: Run critical queries in parallel (first-visit + points, and name lookup)
-      const linkAndPointsPromise = supabase
-        .from("customer_businesses")
-        .select("id, points")
-        .eq("customer_id", customerData.id)
-        .eq("business_id", businessId)
-        .maybeSingle();
+      // Non-critical background updates — fire without blocking the UI
+      if (!customerData.card_token && staffDataRef.current) {
+        fetch("/api/staff/customer/card-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerId: customerData.id }),
+        }).catch(() => {});
+      }
 
-      const namePromise = (!customerData.full_name && customerData.user_id)
-        ? fetch(`/api/customer/${customerData.user_id}/profile`)
-            .then(r => r.ok ? r.json() : null)
-            .catch(() => null)
-        : null;
+      if (!customerData.created_by_business_id && staffDataRef.current) {
+        void supabase
+          .from("customers")
+          .update({ created_by_business_id: staffDataRef.current.businessId })
+          .eq("id", customerData.id)
+          .is("created_by_business_id", null);
+      }
+
+      // Critical queries — run in parallel: (first-visit + points) and (name lookup)
+      const linkPromise = staffDataRef.current
+        ? supabase
+            .from("customer_businesses")
+            .select("id, points")
+            .eq("customer_id", customerData.id)
+            .eq("business_id", staffDataRef.current.businessId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null });
+
+      const namePromise: Promise<{ name?: string } | null> =
+        !customerData.full_name && customerData.user_id
+          ? fetch(`/api/customer/${customerData.user_id}/profile`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+          : Promise.resolve(null);
 
       const [linkResult, profileResult] = await Promise.all([
-        linkAndPointsPromise,
+        linkPromise,
         namePromise,
       ]);
 
-      // Determine first visit + business points from single query
-      const existingLink = linkResult.data;
+      // First visit detection + business points from single query
       let isFirstVisit = false;
       let businessPoints = customerData.total_points || 0;
 
-      if (existingLink) {
-        businessPoints = existingLink.points || 0;
-      } else {
+      if (linkResult.data) {
+        businessPoints = linkResult.data.points || 0;
+      } else if (staffDataRef.current) {
         isFirstVisit = true;
         businessPoints = 0;
-        // Insert link — don't block UI, it's already been attempted by the RPC
-        supabase.from("customer_businesses").insert({
+        await supabase.from("customer_businesses").insert({
           customer_id: customerData.id,
-          business_id: businessId,
-        }).then(() => {}, () => {});
+          business_id: staffDataRef.current.businessId,
+        });
       }
 
       // Resolve customer name
@@ -499,24 +517,6 @@ export default function StaffScannerPage() {
       }
       if (!customerName) {
         customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
-      }
-
-      // Step 3: Fire-and-forget non-critical background updates
-      if (!customerData.card_token) {
-        fetch("/api/staff/customer/card-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customerId: customerData.id }),
-        }).catch(() => {});
-      }
-
-      if (!customerData.created_by_business_id) {
-        supabase
-          .from("customers")
-          .update({ created_by_business_id: businessId })
-          .eq("id", customerData.id)
-          .is("created_by_business_id", null)
-          .then(() => {}, () => {});
       }
 
       const tier = (customerData.tier as TierKey) || "bronze";
