@@ -16,6 +16,8 @@ export interface Brand {
   description: string | null;
   points_per_purchase: number | null;
   min_purchase_for_points: number | null;
+  coin_name: string;
+  coin_image_url: string | null;
   branches: BrandBranch[];
   reward_count: number;
 }
@@ -27,6 +29,8 @@ export interface BrandFromSupabase {
   description: string | null;
   points_per_purchase: number | null;
   min_purchase_for_points: number | null;
+  coin_name: string;
+  coin_image_url: string | null;
   branches: {
     id: string;
     name: string;

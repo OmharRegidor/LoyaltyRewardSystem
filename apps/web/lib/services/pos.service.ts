@@ -752,7 +752,7 @@ export async function createStaffSale(
   }));
 
   // Single atomic RPC call — handles locking, validation, points, transactions, scan log
-  const { data: rawData, error } = await supabase.rpc("process_staff_sale", {
+  const { data: rawData, error } = await (supabase.rpc as (...args: unknown[]) => ReturnType<typeof supabase.rpc>)("process_staff_sale", {
     p_business_id: businessId,
     p_customer_id: input.customer_id,
     p_staff_id: staffId,

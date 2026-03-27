@@ -61,7 +61,7 @@ export default function BrandDetailScreen() {
 
       Alert.alert(
         'Redeem Reward',
-        `Redeem "${reward.title}" for ${reward.points_cost.toLocaleString()} points?`,
+        `Redeem "${reward.title}" for ${reward.points_cost.toLocaleString()} ${brand?.coin_name?.toLowerCase() ?? 'pts'}?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -87,7 +87,7 @@ export default function BrandDetailScreen() {
         ],
       );
     },
-    [redeemReward, isLocked],
+    [redeemReward, isLocked, brand],
   );
 
   if (isLoading) {
@@ -149,9 +149,13 @@ export default function BrandDetailScreen() {
             {brand.points_per_purchase != null &&
               brand.points_per_purchase > 0 && (
                 <View style={styles.rateBadge}>
-                  <Ionicons name="star" size={14} color={COLORS.gold} />
+                  {brand.coin_image_url ? (
+                    <Image source={{ uri: brand.coin_image_url }} style={{ width: 14, height: 14, borderRadius: 7 }} />
+                  ) : (
+                    <Ionicons name="star" size={14} color={COLORS.gold} />
+                  )}
                   <Text style={styles.rateText}>
-                    {brand.points_per_purchase} pts per purchase
+                    {brand.points_per_purchase} {brand.coin_name?.toLowerCase() ?? 'pts'} per purchase
                   </Text>
                 </View>
               )}
@@ -168,7 +172,7 @@ export default function BrandDetailScreen() {
                 color={COLORS.primary}
               />
               <Text style={styles.pointsBadgeText}>
-                You have {businessPoints.toLocaleString()} pts at this store
+                You have {businessPoints.toLocaleString()} {brand.coin_name?.toLowerCase() ?? 'pts'} at this store
               </Text>
             </View>
           </View>
@@ -208,6 +212,8 @@ export default function BrandDetailScreen() {
                 userTier={userTier}
                 onRedeem={handleRedeem}
                 isRedeeming={redeemingId === reward.id}
+                coinName={brand.coin_name}
+                coinImageUrl={brand.coin_image_url}
               />
             ))
           )}

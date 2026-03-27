@@ -31,6 +31,8 @@ interface RewardCardProps {
   userTier: TierLevel;
   onRedeem: (reward: Reward) => void;
   isRedeeming?: boolean;
+  coinName?: string;
+  coinImageUrl?: string | null;
 }
 
 // ============================================
@@ -94,6 +96,8 @@ function RewardCardComponent({
   userTier,
   onRedeem,
   isRedeeming = false,
+  coinName,
+  coinImageUrl,
 }: RewardCardProps) {
   const isLocked = !canAccessReward(userTier, reward.tier_required);
   const hasEnoughPoints = userPoints >= reward.points_cost;
@@ -183,11 +187,15 @@ function RewardCardComponent({
         {/* Points & Action */}
         <View style={styles.footer}>
           <View style={styles.pointsContainer}>
-            <Ionicons name="star" size={16} color={COLORS.gold} />
+            {coinImageUrl ? (
+              <Image source={{ uri: coinImageUrl }} style={{ width: 16, height: 16, borderRadius: 8 }} />
+            ) : (
+              <Ionicons name="star" size={16} color={COLORS.gold} />
+            )}
             <Text style={styles.pointsCost}>
               {reward.points_cost.toLocaleString()}
             </Text>
-            <Text style={styles.pointsLabel}>pts</Text>
+            <Text style={styles.pointsLabel}>{coinName?.toLowerCase() ?? 'pts'}</Text>
           </View>
 
           {isLocked ? (

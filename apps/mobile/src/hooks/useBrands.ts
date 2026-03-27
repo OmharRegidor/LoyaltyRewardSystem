@@ -14,6 +14,8 @@ function transformToBrand(raw: BrandFromSupabase): Brand {
     description: raw.description,
     points_per_purchase: raw.points_per_purchase,
     min_purchase_for_points: raw.min_purchase_for_points,
+    coin_name: raw.coin_name ?? 'Points',
+    coin_image_url: raw.coin_image_url ?? null,
     branches: activeBranches,
     reward_count: raw.rewards?.length ?? 0,
   };
@@ -37,6 +39,8 @@ export function useBrands() {
           description,
           points_per_purchase,
           min_purchase_for_points,
+          coin_name,
+          coin_image_url,
           branches (id, name, address, city, phone, is_active),
           rewards!inner (id)
         `,

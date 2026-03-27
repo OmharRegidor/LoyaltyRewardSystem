@@ -413,7 +413,7 @@ export default function StaffScannerPage() {
     }
 
     try {
-      // Resolve to the correct business-specific customer record
+      // Step 1: Resolve customer via RPC (must be first — everything depends on this)
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc("resolve_customer_for_business", {
           p_scanned_code: scannedCode,
@@ -456,87 +456,70 @@ export default function StaffScannerPage() {
         return;
       }
 
-      // Lazy card token generation for mobile-created customers
-      if (!customerData.card_token && staffDataRef.current) {
-        try {
-          const response = await fetch("/api/staff/customer/card-token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ customerId: customerData.id }),
-          });
-          if (response.ok) {
-            const result = await response.json();
-            customerData.card_token = result.cardToken;
-          }
-        } catch {
-          // Non-critical
-        }
-      }
+      // Step 2: Run critical queries in parallel (first-visit + points, and name lookup)
+      const linkAndPointsPromise = supabase
+        .from("customer_businesses")
+        .select("id, points")
+        .eq("customer_id", customerData.id)
+        .eq("business_id", businessId)
+        .maybeSingle();
 
-      // Set created_by_business_id if null (mobile-created customers)
-      if (!customerData.created_by_business_id && staffDataRef.current) {
-        await supabase
-          .from("customers")
-          .update({ created_by_business_id: staffDataRef.current.businessId })
-          .eq("id", customerData.id)
-          .is("created_by_business_id", null);
-      }
+      const namePromise = (!customerData.full_name && customerData.user_id)
+        ? fetch(`/api/customer/${customerData.user_id}/profile`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+        : null;
 
-      // Auto-link customer to business + detect first visit
+      const [linkResult, profileResult] = await Promise.all([
+        linkAndPointsPromise,
+        namePromise,
+      ]);
+
+      // Determine first visit + business points from single query
+      const existingLink = linkResult.data;
       let isFirstVisit = false;
-      if (staffDataRef.current) {
-        const { data: existingLink } = await supabase
-          .from("customer_businesses")
-          .select("id")
-          .eq("customer_id", customerData.id)
-          .eq("business_id", staffDataRef.current.businessId)
-          .maybeSingle();
+      let businessPoints = customerData.total_points || 0;
 
-        if (!existingLink) {
-          isFirstVisit = true;
-          await supabase.from("customer_businesses").insert({
-            customer_id: customerData.id,
-            business_id: staffDataRef.current.businessId,
-          });
-        }
+      if (existingLink) {
+        businessPoints = existingLink.points || 0;
+      } else {
+        isFirstVisit = true;
+        businessPoints = 0;
+        // Insert link — don't block UI, it's already been attempted by the RPC
+        supabase.from("customer_businesses").insert({
+          customer_id: customerData.id,
+          business_id: businessId,
+        }).then(() => {}, () => {});
       }
 
-      // Get customer name
+      // Resolve customer name
       let customerName = customerData.full_name || "";
-
-      if (!customerName && customerData.user_id) {
-        try {
-          const response = await fetch(
-            `/api/customer/${customerData.user_id}/profile`,
-          );
-          if (response.ok) {
-            const profile = await response.json();
-            if (profile.name) customerName = profile.name;
-          }
-        } catch {
-          // Use fallback
-        }
+      if (!customerName && profileResult?.name) {
+        customerName = profileResult.name;
       }
-
       if (!customerName) {
         customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
       }
 
-      const tier = (customerData.tier as TierKey) || "bronze";
-
-      // Fetch business-specific points
-      let businessPoints = customerData.total_points || 0;
-      if (staffDataRef.current) {
-        const { data: bpData } = await supabase
-          .from("customer_businesses")
-          .select("points")
-          .eq("customer_id", customerData.id)
-          .eq("business_id", staffDataRef.current.businessId)
-          .maybeSingle();
-        if (bpData) {
-          businessPoints = bpData.points || 0;
-        }
+      // Step 3: Fire-and-forget non-critical background updates
+      if (!customerData.card_token) {
+        fetch("/api/staff/customer/card-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customerId: customerData.id }),
+        }).catch(() => {});
       }
+
+      if (!customerData.created_by_business_id) {
+        supabase
+          .from("customers")
+          .update({ created_by_business_id: businessId })
+          .eq("id", customerData.id)
+          .is("created_by_business_id", null)
+          .then(() => {}, () => {});
+      }
+
+      const tier = (customerData.tier as TierKey) || "bronze";
 
       setCustomer({
         id: customerData.id,

@@ -142,16 +142,14 @@ export async function POST(
 
     // Try business-scoped customer first
     let updateError = null;
+    const pinResetData = {
+      pin_hash: pinHash,
+      failed_pin_attempts: 0,
+      pin_locked_until: null,
+    };
     const { error: scopedError, count: scopedCount } = await serviceClient
       .from('customers')
-      .update(
-        {
-          pin_hash: pinHash,
-          failed_pin_attempts: 0,
-          pin_locked_until: null,
-        },
-        { count: 'exact' }
-      )
+      .update(pinResetData, { count: 'exact' })
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id);
 
@@ -176,11 +174,7 @@ export async function POST(
       if (linkedCustomerId) {
         const { error: linkedError } = await serviceClient
           .from('customers')
-          .update({
-            pin_hash: pinHash,
-            failed_pin_attempts: 0,
-            pin_locked_until: null,
-          })
+          .update(pinResetData)
           .eq('id', linkedCustomerId);
         updateError = linkedError;
       } else {

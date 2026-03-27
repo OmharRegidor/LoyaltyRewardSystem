@@ -75,6 +75,8 @@ interface LoyaltySettings {
   minPurchase: number;
   maxPointsPerTransaction: string;
   pointsExpiryDays: string;
+  coinName: string;
+  coinImageUrl: string | null;
 }
 
 interface InputValues {
@@ -184,6 +186,8 @@ export default function SettingsPage() {
     minPurchase: 0,
     maxPointsPerTransaction: '',
     pointsExpiryDays: '',
+    coinName: 'Points',
+    coinImageUrl: null,
   });
 
   // Referral Settings State
@@ -332,6 +336,8 @@ export default function SettingsPage() {
           pointsExpiryDays: (business as Record<string, unknown>).points_expiry_days
             ? String((business as Record<string, unknown>).points_expiry_days)
             : '',
+          coinName: business.coin_name || 'Points',
+          coinImageUrl: business.coin_image_url || null,
         });
 
         // Set preset selection
@@ -419,6 +425,65 @@ export default function SettingsPage() {
   };
 
   // ============================================
+  // COIN IMAGE UPLOAD HANDLER
+  // ============================================
+
+  const handleCoinImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !businessId) return;
+
+    if (file.size > 1 * 1024 * 1024) {
+      setErrorMessage('Coin image must be less than 1MB');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
+      setErrorMessage('Only PNG, JPG and WebP images are allowed');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+
+    setSaveStatus('saving');
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${businessId}-coin-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(fileName);
+
+      const coinImageUrl = urlData.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('businesses')
+        .update({ coin_image_url: coinImageUrl })
+        .eq('id', businessId);
+
+      if (updateError) throw updateError;
+
+      setLoyalty((prev) => ({ ...prev, coinImageUrl }));
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (error) {
+      console.error('Coin image upload error:', error);
+      setErrorMessage('Failed to upload coin image. Please try again.');
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    }
+  };
+
+  // ============================================
   // SAVE SETTINGS
   // ============================================
 
@@ -450,6 +515,7 @@ export default function SettingsPage() {
             ? parseInt(loyalty.pointsExpiryDays)
             : null,
           referral_reward_points: referralRewardPoints,
+          coin_name: loyalty.coinName.trim() || 'Points',
         })
         .eq('id', businessId);
 
@@ -983,6 +1049,56 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  Points Name &amp; Icon
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Customize what your customers see instead of &quot;Points&quot; and the default star icon
+                </p>
+                <div className="flex items-start gap-4">
+                  <input
+                    type="text"
+                    maxLength={20}
+                    disabled={!isEditing}
+                    value={loyalty.coinName}
+                    onChange={(e) =>
+                      setLoyalty((prev) => ({ ...prev, coinName: e.target.value }))
+                    }
+                    className={`w-48 px-4 py-2.5 border rounded-xl transition font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
+                    placeholder="Points"
+                  />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <label
+                      className={`relative w-12 h-12 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden transition ${
+                        isEditing
+                          ? 'border-gray-300 hover:border-primary cursor-pointer'
+                          : 'border-gray-200 cursor-default'
+                      }`}
+                    >
+                      {loyalty.coinImageUrl ? (
+                        <img
+                          src={loyalty.coinImageUrl}
+                          alt="Coin"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Coins className="w-5 h-5 text-gray-400" />
+                      )}
+                      {isEditing && (
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={handleCoinImageUpload}
+                        />
+                      )}
+                    </label>
+                    <span className="text-[10px] text-gray-400">Icon</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Points Rate Selection */}
               <div>
                 <label className="block text-sm font-medium mb-3">

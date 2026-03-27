@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (authError) {
+      console.error('[signup] Auth error:', authError.message, authError.status);
       if (authError.message.includes('already registered')) {
         return NextResponse.json(
           { error: 'This email is already registered. Please login instead.' },
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: 'Signup failed. Please try again.' },
+        { error: authError.message || 'Signup failed. Please try again.' },
         { status: 500 },
       );
     }

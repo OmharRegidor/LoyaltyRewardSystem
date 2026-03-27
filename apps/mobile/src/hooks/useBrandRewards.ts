@@ -19,6 +19,8 @@ interface BrandDetail {
   logo_url: string | null;
   description: string | null;
   points_per_purchase: number | null;
+  coin_name: string;
+  coin_image_url: string | null;
   branches: BrandBranch[];
 }
 
@@ -59,6 +61,8 @@ export function useBrandRewards(businessId: string) {
             logo_url,
             description,
             points_per_purchase,
+            coin_name,
+            coin_image_url,
             branches (id, name, address, city, phone, is_active)
           `,
         )
@@ -120,6 +124,8 @@ export function useBrandRewards(businessId: string) {
         logo_url: brandData.logo_url,
         description: brandData.description,
         points_per_purchase: brandData.points_per_purchase,
+        coin_name: brandData.coin_name ?? 'Points',
+        coin_image_url: brandData.coin_image_url ?? null,
         branches: (brandData.branches || []).filter((b) => b.is_active),
       });
 
