@@ -456,15 +456,7 @@ export default function StaffScannerPage() {
         return;
       }
 
-      // Non-critical background updates — fire without blocking the UI
-      if (!customerData.card_token && staffDataRef.current) {
-        fetch("/api/staff/customer/card-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ customerId: customerData.id }),
-        }).catch(() => {});
-      }
-
+      // Set created_by_business_id if null (mobile-created customers)
       if (!customerData.created_by_business_id && staffDataRef.current) {
         void supabase
           .from("customers")
@@ -473,51 +465,33 @@ export default function StaffScannerPage() {
           .is("created_by_business_id", null);
       }
 
-      // Critical queries — run in parallel: (first-visit + points) and (name lookup)
-      const linkPromise = staffDataRef.current
-        ? supabase
-            .from("customer_businesses")
-            .select("id, points")
-            .eq("customer_id", customerData.id)
-            .eq("business_id", staffDataRef.current.businessId)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null });
-
-      const namePromise: Promise<{ name?: string } | null> =
-        !customerData.full_name && customerData.user_id
-          ? fetch(`/api/customer/${customerData.user_id}/profile`)
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null)
-          : Promise.resolve(null);
-
-      const [linkResult, profileResult] = await Promise.all([
-        linkPromise,
-        namePromise,
-      ]);
-
-      // First visit detection + business points from single query
+      // First visit check + business points (single query)
       let isFirstVisit = false;
       let businessPoints = customerData.total_points || 0;
 
-      if (linkResult.data) {
-        businessPoints = linkResult.data.points || 0;
-      } else if (staffDataRef.current) {
-        isFirstVisit = true;
-        businessPoints = 0;
-        await supabase.from("customer_businesses").insert({
-          customer_id: customerData.id,
-          business_id: staffDataRef.current.businessId,
-        });
+      if (staffDataRef.current) {
+        const { data: linkData } = await supabase
+          .from("customer_businesses")
+          .select("id, points")
+          .eq("customer_id", customerData.id)
+          .eq("business_id", staffDataRef.current.businessId)
+          .maybeSingle();
+
+        if (linkData) {
+          businessPoints = linkData.points || 0;
+        } else {
+          isFirstVisit = true;
+          businessPoints = 0;
+          await supabase.from("customer_businesses").insert({
+            customer_id: customerData.id,
+            business_id: staffDataRef.current.businessId,
+          });
+        }
       }
 
-      // Resolve customer name
-      let customerName = customerData.full_name || "";
-      if (!customerName && profileResult?.name) {
-        customerName = profileResult.name;
-      }
-      if (!customerName) {
-        customerName = `Customer #${customerData.id.slice(-6).toUpperCase()}`;
-      }
+      // Use customer name from RPC data, or fallback to short ID
+      const customerName = customerData.full_name
+        || `Customer #${customerData.id.slice(-6).toUpperCase()}`;
 
       const tier = (customerData.tier as TierKey) || "bronze";
 
