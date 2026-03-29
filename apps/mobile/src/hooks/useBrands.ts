@@ -46,7 +46,8 @@ export function useBrands() {
         `,
         )
         .eq('rewards.is_active', true)
-        .eq('rewards.is_visible', true);
+        .eq('rewards.is_visible', true)
+        .order('created_at', { ascending: false });
 
       if (error) throw new Error(error.message);
 
