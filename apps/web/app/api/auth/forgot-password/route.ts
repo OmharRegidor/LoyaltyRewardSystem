@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { checkRateLimit } from '@/lib/security';
 
 const forgotPasswordSchema = z.object({
@@ -13,7 +12,6 @@ export async function POST(request: NextRequest) {
     const parsed = forgotPasswordSchema.safeParse(body);
 
     if (!parsed.success) {
-      // Always return ok to prevent email enumeration
       return NextResponse.json({ ok: true });
     }
 
@@ -28,18 +26,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.NEXT_PUBLIC_VERCEL_URL
-        ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-        : 'http://localhost:3000');
-
-    const supabase = await createServerSupabaseClient();
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/auth/callback?type=recovery`,
-    });
-
-    // Always return ok — never reveal whether email exists
+    // Rate limit passed — the actual resetPasswordForEmail call
+    // is made from the client-side Supabase client to ensure
+    // PKCE code_verifier is stored properly in the browser
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: true });

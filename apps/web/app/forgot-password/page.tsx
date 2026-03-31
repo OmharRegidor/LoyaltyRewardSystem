@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase';
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams();
@@ -43,6 +44,7 @@ function ForgotPasswordContent() {
     if (isResend) setResendSuccess(false);
 
     try {
+      // Server-side rate limit check
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,6 +56,14 @@ function ForgotPasswordContent() {
         setIsLoading(false);
         return;
       }
+
+      // Call resetPasswordForEmail from the browser client so the
+      // PKCE code_verifier is stored properly in the browser
+      const supabase = createClient();
+      await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim(),
+        { redirectTo: `${window.location.origin}/auth/callback?type=recovery` },
+      );
 
       if (isResend) {
         setResendSuccess(true);

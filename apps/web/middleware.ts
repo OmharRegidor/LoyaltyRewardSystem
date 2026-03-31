@@ -142,6 +142,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Intercept Supabase auth errors on root URL (e.g. expired password reset links)
+  // Supabase redirects to Site URL with error params when OTP verification fails
+  if (pathname === '/') {
+    const errorCode = request.nextUrl.searchParams.get('error_code');
+    if (errorCode) {
+      const loginUrl = new URL('/login', request.url);
+      if (errorCode === 'otp_expired') {
+        loginUrl.searchParams.set('error', 'link_expired');
+      } else {
+        const errorDesc = request.nextUrl.searchParams.get('error_description');
+        loginUrl.searchParams.set('error', errorDesc || 'auth_error');
+      }
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Always allow public routes on non-admin subdomains
   if (isPublicRoute(pathname)) {
     return NextResponse.next();

@@ -153,6 +153,10 @@ function LoginForm() {
       return 'Your account has been deactivated. Contact your manager.';
     if (urlError === 'session_expired')
       return 'Your session has expired. Please sign in again.';
+    if (urlError === 'link_expired')
+      return 'Your password reset link has expired. Please request a new one from the forgot password page.';
+    if (urlError === 'auth_error')
+      return 'Something went wrong with authentication. Please try again.';
     return '';
   };
 
