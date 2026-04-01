@@ -68,6 +68,7 @@ export interface StaffSaleInput {
   exchange_points?: number;
   amount_tendered_centavos?: number;
   tier: TierKey;
+  skip_points?: boolean;
 }
 
 // ============================================

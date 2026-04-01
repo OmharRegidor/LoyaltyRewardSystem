@@ -23,7 +23,6 @@ type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 
 export type AdminDatabase = {
   __InternalSupabase: Database['__InternalSupabase'];
-  graphql_public: Database['graphql_public'];
   public: {
     Tables: Omit<Database['public']['Tables'], 'subscriptions'> & {
       // Override subscriptions to include upgrade_acknowledged column

@@ -14,6 +14,7 @@ import {
   Copy,
   Check,
   Package,
+  Stamp,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { useBusinessContext } from '@/hooks/useBusinessContext';
@@ -219,8 +220,8 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
               <Crown className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">Upgrade to POS + Inventory</h3>
-              <p className="text-sm text-gray-600">Unlock POS, inventory, and all premium features</p>
+              <h3 className="font-bold text-lg">Upgrade to Enterprise</h3>
+              <p className="text-sm text-gray-600">Unlock Stamp Card, POS, inventory, and all premium features</p>
             </div>
           </div>
 
@@ -236,6 +237,7 @@ export function UpgradeRequestForm({ onUpgradeSubmitted }: UpgradeRequestFormPro
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 my-4">
             {[
+              { icon: Stamp, label: 'Digital Stamp Card' },
               { icon: ShoppingCart, label: 'Point-of-Sale System' },
               { icon: Package, label: 'Inventory Management' },
               { icon: Users, label: 'Unlimited Staff & Branches' },

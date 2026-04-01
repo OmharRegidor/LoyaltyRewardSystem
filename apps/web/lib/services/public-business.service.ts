@@ -5,7 +5,6 @@ import type { Database } from '../../../../packages/shared/types/database';
 import {
   generateQRToken,
   generateQRCodeUrl,
-  generateCardToken,
 } from '@/lib/qr-code';
 
 type Business = Database['public']['Tables']['businesses']['Row'];
@@ -77,7 +76,8 @@ export async function getPublicBusinesses(
       phone,
       points_per_purchase,
       pesos_per_point,
-      rewards!inner(id)
+      loyalty_mode,
+      rewards(id)
     `,
       { count: 'exact' }
     )
@@ -108,7 +108,14 @@ export async function getPublicBusinesses(
     return { businesses: [], total: 0 };
   }
 
-  const businesses: PublicBusiness[] = (data || []).map((b) => ({
+  // Stamps-mode businesses don't need rewards (stamp template IS the reward)
+  // Points-mode businesses must have at least one active visible reward
+  type BizRow = (typeof data)[number] & { loyalty_mode?: string; rewards?: { id: string }[] };
+  const filtered = ((data || []) as BizRow[]).filter((b) => {
+    return b.loyalty_mode === 'stamps' || (b.rewards && b.rewards.length > 0);
+  });
+
+  const businesses: PublicBusiness[] = filtered.map((b) => ({
     id: b.id,
     name: b.name,
     slug: b.slug,
@@ -329,7 +336,6 @@ export async function getCustomerTransactions(
 export interface SelfSignupResult {
   customerId: string;
   isNewCustomer: boolean;
-  cardToken: string;
   qrCodeUrl: string;
   email: string | null;
 }
@@ -495,11 +501,11 @@ export async function createSelfSignupCustomer(
   const normalizedEmail = email?.toLowerCase().trim() || null;
 
   // Check for existing customer by phone (if provided) within this business
-  let existingCustomer: { id: string; qr_code_url: string | null; card_token: string | null; email: string | null; phone: string | null } | null = null;
+  let existingCustomer: { id: string; qr_code_url: string | null; email: string | null; phone: string | null } | null = null;
   if (normalizedPhone) {
     const { data } = await supabase
       .from('customers')
-      .select('id, qr_code_url, card_token, email, phone')
+      .select('id, qr_code_url, email, phone')
       .eq('phone', normalizedPhone)
       .eq('created_by_business_id', businessId)
       .maybeSingle();
@@ -513,7 +519,7 @@ export async function createSelfSignupCustomer(
   if (!existingCustomer) {
     const { data: linkedCustomers } = await supabase
       .from('customer_businesses')
-      .select('customer_id, customers!inner(id, qr_code_url, card_token, email, phone)')
+      .select('customer_id, customers!inner(id, qr_code_url, email, phone)')
       .eq('business_id', businessId);
 
     if (linkedCustomers && linkedCustomers.length > 0) {
@@ -523,7 +529,7 @@ export async function createSelfSignupCustomer(
         const emailMatch = normalizedEmail && c.email && c.email.toLowerCase() === normalizedEmail;
         const phoneMatch = normalizedPhone && c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone;
         if (emailMatch || phoneMatch) {
-          existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, card_token: c.card_token, email: c.email, phone: c.phone };
+          existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, email: c.email, phone: c.phone };
           break;
         }
       }
@@ -535,7 +541,7 @@ export async function createSelfSignupCustomer(
     if (normalizedEmail) {
       const { data } = await supabase
         .from('customers')
-        .select('id, qr_code_url, card_token, email, phone')
+        .select('id, qr_code_url, email, phone')
         .eq('email', normalizedEmail)
         .not('user_id', 'is', null)
         .maybeSingle();
@@ -544,7 +550,7 @@ export async function createSelfSignupCustomer(
     if (!existingCustomer && normalizedPhone) {
       const { data } = await supabase
         .from('customers')
-        .select('id, qr_code_url, card_token, email, phone')
+        .select('id, qr_code_url, email, phone')
         .eq('phone', normalizedPhone)
         .not('user_id', 'is', null)
         .maybeSingle();
@@ -553,25 +559,6 @@ export async function createSelfSignupCustomer(
   }
 
   if (existingCustomer) {
-    // Customer exists - ensure card_token exists
-    let cardToken = existingCustomer.card_token;
-
-    if (!cardToken) {
-      try {
-        cardToken = generateCardToken(existingCustomer.id);
-        await supabase
-          .from('customers')
-          .update({
-            card_token: cardToken,
-            card_token_created_at: new Date().toISOString(),
-          })
-          .eq('id', existingCustomer.id);
-      } catch (tokenErr) {
-        console.error('Failed to generate card token for existing customer:', existingCustomer.id, tokenErr);
-        cardToken = '';
-      }
-    }
-
     // Update email if provided and customer doesn't have one
     if (normalizedEmail && !existingCustomer.email) {
       await supabase
@@ -599,7 +586,6 @@ export async function createSelfSignupCustomer(
     return {
       customerId: existingCustomer.id,
       isNewCustomer: false,
-      cardToken,
       qrCodeUrl: existingCustomer.qr_code_url || '',
       email: normalizedEmail || existingCustomer.email,
     };
@@ -630,7 +616,7 @@ export async function createSelfSignupCustomer(
     // INSERT failed — re-check for existing customer (concurrent insert race)
     let raceQuery = supabase
       .from('customers')
-      .select('id, qr_code_url, card_token, email')
+      .select('id, qr_code_url, email')
       .eq('created_by_business_id', businessId);
 
     if (normalizedPhone) {
@@ -646,20 +632,6 @@ export async function createSelfSignupCustomer(
       throw new Error('Failed to create customer');
     }
 
-    let fallbackCardToken = existing.card_token;
-    if (!fallbackCardToken) {
-      try {
-        fallbackCardToken = generateCardToken(existing.id);
-        await supabase
-          .from('customers')
-          .update({ card_token: fallbackCardToken, card_token_created_at: new Date().toISOString() })
-          .eq('id', existing.id);
-      } catch (tokenErr) {
-        console.error('Failed to generate card token for race-condition customer:', existing.id, tokenErr);
-        fallbackCardToken = '';
-      }
-    }
-
     // Link customer to business (race-condition path)
     await supabase
       .from('customer_businesses')
@@ -671,24 +643,9 @@ export async function createSelfSignupCustomer(
     return {
       customerId: existing.id,
       isNewCustomer: false,
-      cardToken: fallbackCardToken,
       qrCodeUrl: existing.qr_code_url || '',
       email: normalizedEmail || existing.email,
     };
-  }
-
-  let cardToken = '';
-  try {
-    cardToken = generateCardToken(newCustomer.id);
-    await supabase
-      .from('customers')
-      .update({
-        card_token: cardToken,
-        card_token_created_at: new Date().toISOString(),
-      })
-      .eq('id', newCustomer.id);
-  } catch (tokenErr) {
-    console.error('Failed to generate card token for new customer:', newCustomer.id, tokenErr);
   }
 
   // Link new customer to business
@@ -702,7 +659,6 @@ export async function createSelfSignupCustomer(
   return {
     customerId: newCustomer.id,
     isNewCustomer: true,
-    cardToken,
     qrCodeUrl,
     email: normalizedEmail,
   };

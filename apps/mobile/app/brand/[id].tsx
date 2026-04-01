@@ -1,6 +1,6 @@
 // app/brand/[id].tsx — Brand detail screen
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,12 @@ import {
   Image,
   Alert,
   RefreshControl,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FullScreenLoading } from '../../src/components/ui/Loading';
 import { RewardCard, EmptyState } from '../../src/components/rewards';
 import { BranchCard } from '../../src/components/brands';
@@ -27,6 +29,294 @@ import {
 } from '../../src/lib/constants';
 import type { Reward } from '../../src/types/rewards.types';
 import { getTierInfo } from '../../src/types/rewards.types';
+
+const CARD_WIDTH = Dimensions.get('window').width - SPACING.lg * 2;
+const CARD_ASPECT = 1.6; // credit-card ratio
+const CARD_HEIGHT = CARD_WIDTH / CARD_ASPECT;
+
+interface StampLoyaltyCardProps {
+  stampCard: {
+    stamps_collected: number;
+    total_stamps: number;
+    reward_title: string;
+    is_completed: boolean;
+  };
+  brandName: string;
+  brandLogoUrl: string | null;
+}
+
+function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCardProps) {
+  const flipAnim = useRef(new Animated.Value(0)).current;
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const flipCard = () => {
+    Animated.spring(flipAnim, {
+      toValue: isFlipped ? 0 : 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(!isFlipped);
+  };
+
+  const frontRotate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['180deg', '360deg'],
+  });
+  const backRotate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+  const frontOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 0.5, 1],
+    outputRange: [0, 0, 1, 1],
+  });
+  const backOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 0.5, 1],
+    outputRange: [1, 1, 0, 0],
+  });
+
+  // Calculate grid layout: best fit for the card area
+  const cols = stampCard.total_stamps <= 5 ? stampCard.total_stamps
+    : stampCard.total_stamps <= 10 ? 5
+    : stampCard.total_stamps <= 12 ? 4
+    : 5;
+  const rows = Math.ceil(stampCard.total_stamps / cols);
+  const stampAreaH = CARD_HEIGHT - 72; // leave room for header + footer
+  const stampSize = Math.min(
+    Math.floor((CARD_WIDTH - 48 - (cols - 1) * 10) / cols),
+    Math.floor((stampAreaH - (rows - 1) * 10) / rows),
+    42,
+  );
+
+  return (
+    <View style={cardStyles.section}>
+      <View style={cardStyles.sectionHeader}>
+        <Text style={cardStyles.sectionTitle}>Stamp Card</Text>
+        <TouchableOpacity onPress={flipCard}>
+          <Text style={cardStyles.flipHint}>
+            {isFlipped ? 'View stamps' : 'View front'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity activeOpacity={0.9} onPress={flipCard}>
+        <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+          {/* BACK — stamp grid (default visible) */}
+          <Animated.View
+            style={[
+              cardStyles.card,
+              cardStyles.cardBack,
+              {
+                transform: [{ perspective: 1000 }, { rotateY: backRotate }],
+                opacity: backOpacity,
+              },
+            ]}
+          >
+            <View style={cardStyles.backHeader}>
+              <Text style={cardStyles.backTitle}>
+                {stampCard.stamps_collected}/{stampCard.total_stamps} stamps
+              </Text>
+            </View>
+            <View style={cardStyles.stampGrid}>
+              {Array.from({ length: stampCard.total_stamps }, (_, i) => {
+                const isFilled = i < stampCard.stamps_collected;
+                const isReward = i === stampCard.total_stamps - 1;
+                return (
+                  <View
+                    key={i}
+                    style={[
+                      cardStyles.stampSlot,
+                      { width: stampSize, height: stampSize, borderRadius: stampSize * 0.25 },
+                      isFilled && cardStyles.stampSlotFilled,
+                      isReward && !isFilled && cardStyles.stampSlotReward,
+                    ]}
+                  >
+                    {isReward && !isFilled ? (
+                      <Text style={cardStyles.rewardSlotText}>FREE</Text>
+                    ) : (
+                      <MaterialCommunityIcons
+                        name="stamper"
+                        size={stampSize * 0.45}
+                        color={isFilled ? '#fff' : COLORS.gray[300]}
+                      />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={cardStyles.backFooter} numberOfLines={1}>
+              {stampCard.is_completed
+                ? `🎉 Reward ready: ${stampCard.reward_title}`
+                : `${stampCard.total_stamps - stampCard.stamps_collected} more → ${stampCard.reward_title}`}
+            </Text>
+          </Animated.View>
+
+          {/* FRONT — branding */}
+          <Animated.View
+            style={[
+              cardStyles.card,
+              cardStyles.cardFront,
+              {
+                transform: [{ perspective: 1000 }, { rotateY: frontRotate }],
+                opacity: frontOpacity,
+              },
+            ]}
+          >
+            {brandLogoUrl ? (
+              <Image source={{ uri: brandLogoUrl }} style={cardStyles.frontLogo} />
+            ) : (
+              <View style={cardStyles.frontLogoFallback}>
+                <Text style={cardStyles.frontLogoText}>
+                  {brandName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <Text style={cardStyles.frontTitle}>LOYALTY CARD</Text>
+            <Text style={cardStyles.frontBrand}>{brandName}</Text>
+            <Text style={cardStyles.frontReward}>{stampCard.reward_title}</Text>
+          </Animated.View>
+        </View>
+      </TouchableOpacity>
+
+      <Text style={cardStyles.tapHint}>Tap card to flip</Text>
+    </View>
+  );
+}
+
+const cardStyles = StyleSheet.create({
+  section: {
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.base,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    color: COLORS.gray[900],
+  },
+  flipHint: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  card: {
+    position: 'absolute',
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 16,
+    backfaceVisibility: 'hidden',
+    padding: SPACING.md,
+    justifyContent: 'space-between',
+  },
+  cardBack: {
+    backgroundColor: '#FFF9F0',
+    borderWidth: 1,
+    borderColor: '#F0E0CC',
+  },
+  cardFront: {
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backTitle: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+    color: COLORS.gray[800],
+  },
+  stampGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    paddingVertical: 4,
+  },
+  stampSlot: {
+    backgroundColor: '#F5F0EB',
+    borderWidth: 1.5,
+    borderColor: '#E0D5C8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampSlotFilled: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  stampSlotReward: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderStyle: 'dashed',
+  },
+  rewardSlotText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#E65100',
+    letterSpacing: 0.5,
+  },
+  backFooter: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    color: COLORS.gray[600],
+    textAlign: 'center',
+  },
+  frontLogo: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginBottom: SPACING.sm,
+  },
+  frontLogoFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  frontLogoText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  frontTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 3,
+    marginBottom: 4,
+  },
+  frontBrand: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  frontReward: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: SPACING.xs,
+  },
+  tapHint: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.gray[400],
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
+});
 
 export default function BrandDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +334,7 @@ export default function BrandDetailScreen() {
     userPoints,
     businessPoints,
     userTier,
+    stampCard,
     refresh,
   } = useBrandRewards(id);
 
@@ -146,7 +437,8 @@ export default function BrandDetailScreen() {
 
             <Text style={styles.brandName}>{brand.name}</Text>
 
-            {brand.points_per_purchase != null &&
+            {brand.loyalty_mode !== 'stamps' &&
+              brand.points_per_purchase != null &&
               brand.points_per_purchase > 0 && (
                 <View style={styles.rateBadge}>
                   {brand.coin_image_url ? (
@@ -164,17 +456,34 @@ export default function BrandDetailScreen() {
               <Text style={styles.description}>{brand.description}</Text>
             ) : null}
 
-            {/* Per-business points balance */}
-            <View style={styles.pointsBadge}>
-              <Ionicons
-                name="wallet-outline"
-                size={16}
-                color={COLORS.primary}
-              />
-              <Text style={styles.pointsBadgeText}>
-                You have {businessPoints.toLocaleString()} {brand.coin_name?.toLowerCase() ?? 'pts'} at this store
-              </Text>
-            </View>
+            {/* Per-business balance — stamps or points */}
+            {brand.loyalty_mode === 'stamps' && stampCard ? (
+              <View style={styles.stampBadge}>
+                <Text style={styles.stampBadgeText}>
+                  🎫 {stampCard.stamps_collected}/{stampCard.total_stamps} stamps
+                  {stampCard.is_completed
+                    ? ' — 🎉 Reward Ready!'
+                    : ` — ${stampCard.total_stamps - stampCard.stamps_collected} more → ${stampCard.reward_title}`}
+                </Text>
+              </View>
+            ) : brand.loyalty_mode === 'stamps' ? (
+              <View style={styles.stampBadge}>
+                <Text style={styles.stampBadgeText}>
+                  🎫 Stamp card — visit to start collecting!
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.pointsBadge}>
+                <Ionicons
+                  name="wallet-outline"
+                  size={16}
+                  color={COLORS.primary}
+                />
+                <Text style={styles.pointsBadgeText}>
+                  You have {businessPoints.toLocaleString()} {brand.coin_name?.toLowerCase() ?? 'pts'} at this store
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -191,33 +500,44 @@ export default function BrandDetailScreen() {
           </View>
         )}
 
-        {/* Rewards */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Rewards</Text>
-            <Text style={styles.sectionCount}>{rewards.length}</Text>
-          </View>
+        {/* Stamp Card (stamp mode) — flippable loyalty card */}
+        {brand.loyalty_mode === 'stamps' && stampCard && (
+          <StampLoyaltyCard
+            stampCard={stampCard}
+            brandName={brand.name}
+            brandLogoUrl={brand.logo_url}
+          />
+        )}
 
-          {rewards.length === 0 ? (
-            <EmptyState
-              title="No rewards"
-              subtitle="This brand has no rewards available."
-            />
-          ) : (
-            rewards.map((reward) => (
-              <RewardCard
-                key={reward.id}
-                reward={reward}
-                userPoints={businessPoints}
-                userTier={userTier}
-                onRedeem={handleRedeem}
-                isRedeeming={redeemingId === reward.id}
-                coinName={brand.coin_name}
-                coinImageUrl={brand.coin_image_url}
+        {/* Rewards (points mode only) */}
+        {brand.loyalty_mode !== 'stamps' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Rewards</Text>
+              <Text style={styles.sectionCount}>{rewards.length}</Text>
+            </View>
+
+            {rewards.length === 0 ? (
+              <EmptyState
+                title="No rewards"
+                subtitle="This brand has no rewards available."
               />
-            ))
-          )}
-        </View>
+            ) : (
+              rewards.map((reward) => (
+                <RewardCard
+                  key={reward.id}
+                  reward={reward}
+                  userPoints={businessPoints}
+                  userTier={userTier}
+                  onRedeem={handleRedeem}
+                  isRedeeming={redeemingId === reward.id}
+                  coinName={brand.coin_name}
+                  coinImageUrl={brand.coin_image_url}
+                />
+              ))
+            )}
+          </View>
+        )}
 
         {/* Bottom spacing */}
         <View style={{ height: SPACING['2xl'] }} />
@@ -305,8 +625,21 @@ const styles = StyleSheet.create({
   },
   pointsBadgeText: {
     fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: COLORS.primary,
+  },
+  stampBadge: {
+    backgroundColor: '#FFF8E1',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.full,
+    marginTop: SPACING.sm,
+  },
+  stampBadgeText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600' as const,
+    color: '#F57F17',
+    textAlign: 'center' as const,
   },
   section: {
     paddingHorizontal: SPACING.lg,

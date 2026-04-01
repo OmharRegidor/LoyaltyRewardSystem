@@ -16,6 +16,7 @@ function transformToBrand(raw: BrandFromSupabase): Brand {
     min_purchase_for_points: raw.min_purchase_for_points,
     coin_name: raw.coin_name ?? 'Points',
     coin_image_url: raw.coin_image_url ?? null,
+    loyalty_mode: (raw.loyalty_mode === 'stamps' ? 'stamps' : 'points') as 'points' | 'stamps',
     branches: activeBranches,
     reward_count: raw.rewards?.length ?? 0,
   };
@@ -41,8 +42,9 @@ export function useBrands() {
           min_purchase_for_points,
           coin_name,
           coin_image_url,
+          loyalty_mode,
           branches (id, name, address, city, phone, is_active),
-          rewards!inner (id)
+          rewards (id)
         `,
         )
         .eq('rewards.is_active', true)
@@ -51,7 +53,8 @@ export function useBrands() {
 
       if (error) throw new Error(error.message);
 
-      const transformed = (data as BrandFromSupabase[]).map(transformToBrand);
+      const transformed = (data as BrandFromSupabase[]).map(transformToBrand)
+        .filter((b) => b.loyalty_mode === 'stamps' || b.reward_count > 0);
       setBrands(transformed);
     } catch (err) {
       console.error('[useBrands] Fetch error:', err);

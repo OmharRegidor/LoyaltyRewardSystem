@@ -79,12 +79,12 @@ export async function POST(
     // Check business-scoped customers first
     const { data: existingByEmail } = await serviceClient
       .from('customers')
-      .select('id, card_token')
+      .select('id')
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id)
       .maybeSingle();
 
-    if (existingByEmail?.card_token) {
+    if (existingByEmail) {
       return NextResponse.json(
         { error: 'You are already a member of this loyalty program.' },
         { status: 409 },
@@ -94,7 +94,7 @@ export async function POST(
     // Also check if any customer already linked to this business matches by email or phone
     const { data: linkedCustomers } = await serviceClient
       .from('customer_businesses')
-      .select('customer_id, customers!inner(id, email, phone, card_token)')
+      .select('customer_id, customers!inner(id, email, phone)')
       .eq('business_id', business.id);
 
     if (linkedCustomers) {
@@ -103,7 +103,7 @@ export async function POST(
         if (!c) continue;
         const emailMatch = c.email && c.email.toLowerCase() === normalizedEmail;
         const phoneMatch = c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone;
-        if ((emailMatch || phoneMatch) && c.card_token) {
+        if (emailMatch || phoneMatch) {
           return NextResponse.json(
             { error: 'You are already a member of this loyalty program.' },
             { status: 409 },

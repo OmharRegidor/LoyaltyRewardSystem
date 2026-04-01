@@ -2,7 +2,6 @@
 
 import { notFound } from 'next/navigation';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
-import { verifyCardToken } from '@/lib/qr-code';
 import { createServiceClient } from '@/lib/supabase-server';
 import { CardPageClient } from './card-page-client';
 
@@ -12,46 +11,12 @@ import { CardPageClient } from './card-page-client';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }
 
 // ============================================
 // HELPERS
 // ============================================
-
-async function getCustomerByCardToken(token: string, businessId: string) {
-  const payload = verifyCardToken(token);
-  if (!payload) return null;
-
-  const supabase = createServiceClient();
-  const { data: customer } = await supabase
-    .from('customers')
-    .select('id, full_name, phone, qr_code_url, tier, card_token')
-    .eq('id', payload.customerId)
-    .single();
-
-  if (!customer || customer.card_token !== token) return null;
-
-  // Fetch business-specific points
-  let totalPoints = 0;
-  const { data: bpData } = await supabase
-    .from('customer_businesses')
-    .select('points')
-    .eq('customer_id', customer.id)
-    .eq('business_id', businessId)
-    .maybeSingle();
-  if (bpData) {
-    totalPoints = bpData.points || 0;
-  }
-
-  return {
-    customerName: customer.full_name || 'Valued Customer',
-    phone: customer.phone || '',
-    qrCodeUrl: customer.qr_code_url || '',
-    tier: customer.tier || 'bronze',
-    totalPoints,
-  };
-}
 
 async function getBusinessJoinCode(businessId: string): Promise<string | null> {
   const supabase = createServiceClient();
@@ -68,9 +33,8 @@ async function getBusinessJoinCode(businessId: string): Promise<string | null> {
 // PAGE COMPONENT
 // ============================================
 
-export default async function CardSignupPage({ params, searchParams }: PageProps) {
+export default async function CardSignupPage({ params }: PageProps) {
   const { slug } = await params;
-  const { token } = await searchParams;
   const business = await getBusinessBySlug(slug);
 
   if (!business) {
@@ -78,9 +42,6 @@ export default async function CardSignupPage({ params, searchParams }: PageProps
   }
 
   const joinCode = await getBusinessJoinCode(business.id);
-
-  // If token is present, verify and fetch customer data for auto-open modal
-  const cardData = token ? await getCustomerByCardToken(token, business.id) : null;
 
   return (
     <CardPageClient
@@ -91,7 +52,7 @@ export default async function CardSignupPage({ params, searchParams }: PageProps
         pesos_per_point: business.pesos_per_point,
       }}
       joinCode={joinCode}
-      initialCardData={cardData}
+      initialCardData={null}
     />
   );
 }

@@ -3,6 +3,8 @@
 import React from 'react';
 import {
   View,
+  Text,
+  FlatList,
   StyleSheet,
   ScrollView,
   StatusBar,
@@ -11,17 +13,18 @@ import {
 
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
 import { useNotifications } from '../../src/hooks/useNotifications';
+import { useStampCards } from '../../src/hooks/useStampCards';
 import {
   HeaderSection,
   BalanceCard,
   MemberQRCard,
   RedeemableRewards,
 } from '../../src/components/home';
-import { COLORS, SPACING } from '../../src/lib/constants';
+import { StampCardWidget } from '../../src/components/home/StampCardWidget';
+import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export default function HomeScreen() {
   const { user, isLoading } = useAuth();
   const { qrCodeUrl, points, lifetimePoints, refreshCustomer } = useCustomer();
   const { unreadCount } = useNotifications();
+  const { stampCards } = useStampCards();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Get display name from Google OAuth metadata
@@ -84,6 +88,26 @@ export default function HomeScreen() {
           {/* QR Card - overlaps gradient */}
           <MemberQRCard qrCodeUrl={qrCodeUrl} isLoading={isLoading} />
 
+          {/* Stamp Cards */}
+          {stampCards.length > 0 && (
+            <View style={styles.stampSection}>
+              <Text style={styles.sectionTitle}>Your Stamp Cards</Text>
+              <FlatList
+                data={stampCards}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: SPACING.md }}
+                renderItem={({ item }) => (
+                  <StampCardWidget
+                    stampCard={item}
+                    onPress={() => router.push(`/brand/${item.business_id}`)}
+                  />
+                )}
+              />
+            </View>
+          )}
+
           {/* Redeemable Rewards */}
           <RedeemableRewards />
 
@@ -118,5 +142,16 @@ const styles = StyleSheet.create({
     marginTop: -SPACING.xl, // Pull up to meet gradient
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
+  },
+  stampSection: {
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700' as const,
+    color: COLORS.gray[900],
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
   },
 });

@@ -77,6 +77,7 @@ export default function RewardsPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [loyaltyMode, setLoyaltyMode] = useState<'points' | 'stamps'>('points');
 
   // ============================================
   // LOAD REWARDS FROM SUPABASE
@@ -97,12 +98,13 @@ export default function RewardsPage() {
 
       const { data: business } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, loyalty_mode')
         .eq('owner_id', user.id)
         .single();
 
       if (!business) return;
       setBusinessId(business.id);
+      setLoyaltyMode((business.loyalty_mode as 'points' | 'stamps') || 'points');
 
       const { data: rewardsData, error } = await supabase
         .from('rewards')
@@ -402,20 +404,42 @@ export default function RewardsPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <RewardsHeader
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onCreateClick={handleCreateClick}
-        />
+        {loyaltyMode === 'stamps' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-amber-800 mb-2">
+              Stamp Card Mode Active
+            </h3>
+            <p className="text-sm text-amber-700 mb-4">
+              Your loyalty reward is configured as part of your stamp card in Settings.
+              Customers earn stamps per visit and receive your configured reward when their card is complete.
+            </p>
+            <a
+              href="/dashboard/settings"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-sm font-medium transition-colors"
+            >
+              Go to Settings →
+            </a>
+          </div>
+        )}
 
-        <RewardsGrid
-          rewards={rewards}
-          viewMode={viewMode}
-          onDelete={handleDeleteReward}
-          onToggleStatus={handleToggleStatus}
-          onView={handleViewReward}
-          onEdit={handleEditReward}
-        />
+        {loyaltyMode === 'points' && (
+          <RewardsHeader
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onCreateClick={handleCreateClick}
+          />
+        )}
+
+        {loyaltyMode === 'points' && (
+          <RewardsGrid
+            rewards={rewards}
+            viewMode={viewMode}
+            onDelete={handleDeleteReward}
+            onToggleStatus={handleToggleStatus}
+            onView={handleViewReward}
+            onEdit={handleEditReward}
+          />
+        )}
 
         <CreateRewardModal
           isOpen={isCreateOpen}

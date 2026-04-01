@@ -20,6 +20,7 @@ interface UseStaffPOSOptions {
   businessId?: string;
   minPurchaseForPoints: number;
   maxPointsPerTransaction: number | null;
+  skipPoints?: boolean;
 }
 
 interface UseStaffPOSReturn {
@@ -64,7 +65,7 @@ interface UseStaffPOSReturn {
 }
 
 export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
-  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId, minPurchaseForPoints, maxPointsPerTransaction } = options;
+  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId, minPurchaseForPoints, maxPointsPerTransaction, skipPoints } = options;
 
   // Product state
   const [products, setProducts] = useState<Product[]>([]);
@@ -192,7 +193,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     [afterDiscountCentavos, exchangeCentavos],
   );
 
-  const tierMultiplier = TIERS[customerTier]?.multiplier || 1;
+  const tierMultiplier = skipPoints ? 0 : (TIERS[customerTier]?.multiplier || 1);
 
   const basePointsToEarn = useMemo(() => {
     const totalPesos = totalDueCentavos / 100;
@@ -301,6 +302,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         exchange_points: exchange?.pointsUsed,
         ...(amountTenderedCentavos > 0 && { amount_tendered_centavos: amountTenderedCentavos }),
         tier: customerTier,
+        ...(skipPoints && { skip_points: true }),
       };
 
       const { data: { session } } = await createClient().auth.getSession();
@@ -337,6 +339,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     exchange,
     customerTier,
     amountTenderedCentavos,
+    skipPoints,
   ]);
 
   const reset = useCallback(() => {

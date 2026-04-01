@@ -29,12 +29,12 @@ export default async function JoinPage({ params, searchParams }: JoinPageProps) 
     // Check business-scoped customers
     const { data: existing } = await supabase
       .from('customers')
-      .select('id, card_token')
+      .select('id')
       .eq('email', normalizedEmail)
       .eq('created_by_business_id', business.id)
       .maybeSingle();
 
-    if (existing?.card_token) {
+    if (existing) {
       return <JoinAlreadyMember businessName={business.name} />;
     }
 
@@ -42,13 +42,13 @@ export default async function JoinPage({ params, searchParams }: JoinPageProps) 
     if (!existing) {
       const { data: linked } = await supabase
         .from('customer_businesses')
-        .select('customers!inner(id, email, card_token)')
+        .select('customers!inner(id, email)')
         .eq('business_id', business.id);
 
       if (linked) {
         for (const link of linked) {
           const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
-          if (c?.email?.toLowerCase() === normalizedEmail && c.card_token) {
+          if (c?.email?.toLowerCase() === normalizedEmail) {
             return <JoinAlreadyMember businessName={business.name} />;
           }
         }

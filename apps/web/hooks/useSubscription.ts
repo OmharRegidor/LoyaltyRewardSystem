@@ -10,6 +10,7 @@ interface Plan {
   displayName: string;
   hasLoyalty: boolean;
   hasPOS: boolean;
+  hasStampCard: boolean;
 }
 
 interface SubscriptionData {
@@ -19,6 +20,7 @@ interface SubscriptionData {
   isAdminManaged: boolean;
   upgradeAcknowledged: boolean;
   pendingUpgradeRequest: boolean;
+  loyaltyMode: 'points' | 'stamps';
   plan: Plan | null;
   billingInterval: 'monthly' | 'annual' | null;
   currentPeriodStart: string | null;

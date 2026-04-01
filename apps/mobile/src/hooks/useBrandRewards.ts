@@ -21,6 +21,7 @@ interface BrandDetail {
   points_per_purchase: number | null;
   coin_name: string;
   coin_image_url: string | null;
+  loyalty_mode: 'points' | 'stamps';
   branches: BrandBranch[];
 }
 
@@ -34,6 +35,13 @@ export function useBrandRewards(businessId: string) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [businessPoints, setBusinessPoints] = useState<number>(0);
+  const [stampCard, setStampCard] = useState<{
+    id: string;
+    stamps_collected: number;
+    total_stamps: number;
+    reward_title: string;
+    is_completed: boolean;
+  } | null>(null);
 
   // Find the customer ID linked to this specific business
   const getCustomerIdForBusiness = useCallback(async (): Promise<string | null> => {
@@ -63,6 +71,7 @@ export function useBrandRewards(businessId: string) {
             points_per_purchase,
             coin_name,
             coin_image_url,
+            loyalty_mode,
             branches (id, name, address, city, phone, is_active)
           `,
         )
@@ -118,6 +127,7 @@ export function useBrandRewards(businessId: string) {
       const brandData = brandResult.data as BrandDetail & {
         branches: BrandBranch[];
       };
+      const loyaltyMode = ((brandData as Record<string, unknown>).loyalty_mode as string) || 'points';
       setBrand({
         id: brandData.id,
         name: brandData.name,
@@ -126,6 +136,7 @@ export function useBrandRewards(businessId: string) {
         points_per_purchase: brandData.points_per_purchase,
         coin_name: brandData.coin_name ?? 'Points',
         coin_image_url: brandData.coin_image_url ?? null,
+        loyalty_mode: loyaltyMode as 'points' | 'stamps',
         branches: (brandData.branches || []).filter((b) => b.is_active),
       });
 
@@ -134,6 +145,29 @@ export function useBrandRewards(businessId: string) {
         .filter((r): r is Reward => r !== null);
 
       setRewards(transformedRewards);
+
+      // Fetch stamp card for stamp-mode businesses
+      if (loyaltyMode === 'stamps' && customerIds.length > 0) {
+        for (const cId of customerIds) {
+          const { data: stampData } = await supabase.rpc('get_customer_stamp_cards', {
+            p_customer_id: cId,
+            p_business_id: businessId,
+          });
+          const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
+          if (Array.isArray(cards) && cards.length > 0) {
+            setStampCard({
+              id: cards[0].id,
+              stamps_collected: cards[0].stamps_collected,
+              total_stamps: cards[0].total_stamps,
+              reward_title: cards[0].reward_title,
+              is_completed: cards[0].is_completed,
+            });
+            break;
+          }
+        }
+      } else {
+        setStampCard(null);
+      }
     } catch (err) {
       console.error('[useBrandRewards] Fetch error:', err);
     } finally {
@@ -244,6 +278,7 @@ export function useBrandRewards(businessId: string) {
     userPoints: points,
     businessPoints,
     userTier,
+    stampCard,
     refresh,
   };
 }

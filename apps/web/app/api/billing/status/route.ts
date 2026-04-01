@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     const { data: business } = await supabase
       .from('businesses')
-      .select('id')
+      .select('id, loyalty_mode')
       .eq('owner_id', user.id)
       .single();
 
@@ -82,12 +82,14 @@ export async function GET(request: Request) {
         isAdminManaged: false,
         upgradeAcknowledged: true,
         pendingUpgradeRequest: !!pendingUpgrade,
+        loyaltyMode: business.loyalty_mode || 'points',
         plan: {
           id: 'free',
           name: 'free',
           displayName: 'Free',
           hasLoyalty: true,
           hasPOS: false,
+          hasStampCard: false,
         },
         limits: {
           customers: null, // Unlimited
@@ -133,7 +135,7 @@ export async function GET(request: Request) {
         };
 
     const hasAccess = ['active', 'trialing'].includes(subscription.status);
-    const isAdminManaged = !subscription.xendit_subscription_id;
+    const isAdminManaged = true;
 
     // Check for pending upgrade request and upgrade_acknowledged (use admin client for extended types)
     const adminService = createAdminServiceClient();
@@ -151,6 +153,9 @@ export async function GET(request: Request) {
         .maybeSingle(),
     ]);
 
+    const hasPOS = subscription.module_pos_override ?? subscription.plan?.has_pos ?? false;
+    const isEnterprise = subscription.plan?.name === 'enterprise';
+
     return NextResponse.json({
       status: subscription.status,
       hasAccess,
@@ -158,13 +163,15 @@ export async function GET(request: Request) {
       isAdminManaged,
       upgradeAcknowledged: subExtra?.upgrade_acknowledged ?? true,
       pendingUpgradeRequest: !!pendingUpgrade,
+      loyaltyMode: business.loyalty_mode || 'points',
       plan: subscription.plan
         ? {
             id: subscription.plan.id,
             name: subscription.plan.name,
             displayName: subscription.plan.display_name,
             hasLoyalty: subscription.plan.has_loyalty,
-            hasPOS: subscription.module_pos_override ?? subscription.plan.has_pos,
+            hasPOS,
+            hasStampCard: isEnterprise || hasPOS,
           }
         : null,
       billingInterval: subscription.billing_interval,

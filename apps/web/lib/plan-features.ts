@@ -13,7 +13,8 @@ export type FeatureName =
   | 'staff'
   | 'branches'
   | 'analytics'
-  | 'pos';
+  | 'pos'
+  | 'stampCard';
 
 export type PlanFeatures = Record<FeatureName, boolean>;
 
@@ -30,6 +31,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     branches: true,
     analytics: true,
     pos: false,
+    stampCard: false,
   },
   enterprise: {
     loyalty: true,
@@ -39,6 +41,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     branches: true,
     analytics: true,
     pos: true,
+    stampCard: true,
   },
 };
 
@@ -79,6 +82,10 @@ export const FEATURE_DISPLAY_NAMES: Record<FeatureName, FeatureDisplayInfo> = {
   pos: {
     name: 'POS System',
     description: 'Point of sale integration',
+  },
+  stampCard: {
+    name: 'Stamp Card',
+    description: 'Digital stamp card loyalty program',
   },
 };
 

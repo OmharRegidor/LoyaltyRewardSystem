@@ -1,9 +1,16 @@
 "use client";
 
-import { CheckCircle, Printer, ShoppingCart } from "lucide-react";
+import { CheckCircle, Printer, ShoppingCart, Stamp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { StaffSaleResult, StaffCartItem } from "@/types/staff-pos.types";
 import type { PaymentMethod } from "@/types/pos.types";
+
+interface StampReceiptInfo {
+  stamps_collected: number;
+  total_stamps: number;
+  is_completed: boolean;
+  reward_title: string;
+}
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -16,6 +23,8 @@ interface ReceiptModalProps {
   paymentMethod: PaymentMethod;
   amountTenderedCentavos: number;
   discountReason?: string;
+  loyaltyMode?: 'points' | 'stamps';
+  stampResult?: StampReceiptInfo | null;
 }
 
 function formatPesos(centavos: number): string {
@@ -39,6 +48,8 @@ export function ReceiptModal({
   paymentMethod,
   amountTenderedCentavos,
   discountReason,
+  loyaltyMode,
+  stampResult,
 }: ReceiptModalProps) {
   const changeCentavos = amountTenderedCentavos - saleResult.total_centavos;
   const showChange = paymentMethod === "cash" && changeCentavos > 0;
@@ -171,8 +182,37 @@ export function ReceiptModal({
                 )}
               </div>
 
-              {/* Loyalty Points */}
-              {saleResult.points_earned > 0 && (
+              {/* Stamp Card Info (stamps mode) */}
+              {loyaltyMode === 'stamps' && stampResult && (
+                <>
+                  <div className="border-t border-dashed border-gray-300" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Stamp className="w-3 h-3" />
+                      Stamp Card
+                    </p>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Stamp added</span>
+                      <span className="text-primary font-medium">
+                        {stampResult.stamps_collected}/{stampResult.total_stamps}
+                      </span>
+                    </div>
+                    {stampResult.is_completed && (
+                      <p className="text-xs text-green-600 font-medium">
+                        Card complete! Reward: {stampResult.reward_title}
+                      </p>
+                    )}
+                    {!stampResult.is_completed && (
+                      <p className="text-xs text-primary/70">
+                        {stampResult.total_stamps - stampResult.stamps_collected} more → {stampResult.reward_title}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Loyalty Points (points mode) */}
+              {loyaltyMode !== 'stamps' && saleResult.points_earned > 0 && (
                 <>
                   <div className="border-t border-dashed border-gray-300" />
                   <div className="space-y-1">

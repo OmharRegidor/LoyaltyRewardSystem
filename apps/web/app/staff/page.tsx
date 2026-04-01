@@ -16,6 +16,8 @@ import {
   Monitor,
   Search,
   Tag,
+  Stamp,
+  Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase";
@@ -48,6 +50,7 @@ interface StaffData {
   pesosPerPoint: number;
   minPurchaseForPoints: number;
   maxPointsPerTransaction: number | null;
+  loyaltyMode: 'points' | 'stamps';
 }
 
 interface CustomerData {
@@ -110,6 +113,21 @@ export default function StaffScannerPage() {
   const [receiptCartItems, setReceiptCartItems] = useState<StaffCartItem[]>([]);
   const [receiptAmountTendered, setReceiptAmountTendered] = useState(0);
   const [receiptDiscountReason, setReceiptDiscountReason] = useState<string | undefined>();
+  const [stampCardData, setStampCardData] = useState<{
+    card_id: string;
+    stamps_collected: number;
+    total_stamps: number;
+    reward_title: string;
+    is_completed: boolean;
+  } | null>(null);
+  const [isQuickStamping, setIsQuickStamping] = useState(false);
+  const [showStampPOS, setShowStampPOS] = useState(false);
+  const [lastSaleStampResult, setLastSaleStampResult] = useState<{
+    stamps_collected: number;
+    total_stamps: number;
+    is_completed: boolean;
+    reward_title: string;
+  } | null>(null);
 
   // Refs
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -124,6 +142,7 @@ export default function StaffScannerPage() {
     businessId: staffData?.businessId,
     minPurchaseForPoints: staffData?.minPurchaseForPoints ?? 0,
     maxPointsPerTransaction: staffData?.maxPointsPerTransaction ?? null,
+    skipPoints: staffData?.loyaltyMode === 'stamps',
   });
 
   // ============================================
@@ -225,7 +244,7 @@ export default function StaffScannerPage() {
           .maybeSingle(),
         supabase
           .from("businesses")
-          .select("id, name, pesos_per_point, min_purchase_for_points, max_points_per_transaction")
+          .select("id, name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode")
           .eq("owner_id", user.id)
           .maybeSingle(),
       ]);
@@ -234,7 +253,7 @@ export default function StaffScannerPage() {
         // Active staff — fetch business info
         const { data: business } = await supabase
           .from("businesses")
-          .select("name, pesos_per_point, min_purchase_for_points, max_points_per_transaction")
+          .select("name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode")
           .eq("id", staffRecord.business_id)
           .single();
 
@@ -246,6 +265,7 @@ export default function StaffScannerPage() {
           pesosPerPoint: business?.pesos_per_point || 10,
           minPurchaseForPoints: business?.min_purchase_for_points ?? 0,
           maxPointsPerTransaction: business?.max_points_per_transaction ?? null,
+          loyaltyMode: (business?.loyalty_mode as 'points' | 'stamps') || 'points',
         });
 
         await loadTodayStats(staffRecord.id);
@@ -263,6 +283,7 @@ export default function StaffScannerPage() {
           pesosPerPoint: ownerBusiness.pesos_per_point || 10,
           minPurchaseForPoints: ownerBusiness.min_purchase_for_points ?? 0,
           maxPointsPerTransaction: ownerBusiness.max_points_per_transaction ?? null,
+          loyaltyMode: (ownerBusiness.loyalty_mode as 'points' | 'stamps') || 'points',
         });
       } else {
         router.push("/login");
@@ -432,7 +453,7 @@ export default function StaffScannerPage() {
 
       // Fallback: direct DB lookup if RPC returned nothing
       if (!customerData) {
-        const selectFields = "id, user_id, full_name, email, total_points, lifetime_points, tier, card_token, created_by_business_id, qr_code_url";
+        const selectFields = "id, user_id, full_name, email, total_points, lifetime_points, tier, created_by_business_id, qr_code_url";
         const [byCode, byUrl] = await Promise.all([
           supabase.from("customers").select(selectFields).eq("qr_code_url", scannedCode).maybeSingle(),
           supabase.from("customers").select(selectFields).eq("qr_code_url", `NoxaLoyalty://customer/${scannedCode}`).maybeSingle(),
@@ -505,6 +526,27 @@ export default function StaffScannerPage() {
         isFirstVisit,
       });
 
+      // Fetch stamp card data if in stamps mode
+      if (staffDataRef.current?.loyaltyMode === 'stamps') {
+        const { data: stampData } = await supabase.rpc('get_customer_stamp_cards', {
+          p_customer_id: customerData.id,
+          p_business_id: staffDataRef.current!.businessId,
+        });
+        const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
+        if (Array.isArray(cards) && cards.length > 0) {
+          const card = cards[0];
+          setStampCardData({
+            card_id: card.id,
+            stamps_collected: card.stamps_collected,
+            total_stamps: card.total_stamps,
+            reward_title: card.reward_title,
+            is_completed: card.is_completed,
+          });
+        } else {
+          setStampCardData(null);
+        }
+      }
+
       setScannerState("customer-found");
     } catch (err) {
       console.error("Customer lookup error:", err);
@@ -524,10 +566,42 @@ export default function StaffScannerPage() {
     setReceiptCartItems([...pos.cartItems]);
     setReceiptAmountTendered(pos.amountTenderedCentavos);
     setReceiptDiscountReason(pos.discount?.reason);
+    setLastSaleStampResult(null);
 
     try {
       const result = await pos.completeSale();
       setSaleResult(result);
+
+      // Auto-add stamp in stamps mode
+      if (staffData.loyaltyMode === 'stamps') {
+        try {
+          const stampRes = await fetch('/api/staff/stamp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId: customer.id,
+              saleId: result.sale_id,
+              notes: `POS Sale #${result.sale_number}`,
+            }),
+          });
+          const stampData = await stampRes.json();
+          if (stampData.success) {
+            const stampResult = {
+              stamps_collected: stampData.stamps_collected ?? 0,
+              total_stamps: stampData.total_stamps ?? 10,
+              is_completed: stampData.is_completed ?? false,
+              reward_title: stampData.reward_title ?? '',
+            };
+            setStampCardData({
+              card_id: stampData.card_id ?? '',
+              ...stampResult,
+            });
+            setLastSaleStampResult(stampResult);
+          }
+        } catch (stampErr) {
+          console.error('Auto-stamp after sale failed:', stampErr);
+        }
+      }
 
       // Clear the cart so realtime stock updates aren't double-counted
       // (receipt snapshots already captured above)
@@ -550,12 +624,105 @@ export default function StaffScannerPage() {
   };
 
   // ============================================
+  // QUICK STAMP (no sale)
+  // ============================================
+
+  const handleQuickStamp = async () => {
+    if (!customer || !staffData) return;
+    setIsQuickStamping(true);
+    try {
+      const res = await fetch('/api/staff/stamp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: customer.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStampCardData({
+          card_id: data.card_id ?? '',
+          stamps_collected: data.stamps_collected ?? 0,
+          total_stamps: data.total_stamps ?? 10,
+          reward_title: data.reward_title ?? '',
+          is_completed: data.is_completed ?? false,
+        });
+        setStats((prev) => ({ ...prev, scansToday: prev.scansToday + 1 }));
+      }
+    } catch (err) {
+      console.error('Quick stamp error:', err);
+    } finally {
+      setIsQuickStamping(false);
+    }
+  };
+
+  const handleRedeemStampCard = async () => {
+    if (!stampCardData?.card_id || !staffData) return;
+    try {
+      const res = await fetch('/api/staff/stamp/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stampCardId: stampCardData.card_id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStampCardData({
+          card_id: data.new_card_id ?? '',
+          stamps_collected: 0,
+          total_stamps: stampCardData.total_stamps,
+          reward_title: data.reward_title ?? stampCardData.reward_title,
+          is_completed: false,
+        });
+      }
+    } catch (err) {
+      console.error('Redeem stamp card error:', err);
+    }
+  };
+
+  const backToStampView = () => {
+    setShowStampPOS(false);
+    pos.reset();
+    setPaymentView(false);
+  };
+
+  const [isUndoingStamp, setIsUndoingStamp] = useState(false);
+
+  const handleUndoStamp = async () => {
+    if (!stampCardData?.card_id || isUndoingStamp) return;
+    setIsUndoingStamp(true);
+    try {
+      const res = await fetch('/api/staff/stamp/undo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stampCardId: stampCardData.card_id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStampCardData({
+          ...stampCardData,
+          stamps_collected: data.new_count,
+          is_completed: false,
+        });
+      }
+    } catch (err) {
+      console.error('Undo stamp error:', err);
+    } finally {
+      setIsUndoingStamp(false);
+    }
+  };
+
+  // ============================================
   // RESET & LOGOUT
   // ============================================
 
   const resetScanner = () => {
     setCustomer(null);
     setSaleResult(null);
+    setStampCardData(null);
+    setLastSaleStampResult(null);
+    setShowStampPOS(false);
     setError("");
     setScannerState("idle");
     setMobileTab("products");
@@ -730,8 +897,137 @@ export default function StaffScannerPage() {
             </motion.div>
           )}
 
-          {/* CUSTOMER FOUND STATE — Full POS */}
-          {isCustomerFound && customer && staffData && (
+          {/* CUSTOMER FOUND — Stamp-first view (stamps mode, before opening POS) */}
+          {isCustomerFound && customer && staffData && staffData.loyaltyMode === 'stamps' && !showStampPOS && (
+            <motion.div key="stamp-first" {...fadeSlide} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 max-w-sm mx-auto w-full gap-5">
+                {/* Customer name */}
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-lg font-semibold text-gray-900">{customer.name}</span>
+                  </div>
+                  {customer.isFirstVisit && (
+                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                      First visit!
+                    </span>
+                  )}
+                </div>
+
+                {/* Stamp Card — physical card style */}
+                {stampCardData && (() => {
+                  const total = stampCardData.total_stamps;
+                  const cols = total <= 5 ? total : total <= 10 ? 5 : total <= 12 ? 4 : 5;
+                  return (
+                    <div className="w-full rounded-2xl border border-gray-200 shadow-sm overflow-hidden" style={{ aspectRatio: '1.6 / 1' }}>
+                      {/* Card body */}
+                      <div className="h-full bg-gradient-to-br from-white to-gray-50 p-4 flex flex-col justify-between">
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-900">Stamp Card</span>
+                          <span className="text-sm font-bold text-primary">
+                            {stampCardData.stamps_collected} / {total}
+                          </span>
+                        </div>
+
+                        {/* Stamp grid — even columns */}
+                        <div
+                          className="grid place-items-center gap-2 py-2"
+                          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+                        >
+                          {Array.from({ length: total }, (_, i) => {
+                            const isFilled = i < stampCardData.stamps_collected;
+                            const isLast = i === total - 1;
+                            return (
+                              <div
+                                key={i}
+                                className={`aspect-square w-full max-w-[44px] rounded-xl flex items-center justify-center transition-all ${
+                                  isFilled
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : isLast
+                                      ? 'bg-amber-50 border-2 border-dashed border-amber-400 text-amber-600'
+                                      : 'bg-gray-100/80 border-2 border-dashed border-gray-200 text-gray-300'
+                                }`}
+                              >
+                                {isLast && !isFilled ? (
+                                  <span className="text-[9px] font-extrabold tracking-wide">FREE</span>
+                                ) : (
+                                  <Stamp className="w-[45%] h-[45%]" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Footer */}
+                        <p className="text-center text-xs text-gray-500">
+                          {stampCardData.is_completed
+                            ? `Card complete — ${stampCardData.reward_title}`
+                            : `${total - stampCardData.stamps_collected} more to earn ${stampCardData.reward_title}`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Primary actions */}
+                <div className="w-full space-y-3">
+                  {stampCardData?.is_completed ? (
+                    <button
+                      onClick={handleRedeemStampCard}
+                      className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-2.5 transition-colors shadow-sm"
+                    >
+                      <Gift className="w-5 h-5" />
+                      Redeem Reward
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleQuickStamp}
+                      disabled={isQuickStamping}
+                      className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-semibold text-lg flex items-center justify-center gap-2.5 transition-colors disabled:opacity-50 shadow-sm"
+                    >
+                      {isQuickStamping ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Stamp className="w-5 h-5" />
+                      )}
+                      Add Stamp
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setShowStampPOS(true)}
+                    className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-medium border border-gray-200 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Ring Up Sale + Stamp
+                  </button>
+                </div>
+
+                {/* Undo last stamp */}
+                {stampCardData && stampCardData.stamps_collected > 0 && !stampCardData.is_completed && (
+                  <button
+                    onClick={handleUndoStamp}
+                    disabled={isUndoingStamp}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                  >
+                    {isUndoingStamp ? 'Undoing...' : 'Undo last stamp'}
+                  </button>
+                )}
+
+                {/* Back */}
+                <button
+                  onClick={resetScanner}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  ← Scan another customer
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* CUSTOMER FOUND — Full POS (points mode, or stamps mode after clicking "Ring Up Sale") */}
+          {isCustomerFound && customer && staffData && (staffData.loyaltyMode !== 'stamps' || showStampPOS) && (
             <motion.div key="pos" {...fadeSlide} className="flex flex-col flex-1 min-h-0">
               {/* Customer Info Banner */}
               <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-200 flex-wrap">
@@ -739,26 +1035,44 @@ export default function StaffScannerPage() {
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="truncate max-w-[160px]">{customer.name}</span>
                 </div>
-                <div className="text-sm text-gray-600">
-                  {customer.currentPoints.toLocaleString()} pts
-                </div>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
-                    customer.tier === "platinum"
-                      ? "bg-purple-100 text-purple-700"
-                      : customer.tier === "gold"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : customer.tier === "silver"
-                          ? "bg-gray-100 text-gray-600"
-                          : "bg-amber-100 text-amber-700"
-                  }`}
-                >
-                  {customer.tier}
-                </span>
+                {staffData.loyaltyMode === 'stamps' ? (
+                  <div className="flex items-center gap-1.5 text-sm text-primary">
+                    <Stamp className="w-3.5 h-3.5" />
+                    <span>{stampCardData ? `${stampCardData.stamps_collected}/${stampCardData.total_stamps}` : 'New'}</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-sm text-gray-600">
+                      {customer.currentPoints.toLocaleString()} pts
+                    </div>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
+                        customer.tier === "platinum"
+                          ? "bg-purple-100 text-purple-700"
+                          : customer.tier === "gold"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : customer.tier === "silver"
+                              ? "bg-gray-100 text-gray-600"
+                              : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {customer.tier}
+                    </span>
+                  </>
+                )}
                 {customer.isFirstVisit && (
                   <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                     1st visit
                   </span>
+                )}
+                {/* Back to stamp view button (stamps mode) */}
+                {staffData.loyaltyMode === 'stamps' && (
+                  <button
+                    onClick={backToStampView}
+                    className="ml-auto text-xs text-primary hover:text-primary/80 font-medium"
+                  >
+                    ← Back to stamp
+                  </button>
                 )}
               </div>
 
@@ -852,7 +1166,7 @@ export default function StaffScannerPage() {
                       onComplete={handleCompleteSale}
                       onBack={() => setPaymentView(false)}
                       isProcessing={pos.isProcessing}
-                      pointsToEarn={pos.pointsToEarn}
+                      pointsToEarn={staffData.loyaltyMode === 'stamps' ? 0 : pos.pointsToEarn}
                       customerTier={customer?.tier}
                     />
                   ) : (
@@ -929,11 +1243,17 @@ export default function StaffScannerPage() {
                               <span className="text-gray-900">Total</span>
                               <span className="text-gray-900">₱{(pos.totalDueCentavos / 100).toFixed(2)}</span>
                             </div>
-                            {pos.pointsToEarn > 0 && customer && (
+                            {staffData.loyaltyMode !== 'stamps' && pos.pointsToEarn > 0 && customer && (
                               <div className="flex items-center gap-1.5 text-xs text-amber-600 pt-1">
                                 <span className="capitalize">{customer.tier}</span>
                                 <span>•</span>
                                 <span>Earn {pos.pointsToEarn} pts</span>
+                              </div>
+                            )}
+                            {staffData.loyaltyMode === 'stamps' && (
+                              <div className="flex items-center gap-1.5 text-xs text-primary pt-1">
+                                <Stamp className="w-3 h-3" />
+                                <span>+1 stamp will be added with this sale</span>
                               </div>
                             )}
                           </div>
@@ -948,7 +1268,7 @@ export default function StaffScannerPage() {
                           {pos.discount ? "Discount applied — edit" : "Add discount"}
                         </button>
 
-                        {/* Charge button — opens payment view */}
+                        {/* Charge + Stamp button */}
                         <button
                           onClick={() => setPaymentView(true)}
                           disabled={pos.cartItems.length === 0 || pos.isProcessing}
@@ -958,7 +1278,7 @@ export default function StaffScannerPage() {
                             <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                           ) : (
                             <>
-                              <span>Charge</span>
+                              <span>{staffData.loyaltyMode === 'stamps' ? 'Charge + Stamp' : 'Charge'}</span>
                               <span>₱{(pos.totalDueCentavos / 100).toFixed(2)} ›</span>
                             </>
                           )}
@@ -966,10 +1286,10 @@ export default function StaffScannerPage() {
 
                         {/* Cancel */}
                         <button
-                          onClick={resetScanner}
+                          onClick={staffData.loyaltyMode === 'stamps' ? backToStampView : resetScanner}
                           className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                         >
-                          Cancel
+                          {staffData.loyaltyMode === 'stamps' ? '← Back to stamp view' : 'Cancel'}
                         </button>
                       </div>
 
@@ -1009,6 +1329,8 @@ export default function StaffScannerPage() {
               paymentMethod={receiptPaymentMethod}
               amountTenderedCentavos={receiptAmountTendered}
               discountReason={receiptDiscountReason}
+              loyaltyMode={staffData.loyaltyMode}
+              stampResult={lastSaleStampResult}
             />
           )}
 

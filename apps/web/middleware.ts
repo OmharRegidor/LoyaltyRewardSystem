@@ -25,8 +25,6 @@ const PUBLIC_ROUTES = [
 
 const PUBLIC_PREFIXES = [
   '/invite/',
-  '/checkout/',
-  '/card/',
   '/api/public/',
   '/api/webhooks/',
   '/api/qr/',

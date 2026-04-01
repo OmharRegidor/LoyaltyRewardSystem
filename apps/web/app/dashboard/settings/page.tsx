@@ -42,7 +42,15 @@ import {
   ScissorsLineDashed,
   Wheat,
   MoreHorizontal,
+  Lock,
+  Stamp,
+  Crown,
+  RefreshCw,
+  Gift,
+  ImagePlus,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
@@ -96,6 +104,17 @@ interface EditSnapshot {
   customBusinessType: string;
 }
 
+interface StampTemplate {
+  title: string;
+  totalStamps: number;
+  rewardTitle: string;
+  rewardDescription: string;
+  rewardImageUrl: string | null;
+  minPurchaseAmount: number;
+  autoReset: boolean;
+}
+
+type LoyaltyMode = 'points' | 'stamps';
 type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
 // ============================================
@@ -204,6 +223,22 @@ export default function SettingsPage() {
     previewAmount: '500',
   });
 
+  // Loyalty Mode & Stamp Card State
+  const { subscription, isLoading: isSubLoading } = useSubscription();
+  const [loyaltyMode, setLoyaltyMode] = useState<LoyaltyMode>('points');
+  const [isModeLocked, setIsModeLocked] = useState(false);
+  const [stampTemplate, setStampTemplate] = useState<StampTemplate>({
+    title: 'Loyalty Card',
+    totalStamps: 10,
+    rewardTitle: '',
+    rewardDescription: '',
+    rewardImageUrl: null,
+    minPurchaseAmount: 0,
+    autoReset: true,
+  });
+  const [stampSaveStatus, setStampSaveStatus] = useState<SaveStatus>('idle');
+  const [stampErrorMessage, setStampErrorMessage] = useState('');
+
   // ============================================
   // INPUT STYLING HELPER
   // ============================================
@@ -279,6 +314,31 @@ export default function SettingsPage() {
 
       if (business) {
         setBusinessId(business.id);
+
+        // Load loyalty mode from business
+        const mode = (business as Record<string, unknown>).loyalty_mode as LoyaltyMode | undefined;
+        if (mode === 'stamps' || mode === 'points') {
+          setLoyaltyMode(mode);
+        }
+
+        // Lock mode only when customers have actual loyalty activity
+        // Points mode: lock if any customer has points > 0
+        // Stamps mode: lock if any stamp cards exist
+        const currentMode = mode || 'points';
+        if (currentMode === 'stamps') {
+          const { count: stampCount } = await supabase
+            .from('stamp_cards')
+            .select('id', { count: 'exact', head: true })
+            .eq('business_id', business.id);
+          setIsModeLocked((stampCount ?? 0) > 0);
+        } else {
+          const { count: pointsCount } = await supabase
+            .from('customer_businesses')
+            .select('id', { count: 'exact', head: true })
+            .eq('business_id', business.id)
+            .gt('points', 0);
+          setIsModeLocked((pointsCount ?? 0) > 0);
+        }
 
         // Get user metadata for business_type and phone if not in business table
         const metadata = user.user_metadata || {};
@@ -356,6 +416,156 @@ export default function SettingsPage() {
       console.error('Load settings error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ============================================
+  // LOAD STAMP TEMPLATE
+  // ============================================
+
+  useEffect(() => {
+    if (!businessId) return;
+    loadStampTemplate();
+  }, [businessId]);
+
+  const loadStampTemplate = async () => {
+    try {
+      const res = await fetch('/api/dashboard/stamp-template');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.template) {
+        setStampTemplate({
+          title: data.template.title || 'Loyalty Card',
+          totalStamps: data.template.total_stamps || 10,
+          rewardTitle: data.template.reward_title || '',
+          rewardDescription: data.template.reward_description || '',
+          rewardImageUrl: data.template.reward_image_url || null,
+          minPurchaseAmount: data.template.min_purchase_amount || 0,
+          autoReset: data.template.auto_reset !== false,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load stamp template:', err);
+    }
+  };
+
+  // ============================================
+  // SAVE STAMP TEMPLATE
+  // ============================================
+
+  const saveStampTemplate = async () => {
+    if (!businessId) return;
+
+    setStampSaveStatus('saving');
+    setStampErrorMessage('');
+
+    try {
+      // Validate
+      if (!stampTemplate.rewardTitle.trim()) {
+        throw new Error('Reward title is required');
+      }
+      if (stampTemplate.totalStamps < 1 || stampTemplate.totalStamps > 30) {
+        throw new Error('Total stamps must be between 1 and 30');
+      }
+
+      const res = await fetch('/api/dashboard/stamp-template', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: stampTemplate.title,
+          totalStamps: stampTemplate.totalStamps,
+          rewardTitle: stampTemplate.rewardTitle,
+          rewardDescription: stampTemplate.rewardDescription || null,
+          rewardImageUrl: stampTemplate.rewardImageUrl,
+          minPurchaseAmount: stampTemplate.minPurchaseAmount,
+          autoReset: stampTemplate.autoReset,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save template');
+      }
+
+      setStampSaveStatus('success');
+      setTimeout(() => setStampSaveStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Save stamp template error:', err);
+      setStampErrorMessage(err instanceof Error ? err.message : 'Failed to save template');
+      setStampSaveStatus('error');
+      setTimeout(() => setStampSaveStatus('idle'), 5000);
+    }
+  };
+
+  // ============================================
+  // SAVE LOYALTY MODE
+  // ============================================
+
+  const saveLoyaltyMode = async (mode: LoyaltyMode) => {
+    if (!businessId || isModeLocked) return;
+
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ loyalty_mode: mode })
+        .eq('id', businessId);
+
+      if (error) throw error;
+      setLoyaltyMode(mode);
+    } catch (err) {
+      console.error('Failed to save loyalty mode:', err);
+    }
+  };
+
+  // ============================================
+  // REWARD IMAGE UPLOAD HANDLER
+  // ============================================
+
+  const handleRewardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !businessId) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setStampErrorMessage('Image must be less than 2MB');
+      setStampSaveStatus('error');
+      setTimeout(() => setStampSaveStatus('idle'), 3000);
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
+      setStampErrorMessage('Only PNG, JPG and WebP images are allowed');
+      setStampSaveStatus('error');
+      setTimeout(() => setStampSaveStatus('idle'), 3000);
+      return;
+    }
+
+    setStampSaveStatus('saving');
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${businessId}-reward-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(fileName);
+
+      const rewardImageUrl = urlData.publicUrl;
+      setStampTemplate((prev) => ({ ...prev, rewardImageUrl }));
+      setStampSaveStatus('success');
+      setTimeout(() => setStampSaveStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Reward image upload error:', err);
+      setStampErrorMessage('Failed to upload image. Please try again.');
+      setStampSaveStatus('error');
+      setTimeout(() => setStampSaveStatus('idle'), 3000);
     }
   };
 
@@ -516,6 +726,7 @@ export default function SettingsPage() {
             : null,
           referral_reward_points: referralRewardPoints,
           coin_name: loyalty.coinName.trim() || 'Points',
+          loyalty_mode: loyaltyMode,
         })
         .eq('id', businessId);
 
@@ -1034,7 +1245,379 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          {/* Loyalty Points Settings */}
+          {/* Loyalty Program Type */}
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-violet-500/10 rounded-xl">
+                <Stamp className="w-5 h-5 text-violet-500" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold">Loyalty Program Type</h2>
+                <p className="text-sm text-gray-500">
+                  Choose how customers earn rewards
+                </p>
+              </div>
+            </div>
+
+            {isModeLocked && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200/50 rounded-xl flex items-center gap-2">
+                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-700">
+                  Cannot change — customers already have {loyaltyMode === 'stamps' ? 'stamp cards' : 'earned points'}
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Points System Option */}
+              <button
+                type="button"
+                disabled={isModeLocked}
+                onClick={() => {
+                  if (!isModeLocked) saveLoyaltyMode('points');
+                }}
+                className={`relative p-4 rounded-xl border-2 text-left transition-all disabled:cursor-not-allowed ${
+                  loyaltyMode === 'points'
+                    ? 'border-primary bg-primary/5 shadow-md'
+                    : isModeLocked
+                      ? 'border-gray-200 opacity-60'
+                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-amber-500/10 rounded-lg">
+                    <Coins className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Points System</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Customers earn points per peso spent and redeem them for rewards
+                </p>
+                {loyaltyMode === 'points' && (
+                  <div className="absolute top-3 right-3">
+                    <CheckCircle className="w-5 h-5 text-primary" />
+                  </div>
+                )}
+              </button>
+
+              {/* Stamp Card Option */}
+              {isSubLoading ? (
+                <div className="relative p-4 rounded-xl border-2 border-gray-200 animate-pulse">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Stamp className="w-5 h-5 text-gray-300" />
+                    </div>
+                    <div className="h-5 w-24 bg-gray-200 rounded" />
+                  </div>
+                  <div className="h-3 w-48 bg-gray-100 rounded" />
+                </div>
+              ) : subscription?.plan?.hasStampCard ? (
+                <button
+                  type="button"
+                  disabled={isModeLocked}
+                  onClick={() => {
+                    if (!isModeLocked) saveLoyaltyMode('stamps');
+                  }}
+                  className={`relative p-4 rounded-xl border-2 text-left transition-all disabled:cursor-not-allowed ${
+                    loyaltyMode === 'stamps'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : isModeLocked
+                        ? 'border-gray-200 opacity-60'
+                        : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-violet-500/10 rounded-lg">
+                      <Stamp className="w-5 h-5 text-violet-500" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Stamp Card</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Customers collect stamps per visit and earn a reward when the card is full
+                  </p>
+                  {loyaltyMode === 'stamps' && (
+                    <div className="absolute top-3 right-3">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBillingExpanded(true);
+                    setTimeout(() => {
+                      document.getElementById('billing')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 400);
+                  }}
+                  className="relative p-4 rounded-xl border-2 border-dashed border-gray-300 text-left transition-all hover:border-violet-300 hover:bg-violet-50/30"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Lock className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-500">Stamp Card</p>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 rounded-full">
+                        <Crown className="w-3 h-3" />
+                        Enterprise
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Collect stamps per visit and earn a reward when the card is full
+                  </p>
+                </button>
+              )}
+            </div>
+          </Card>
+
+          {/* Stamp Card Configuration - shown when stamps mode is active and enterprise */}
+          {loyaltyMode === 'stamps' && !isSubLoading && subscription?.plan?.hasStampCard && (
+            <Card className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-violet-500/10 rounded-xl">
+                  <Gift className="w-5 h-5 text-violet-500" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold">Stamp Card Settings</h2>
+                  <p className="text-sm text-gray-500">
+                    Configure your digital stamp card
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {/* Card Title */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Card Title
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={50}
+                    value={stampTemplate.title}
+                    onChange={(e) =>
+                      setStampTemplate((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl transition focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="Loyalty Card"
+                  />
+                </div>
+
+                {/* Total Stamps */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Total Stamps to Complete
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Number of stamps needed to earn the reward (1-30)
+                  </p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={stampTemplate.totalStamps === 0 ? '' : stampTemplate.totalStamps}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '') {
+                        setStampTemplate((prev) => ({ ...prev, totalStamps: 0 }));
+                        return;
+                      }
+                      const val = parseInt(raw);
+                      if (!isNaN(val)) {
+                        setStampTemplate((prev) => ({
+                          ...prev,
+                          totalStamps: Math.min(30, Math.max(0, val)),
+                        }));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (stampTemplate.totalStamps < 1) {
+                        setStampTemplate((prev) => ({ ...prev, totalStamps: 1 }));
+                      }
+                    }}
+                    className="w-32 px-4 py-2.5 border border-gray-200 rounded-xl transition text-center font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                  <span className="ml-2 text-sm text-gray-500">stamps</span>
+                </div>
+
+                {/* Reward Title */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Reward Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={stampTemplate.rewardTitle}
+                    onChange={(e) =>
+                      setStampTemplate((prev) => ({ ...prev, rewardTitle: e.target.value }))
+                    }
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl transition focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="e.g. Free Item, 20% Off, Free Drink"
+                  />
+                </div>
+
+                {/* Reward Image */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Reward Image
+                    <span className="text-gray-500 font-normal ml-1">(optional)</span>
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="relative w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary flex items-center justify-center overflow-hidden cursor-pointer transition">
+                      {stampTemplate.rewardImageUrl ? (
+                        <img
+                          src={stampTemplate.rewardImageUrl}
+                          alt="Reward"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImagePlus className="w-6 h-6 text-gray-400" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleRewardImageUpload}
+                      />
+                    </label>
+                    <div className="text-xs text-gray-500 space-y-0.5">
+                      <p>PNG, JPG or WebP</p>
+                      <p>Max 2MB</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Min Purchase Amount */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Minimum Purchase Amount
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Minimum spend required per visit to earn a stamp
+                  </p>
+                  <div className="relative w-40">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                      ₱
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={stampTemplate.minPurchaseAmount === 0 ? '' : stampTemplate.minPurchaseAmount}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          setStampTemplate((prev) => ({ ...prev, minPurchaseAmount: 0 }));
+                          return;
+                        }
+                        const val = parseFloat(raw);
+                        if (!isNaN(val) && val >= 0) {
+                          setStampTemplate((prev) => ({ ...prev, minPurchaseAmount: val }));
+                        }
+                      }}
+                      className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-xl transition focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Auto-restart toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <RefreshCw className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium">Auto-restart</p>
+                      <p className="text-xs text-gray-500">
+                        Start new card after redemption
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={stampTemplate.autoReset}
+                    onCheckedChange={(checked) =>
+                      setStampTemplate((prev) => ({ ...prev, autoReset: checked }))
+                    }
+                  />
+                </div>
+
+                {/* Stamp preview */}
+                <div className="p-4 bg-linear-to-r from-violet-50 to-violet-100/50 rounded-xl border border-violet-200/50">
+                  <p className="text-sm font-medium text-violet-700 mb-2">
+                    Card Preview
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: stampTemplate.totalStamps }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold ${
+                          i < 3
+                            ? 'border-violet-400 bg-violet-100 text-violet-600'
+                            : 'border-gray-200 bg-white text-gray-300'
+                        }`}
+                      >
+                        {i < 3 ? <Stamp className="w-4 h-4" /> : i + 1}
+                      </div>
+                    ))}
+                  </div>
+                  {stampTemplate.rewardTitle && (
+                    <p className="mt-2 text-xs text-violet-600">
+                      Reward: <strong>{stampTemplate.rewardTitle}</strong>
+                    </p>
+                  )}
+                </div>
+
+                {/* Save Stamp Template Button */}
+                <div className="pt-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      {stampSaveStatus === 'success' && (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Stamp card saved!
+                          </span>
+                        </div>
+                      )}
+                      {stampSaveStatus === 'error' && (
+                        <div className="flex items-center gap-2 text-red-600">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium truncate">
+                            {stampErrorMessage}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={saveStampTemplate}
+                      disabled={stampSaveStatus === 'saving'}
+                      className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 hover:shadow-lg hover:shadow-violet-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none text-sm"
+                    >
+                      {stampSaveStatus === 'saving' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Save Stamp Card</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Loyalty Points Settings - shown when points mode is active */}
+          {loyaltyMode === 'points' && (
           <Card className="p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-amber-500/10 rounded-xl">
@@ -1231,6 +1814,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+          )}
 
           {/* Referral Settings */}
           <Card className="p-4 sm:p-6">

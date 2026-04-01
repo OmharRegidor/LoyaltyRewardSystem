@@ -28,6 +28,7 @@ const StaffSaleSchema = z.object({
   exchange_points: z.number().int().nonnegative().optional(),
   amount_tendered_centavos: z.number().int().nonnegative().optional(),
   tier: z.enum(["bronze", "silver", "gold", "platinum"]),
+  skip_points: z.boolean().optional(),
 });
 
 // ============================================

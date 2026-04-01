@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_notes: {
@@ -218,366 +193,6 @@ export type Database = {
           },
         ]
       }
-      availability: {
-        Row: {
-          branch_id: string | null
-          business_id: string
-          created_at: string
-          day_of_week: number
-          end_time: string
-          id: string
-          is_available: boolean
-          staff_id: string | null
-          start_time: string
-          updated_at: string
-        }
-        Insert: {
-          branch_id?: string | null
-          business_id: string
-          created_at?: string
-          day_of_week: number
-          end_time: string
-          id?: string
-          is_available?: boolean
-          staff_id?: string | null
-          start_time: string
-          updated_at?: string
-        }
-        Update: {
-          branch_id?: string | null
-          business_id?: string
-          created_at?: string
-          day_of_week?: number
-          end_time?: string
-          id?: string
-          is_available?: boolean
-          staff_id?: string | null
-          start_time?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "availability_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "availability_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addon_options: {
-        Row: {
-          addon_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          addon_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          addon_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addon_options_addon_id_fkey"
-            columns: ["addon_id"]
-            isOneToOne: false
-            referencedRelation: "booking_addons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addon_selections: {
-        Row: {
-          addon_id: string
-          booking_id: string
-          created_at: string | null
-          id: string
-          quantity: number | null
-          unit_price_centavos: number
-        }
-        Insert: {
-          addon_id: string
-          booking_id: string
-          created_at?: string | null
-          id?: string
-          quantity?: number | null
-          unit_price_centavos: number
-        }
-        Update: {
-          addon_id?: string
-          booking_id?: string
-          created_at?: string | null
-          id?: string
-          quantity?: number | null
-          unit_price_centavos?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addon_selections_addon_id_fkey"
-            columns: ["addon_id"]
-            isOneToOne: false
-            referencedRelation: "booking_addons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_addon_selections_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      booking_addons: {
-        Row: {
-          business_id: string
-          category: string | null
-          created_at: string | null
-          description: string | null
-          duration_minutes: number | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_id: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_id?: string
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "booking_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "booking_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bookings: {
-        Row: {
-          addons_json: Json | null
-          addons_total_centavos: number | null
-          booking_date: string
-          branch_id: string | null
-          business_id: string
-          cancellation_reason: string | null
-          cancelled_at: string | null
-          confirmation_code: string | null
-          created_at: string
-          customer_email: string | null
-          customer_id: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          end_date: string | null
-          end_time: string
-          guests_adults: number | null
-          guests_children: number | null
-          id: string
-          nights: number | null
-          notes: string | null
-          party_size: number | null
-          service_id: string
-          special_requests: string | null
-          staff_id: string | null
-          start_time: string
-          status: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos: number | null
-          total_price_centavos: number | null
-          updated_at: string
-          variant_id: string | null
-        }
-        Insert: {
-          addons_json?: Json | null
-          addons_total_centavos?: number | null
-          booking_date: string
-          branch_id?: string | null
-          business_id: string
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          confirmation_code?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          end_date?: string | null
-          end_time: string
-          guests_adults?: number | null
-          guests_children?: number | null
-          id?: string
-          nights?: number | null
-          notes?: string | null
-          party_size?: number | null
-          service_id: string
-          special_requests?: string | null
-          staff_id?: string | null
-          start_time: string
-          status?: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos?: number | null
-          total_price_centavos?: number | null
-          updated_at?: string
-          variant_id?: string | null
-        }
-        Update: {
-          addons_json?: Json | null
-          addons_total_centavos?: number | null
-          booking_date?: string
-          branch_id?: string | null
-          business_id?: string
-          cancellation_reason?: string | null
-          cancelled_at?: string | null
-          confirmation_code?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          end_date?: string | null
-          end_time?: string
-          guests_adults?: number | null
-          guests_children?: number | null
-          id?: string
-          nights?: number | null
-          notes?: string | null
-          party_size?: number | null
-          service_id?: string
-          special_requests?: string | null
-          staff_id?: string | null
-          start_time?: string
-          status?: Database["public"]["Enums"]["booking_status"]
-          subtotal_centavos?: number | null
-          total_price_centavos?: number | null
-          updated_at?: string
-          variant_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookings_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "service_price_variants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       branches: {
         Row: {
           address: string | null
@@ -645,6 +260,7 @@ export type Database = {
           is_free_forever: boolean
           join_code: string | null
           logo_url: string | null
+          loyalty_mode: string
           max_points_per_transaction: number | null
           min_purchase_for_points: number | null
           name: string
@@ -659,8 +275,6 @@ export type Database = {
           slug: string
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string | null
-          xendit_customer_id: string | null
-          xendit_payment_method_id: string | null
         }
         Insert: {
           address?: string | null
@@ -674,6 +288,7 @@ export type Database = {
           is_free_forever?: boolean
           join_code?: string | null
           logo_url?: string | null
+          loyalty_mode?: string
           max_points_per_transaction?: number | null
           min_purchase_for_points?: number | null
           name: string
@@ -688,8 +303,6 @@ export type Database = {
           slug: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
-          xendit_customer_id?: string | null
-          xendit_payment_method_id?: string | null
         }
         Update: {
           address?: string | null
@@ -703,6 +316,7 @@ export type Database = {
           is_free_forever?: boolean
           join_code?: string | null
           logo_url?: string | null
+          loyalty_mode?: string
           max_points_per_transaction?: number | null
           min_purchase_for_points?: number | null
           name?: string
@@ -717,8 +331,6 @@ export type Database = {
           slug?: string
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string | null
-          xendit_customer_id?: string | null
-          xendit_payment_method_id?: string | null
         }
         Relationships: []
       }
@@ -771,8 +383,6 @@ export type Database = {
       customers: {
         Row: {
           age: number | null
-          card_token: string | null
-          card_token_created_at: string | null
           created_at: string | null
           created_by_business_id: string | null
           created_by_staff_id: string | null
@@ -797,8 +407,6 @@ export type Database = {
         }
         Insert: {
           age?: number | null
-          card_token?: string | null
-          card_token_created_at?: string | null
           created_at?: string | null
           created_by_business_id?: string | null
           created_by_staff_id?: string | null
@@ -823,8 +431,6 @@ export type Database = {
         }
         Update: {
           age?: number | null
-          card_token?: string | null
-          card_token_created_at?: string | null
           created_at?: string | null
           created_by_business_id?: string | null
           created_by_staff_id?: string | null
@@ -950,10 +556,6 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           status: Database["public"]["Enums"]["invoice_status"]
-          stripe_hosted_invoice_url: string | null
-          stripe_invoice_id: string
-          stripe_invoice_number: string | null
-          stripe_invoice_pdf: string | null
           subscription_id: string | null
         }
         Insert: {
@@ -968,10 +570,6 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
-          stripe_hosted_invoice_url?: string | null
-          stripe_invoice_id: string
-          stripe_invoice_number?: string | null
-          stripe_invoice_pdf?: string | null
           subscription_id?: string | null
         }
         Update: {
@@ -986,10 +584,6 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
-          stripe_hosted_invoice_url?: string | null
-          stripe_invoice_id?: string
-          stripe_invoice_number?: string | null
-          stripe_invoice_pdf?: string | null
           subscription_id?: string | null
         }
         Relationships: [
@@ -1193,8 +787,6 @@ export type Database = {
           id: string
           paid_at: string | null
           status: string
-          xendit_cycle_id: string | null
-          xendit_subscription_id: string | null
         }
         Insert: {
           amount: number
@@ -1205,8 +797,6 @@ export type Database = {
           id?: string
           paid_at?: string | null
           status: string
-          xendit_cycle_id?: string | null
-          xendit_subscription_id?: string | null
         }
         Update: {
           amount?: number
@@ -1217,8 +807,6 @@ export type Database = {
           id?: string
           paid_at?: string | null
           status?: string
-          xendit_cycle_id?: string | null
-          xendit_subscription_id?: string | null
         }
         Relationships: [
           {
@@ -1250,9 +838,6 @@ export type Database = {
           paid_at: string | null
           receipt_url: string | null
           status: Database["public"]["Enums"]["payment_status"]
-          stripe_charge_id: string | null
-          stripe_invoice_id: string | null
-          stripe_payment_intent_id: string | null
           subscription_id: string | null
         }
         Insert: {
@@ -1267,9 +852,6 @@ export type Database = {
           paid_at?: string | null
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
-          stripe_charge_id?: string | null
-          stripe_invoice_id?: string | null
-          stripe_payment_intent_id?: string | null
           subscription_id?: string | null
         }
         Update: {
@@ -1284,9 +866,6 @@ export type Database = {
           paid_at?: string | null
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
-          stripe_charge_id?: string | null
-          stripe_invoice_id?: string | null
-          stripe_payment_intent_id?: string | null
           subscription_id?: string | null
         }
         Relationships: [
@@ -1312,7 +891,6 @@ export type Database = {
           description: string | null
           display_name: string
           features: Json | null
-          has_booking: boolean
           has_loyalty: boolean
           has_pos: boolean
           id: string
@@ -1330,7 +908,6 @@ export type Database = {
           description?: string | null
           display_name: string
           features?: Json | null
-          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -1348,7 +925,6 @@ export type Database = {
           description?: string | null
           display_name?: string
           features?: Json | null
-          has_booking?: boolean
           has_loyalty?: boolean
           has_pos?: boolean
           id?: string
@@ -1463,33 +1039,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      rate_limits: {
-        Row: {
-          action: string
-          id: string
-          identifier: string
-          identifier_type: string
-          request_count: number | null
-          window_start: string | null
-        }
-        Insert: {
-          action: string
-          id?: string
-          identifier: string
-          identifier_type: string
-          request_count?: number | null
-          window_start?: string | null
-        }
-        Update: {
-          action?: string
-          id?: string
-          identifier?: string
-          identifier_type?: string
-          request_count?: number | null
-          window_start?: string | null
-        }
-        Relationships: []
       }
       redemptions: {
         Row: {
@@ -2032,252 +1581,6 @@ export type Database = {
           },
         ]
       }
-      service_addons: {
-        Row: {
-          business_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          price_type: string | null
-          service_id: string | null
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          price_type?: string | null
-          service_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          price_type?: string | null
-          service_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_addons_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "service_addons_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_price_variants: {
-        Row: {
-          capacity: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          price_centavos: number
-          service_id: string
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          capacity?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          price_centavos?: number
-          service_id: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          capacity?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          price_centavos?: number
-          service_id?: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_price_variants_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_questions: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_required: boolean | null
-          options: Json | null
-          question: string
-          question_type: string
-          service_id: string
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_required?: boolean | null
-          options?: Json | null
-          question: string
-          question_type?: string
-          service_id: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_required?: boolean | null
-          options?: Json | null
-          question?: string
-          question_type?: string
-          service_id?: string
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_questions_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      services: {
-        Row: {
-          allow_staff_selection: boolean | null
-          branch_id: string | null
-          buffer_minutes: number | null
-          business_id: string
-          category: string | null
-          config: Json | null
-          created_at: string
-          deposit_percentage: number | null
-          description: string | null
-          duration_minutes: number
-          id: string
-          image_url: string | null
-          inventory_count: number | null
-          is_active: boolean
-          max_guests: number | null
-          name: string
-          price_centavos: number | null
-          pricing_type: string | null
-          requires_time_slot: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          allow_staff_selection?: boolean | null
-          branch_id?: string | null
-          buffer_minutes?: number | null
-          business_id: string
-          category?: string | null
-          config?: Json | null
-          created_at?: string
-          deposit_percentage?: number | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          image_url?: string | null
-          inventory_count?: number | null
-          is_active?: boolean
-          max_guests?: number | null
-          name: string
-          price_centavos?: number | null
-          pricing_type?: string | null
-          requires_time_slot?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          allow_staff_selection?: boolean | null
-          branch_id?: string | null
-          buffer_minutes?: number | null
-          business_id?: string
-          category?: string | null
-          config?: Json | null
-          created_at?: string
-          deposit_percentage?: number | null
-          description?: string | null
-          duration_minutes?: number
-          id?: string
-          image_url?: string | null
-          inventory_count?: number | null
-          is_active?: boolean
-          max_guests?: number | null
-          name?: string
-          price_centavos?: number | null
-          pricing_type?: string | null
-          requires_time_slot?: boolean | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "services_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "services_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "admin_business_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "services_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       staff: {
         Row: {
           branch_id: string | null
@@ -2420,36 +1723,192 @@ export type Database = {
           },
         ]
       }
-      staff_services: {
+      stamp_card_templates: {
+        Row: {
+          auto_reset: boolean
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          min_purchase_amount: number
+          reward_description: string | null
+          reward_image_url: string | null
+          reward_title: string
+          title: string
+          total_stamps: number
+          updated_at: string
+        }
+        Insert: {
+          auto_reset?: boolean
+          business_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_purchase_amount?: number
+          reward_description?: string | null
+          reward_image_url?: string | null
+          reward_title: string
+          title?: string
+          total_stamps?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_reset?: boolean
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_purchase_amount?: number
+          reward_description?: string | null
+          reward_image_url?: string | null
+          reward_title?: string
+          title?: string
+          total_stamps?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stamp_card_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stamp_card_templates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stamp_cards: {
+        Row: {
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          is_completed: boolean
+          is_redeemed: boolean
+          redeemed_at: string | null
+          reward_title: string
+          stamps_collected: number
+          template_id: string
+          total_stamps: number
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_completed?: boolean
+          is_redeemed?: boolean
+          redeemed_at?: string | null
+          reward_title: string
+          stamps_collected?: number
+          template_id: string
+          total_stamps: number
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_completed?: boolean
+          is_redeemed?: boolean
+          redeemed_at?: string | null
+          reward_title?: string
+          stamps_collected?: number
+          template_id?: string
+          total_stamps?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stamp_cards_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stamp_cards_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stamp_cards_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stamp_cards_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "stamp_card_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stamp_entries: {
         Row: {
           created_at: string
           id: string
-          service_id: string
-          staff_id: string
+          is_undone: boolean
+          notes: string | null
+          sale_id: string | null
+          staff_id: string | null
+          stamp_card_id: string
+          undone_at: string | null
+          undone_by: string | null
         }
         Insert: {
           created_at?: string
           id?: string
-          service_id: string
-          staff_id: string
+          is_undone?: boolean
+          notes?: string | null
+          sale_id?: string | null
+          staff_id?: string | null
+          stamp_card_id: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          service_id?: string
-          staff_id?: string
+          is_undone?: boolean
+          notes?: string | null
+          sale_id?: string | null
+          staff_id?: string | null
+          stamp_card_id?: string
+          undone_at?: string | null
+          undone_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "staff_services_service_id_fkey"
-            columns: ["service_id"]
+            foreignKeyName: "stamp_entries_staff_id_fkey"
+            columns: ["staff_id"]
             isOneToOne: false
-            referencedRelation: "services"
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "staff_services_staff_id_fkey"
-            columns: ["staff_id"]
+            foreignKeyName: "stamp_entries_stamp_card_id_fkey"
+            columns: ["stamp_card_id"]
+            isOneToOne: false
+            referencedRelation: "stamp_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stamp_entries_undone_by_fkey"
+            columns: ["undone_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
@@ -2539,15 +1998,12 @@ export type Database = {
           current_period_start: string | null
           id: string
           is_free_forever: boolean | null
-          module_booking_override: boolean | null
           module_pos_override: boolean | null
           plan_id: string | null
           status: string
           trial_ends_at: string | null
           updated_at: string | null
           upgrade_acknowledged: boolean | null
-          xendit_customer_id: string | null
-          xendit_subscription_id: string | null
         }
         Insert: {
           billing_interval?: string
@@ -2561,15 +2017,12 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
-          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string | null
           upgrade_acknowledged?: boolean | null
-          xendit_customer_id?: string | null
-          xendit_subscription_id?: string | null
         }
         Update: {
           billing_interval?: string
@@ -2583,15 +2036,12 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           is_free_forever?: boolean | null
-          module_booking_override?: boolean | null
           module_pos_override?: boolean | null
           plan_id?: string | null
           status?: string
           trial_ends_at?: string | null
           updated_at?: string | null
           upgrade_acknowledged?: boolean | null
-          xendit_customer_id?: string | null
-          xendit_subscription_id?: string | null
         }
         Relationships: [
           {
@@ -2938,25 +2388,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_platform_stats: {
-        Row: {
-          active_subscriptions: number | null
-          bookings_30d: number | null
-          businesses_30d: number | null
-          businesses_7d: number | null
-          customers_30d: number | null
-          enterprise_count: number | null
-          free_count: number | null
-          points_issued_30d: number | null
-          total_bookings: number | null
-          total_businesses: number | null
-          total_customers: number | null
-          total_points_issued: number | null
-          total_transactions: number | null
-          transactions_30d: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       accept_staff_invite: {
@@ -2970,6 +2401,16 @@ export type Database = {
       add_customer_points: {
         Args: { p_customer_id: string; p_points: number }
         Returns: undefined
+      }
+      add_stamp: {
+        Args: {
+          p_business_id: string
+          p_customer_id: string
+          p_notes?: string
+          p_sale_id?: string
+          p_staff_id: string
+        }
+        Returns: Json
       }
       check_plan_limit: {
         Args: { p_business_id: string; p_limit_type: string }
@@ -3053,6 +2494,10 @@ export type Database = {
           transactions: number
         }[]
       }
+      get_customer_stamp_cards: {
+        Args: { p_business_id?: string; p_customer_id: string }
+        Returns: Json
+      }
       get_customer_tier: {
         Args: { p_lifetime_points: number }
         Returns: string
@@ -3116,7 +2561,6 @@ export type Database = {
       lookup_customer_by_qr: {
         Args: { p_scanned_code: string }
         Returns: {
-          card_token: string
           created_by_business_id: string
           email: string
           full_name: string
@@ -3145,10 +2589,13 @@ export type Database = {
         Args: { p_customer_id: string; p_reward_id: string }
         Returns: Json
       }
+      redeem_stamp_card: {
+        Args: { p_staff_id: string; p_stamp_card_id: string }
+        Returns: Json
+      }
       resolve_customer_for_business: {
         Args: { p_business_id: string; p_scanned_code: string }
         Returns: {
-          card_token: string
           created_by_business_id: string
           email: string
           full_name: string
@@ -3159,6 +2606,10 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
+      }
+      undo_last_stamp: {
+        Args: { p_staff_id: string; p_stamp_card_id: string }
+        Returns: Json
       }
       update_staff_last_login: {
         Args: { p_staff_id: string }
@@ -3180,12 +2631,6 @@ export type Database = {
     Enums: {
       app_role: "admin" | "business_owner" | "staff" | "customer"
       billing_interval: "monthly" | "annual"
-      booking_status:
-        | "pending"
-        | "confirmed"
-        | "completed"
-        | "cancelled"
-        | "no_show"
       invoice_status: "draft" | "open" | "paid" | "void" | "uncollectible"
       payment_status:
         | "pending"
@@ -3330,20 +2775,10 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "business_owner", "staff", "customer"],
       billing_interval: ["monthly", "annual"],
-      booking_status: [
-        "pending",
-        "confirmed",
-        "completed",
-        "cancelled",
-        "no_show",
-      ],
       invoice_status: ["draft", "open", "paid", "void", "uncollectible"],
       payment_status: [
         "pending",

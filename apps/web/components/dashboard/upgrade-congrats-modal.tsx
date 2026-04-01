@@ -14,6 +14,7 @@ import {
   Users,
   BarChart3,
   Sparkles,
+  Stamp,
 } from 'lucide-react';
 
 interface UpgradeCongratsModalProps {
@@ -48,6 +49,7 @@ export function UpgradeCongratsModal({ open, onDismiss }: UpgradeCongratsModalPr
 
         <div className="space-y-3 py-4">
           {[
+            { icon: Stamp, label: 'Digital Stamp Card', desc: 'Simple punch card loyalty for your customers' },
             { icon: ShoppingCart, label: 'Point-of-Sale System', desc: 'Process sales and manage inventory' },
             { icon: Users, label: 'Unlimited Staff', desc: 'Add as many team members as you need' },
             { icon: BarChart3, label: 'Advanced Analytics', desc: 'Deep insights into your business' },

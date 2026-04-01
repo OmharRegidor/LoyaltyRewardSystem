@@ -198,11 +198,11 @@ function WelcomeModalContent({ onClose, slug }: { onClose: () => void; slug: str
             <div className="flex items-center justify-center gap-2 mb-2">
               <Package className="w-4 h-4 text-primary" />
               <p className="text-sm font-semibold text-gray-700">
-                Want POS + Inventory Management?
+                Want Stamp Card, POS + Inventory?
               </p>
             </div>
             <p className="text-sm text-gray-600 mb-2">
-              Upgrade to Enterprise for POS, Inventory, and more.
+              Upgrade to Enterprise for Stamp Card, POS, Inventory, and more.
             </p>
             <Link
               href="/dashboard/settings"

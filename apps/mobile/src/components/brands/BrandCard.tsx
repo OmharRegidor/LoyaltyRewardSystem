@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   COLORS,
   SPACING,
@@ -53,7 +53,7 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
           </Text>
         </View>
 
-        {brand.min_purchase_for_points != null && brand.min_purchase_for_points > 0 && (
+        {brand.loyalty_mode !== 'stamps' && brand.min_purchase_for_points != null && brand.min_purchase_for_points > 0 && (
           <View style={styles.metaRow}>
             <Ionicons name="cart-outline" size={14} color={COLORS.gray[400]} />
             <Text style={styles.metaText}>
@@ -62,14 +62,19 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
           </View>
         )}
 
-        {brand.points_per_purchase != null && brand.points_per_purchase > 0 && (
+        {brand.loyalty_mode === 'stamps' ? (
+          <View style={styles.metaRow}>
+            <MaterialCommunityIcons name="stamper" size={14} color={COLORS.primary} />
+            <Text style={styles.metaText}>Stamp Card</Text>
+          </View>
+        ) : brand.points_per_purchase != null && brand.points_per_purchase > 0 ? (
           <View style={styles.metaRow}>
             <Ionicons name="star" size={14} color={COLORS.gold} />
             <Text style={styles.metaText}>
               {brand.points_per_purchase} pts per purchase
             </Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       {/* Chevron */}

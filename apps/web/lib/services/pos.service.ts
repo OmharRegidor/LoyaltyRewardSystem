@@ -739,7 +739,7 @@ export async function createStaffSale(
     (sum, item) => sum + item.unit_price_centavos * item.quantity,
     0,
   );
-  const tierMultiplier = TIERS[input.tier]?.multiplier || 1;
+  const tierMultiplier = input.skip_points ? 0 : (TIERS[input.tier]?.multiplier || 1);
   const tierName = TIERS[input.tier]?.name || "Bronze";
 
   // Prepare sale items as JSONB for the atomic function
