@@ -214,6 +214,7 @@ export interface BusinessDetailResponse {
     points_per_purchase: number | null;
     plan_name: string | null;
     billing_interval: string | null;
+    current_period_start: string | null;
     current_period_end: string | null;
     current_plan_id: string | null;
     has_pos: boolean;

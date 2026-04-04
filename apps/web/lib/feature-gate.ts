@@ -63,6 +63,7 @@ function getServiceClient() {
 interface CachedSubscription {
   status: string;
   module_pos_override: boolean | null;
+  current_period_end: string | null;
   plans: Record<string, unknown> | Record<string, unknown>[] | null;
 }
 
@@ -88,6 +89,7 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
       `
       status,
       module_pos_override,
+      current_period_end,
       plans (
         has_loyalty,
         has_pos,
@@ -114,6 +116,14 @@ async function getCachedSubscription(businessId: string): Promise<CachedSubscrip
 }
 
 /**
+ * Check if a subscription period has expired
+ */
+function isSubscriptionExpired(subscription: CachedSubscription): boolean {
+  if (!subscription.current_period_end) return false;
+  return new Date(subscription.current_period_end).getTime() < Date.now();
+}
+
+/**
  * Check if a business has access to a specific module (loyalty, pos)
  * This is the SERVER-SIDE check that cannot be bypassed
  */
@@ -123,11 +133,11 @@ export async function checkModuleAccess(
 ): Promise<ModuleCheckResult> {
   const subscription = await getCachedSubscription(businessId);
 
-  // No subscription or not active
-  if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
+  // No subscription, not active, or expired
+  if (!subscription || !['active', 'trialing'].includes(subscription.status) || isSubscriptionExpired(subscription)) {
     return {
       allowed: false,
-      reason: 'No active subscription',
+      reason: subscription && isSubscriptionExpired(subscription) ? 'Subscription period has expired' : 'No active subscription',
     };
   }
 
@@ -181,11 +191,11 @@ export async function checkFeatureAccess(
 ): Promise<FeatureCheckResult> {
   const subscription = await getCachedSubscription(businessId);
 
-  // No subscription or not active
-  if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
+  // No subscription, not active, or expired
+  if (!subscription || !['active', 'trialing'].includes(subscription.status) || isSubscriptionExpired(subscription)) {
     return {
       allowed: false,
-      reason: 'No active subscription',
+      reason: subscription && isSubscriptionExpired(subscription) ? 'Subscription period has expired' : 'No active subscription',
     };
   }
 
@@ -217,14 +227,14 @@ export async function checkLimitAccess(
 ): Promise<LimitCheckResult> {
   const subscription = await getCachedSubscription(businessId);
 
-  // No subscription or not active
-  if (!subscription || !['active', 'trialing'].includes(subscription.status)) {
+  // No subscription, not active, or expired
+  if (!subscription || !['active', 'trialing'].includes(subscription.status) || isSubscriptionExpired(subscription)) {
     return {
       allowed: false,
       current: 0,
       limit: 0,
       remaining: 0,
-      reason: 'No active subscription',
+      reason: subscription && isSubscriptionExpired(subscription) ? 'Subscription period has expired' : 'No active subscription',
     };
   }
 
@@ -321,9 +331,10 @@ export async function checkSubscriptionAccess(
   const subscription = await getCachedSubscription(businessId);
 
   const status = subscription?.status || 'preview';
-  const hasAccess = ['active', 'trialing'].includes(status);
+  const expired = subscription ? isSubscriptionExpired(subscription) : false;
+  const hasAccess = ['active', 'trialing'].includes(status) && !expired;
 
-  return { hasAccess, status };
+  return { hasAccess, status: expired ? 'expired' : status };
 }
 
 /**

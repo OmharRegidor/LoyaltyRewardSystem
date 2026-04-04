@@ -63,6 +63,76 @@ export async function GET(request: Request) {
       .eq('business_id', business.id)
       .single();
 
+    // Auto-downgrade: if period has ended, revert to free plan
+    if (
+      subscription &&
+      subscription.status === 'active' &&
+      !subscription.is_free_forever &&
+      subscription.current_period_end
+    ) {
+      const periodEnd = new Date(subscription.current_period_end);
+      if (periodEnd.getTime() < Date.now()) {
+        // Find free plan
+        const { data: freePlan } = await service
+          .from('plans')
+          .select('id')
+          .eq('name', 'free')
+          .single();
+
+        if (freePlan) {
+          await service
+            .from('subscriptions')
+            .update({
+              plan_id: freePlan.id,
+              status: 'active',
+              is_free_forever: true,
+              module_pos_override: false,
+              billing_interval: 'monthly',
+              current_period_start: null,
+              current_period_end: null,
+            })
+            .eq('id', subscription.id);
+
+          // Audit trail
+          await service.from('admin_plan_changes').insert({
+            business_id: business.id,
+            changed_by_email: 'system@noxaloyalty.com',
+            old_plan_id: subscription.plan_id,
+            new_plan_id: freePlan.id,
+            reason: 'Auto-downgrade: Enterprise plan period expired',
+          });
+
+          // Return free plan response
+          return NextResponse.json({
+            status: 'active',
+            hasAccess: true,
+            isFreeForever: true,
+            isAdminManaged: false,
+            upgradeAcknowledged: true,
+            pendingUpgradeRequest: false,
+            loyaltyMode: business.loyalty_mode || 'points',
+            plan: {
+              id: freePlan.id,
+              name: 'free',
+              displayName: 'Free',
+              hasLoyalty: true,
+              hasPOS: false,
+              hasStampCard: false,
+            },
+            billingInterval: null,
+            currentPeriodStart: null,
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false,
+            limits: {
+              customers: null,
+              branches: 3,
+              staff: 5,
+            },
+          });
+        }
+      }
+    }
+
     if (!subscription) {
       // Check for pending upgrade request (use admin client for extended types)
       const adminService = createAdminServiceClient();

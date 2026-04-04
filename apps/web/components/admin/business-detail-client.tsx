@@ -287,10 +287,18 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex flex-wrap items-center gap-3 mb-5">
           <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
             {business.plan_name}
           </Badge>
+          {business.current_period_start && business.current_period_end && (
+            <span className="text-xs text-gray-500">
+              {formatLongDate(business.current_period_start)} — {formatLongDate(business.current_period_end)}
+              {new Date(business.current_period_end).getTime() < Date.now() && (
+                <span className="ml-1.5 text-red-600 font-medium">Expired</span>
+              )}
+            </span>
+          )}
           <Button size="sm" variant="outline" onClick={() => { setPlanModalOpen(true); setSelectedPlanId(''); setPlanChangeReason(''); setPlanModulePos(false); }} className="gap-1.5 h-7 text-xs">
             <ArrowUpDown className="w-3 h-3" /> Change Plan
           </Button>

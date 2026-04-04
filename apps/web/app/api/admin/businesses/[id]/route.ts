@@ -50,7 +50,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         id, name, slug, owner_email, created_at, subscription_status,
         business_type, phone, city, address, logo_url, points_per_purchase,
         subscriptions (
-          id, plan_id, status, billing_interval, current_period_end,
+          id, plan_id, status, billing_interval, current_period_start, current_period_end,
           module_pos_override,
           plans ( id, display_name, has_pos, has_loyalty )
         )
@@ -169,6 +169,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       points_per_purchase: biz.points_per_purchase,
       plan_name: planData?.display_name ?? 'Free',
       billing_interval: sub?.billing_interval ?? null,
+      current_period_start: sub?.current_period_start ?? null,
       current_period_end: sub?.current_period_end ?? null,
       current_plan_id: sub?.plan_id ?? null,
       has_pos: ((sub as Record<string, unknown>)?.module_pos_override as boolean | null) ??
