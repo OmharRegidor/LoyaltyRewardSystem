@@ -1,15 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Package } from "lucide-react";
+import { Search, Package, Clock, ClipboardList } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Product } from "@/types/pos.types";
+import type { Service } from "@/types/service.types";
+import { PRICING_TYPE_LABELS } from "@/types/service.types";
 import type { StaffCartItem } from "@/types/staff-pos.types";
 
 interface ProductSelectorProps {
   products: Product[];
+  services?: Service[];
   cartItems?: StaffCartItem[];
   onAddToCart: (product: Product) => void;
+  onAddServiceToCart?: (service: Service) => void;
   disabled?: boolean;
 }
 
@@ -128,10 +132,89 @@ function ProductCard({
   );
 }
 
+function ServiceCard({
+  service,
+  onAdd,
+  disabled,
+  index,
+}: {
+  service: Service;
+  onAdd: () => void;
+  disabled?: boolean;
+  index: number;
+}) {
+  const color = getCategoryColor(service.category || "Service");
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, delay: index * 0.03 }}
+    >
+      <motion.button
+        onClick={onAdd}
+        disabled={disabled}
+        whileHover={!disabled ? { y: -2 } : undefined}
+        whileTap={!disabled ? { scale: 0.97 } : undefined}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        className="relative flex flex-col rounded-xl overflow-hidden transition-all text-left w-full bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 border border-gray-200 hover:border-yellow-400"
+      >
+        {/* Image area */}
+        <div className="h-24 relative w-full bg-gray-100 overflow-hidden">
+          {service.image_url ? (
+            <img
+              src={service.image_url}
+              alt={service.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div
+              className={`w-full h-full flex items-center justify-center ${color.bg}`}
+            >
+              <ClipboardList className={`w-8 h-8 ${color.text} opacity-60`} />
+            </div>
+          )}
+
+          {/* Duration badge */}
+          <span className="absolute top-1.5 right-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border text-blue-800 bg-blue-100 border-blue-300 flex items-center gap-0.5">
+            <Clock className="w-2.5 h-2.5" />
+            {service.duration_minutes}{service.duration_unit === 'hours' ? 'hr' : service.duration_unit === 'days' ? 'd' : service.duration_unit === 'nights' ? 'n' : 'min'}
+          </span>
+        </div>
+
+        {/* Info area */}
+        <div className="p-3">
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {service.name}
+          </p>
+          {service.category && (
+            <p className="text-xs text-gray-400 truncate">{service.category}</p>
+          )}
+          <div className="flex items-center gap-1 mt-0.5">
+            <p className="text-sm font-bold text-yellow-700">
+              {service.price_centavos
+                ? `₱${(service.price_centavos / 100).toFixed(2)}`
+                : "—"}
+            </p>
+            {service.pricing_type !== "fixed" && (
+              <span className="text-[10px] text-gray-400">
+                {PRICING_TYPE_LABELS[service.pricing_type]}
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.button>
+    </motion.div>
+  );
+}
+
 export function ProductSelector({
   products,
+  services = [],
   cartItems = [],
   onAddToCart,
+  onAddServiceToCart,
   disabled,
 }: ProductSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -148,14 +231,19 @@ export function ProductSelector({
     return map;
   }, [cartItems]);
 
-  // Extract unique categories
+  const hasServices = services.length > 0;
+
+  // Extract unique categories from both products and services
   const categories = useMemo(() => {
     const cats = new Set<string>();
     for (const p of products) {
       cats.add(p.category || "Other");
     }
+    for (const s of services) {
+      cats.add(s.category || "Other");
+    }
     return ["All", ...Array.from(cats).sort()];
-  }, [products]);
+  }, [products, services]);
 
   // Filter products by search + category
   const filteredProducts = useMemo(() => {
@@ -180,12 +268,37 @@ export function ProductSelector({
     return result;
   }, [products, searchQuery, selectedCategory]);
 
-  if (products.length === 0) {
+  // Filter services by search + category
+  const filteredServices = useMemo(() => {
+    let result = services;
+
+    if (selectedCategory !== "All") {
+      result = result.filter(
+        (s) => (s.category || "Other") === selectedCategory,
+      );
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          (s.category && s.category.toLowerCase().includes(q)),
+      );
+    }
+
+    return result;
+  }, [services, searchQuery, selectedCategory]);
+
+  const totalItems = products.length + services.length;
+  const totalFilteredItems = filteredProducts.length + filteredServices.length;
+
+  if (totalItems === 0) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 sm:p-6 text-center max-w-sm mx-auto">
         <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
         <p className="text-gray-500 text-sm">
-          No products configured yet. Use manual amount entry below.
+          No items configured yet. Use manual amount entry below.
         </p>
       </div>
     );
@@ -195,19 +308,19 @@ export function ProductSelector({
     <div className="flex flex-col h-full">
       {/* Search Bar */}
       <div className="relative mb-3">
-        <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search products, SKU, or barcode..."
-          className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
+          placeholder={hasServices ? "Search products or services..." : "Search products, SKU, or barcode..."}
+          className="w-full pl-9 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
         />
       </div>
 
       {/* Category Chips */}
       {categories.length > 2 && (
-        <div className="flex gap-2.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-1.5 sm:gap-2.5 mb-3 overflow-x-auto pb-1 scrollbar-hide">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat;
             const color = cat === "All" ? null : getCategoryColor(cat);
@@ -231,23 +344,34 @@ export function ProductSelector({
         </div>
       )}
 
-      {/* Product Grid */}
+      {/* Product & Service Grid */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {filteredProducts.length === 0 ? (
+        {totalFilteredItems === 0 ? (
           <div className="text-center py-8">
             <p className="text-sm text-gray-400">
-              {searchQuery ? "No products found" : "No products in this category"}
+              {searchQuery ? "No items found" : "No items in this category"}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+            {/* Services first */}
+            {filteredServices.map((service, index) => (
+              <ServiceCard
+                key={`svc-${service.id}`}
+                service={service}
+                onAdd={() => onAddServiceToCart?.(service)}
+                disabled={disabled}
+                index={index}
+              />
+            ))}
+            {/* Then products */}
             {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onAdd={() => onAddToCart(product)}
                 disabled={disabled}
-                index={index}
+                index={filteredServices.length + index}
                 availableStock={product.stock_quantity - (cartQuantityMap.get(product.id) || 0)}
               />
             ))}

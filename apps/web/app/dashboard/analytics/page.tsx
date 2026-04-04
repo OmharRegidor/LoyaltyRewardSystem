@@ -271,31 +271,31 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6 overflow-hidden">
+        <div className="space-y-5 sm:space-y-6 overflow-hidden">
           {/* Header skeleton */}
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div>
-              <Skeleton className="h-9 w-32 rounded-lg" />
-              <Skeleton className="h-5 w-64 mt-1 rounded-lg" />
+              <Skeleton className="h-8 w-32 rounded-lg" />
+              <Skeleton className="h-5 w-64 mt-1.5 rounded-lg" />
             </div>
-            <Skeleton className="h-10 w-28 rounded-lg" />
+            <Skeleton className="h-10 w-28 rounded-xl" />
           </div>
 
           {/* KPI cards skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="p-4 bg-white border border-gray-100 shadow-md">
-                <Skeleton className="h-4 w-32 mb-1 rounded-lg" />
+              <Card key={i} className="p-5 shadow-card border border-border/50">
+                <Skeleton className="h-3 w-32 mb-3 rounded-lg" />
                 <Skeleton className="h-7 w-20 rounded-lg" />
-                <Skeleton className="h-3 w-24 mt-2 rounded-lg" />
+                <Skeleton className="h-3 w-24 mt-3 rounded-lg" />
               </Card>
             ))}
           </div>
 
           {/* Charts skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Monthly points chart skeleton */}
-            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+            <Card className="p-5 sm:p-6 shadow-card border border-border/50">
               <Skeleton className="h-6 w-36 mb-4 rounded-lg" />
               <div className="h-[200px] flex items-end gap-3 px-4">
                 {[40, 65, 45, 80, 55, 70, 50, 85, 60, 75, 90, 65].map((h, i) => (
@@ -305,7 +305,7 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Customer segments chart skeleton */}
-            <Card className="p-6 bg-white border border-gray-100 shadow-md">
+            <Card className="p-5 sm:p-6 shadow-card border border-border/50">
               <Skeleton className="h-6 w-44 mb-4 rounded-lg" />
               <div className="h-[200px] flex items-center justify-center">
                 <Skeleton className="w-[180px] h-[180px] rounded-full" />
@@ -320,25 +320,25 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-6"
+        className="space-y-5 sm:space-y-6"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
       >
         {/* Header */}
         <motion.div
-          className="flex justify-between items-center"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
           variants={itemVariants}
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Analytics
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Track your loyalty program performance
             </p>
           </div>
-          <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+          <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2.5 sm:px-5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-all text-sm font-medium self-start sm:self-auto">
             <Download className="w-4 h-4" />
             Export
           </button>
@@ -346,88 +346,125 @@ export default function AnalyticsPage() {
 
         {/* KPI Cards */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
           variants={containerVariants}
         >
           {[
             {
               label: 'Total Points Issued',
               value: kpi.totalPoints.toLocaleString(),
+              color: 'red',
+              icon: TrendingUp,
             },
             {
               label: 'Avg Points/Transaction',
               value: kpi.avgPointsPerTx.toLocaleString(),
+              color: 'amber',
+              icon: BarChart3,
             },
             {
               label: 'Customer Lifetime Value',
               value: `${kpi.customerLTV.toLocaleString()} pts`,
+              color: 'blue',
+              icon: Gift,
             },
-            { label: 'Repeat Customer Rate', value: `${kpi.repeatRate}%` },
-          ].map((item, i) => (
+            {
+              label: 'Repeat Customer Rate',
+              value: `${kpi.repeatRate}%`,
+              color: 'emerald',
+              icon: TrendingUp,
+            },
+          ].map((item, i) => {
+            const Icon = item.icon;
+            return (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="p-4 bg-white border border-gray-100 shadow-md">
-                <p className="text-sm text-gray-500 mb-1">
-                  {item.label}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
+              <Card className="p-5 shadow-card border border-border/50">
+                <div className="flex items-start justify-between mb-3">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <div className={`p-2 bg-gradient-to-br from-${item.color}-100 to-${item.color}-50 rounded-xl`}>
+                    <Icon className={`w-4 h-4 text-${item.color}-600`} />
+                  </div>
+                </div>
+                <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
                   {item.value}
                 </p>
-                <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4" /> vs last month
+                <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1 font-medium">
+                  <TrendingUp className="w-3.5 h-3.5" /> vs last month
                 </p>
               </Card>
             </motion.div>
-          ))}
+            );
+          })}
         </motion.div>
 
         {/* Charts */}
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
           variants={containerVariants}
         >
           {/* Monthly Points */}
           <motion.div variants={itemVariants}>
-            <Card className="p-6 bg-white border border-gray-100 shadow-md">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Monthly Points
-              </h2>
+            <Card className="shadow-card border border-border/50 overflow-hidden">
+              <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/40">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+                  Monthly Points
+                </h2>
+              </div>
+              <div className="p-5 sm:p-6">
               {monthlyData.length === 0 ? (
                 <div className="h-[300px] flex flex-col items-center justify-center">
-                  <BarChart3 className="w-12 h-12 text-gray-300 mb-4" />
-                  <p className="text-gray-500 font-medium">
+                  <div className="p-4 bg-gradient-to-br from-muted/80 to-muted/40 rounded-2xl mb-4">
+                    <BarChart3 className="w-8 h-8 text-muted-foreground/60" />
+                  </div>
+                  <p className="text-foreground font-medium text-sm">
                     No points data yet
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Issue points to customers to see trends.
                   </p>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="month" stroke="#9ca3af" />
-                    <YAxis stroke="#9ca3af" />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: '1px solid hsl(var(--border))',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        fontSize: '13px',
+                      }}
+                    />
                     <Bar dataKey="points" fill="#D32F2F" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
+              </div>
             </Card>
           </motion.div>
 
           {/* Customer Segments */}
           <motion.div variants={itemVariants}>
-            <Card className="p-6 bg-white border border-gray-100 shadow-md">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Customer Segments
-              </h2>
+            <Card className="shadow-card border border-border/50 overflow-hidden">
+              <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/40">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+                  Customer Segments
+                </h2>
+              </div>
+              <div className="p-5 sm:p-6">
               {customerSegments.length === 0 ? (
                 <div className="h-[300px] flex flex-col items-center justify-center">
-                  <PieChartIcon className="w-12 h-12 text-gray-300 mb-4" />
-                  <p className="text-gray-500 font-medium">
+                  <div className="p-4 bg-gradient-to-br from-muted/80 to-muted/40 rounded-2xl mb-4">
+                    <PieChartIcon className="w-8 h-8 text-muted-foreground/60" />
+                  </div>
+                  <p className="text-foreground font-medium text-sm">
                     No customer data yet
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Add customers to see segment breakdown.
                   </p>
                 </div>
@@ -446,51 +483,67 @@ export default function AnalyticsPage() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '12px',
+                        border: '1px solid hsl(var(--border))',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        fontSize: '13px',
+                      }}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               )}
+              </div>
             </Card>
           </motion.div>
 
           {/* Reward Performance */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
             <div className="max-w-2xl mx-auto">
-              <Card className="p-6 bg-white border border-gray-100 shadow-md">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">
-                  Top Rewards
-                </h2>
+              <Card className="shadow-card border border-border/50 overflow-hidden">
+                <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-border/40">
+                  <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+                    Top Rewards
+                  </h2>
+                </div>
+                <div className="p-5 sm:p-6">
                 {rewardPerformance.length === 0 ? (
                   <div className="py-12 flex flex-col items-center justify-center">
-                    <Gift className="w-12 h-12 text-gray-300 mb-4" />
-                    <p className="text-gray-500 font-medium">
+                    <div className="p-4 bg-gradient-to-br from-muted/80 to-muted/40 rounded-2xl mb-4">
+                      <Gift className="w-8 h-8 text-muted-foreground/60" />
+                    </div>
+                    <p className="text-foreground font-medium text-sm">
                       No rewards redeemed yet
                     </p>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Create rewards and customers will start redeeming them.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2.5">
                     {rewardPerformance.map((item, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-3.5 bg-muted/50 hover:bg-muted/80 rounded-xl transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <Gift className="w-5 h-5 text-gray-700" />
-                          <span className="font-medium text-gray-900">
+                          <div className="p-2 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
+                            <Gift className="w-4 h-4 text-amber-600" />
+                          </div>
+                          <span className="font-medium text-sm text-foreground">
                             {item.reward}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted-foreground font-medium tabular-nums">
                           {item.redemptions} redemptions
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
+                </div>
               </Card>
             </div>
           </motion.div>

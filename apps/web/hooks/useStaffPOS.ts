@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import type { Product } from "@/types/pos.types";
+import type { Service } from "@/types/service.types";
 import type {
   StaffCartItem,
   DiscountInfo,
@@ -18,14 +19,16 @@ interface UseStaffPOSOptions {
   customerTier: TierKey;
   customerId: string;
   businessId?: string;
+  businessType?: string | null;
   minPurchaseForPoints: number;
   maxPointsPerTransaction: number | null;
   skipPoints?: boolean;
 }
 
 interface UseStaffPOSReturn {
-  // Product state
+  // Product & service state
   products: Product[];
+  services: Service[];
   isLoadingProducts: boolean;
   hasPOSModule: boolean;
 
@@ -55,6 +58,7 @@ interface UseStaffPOSReturn {
 
   // Actions
   addProduct: (product: Product) => void;
+  addService: (service: Service) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   addManualItem: (name: string, pricePesos: number) => void;
@@ -65,10 +69,11 @@ interface UseStaffPOSReturn {
 }
 
 export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
-  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId, minPurchaseForPoints, maxPointsPerTransaction, skipPoints } = options;
+  const { pesosPerPoint, customerPoints, customerTier, customerId, businessId, businessType, minPurchaseForPoints, maxPointsPerTransaction, skipPoints } = options;
 
-  // Product state
+  // Product & service state
   const [products, setProducts] = useState<Product[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [hasPOSModule, setHasPOSModule] = useState(true);
 
@@ -84,37 +89,55 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
   const [isProcessing, setIsProcessing] = useState(false);
   const [saleResult, setSaleResult] = useState<StaffSaleResult | null>(null);
 
-  // Load products on init
+  // Load products and services on init
   useEffect(() => {
     let cancelled = false;
 
-    async function loadProducts() {
+    async function loadCatalog() {
       try {
-        const res = await fetch("/api/dashboard/pos/products");
-        if (res.status === 403) {
-          // No POS module — manual-only mode
+        // Fetch products and services in parallel
+        const [productsRes, servicesRes] = await Promise.all([
+          fetch("/api/dashboard/pos/products"),
+          fetch("/api/dashboard/pos/services"),
+        ]);
+
+        if (productsRes.status === 403) {
           setHasPOSModule(false);
           setProducts([]);
+          setServices([]);
           return;
         }
-        if (!res.ok) {
-          setProducts([]);
-          return;
-        }
-        const data = await res.json();
+
         if (!cancelled) {
-          setProducts(
-            (data.products || []).filter((p: Product) => p.is_active),
-          );
+          if (productsRes.ok) {
+            const data = await productsRes.json();
+            setProducts(
+              (data.products || []).filter((p: Product) => p.is_active),
+            );
+          } else {
+            setProducts([]);
+          }
+
+          if (servicesRes.ok) {
+            const data = await servicesRes.json();
+            setServices(
+              (data.services || []).filter((s: Service) => s.is_active),
+            );
+          } else {
+            setServices([]);
+          }
         }
       } catch {
-        if (!cancelled) setProducts([]);
+        if (!cancelled) {
+          setProducts([]);
+          setServices([]);
+        }
       } finally {
         if (!cancelled) setIsLoadingProducts(false);
       }
     }
 
-    loadProducts();
+    loadCatalog();
     return () => {
       cancelled = true;
     };
@@ -216,10 +239,10 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
   const addProduct = useCallback((product: Product) => {
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.product_id === product.id);
+      const existing = prev.find((item) => item.product_id === product.id && item.item_type !== 'service');
       if (existing) {
         return prev.map((item) =>
-          item.product_id === product.id
+          item.product_id === product.id && item.item_type !== 'service'
             ? { ...item, quantity: item.quantity + 1 }
             : item,
         );
@@ -235,6 +258,35 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
           unit_price_centavos: product.price_centavos,
           image_url: product.image_url,
           stock_quantity: product.stock_quantity,
+          item_type: 'product' as const,
+        },
+      ];
+    });
+  }, []);
+
+  const addService = useCallback((service: Service) => {
+    setCartItems((prev) => {
+      const serviceCartId = `svc-${service.id}`;
+      const existing = prev.find((item) => item.id === serviceCartId);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === serviceCartId
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: serviceCartId,
+          name: service.name,
+          description: service.description || undefined,
+          quantity: 1,
+          unit_price_centavos: service.price_centavos,
+          image_url: service.image_url,
+          item_type: 'service' as const,
+          duration_minutes: service.duration_minutes,
+          duration_unit: service.duration_unit || 'minutes',
         },
       ];
     });
@@ -353,6 +405,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
   return {
     products,
+    services,
     isLoadingProducts,
     hasPOSModule,
     cartItems,
@@ -372,6 +425,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     isProcessing,
     saleResult,
     addProduct,
+    addService,
     removeItem,
     updateQuantity,
     addManualItem,

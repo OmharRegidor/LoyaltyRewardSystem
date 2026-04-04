@@ -22,15 +22,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
-
-const TIER_CONFIG: Record<TierLevel, { label: string; emoji: string; color: string }> = {
-  bronze: { label: 'Bronze', emoji: '🥉', color: 'bg-amber-100 text-amber-800' },
-  silver: { label: 'Silver', emoji: '🥈', color: 'bg-gray-200 text-gray-700' },
-  gold: { label: 'Gold', emoji: '🥇', color: 'bg-yellow-100 text-yellow-800' },
-  platinum: { label: 'Platinum', emoji: '💎', color: 'bg-purple-100 text-purple-800' },
-};
-
 interface Reward {
   id: string;
   title: string;
@@ -41,7 +32,6 @@ interface Reward {
   status: 'active' | 'inactive';
   image: string;
   isVisible?: boolean;
-  tierRequired?: TierLevel;
 }
 
 interface RewardsGridProps {
@@ -65,13 +55,13 @@ export function RewardsGrid({
 
   if (rewards.length === 0) {
     return (
-      <Card className="p-12 text-center bg-white">
+      <Card className="p-12 text-center bg-gradient-to-b from-muted/30 to-background shadow-card border border-border/50">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-300 mx-auto mb-4 flex items-center justify-center">
-            <span className="text-3xl text-gray-400">+</span>
+          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 mx-auto mb-4 flex items-center justify-center">
+            <Coins className="w-7 h-7 text-primary/60" />
           </div>
-          <h3 className="font-semibold mb-2 text-gray-900">Create Your First Reward</h3>
-          <p className="text-gray-500">
+          <h3 className="font-display font-semibold mb-2 text-foreground">Create Your First Reward</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
             Start building your rewards catalog
           </p>
         </div>
@@ -124,12 +114,12 @@ export function RewardsGrid({
           if (!open) setDeleteTarget(null);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="border-t-2 border-t-destructive">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Reward</AlertDialogTitle>
+            <AlertDialogTitle className="font-display">Delete Reward</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete{' '}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-foreground">
                 &ldquo;{deleteTarget?.title}&rdquo;
               </span>
               ? This action cannot be undone.
@@ -138,7 +128,7 @@ export function RewardsGrid({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               onClick={() => {
                 if (deleteTarget) {
                   onDelete(deleteTarget.id);
@@ -173,43 +163,39 @@ function RewardCard({
 
   const getBadgeStatus = () => {
     if (isHidden)
-      return { text: 'HIDDEN', className: 'bg-gray-200 text-gray-600' };
+      return { text: 'Hidden', dot: 'bg-muted-foreground', className: 'bg-muted text-muted-foreground' };
     if (isOutOfStock)
       return {
-        text: 'OUT OF STOCK',
-        className: 'bg-red-100 text-red-700',
+        text: 'Out of Stock',
+        dot: 'bg-destructive',
+        className: 'bg-destructive/10 text-destructive',
       };
-    return { text: 'ACTIVE', className: 'bg-green-100 text-green-700' };
+    return { text: 'Active', dot: 'bg-emerald-500', className: 'bg-emerald-500/10 text-emerald-700' };
   };
 
   const badgeStatus = getBadgeStatus();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg hover:border-secondary/50 transition-all group bg-white py-0 gap-0">
+    <Card className="overflow-hidden shadow-card border border-border/50 hover:shadow-card-hover transition-shadow duration-300 group bg-background py-0 gap-0">
       {/* Image */}
-      <div className="relative aspect-video bg-gray-100 overflow-hidden">
+      <div className="relative aspect-video bg-muted overflow-hidden">
         <img
           src={reward.image || '/placeholder.svg'}
           alt={reward.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {/* Tier Badge */}
-        {reward.tierRequired && reward.tierRequired !== 'bronze' && (
-          <div className="absolute top-3 left-3">
-            <Badge className={TIER_CONFIG[reward.tierRequired].color}>
-              {TIER_CONFIG[reward.tierRequired].emoji} {TIER_CONFIG[reward.tierRequired].label}
-            </Badge>
-          </div>
-        )}
         {/* Status Badge */}
         <div className="absolute top-3 right-3">
-          <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>
+          <Badge className={`${badgeStatus.className} gap-1.5`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${badgeStatus.dot}`} />
+            {badgeStatus.text}
+          </Badge>
         </div>
         {/* Gradient Overlay with View Details Button */}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
           <button
             onClick={() => onView?.(reward.id)}
-            className="w-full bg-white text-black font-semibold py-2 rounded-lg hover:bg-gray-100 transition"
+            className="w-full bg-white text-foreground font-semibold py-2 rounded-xl hover:bg-white/90 transition-colors text-sm"
           >
             View Details
           </button>
@@ -219,29 +205,29 @@ function RewardCard({
       {/* Content */}
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-bold line-clamp-2 text-gray-900">{reward.title}</h3>
-          <p className="text-sm text-gray-500 line-clamp-1 mt-1">
+          <h3 className="font-display font-bold line-clamp-2 text-foreground text-sm sm:text-base">{reward.title}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
             {reward.description}
           </p>
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Coins className="w-4 h-4 text-primary" />
-            <span className="font-bold text-lg text-gray-900">{reward.pointsCost}</span>
+            <span className="font-display text-lg font-bold tabular-nums tracking-tight text-foreground">{reward.pointsCost}</span>
           </div>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {reward.stock === -1 ? 'Unlimited' : `${reward.stock} left`}
           </span>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 border-t border-gray-200">
+        <div className="flex gap-2 pt-2 border-t border-border/50">
           {/* Desktop: Inline buttons */}
           <div className="hidden md:flex gap-2 flex-1">
             <button
               onClick={() => onToggleStatus(reward.id)}
-              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition text-sm text-gray-700"
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted/50 rounded-lg transition-colors text-sm text-muted-foreground"
             >
               {reward.isVisible !== false ? (
                 <>
@@ -257,14 +243,14 @@ function RewardCard({
             </button>
             <button
               onClick={() => onEdit?.(reward.id)}
-              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-gray-100 rounded-lg transition text-sm text-gray-700"
+              className="flex-1 flex items-center justify-center gap-1 p-2 hover:bg-muted/50 rounded-lg transition-colors text-sm text-muted-foreground"
             >
               <Edit className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={onDelete}
-              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
+              className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -274,8 +260,8 @@ function RewardCard({
           <div className="md:hidden flex-1 flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                  <MoreVertical className="w-4 h-4 text-gray-600" />
+                <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors">
+                  <MoreVertical className="w-4 h-4 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -327,23 +313,24 @@ function RewardListItem({
 
   const getBadgeStatus = () => {
     if (isHidden)
-      return { text: 'HIDDEN', className: 'bg-gray-200 text-gray-600' };
+      return { text: 'Hidden', dot: 'bg-muted-foreground', className: 'bg-muted text-muted-foreground' };
     if (isOutOfStock)
       return {
-        text: 'OUT',
-        className: 'bg-red-100 text-red-700',
+        text: 'Out',
+        dot: 'bg-destructive',
+        className: 'bg-destructive/10 text-destructive',
       };
-    return { text: 'ACTIVE', className: 'bg-green-100 text-green-700' };
+    return { text: 'Active', dot: 'bg-emerald-500', className: 'bg-emerald-500/10 text-emerald-700' };
   };
 
   const badgeStatus = getBadgeStatus();
 
   return (
-    <Card className="p-4 hover:shadow-lg transition-all bg-white">
+    <Card className="p-4 shadow-card border border-border/50 hover:shadow-card-hover transition-shadow duration-300 bg-background">
       <div className="flex gap-4">
         {/* Thumbnail */}
         <div
-          className="h-24 w-24 rounded-lg overflow-hidden shrink-0 bg-gray-100 cursor-pointer"
+          className="h-24 w-24 rounded-xl overflow-hidden shrink-0 bg-muted cursor-pointer"
           onClick={() => onView?.(reward.id)}
         >
           <img
@@ -358,25 +345,28 @@ function RewardListItem({
           <div className="flex items-start justify-between gap-4 mb-2">
             <div>
               <h3
-                className="font-bold cursor-pointer hover:text-primary transition text-gray-900"
+                className="font-display font-bold cursor-pointer hover:text-primary transition-colors text-foreground text-sm sm:text-base"
                 onClick={() => onView?.(reward.id)}
               >
                 {reward.title}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {reward.description}
               </p>
             </div>
-            <Badge className={badgeStatus.className}>{badgeStatus.text}</Badge>
+            <Badge className={`${badgeStatus.className} gap-1.5`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${badgeStatus.dot}`} />
+              {badgeStatus.text}
+            </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Coins className="w-4 h-4 text-primary" />
-                <span className="font-bold text-gray-900">{reward.pointsCost}</span>
+                <span className="font-display font-bold tabular-nums text-foreground">{reward.pointsCost}</span>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Stock: {reward.stock === -1 ? 'Unlimited' : reward.stock}
               </span>
             </div>
@@ -386,7 +376,7 @@ function RewardListItem({
               <div className="hidden md:flex gap-2">
                 <button
                   onClick={() => onToggleStatus(reward.id)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600"
+                  className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-muted-foreground"
                 >
                   {reward.isVisible !== false ? (
                     <EyeOff className="w-4 h-4" />
@@ -396,13 +386,13 @@ function RewardListItem({
                 </button>
                 <button
                   onClick={() => onEdit?.(reward.id)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600"
+                  className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-muted-foreground"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={onDelete}
-                  className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition"
+                  className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -412,8 +402,8 @@ function RewardListItem({
               <div className="md:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                      <MoreVertical className="w-4 h-4 text-gray-600" />
+                    <button className="p-2 hover:bg-muted/50 rounded-lg transition-colors">
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

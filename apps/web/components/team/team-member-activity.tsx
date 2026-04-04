@@ -118,7 +118,7 @@ export function TeamMemberActivity({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-border">
+      <div className="bg-background rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-border/50 border-t-2 border-t-primary">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export function TeamMemberActivity({
               </span>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 className="font-display text-lg font-bold text-foreground tracking-tight">
                 {member.name}
               </h2>
               <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
@@ -136,7 +136,7 @@ export function TeamMemberActivity({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -148,7 +148,7 @@ export function TeamMemberActivity({
             <button
               key={range}
               onClick={() => setDateRange(range)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 dateRange === range
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted'
@@ -164,28 +164,28 @@ export function TeamMemberActivity({
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 shrink-0">
+        <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 shrink-0">
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
               {stats.totalScans}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Total Scans
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-primary">
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-primary">
               {stats.totalPoints.toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Points Awarded
             </p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
               {stats.avgPointsPerScan}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Avg per Scan
             </p>
           </div>

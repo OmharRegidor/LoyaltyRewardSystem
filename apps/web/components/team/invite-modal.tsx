@@ -163,16 +163,16 @@ export function InviteModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-md border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-background rounded-2xl w-full max-w-md border border-border/50 shadow-2xl max-h-[90vh] overflow-y-auto border-t-2 border-t-primary">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-primary rounded-t-2xl z-10">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-primary rounded-t-2xl z-10">
+          <h2 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2 tracking-tight">
             <UserPlus className="w-5 h-5 text-white" />
             {state === "success" ? "Invite Created!" : "Invite Staff/Cashier"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors"
           >
             <X className="w-5 h-5 text-white/80" />
           </button>
@@ -184,28 +184,28 @@ export function InviteModal({
             // Success State
             <div className="space-y-6">
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-500" />
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-emerald-500" />
                 </div>
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   {emailSent === true ? (
-                    <>Invite sent to <span className="text-gray-900 font-medium">{email}</span></>
+                    <>Invite sent to <span className="text-foreground font-medium">{email}</span></>
                   ) : emailSent === false ? (
-                    <>Invite created for <span className="text-gray-900 font-medium">{name}</span> <span className="text-amber-600">(email could not be sent)</span></>
+                    <>Invite created for <span className="text-foreground font-medium">{name}</span> <span className="text-amber-600">(email could not be sent)</span></>
                   ) : (
-                    <>Invite created for <span className="text-gray-900 font-medium">{name}</span></>
+                    <>Invite created for <span className="text-foreground font-medium">{name}</span></>
                   )}
                 </p>
                 {branchName && (
-                  <p className="text-gray-500 text-sm">Branch: {branchName}</p>
+                  <p className="text-muted-foreground text-sm">Branch: {branchName}</p>
                 )}
               </div>
 
               {/* Invite Link */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-sm text-gray-500 mb-2">Share this link:</p>
+              <div className="bg-muted/50 rounded-xl p-4">
+                <p className="text-sm text-muted-foreground mb-2">Share this link:</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-gray-100 px-3 py-2 rounded-lg text-gray-800 text-sm truncate">
+                  <code className="flex-1 bg-muted px-3 py-2 rounded-lg text-foreground text-sm truncate">
                     {inviteLink}
                   </code>
                   <button
@@ -246,7 +246,7 @@ export function InviteModal({
 
               <button
                 onClick={handleDone}
-                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 rounded-xl font-medium transition-colors"
+                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-foreground border border-border rounded-xl font-medium transition-colors"
               >
                 Done
               </button>
@@ -256,17 +256,17 @@ export function InviteModal({
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-4">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cashier Name <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Cashier Name <span className="text-destructive">*</span>
                 </label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter cashier's name"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
@@ -274,17 +274,17 @@ export function InviteModal({
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Email Address <span className="text-destructive">*</span>
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="cashier@email.com"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
@@ -292,31 +292,31 @@ export function InviteModal({
 
               {/* Branch Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Branch Name <span className="text-gray-500">(optional)</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Branch Name <span className="text-muted-foreground">(optional)</span>
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input
                     type="text"
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
                     placeholder="e.g., San Pedro Branch"
-                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground focus:border-secondary focus:ring-2 focus:ring-secondary/50 transition-all"
                     disabled={state === "submitting"}
                   />
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+              <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200/60 rounded-xl p-4">
                 Invitees will create their own account and password when they
                 open the link.
               </div>
 
               {/* Error */}
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="text-red-600 text-sm">{error}</p>
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
+                  <p className="text-destructive text-sm">{error}</p>
                 </div>
               )}
 
@@ -324,7 +324,7 @@ export function InviteModal({
               <button
                 type="submit"
                 disabled={state === "submitting"}
-                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-gray-900 border border-gray-900 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-secondary hover:bg-secondary/90 text-foreground border border-border rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {state === "submitting" ? (
                   <>

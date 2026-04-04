@@ -29,13 +29,13 @@ export function CustomersFilters({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="p-4 bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <Card className="p-4 bg-white shadow-card border border-border/50">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {/* Status Filter */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Status</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</label>
             <Select value={status} onValueChange={onStatusChange}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -47,24 +47,26 @@ export function CustomersFilters({
           </div>
 
           {/* Points Range */}
-          <div className="space-y-2 md:col-span-1">
-            <label className="text-sm font-medium text-gray-700">Points Range</label>
+          <div className="space-y-1.5 md:col-span-1">
+            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Points Range</label>
             <div className="flex items-center gap-2">
               <Input
                 type="text"
                 inputMode="numeric"
                 placeholder="Min"
+                className="rounded-xl tabular-nums"
                 value={pointsRange[0]}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, "")
                   onPointsRangeChange([value === "" ? 0 : Number(value), pointsRange[1]])
                 }}
               />
-              <span className="text-sm text-gray-500">to</span>
+              <span className="text-sm text-muted-foreground">to</span>
               <Input
                 type="text"
                 inputMode="numeric"
                 placeholder="Max"
+                className="rounded-xl tabular-nums"
                 value={pointsRange[1]}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, "")
@@ -75,10 +77,10 @@ export function CustomersFilters({
           </div>
 
           {/* Sort By */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Sort By</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Sort By</label>
             <Select value={sortBy} onValueChange={onSortByChange}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

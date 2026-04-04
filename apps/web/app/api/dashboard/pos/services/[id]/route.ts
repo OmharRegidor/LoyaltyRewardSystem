@@ -1,4 +1,4 @@
-// apps/web/app/api/dashboard/pos/products/[id]/route.ts
+// apps/web/app/api/dashboard/pos/services/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -7,22 +7,24 @@ import {
 } from "@/lib/supabase-server";
 import { requireModule } from "@/lib/feature-gate";
 import {
-  getProductById,
-  updateProduct,
-  deleteProduct,
-} from "@/lib/services/pos.service";
+  getServiceById,
+  updateService,
+  deleteService,
+} from "@/lib/services/service-catalog.service";
 import { z } from "zod";
 
 // ============================================
 // VALIDATION SCHEMAS
 // ============================================
 
-const UpdateProductSchema = z.object({
+const UpdateServiceSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().max(1000).optional(),
-  price: z.number().positive().optional(), // In pesos
+  price: z.number().nonnegative().optional(),
+  pricing_type: z.enum(["fixed", "per_hour", "per_session", "per_person", "per_night", "per_day", "starting_at"]).optional(),
+  duration_minutes: z.number().int().positive().optional(),
+  duration_unit: z.enum(["minutes", "hours", "days", "nights"]).optional(),
   category: z.string().max(100).optional(),
-  sku: z.string().max(50).optional(),
   image_url: z
     .string()
     .url()
@@ -30,9 +32,9 @@ const UpdateProductSchema = z.object({
     .optional()
     .transform((val) => val ?? undefined),
   is_active: z.boolean().optional(),
-  sort_order: z.number().int().nonnegative().optional(),
-  stock_quantity: z.number().int().nonnegative().max(999999).optional(),
-  low_stock_threshold: z.number().int().nonnegative().optional(),
+  max_guests: z.number().int().positive().nullable().optional().transform((val) => val ?? undefined),
+  allow_staff_selection: z.boolean().optional(),
+  staff_ids: z.array(z.string().uuid()).optional(),
 });
 
 // ============================================
@@ -61,7 +63,7 @@ async function getBusinessId(userId: string): Promise<string | null> {
 }
 
 // ============================================
-// GET: Get Single Product
+// GET: Get Single Service
 // ============================================
 
 export async function GET(
@@ -89,23 +91,21 @@ export async function GET(
       );
     }
 
-    // Check POS module access
     await requireModule(businessId, "pos");
 
-    const product = await getProductById(id);
+    const service = await getServiceById(id);
 
-    if (!product) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    if (!service) {
+      return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    // Verify product belongs to this business
-    if (product.business_id !== businessId) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    if (service.business_id !== businessId) {
+      return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ product });
+    return NextResponse.json({ service });
   } catch (error) {
-    console.error("GET /api/dashboard/pos/products/[id] error:", error);
+    console.error("GET /api/dashboard/pos/services/[id] error:", error);
 
     if (error instanceof Error && "code" in error) {
       const err = error as Error & { code: string };
@@ -125,7 +125,7 @@ export async function GET(
 }
 
 // ============================================
-// PUT: Update Product
+// PUT: Update Service
 // ============================================
 
 export async function PUT(
@@ -153,18 +153,15 @@ export async function PUT(
       );
     }
 
-    // Check POS module access
     await requireModule(businessId, "pos");
 
-    // Verify product exists and belongs to this business
-    const existingProduct = await getProductById(id);
-    if (!existingProduct || existingProduct.business_id !== businessId) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const existingService = await getServiceById(id);
+    if (!existingService || existingService.business_id !== businessId) {
+      return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    // Parse and validate input
     const body = await request.json();
-    const validation = UpdateProductSchema.safeParse(body);
+    const validation = UpdateServiceSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -176,11 +173,11 @@ export async function PUT(
       );
     }
 
-    const product = await updateProduct(id, validation.data);
+    const service = await updateService(id, validation.data);
 
-    return NextResponse.json({ product });
+    return NextResponse.json({ service });
   } catch (error) {
-    console.error("PUT /api/dashboard/pos/products/[id] error:", error);
+    console.error("PUT /api/dashboard/pos/services/[id] error:", error);
 
     if (error instanceof Error && "code" in error) {
       const err = error as Error & { code: string };
@@ -200,7 +197,7 @@ export async function PUT(
 }
 
 // ============================================
-// DELETE: Delete Product
+// DELETE: Delete Service
 // ============================================
 
 export async function DELETE(
@@ -228,20 +225,18 @@ export async function DELETE(
       );
     }
 
-    // Check POS module access
     await requireModule(businessId, "pos");
 
-    // Verify product exists and belongs to this business
-    const existingProduct = await getProductById(id);
-    if (!existingProduct || existingProduct.business_id !== businessId) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    const existingService = await getServiceById(id);
+    if (!existingService || existingService.business_id !== businessId) {
+      return NextResponse.json({ error: "Service not found" }, { status: 404 });
     }
 
-    await deleteProduct(id);
+    await deleteService(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("DELETE /api/dashboard/pos/products/[id] error:", error);
+    console.error("DELETE /api/dashboard/pos/services/[id] error:", error);
 
     if (error instanceof Error && "code" in error) {
       const err = error as Error & { code: string };

@@ -23,8 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
-
 interface CreateRewardData {
   title: string;
   description: string;
@@ -33,7 +31,6 @@ interface CreateRewardData {
   category: string;
   expiryDate?: string;
   image?: string;
-  tierRequired: TierLevel;
 }
 
 interface CreateRewardModalProps {
@@ -59,7 +56,6 @@ export function CreateRewardModal({
     category: 'Food',
     expiryDate: '',
     image: '/reward-item.png',
-    tierRequired: 'bronze' as TierLevel,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +81,6 @@ export function CreateRewardModal({
         category: formData.category,
         expiryDate: formData.expiryDate || undefined,
         image: formData.image,
-        tierRequired: formData.tierRequired,
       });
 
       // Reset form after successful creation
@@ -97,7 +92,6 @@ export function CreateRewardModal({
         category: 'Food',
         expiryDate: '',
         image: '/reward-item.png',
-        tierRequired: 'bronze' as TierLevel,
       });
 
       setImagePreview(null);
@@ -179,9 +173,9 @@ export function CreateRewardModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-t-2 border-t-primary">
         <DialogHeader>
-          <DialogTitle>Create New Reward</DialogTitle>
+          <DialogTitle className="font-display tracking-tight">Create New Reward</DialogTitle>
         </DialogHeader>
 
         <motion.form
@@ -196,7 +190,7 @@ export function CreateRewardModal({
             <div className="space-y-3">
               <label className="text-sm font-medium">Reward Image</label>
               <label className="block cursor-pointer">
-                <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center hover:bg-gray-50 hover:border-primary/50 transition h-48 relative overflow-hidden">
+                <Card className="border-2 border-dashed p-6 flex flex-col items-center justify-center hover:bg-muted/50 hover:border-primary/50 transition h-48 relative overflow-hidden">
                   {imagePreview ? (
                     <>
                       <img
@@ -216,12 +210,12 @@ export function CreateRewardModal({
                       {isUploadingImage ? (
                         <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
                       ) : (
-                        <Upload className="w-8 h-8 text-gray-500 mb-2" />
+                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
                       )}
                       <p className="text-sm font-medium">
                         {isUploadingImage ? 'Uploading...' : 'Click to upload'}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         PNG, JPG up to 2MB
                       </p>
                     </>
@@ -264,7 +258,7 @@ export function CreateRewardModal({
                 <textarea
                   placeholder="Describe this reward..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -306,7 +300,7 @@ export function CreateRewardModal({
                   required
                   disabled={isSubmitting}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Enter -1 for unlimited stock
                 </p>
               </div>
@@ -337,32 +331,6 @@ export function CreateRewardModal({
 
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Tier Required
-                </label>
-                <Select
-                  value={formData.tierRequired}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, tierRequired: value as TierLevel })
-                  }
-                  disabled={isSubmitting}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bronze">🥉 Bronze (All members)</SelectItem>
-                    <SelectItem value="silver">🥈 Silver (500+ pts)</SelectItem>
-                    <SelectItem value="gold">🥇 Gold (2,000+ pts)</SelectItem>
-                    <SelectItem value="platinum">💎 Platinum (5,000+ pts)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Only members at this tier or above can redeem
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
                   Expiry Date (Optional)
                 </label>
                 <input
@@ -372,7 +340,7 @@ export function CreateRewardModal({
                     setFormData({ ...formData, expiryDate: e.target.value })
                   }
                   disabled={isSubmitting}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 dark:[&::-webkit-calendar-picker-indicator]:invert"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 dark:[&::-webkit-calendar-picker-indicator]:invert"
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
@@ -380,7 +348,7 @@ export function CreateRewardModal({
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 pt-6 border-t border-gray-200">
+          <div className="flex gap-3 pt-6 border-t border-border">
             <Button
               type="button"
               variant="outline"

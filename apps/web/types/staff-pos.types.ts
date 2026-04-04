@@ -34,6 +34,9 @@ export const TIERS: Record<TierKey, TierConfig> = {
 export interface StaffCartItem extends CartItem {
   image_url?: string | null;
   stock_quantity?: number;
+  item_type?: 'product' | 'service';
+  duration_minutes?: number;
+  duration_unit?: string;
 }
 
 // ============================================

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
-  Loader2,
   TrendingUp,
   ShoppingCart,
   Package,
@@ -25,6 +23,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { POSNavTabs } from '@/components/pos';
+import { cachedFetch } from '@/lib/client-cache';
 import type { SalesAnalytics } from '@/types/pos.types';
 
 function formatPrice(centavos: number): string {
@@ -38,8 +37,46 @@ function formatDate(dateStr: string): string {
 
 type DateRange = '7d' | '30d';
 
+const kpiConfig = [
+  {
+    key: 'revenue',
+    label: 'Total Revenue',
+    icon: TrendingUp,
+    gradientFrom: 'from-emerald-100',
+    gradientTo: 'to-emerald-50',
+    iconColor: 'text-emerald-600',
+    getValue: (a: SalesAnalytics) => formatPrice(a.totals.revenue_centavos),
+  },
+  {
+    key: 'transactions',
+    label: 'Transactions',
+    icon: Receipt,
+    gradientFrom: 'from-primary/15',
+    gradientTo: 'to-primary/5',
+    iconColor: 'text-primary',
+    getValue: (a: SalesAnalytics) => a.totals.transactions.toLocaleString(),
+  },
+  {
+    key: 'aov',
+    label: 'Avg Order Value',
+    icon: ShoppingCart,
+    gradientFrom: 'from-blue-100',
+    gradientTo: 'to-blue-50',
+    iconColor: 'text-blue-600',
+    getValue: (a: SalesAnalytics) => formatPrice(a.totals.avg_order_value_centavos),
+  },
+  {
+    key: 'items',
+    label: 'Items Sold',
+    icon: Package,
+    gradientFrom: 'from-amber-100',
+    gradientTo: 'to-amber-50',
+    iconColor: 'text-amber-600',
+    getValue: (a: SalesAnalytics) => a.totals.items_sold.toLocaleString(),
+  },
+] as const;
+
 export default function POSAnalyticsPage() {
-  const router = useRouter();
   const { subscription, isLoading: isLoadingSubscription } = useSubscription();
   const [analytics, setAnalytics] = useState<SalesAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,14 +94,9 @@ export default function POSAnalyticsPage() {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - (dateRange === '7d' ? 6 : 29));
 
-        const response = await fetch(
-          `/api/dashboard/pos/analytics?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate}`
-        );
-        const data = await response.json();
-
-        if (response.ok) {
-          setAnalytics(data.analytics);
-        }
+        const url = `/api/dashboard/pos/analytics?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate}`;
+        const data = await cachedFetch<{ analytics: SalesAnalytics }>(url);
+        setAnalytics(data.analytics);
       } catch (err) {
         console.error('Failed to load analytics:', err);
       } finally {
@@ -78,50 +110,27 @@ export default function POSAnalyticsPage() {
   if (isLoadingSubscription) {
     return (
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="flex justify-between items-center">
             <div className="space-y-2">
               <Skeleton className="h-8 w-48" />
               <Skeleton className="h-4 w-56" />
             </div>
             <div className="flex gap-2">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-9 w-24 rounded-full" />
+              <Skeleton className="h-9 w-28 rounded-full" />
             </div>
           </div>
           <Skeleton className="h-10 w-full max-w-md" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+              <Skeleton key={i} className="h-28 w-full rounded-xl" />
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-[350px] w-full rounded-xl" />
-            <Skeleton className="h-[350px] w-full rounded-xl" />
+            <Skeleton className="h-[380px] w-full rounded-xl" />
+            <Skeleton className="h-[380px] w-full rounded-xl" />
           </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!hasPOS) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-          <Card className="max-w-md">
-            <CardContent className="flex flex-col items-center text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <BarChart3 className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">POS Not Available</h2>
-              <p className="text-muted-foreground mb-6">
-                Point of Sale is available on the Enterprise plan.
-              </p>
-              <Button onClick={() => router.push('/dashboard/settings')}>
-                View Plans
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </DashboardLayout>
     );
@@ -136,28 +145,44 @@ export default function POSAnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Sales Analytics</h1>
-            <p className="text-gray-500 mt-1">Track your POS performance</p>
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+              Sales Analytics
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Track your POS performance and revenue trends
+            </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant={dateRange === '7d' ? 'default' : 'outline'}
-              size="sm"
+
+          {/* Date Range Pills */}
+          <div className="flex items-center gap-1 rounded-full bg-muted/60 p-1 border border-border/40">
+            <button
               onClick={() => setDateRange('7d')}
+              className={`
+                px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer
+                ${dateRange === '7d'
+                  ? 'bg-white text-foreground shadow-card'
+                  : 'text-muted-foreground hover:text-foreground'
+                }
+              `}
             >
               Last 7 Days
-            </Button>
-            <Button
-              variant={dateRange === '30d' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => setDateRange('30d')}
+              className={`
+                px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer
+                ${dateRange === '30d'
+                  ? 'bg-white text-foreground shadow-card'
+                  : 'text-muted-foreground hover:text-foreground'
+                }
+              `}
             >
               Last 30 Days
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -165,115 +190,102 @@ export default function POSAnalyticsPage() {
         <POSNavTabs />
 
         {isLoading ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-6 sm:space-y-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                <Skeleton key={i} className="h-24 sm:h-28 w-full rounded-xl" />
               ))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Skeleton className="h-[350px] w-full rounded-xl" />
-              <Skeleton className="h-[350px] w-full rounded-xl" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Skeleton className="h-[300px] sm:h-[380px] w-full rounded-xl" />
+              <Skeleton className="h-[300px] sm:h-[380px] w-full rounded-xl" />
             </div>
           </div>
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="py-3">
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Revenue</p>
-                      <p className="text-2xl font-bold">
-                        {formatPrice(analytics?.totals.revenue_centavos ?? 0)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="py-3">
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Receipt className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Transactions</p>
-                      <p className="text-2xl font-bold">
-                        {analytics?.totals.transactions ?? 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="py-3">
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <ShoppingCart className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Avg Order Value</p>
-                      <p className="text-2xl font-bold">
-                        {formatPrice(analytics?.totals.avg_order_value_centavos ?? 0)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="py-3">
-                <CardContent className="pt-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                      <Package className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Items Sold</p>
-                      <p className="text-2xl font-bold">
-                        {analytics?.totals.items_sold ?? 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+              {kpiConfig.map((kpi) => {
+                const Icon = kpi.icon;
+                return (
+                  <Card
+                    key={kpi.key}
+                    className="shadow-card border border-border/50 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    <CardContent className="p-3 sm:p-5">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+                        <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${kpi.gradientFrom} ${kpi.gradientTo} flex items-center justify-center shrink-0`}>
+                          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${kpi.iconColor}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-none">
+                            {kpi.label}
+                          </p>
+                          <p className="font-display text-lg sm:text-2xl font-bold mt-1 sm:mt-1.5 tabular-nums tracking-tight truncate">
+                            {analytics ? kpi.getValue(analytics) : '--'}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Revenue Trend */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Revenue Trend</CardTitle>
+              <Card className="shadow-card border border-border/50">
+                <CardHeader className="pb-4 border-b border-border/40">
+                  <CardTitle className="text-sm sm:text-base font-semibold text-foreground">
+                    Revenue Trend
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
                   {chartData.length === 0 ? (
-                    <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
-                      <BarChart3 className="h-12 w-12 mb-4" />
-                      <p className="font-medium">No sales data yet</p>
-                      <p className="text-sm">Complete sales to see trends</p>
+                    <div className="h-[300px] flex flex-col items-center justify-center rounded-xl bg-gradient-to-b from-muted/30 to-transparent">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-muted to-background flex items-center justify-center mb-4 shadow-xs">
+                        <BarChart3 className="h-7 w-7 text-muted-foreground/60" />
+                      </div>
+                      <p className="font-medium text-foreground/70">No sales data yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Complete your first sale to see revenue trends
+                      </p>
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} />
-                        <YAxis
-                          stroke="#9ca3af"
+                        <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.91 0.005 80)" vertical={false} />
+                        <XAxis
+                          dataKey="date"
+                          stroke="oklch(0.45 0.015 30)"
                           fontSize={12}
-                          tickFormatter={(value) => `₱${value}`}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          stroke="oklch(0.45 0.015 30)"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value: number) => `₱${value.toLocaleString()}`}
                         />
                         <Tooltip
-                          formatter={(value: number) => [`₱${value.toFixed(2)}`, 'Revenue']}
-                          labelStyle={{ color: '#374151' }}
+                          formatter={(value) => [`₱${Number(value).toFixed(2)}`, 'Revenue']}
+                          labelStyle={{ color: '#374151', fontWeight: 500 }}
+                          contentStyle={{
+                            borderRadius: '10px',
+                            border: '1px solid oklch(0.91 0.005 80)',
+                            boxShadow: '0 4px 12px oklch(0 0 0 / 0.06)',
+                            padding: '8px 12px',
+                          }}
                         />
-                        <Bar dataKey="revenue" fill="#D32F2F" radius={[4, 4, 0, 0]} />
+                        <Bar
+                          dataKey="revenue"
+                          fill="oklch(0.35 0.16 25)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={48}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -281,36 +293,64 @@ export default function POSAnalyticsPage() {
               </Card>
 
               {/* Top Products */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Top Products</CardTitle>
+              <Card className="shadow-card border border-border/50">
+                <CardHeader className="pb-4 border-b border-border/40">
+                  <CardTitle className="text-sm sm:text-base font-semibold text-foreground">
+                    Top Products
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
                   {(analytics?.top_products.length ?? 0) === 0 ? (
-                    <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground">
-                      <Package className="h-12 w-12 mb-4" />
-                      <p className="font-medium">No product data yet</p>
-                      <p className="text-sm">Sell products to see rankings</p>
+                    <div className="h-[300px] flex flex-col items-center justify-center rounded-xl bg-gradient-to-b from-muted/30 to-transparent">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-muted to-background flex items-center justify-center mb-4 shadow-xs">
+                        <Package className="h-7 w-7 text-muted-foreground/60" />
+                      </div>
+                      <p className="font-medium text-foreground/70">No product data yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Sell products to see your top performers
+                      </p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-0">
                       {analytics?.top_products.slice(0, 5).map((product, index) => (
                         <div
                           key={product.product_id || product.name}
-                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                          className={`
+                            flex items-center justify-between py-3.5 px-1
+                            ${index < (analytics?.top_products.length ?? 0) - 1 && index < 4
+                              ? 'border-b border-border/30'
+                              : ''
+                            }
+                          `}
                         >
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <span
+                              className={`
+                                w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center shrink-0
+                                ${index === 0
+                                  ? 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-700'
+                                  : index === 1
+                                    ? 'bg-gradient-to-br from-muted to-muted/50 text-muted-foreground'
+                                    : index === 2
+                                      ? 'bg-gradient-to-br from-orange-100 to-orange-50 text-orange-700'
+                                      : 'bg-muted/60 text-muted-foreground'
+                                }
+                              `}
+                            >
                               {index + 1}
                             </span>
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm text-foreground truncate">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
                                 {product.quantity} sold
                               </p>
                             </div>
                           </div>
-                          <p className="font-bold">{formatPrice(product.revenue_centavos)}</p>
+                          <p className="font-semibold text-sm tabular-nums text-foreground shrink-0 ml-3">
+                            {formatPrice(product.revenue_centavos)}
+                          </p>
                         </div>
                       ))}
                     </div>

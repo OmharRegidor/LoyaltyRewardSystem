@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { checkModuleAccess } from '@/lib/feature-gate';
 import { DashboardLayout } from '@/components/dashboard/layout';
+import { POSOnboarding } from '@/components/pos/POSOnboarding';
 import { Lock, ShoppingCart, Package, BarChart3, ClipboardList, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,7 +19,7 @@ export default async function POSLayout({
 
   const { data: business } = await supabase
     .from('businesses')
-    .select('id')
+    .select('id, business_type, pos_onboarded')
     .eq('owner_id', user.id)
     .maybeSingle();
 
@@ -26,13 +27,24 @@ export default async function POSLayout({
 
   const { allowed } = await checkModuleAccess(business.id, 'pos');
 
-  if (allowed) return children;
+  if (!allowed) {
+    return (
+      <DashboardLayout>
+        <POSLockedOverlay />
+      </DashboardLayout>
+    );
+  }
 
-  return (
-    <DashboardLayout>
-      <POSLockedOverlay />
-    </DashboardLayout>
-  );
+  // POS is allowed but not yet onboarded — show setup screen
+  if (!business.pos_onboarded) {
+    return (
+      <DashboardLayout>
+        <POSOnboarding currentBusinessType={business.business_type} />
+      </DashboardLayout>
+    );
+  }
+
+  return children;
 }
 
 function POSLockedOverlay() {

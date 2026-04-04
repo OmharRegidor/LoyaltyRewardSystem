@@ -17,8 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 // TYPES
 // ============================================
 
-export type TierLevel = 'bronze' | 'silver' | 'gold' | 'platinum';
-
 export interface Reward {
   id: string;
   title: string;
@@ -30,7 +28,6 @@ export interface Reward {
   image: string;
   isVisible: boolean;
   expiryDate?: string;
-  tierRequired: TierLevel;
 }
 
 interface RewardFromDB {
@@ -45,7 +42,6 @@ interface RewardFromDB {
   image_url: string | null;
   created_at: string | null;
   valid_until: string | null;
-  tier_required: string | null;
 }
 
 export interface CreateRewardData {
@@ -56,7 +52,6 @@ export interface CreateRewardData {
   category: string;
   expiryDate?: string;
   image?: string;
-  tierRequired: TierLevel;
 }
 
 export interface UpdateRewardData extends CreateRewardData {
@@ -134,7 +129,6 @@ export default function RewardsPage() {
           image: r.image_url || '/reward-item.png',
           isVisible: r.is_visible ?? true,
           expiryDate: r.valid_until || undefined,
-          tierRequired: (r.tier_required as TierLevel) || 'bronze',
         }),
       );
 
@@ -177,7 +171,6 @@ export default function RewardsPage() {
           is_active: true,
           is_visible: true,
           valid_until: newReward.expiryDate || null,
-          tier_required: newReward.tierRequired,
         })
         .select()
         .single();
@@ -198,7 +191,6 @@ export default function RewardsPage() {
         image: data.image_url || '/reward-item.png',
         isVisible: true,
         expiryDate: data.valid_until || undefined,
-        tierRequired: newReward.tierRequired,
       };
 
       setRewards(prev => [createdReward, ...prev]);
@@ -227,7 +219,6 @@ export default function RewardsPage() {
           image_url: updatedReward.image || null,
           is_visible: updatedReward.isVisible,
           valid_until: updatedReward.expiryDate || null,
-          tier_required: updatedReward.tierRequired,
         })
         .eq('id', updatedReward.id)
         .select()
@@ -256,7 +247,6 @@ export default function RewardsPage() {
                     ? 'active'
                     : 'inactive',
                 expiryDate: data.valid_until || undefined,
-                tierRequired: updatedReward.tierRequired,
               }
             : r,
         ),
@@ -355,23 +345,23 @@ export default function RewardsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Header skeleton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <Skeleton className="h-8 w-32 rounded-lg" />
-              <Skeleton className="h-5 w-56 mt-1 rounded-lg" />
+              <Skeleton className="h-7 w-40 rounded-lg" />
+              <Skeleton className="h-5 w-56 mt-2 rounded-lg" />
             </div>
             <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-20 rounded-lg" />
-              <Skeleton className="h-10 w-36 rounded-xl" />
+              <Skeleton className="h-9 w-20 rounded-xl" />
+              <Skeleton className="h-9 w-36 rounded-xl" />
             </div>
           </div>
 
           {/* Rewards grid skeleton */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+              <div key={i} className="bg-background rounded-2xl border border-border/50 shadow-card overflow-hidden">
                 <Skeleton className="h-36 w-full rounded-none" />
                 <div className="p-5 space-y-3">
                   <div className="flex items-center justify-between">
@@ -399,14 +389,14 @@ export default function RewardsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-6"
+        className="space-y-5 sm:space-y-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
         {loyaltyMode === 'stamps' && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-            <h3 className="text-lg font-semibold text-amber-800 mb-2">
+          <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-6 text-center shadow-card">
+            <h3 className="font-display text-lg font-semibold text-amber-800 mb-2">
               Stamp Card Mode Active
             </h3>
             <p className="text-sm text-amber-700 mb-4">
@@ -415,7 +405,7 @@ export default function RewardsPage() {
             </p>
             <a
               href="/dashboard/settings"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl text-sm font-medium transition-colors"
             >
               Go to Settings →
             </a>

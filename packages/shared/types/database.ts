@@ -270,6 +270,7 @@ export type Database = {
           phone: string | null
           points_expiry_days: number | null
           points_per_purchase: number | null
+          pos_onboarded: boolean
           qr_code_url: string | null
           referral_reward_points: number
           slug: string
@@ -298,6 +299,7 @@ export type Database = {
           phone?: string | null
           points_expiry_days?: number | null
           points_per_purchase?: number | null
+          pos_onboarded?: boolean
           qr_code_url?: string | null
           referral_reward_points?: number
           slug: string
@@ -326,6 +328,7 @@ export type Database = {
           phone?: string | null
           points_expiry_days?: number | null
           points_per_purchase?: number | null
+          pos_onboarded?: boolean
           qr_code_url?: string | null
           referral_reward_points?: number
           slug?: string
@@ -1581,6 +1584,97 @@ export type Database = {
           },
         ]
       }
+      services: {
+        Row: {
+          allow_staff_selection: boolean | null
+          branch_id: string | null
+          buffer_minutes: number | null
+          business_id: string
+          category: string | null
+          config: Json | null
+          created_at: string
+          deposit_percentage: number | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          image_url: string | null
+          inventory_count: number | null
+          is_active: boolean
+          max_guests: number | null
+          name: string
+          price_centavos: number | null
+          pricing_type: string | null
+          requires_time_slot: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allow_staff_selection?: boolean | null
+          branch_id?: string | null
+          buffer_minutes?: number | null
+          business_id: string
+          category?: string | null
+          config?: Json | null
+          created_at?: string
+          deposit_percentage?: number | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          inventory_count?: number | null
+          is_active?: boolean
+          max_guests?: number | null
+          name: string
+          price_centavos?: number | null
+          pricing_type?: string | null
+          requires_time_slot?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allow_staff_selection?: boolean | null
+          branch_id?: string | null
+          buffer_minutes?: number | null
+          business_id?: string
+          category?: string | null
+          config?: Json | null
+          created_at?: string
+          deposit_percentage?: number | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          image_url?: string | null
+          inventory_count?: number | null
+          is_active?: boolean
+          max_guests?: number | null
+          name?: string
+          price_centavos?: number | null
+          pricing_type?: string | null
+          requires_time_slot?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff: {
         Row: {
           branch_id: string | null
@@ -1719,6 +1813,42 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_services: {
+        Row: {
+          created_at: string
+          id: string
+          service_id: string
+          staff_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          service_id: string
+          staff_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          service_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_services_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]

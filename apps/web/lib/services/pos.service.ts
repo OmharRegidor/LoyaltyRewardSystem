@@ -167,6 +167,8 @@ export async function updateProduct(
     updateData.image_url = input.image_url || null;
   if (input.is_active !== undefined) updateData.is_active = input.is_active;
   if (input.sort_order !== undefined) updateData.sort_order = input.sort_order;
+  if (input.stock_quantity !== undefined)
+    updateData.stock_quantity = input.stock_quantity;
   if (input.low_stock_threshold !== undefined)
     updateData.low_stock_threshold = input.low_stock_threshold;
 

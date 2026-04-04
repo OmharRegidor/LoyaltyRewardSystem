@@ -194,20 +194,20 @@ export default function TeamManagementPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="space-y-6 overflow-hidden">
+        <div className="space-y-5 sm:space-y-6 overflow-hidden">
           {/* Header skeleton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <Skeleton className="h-8 w-48 rounded-lg" />
-              <Skeleton className="h-5 w-56 mt-1 rounded-lg" />
+              <Skeleton className="h-7 w-48 rounded-lg" />
+              <Skeleton className="h-5 w-56 mt-2 rounded-lg" />
             </div>
-            <Skeleton className="h-12 w-48 rounded-xl" />
+            <Skeleton className="h-9 w-48 rounded-xl" />
           </div>
 
           {/* Stats skeleton */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-background rounded-xl p-4 border border-border shadow-sm">
+              <div key={i} className="bg-background rounded-xl p-4 border border-border/50 shadow-card">
                 <Skeleton className="h-7 w-10 mb-1 rounded-lg" />
                 <Skeleton className="h-4 w-24 rounded-lg" />
               </div>
@@ -215,7 +215,7 @@ export default function TeamManagementPage() {
           </div>
 
           {/* Team members list skeleton */}
-          <div className="bg-background rounded-2xl border border-border shadow-sm">
+          <div className="bg-background rounded-2xl border border-border/50 shadow-card">
             <div className="p-4 sm:p-6 border-b border-border">
               <Skeleton className="h-6 w-44 rounded-lg" />
             </div>
@@ -245,94 +245,115 @@ export default function TeamManagementPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Team Management
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your staff and cashiers
             </p>
           </div>
           <button
             onClick={handleInviteClick}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
           >
-            <Plus className="w-5 h-5" />
-            Invite Team Member
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Invite Team Member</span>
+            <span className="sm:hidden">Invite</span>
           </button>
         </div>
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
-            <p className="text-2xl font-bold text-foreground">
+          <div className="bg-background rounded-xl p-4 border border-border/50 shadow-card hover:shadow-card-hover transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+            </div>
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
               {teamMembers.length}
             </p>
-            <p className="text-sm text-muted-foreground">Total Members</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total Members</p>
           </div>
-          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-background rounded-xl p-4 border border-border/50 shadow-card hover:shadow-card-hover transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center">
+                <Users className="w-4 h-4 text-emerald-600" />
+              </div>
+            </div>
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-emerald-600">
               {activeMembers.length}
             </p>
-            <p className="text-sm text-muted-foreground">Active Staff</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Active Staff</p>
           </div>
-          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
-            <p className="text-2xl font-bold text-yellow-600">
+          <div className="bg-background rounded-xl p-4 border border-border/50 shadow-card hover:shadow-card-hover transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+            </div>
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-amber-600">
               {pendingInvites.length}
             </p>
-            <p className="text-sm text-muted-foreground">Pending Invites</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Pending Invites</p>
           </div>
-          <div className="bg-background rounded-xl p-4 border border-border shadow-sm">
-            <p className="text-2xl font-bold text-muted-foreground">
+          <div className="bg-background rounded-xl p-4 border border-border/50 shadow-card hover:shadow-card-hover transition-shadow duration-300">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
+                <UserX className="w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
+            <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-muted-foreground">
               {inactiveMembers.length}
             </p>
-            <p className="text-sm text-muted-foreground">Inactive</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Inactive</p>
           </div>
         </div>
 
         {/* Pending Invites Section */}
         {pendingInvites.length > 0 && (
-          <div className="bg-yellow-50 rounded-2xl border border-yellow-200 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-yellow-200">
-              <h2 className="text-lg font-semibold text-yellow-800 flex items-center gap-2">
+          <div className="bg-amber-50/50 rounded-2xl border border-amber-200/60 overflow-hidden shadow-card">
+            <div className="p-4 sm:p-6 border-b border-amber-200/60">
+              <h2 className="font-display text-base sm:text-lg font-semibold text-amber-800 flex items-center gap-2 tracking-tight">
                 <Clock className="w-5 h-5" />
                 Pending Invites ({pendingInvites.length})
               </h2>
-              <p className="text-sm text-yellow-700 mt-1">
+              <p className="text-sm text-amber-700/80 mt-1">
                 Share the invite link with your team members
               </p>
             </div>
-            <div className="divide-y divide-yellow-200">
+            <div className="divide-y divide-amber-200/60">
               {pendingInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50"
+                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-amber-50/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center shrink-0">
-                      <Mail className="w-5 h-5 text-yellow-600" />
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center shrink-0">
+                      <Mail className="w-5 h-5 text-amber-600" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">
+                      <p className="font-medium text-foreground truncate text-sm sm:text-base">
                         {invite.name}
                       </p>
                       <p className="text-sm text-muted-foreground truncate">
                         {invite.email}
                       </p>
                     </div>
-                    <span className="px-2 py-1 bg-muted rounded-lg text-xs font-medium text-muted-foreground capitalize shrink-0">
+                    <span className="px-2.5 py-1 bg-amber-100/60 rounded-lg text-xs font-medium text-amber-700 capitalize shrink-0">
                       {invite.role}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-auto">
                     <button
                       onClick={() => copyInviteLink(invite.token)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-sm font-medium ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${
                         copiedToken === invite.token
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-muted text-foreground hover:bg-muted/80'
                       }`}
                     >
@@ -341,10 +362,10 @@ export default function TeamManagementPage() {
                     </button>
                     <button
                       onClick={() => handleCancelInvite(invite.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-destructive/10 rounded-xl transition-colors"
                       title="Cancel invite"
                     >
-                      <XCircle className="w-5 h-5 text-red-500" />
+                      <XCircle className="w-5 h-5 text-destructive" />
                     </button>
                   </div>
                 </div>
@@ -354,31 +375,31 @@ export default function TeamManagementPage() {
         )}
 
         {/* Team Members Section */}
-        <div className="bg-background rounded-2xl border border-border shadow-sm">
+        <div className="bg-background rounded-2xl border border-border/50 shadow-card">
           <div className="p-4 sm:p-6 border-b border-border">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Users className="w-5 h-5" />
+            <h2 className="font-display text-base sm:text-lg font-semibold text-foreground flex items-center gap-2 tracking-tight">
+              <Users className="w-5 h-5 text-muted-foreground" />
               Team Members ({teamMembers.length})
             </h2>
           </div>
 
           {teamMembers.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-muted-foreground" />
+            <div className="p-12 text-center bg-gradient-to-b from-muted/30 to-background">
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-7 h-7 text-primary/60" />
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">
+              <h3 className="font-display text-lg font-medium text-foreground mb-2">
                 No team members yet
               </h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
                 Invite your first team member to help manage your loyalty
                 program
               </p>
               <button
                 onClick={handleInviteClick}
-                className="inline-flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 transition-all"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
                 Invite Team Member
               </button>
             </div>
@@ -398,7 +419,7 @@ export default function TeamManagementPage() {
         </div>
 
         {/* Help Text */}
-        <div className="bg-primary/5 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-primary/5 rounded-xl p-4 flex items-start gap-3 border border-primary/10">
           <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div className="text-sm text-primary/90">
             <p className="font-medium mb-1">How team roles work:</p>
@@ -439,13 +460,13 @@ export default function TeamManagementPage() {
 
       {/* Deactivate Confirmation Modal */}
       {deactivateTarget && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-xl border border-border">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-border/50 border-t-2 border-t-destructive">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 bg-destructive/10 rounded-xl flex items-center justify-center shrink-0">
                 <UserX className="w-5 h-5 text-destructive" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="font-display text-lg font-semibold text-foreground">
                 Deactivate Member
               </h3>
             </div>
