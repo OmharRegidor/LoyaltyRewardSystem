@@ -208,7 +208,7 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       {/* Version */}
-      <Text style={styles.versionText}>VERSION 1.0.0</Text>
+      <Text style={styles.versionText}>VERSION 1.0.3</Text>
 
       {/* Delete Account Link */}
       <TouchableOpacity
