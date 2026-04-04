@@ -115,7 +115,7 @@ export default function DownloadPage() {
               </svg>
               <div className="leading-tight">
                 <span className="block text-[10px] text-white/60">Download</span>
-                <span className="text-base font-bold tracking-wide sm:text-lg">Android APK</span>
+                <span className="text-base font-bold tracking-wide sm:text-lg">Android</span>
               </div>
             </div>
           </Link>
