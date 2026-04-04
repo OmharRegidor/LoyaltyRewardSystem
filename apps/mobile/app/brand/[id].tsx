@@ -352,7 +352,7 @@ export default function BrandDetailScreen() {
 
       Alert.alert(
         'Redeem Reward',
-        `Redeem "${reward.title}" for ${reward.points_cost.toLocaleString()} ${brand?.coin_name?.toLowerCase() ?? 'pts'}?`,
+        `Redeem "${reward.title}" for ${reward.points_cost.toLocaleString()} ${brand?.coin_name ?? 'pts'}?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -447,7 +447,7 @@ export default function BrandDetailScreen() {
                     <Ionicons name="star" size={14} color={COLORS.gold} />
                   )}
                   <Text style={styles.rateText}>
-                    {brand.points_per_purchase} {brand.coin_name?.toLowerCase() ?? 'pts'} per purchase
+                    {brand.points_per_purchase} {brand.coin_name ?? 'pts'} per purchase
                   </Text>
                 </View>
               )}
@@ -480,7 +480,7 @@ export default function BrandDetailScreen() {
                   color={COLORS.primary}
                 />
                 <Text style={styles.pointsBadgeText}>
-                  You have {businessPoints.toLocaleString()} {brand.coin_name?.toLowerCase() ?? 'pts'} at this store
+                  You have {businessPoints.toLocaleString()} {brand.coin_name ?? 'pts'} at this store
                 </Text>
               </View>
             )}
