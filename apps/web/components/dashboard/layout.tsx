@@ -16,6 +16,7 @@ import {
   UsersRound,
   ShoppingCart,
   Lock,
+  Loader2,
   ChevronsLeft,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,6 +62,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   locked?: boolean;
+  loading?: boolean;
 }
 
 interface DashboardLayoutProps {
@@ -93,7 +95,7 @@ function SidebarBody({
   // Always show POS — locked state depends on subscription (default locked while loading)
   const navigation: NavItem[] = [
     ...coreNavigation,
-    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: subscriptionLoading || !hasPOS },
+    { name: 'POS', href: '/dashboard/pos', icon: ShoppingCart, locked: subscriptionLoading ? false : !hasPOS, loading: subscriptionLoading },
   ];
 
   const settingsItem: NavItem = { name: 'Settings', href: '/dashboard/settings', icon: Settings };
@@ -126,7 +128,7 @@ function SidebarBody({
             height={36}
             className="shrink-0 rounded-lg object-contain group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
           />
-          <span className="text-xl font-bold text-sidebar-foreground italic truncate group-data-[collapsible=icon]:hidden">
+          <span className="font-display text-xl font-bold text-sidebar-foreground tracking-tight truncate group-data-[collapsible=icon]:hidden">
             NoxaLoyalty
           </span>
         </Link>
@@ -151,18 +153,22 @@ function SidebarBody({
                     size="default"
                     className={
                       isActive(item.href)
-                        ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-md'
-                        : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-sm transition-all duration-200'
+                        : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 transition-colors duration-150'
                     }
                   >
                     <Link href={item.href}>
-                      <item.icon className="size-[18px]" />
+                      <item.icon className="size-4" />
                       <span>{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.locked && !isCollapsed && (
+                  {(item.locked || item.loading) && !isCollapsed && (
                     <SidebarMenuBadge>
-                      <Lock className="size-3.5 opacity-50" />
+                      {item.loading ? (
+                        <Loader2 className="size-3.5 opacity-50 animate-spin" />
+                      ) : (
+                        <Lock className="size-3.5 opacity-50" />
+                      )}
                     </SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
@@ -188,12 +194,12 @@ function SidebarBody({
                   size="default"
                   className={
                     isActive(settingsItem.href)
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-md'
-                      : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground font-semibold shadow-sm transition-all duration-200'
+                      : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 transition-colors duration-150'
                   }
                 >
                   <Link href={settingsItem.href}>
-                    <settingsItem.icon className="size-[18px]" />
+                    <settingsItem.icon className="size-4" />
                     <span>{settingsItem.name}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -266,7 +272,7 @@ function SidebarBody({
               onClick={handleLogout}
               className="text-sidebar-foreground/60 hover:text-red-300 hover:bg-sidebar-accent/20"
             >
-              <LogOut className="size-[18px]" />
+              <LogOut className="size-4" />
               <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

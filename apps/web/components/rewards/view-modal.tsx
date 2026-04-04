@@ -42,7 +42,7 @@ export function ViewRewardModal({
 
   const getBadgeStatus = () => {
     if (isHidden)
-      return { text: 'HIDDEN', className: 'bg-gray-100 text-gray-500' };
+      return { text: 'HIDDEN', className: 'bg-muted text-muted-foreground' };
     if (isOutOfStock)
       return {
         text: 'OUT OF STOCK',
@@ -64,9 +64,9 @@ export function ViewRewardModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg p-5">
+      <DialogContent className="max-w-lg p-5 border-t-2 border-t-primary">
         <DialogHeader>
-          <DialogTitle>Reward Details</DialogTitle>
+          <DialogTitle className="font-display tracking-tight">Reward Details</DialogTitle>
         </DialogHeader>
 
         <motion.div
@@ -76,7 +76,7 @@ export function ViewRewardModal({
           transition={{ duration: 0.3 }}
         >
           {/* Image */}
-          <div className="relative h-36 bg-gray-100 rounded-xl overflow-hidden">
+          <div className="relative h-36 bg-muted rounded-xl overflow-hidden">
             <img
               src={reward.image || '/placeholder.svg'}
               alt={reward.title}
@@ -91,71 +91,71 @@ export function ViewRewardModal({
 
           {/* Title & Description */}
           <div>
-            <h2 className="text-xl font-bold mb-1">{reward.title}</h2>
-            <p className="text-sm text-gray-500">{reward.description}</p>
+            <h2 className="font-display text-xl font-bold mb-1 text-foreground">{reward.title}</h2>
+            <p className="text-sm text-muted-foreground">{reward.description}</p>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             {/* Points Cost */}
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-muted/50 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
                 <Coins className="w-4 h-4 text-primary" />
-                <span className="text-sm text-gray-500">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Points Cost
                 </span>
               </div>
-              <p className="text-xl font-bold">{reward.pointsCost}</p>
+              <p className="font-display text-xl font-bold tabular-nums tracking-tight text-foreground">{reward.pointsCost}</p>
             </div>
 
             {/* Stock */}
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-muted/50 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
                 <Package className="w-4 h-4 text-primary" />
-                <span className="text-sm text-gray-500">Stock</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Stock</span>
               </div>
-              <p className="text-xl font-bold">
+              <p className="font-display text-xl font-bold tabular-nums tracking-tight text-foreground">
                 {reward.stock === -1 ? 'Unlimited' : reward.stock}
               </p>
             </div>
 
             {/* Category */}
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-muted/50 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm text-gray-500">Category</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Category</span>
               </div>
-              <p className="text-base font-semibold capitalize">
+              <p className="text-base font-semibold capitalize text-foreground">
                 {reward.category}
               </p>
             </div>
 
             {/* Expiry */}
-            <div className="p-3 bg-gray-50 rounded-xl">
+            <div className="p-3 bg-muted/50 rounded-xl">
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="w-4 h-4 text-primary" />
-                <span className="text-sm text-gray-500">Expires</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Expires</span>
               </div>
-              <p className="text-base font-semibold">
+              <p className="text-base font-semibold text-foreground">
                 {formatDate(reward.expiryDate)}
               </p>
             </div>
           </div>
 
           {/* Visibility Status */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-xl">
             <div className="flex items-center gap-3">
               {reward.isVisible ? (
                 <Eye className="w-5 h-5 text-success" />
               ) : (
-                <EyeOff className="w-5 h-5 text-gray-500" />
+                <EyeOff className="w-5 h-5 text-muted-foreground" />
               )}
               <div>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium text-foreground">
                   {reward.isVisible
                     ? 'Visible to Customers'
                     : 'Hidden from Customers'}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {reward.isVisible
                     ? 'This reward is shown in the mobile app'
                     : 'This reward is not visible in the mobile app'}
@@ -165,7 +165,7 @@ export function ViewRewardModal({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-3 border-t border-gray-200">
+          <div className="flex gap-3 pt-3 border-t border-border">
             <Button
               variant="outline"
               className="flex-1 bg-transparent"

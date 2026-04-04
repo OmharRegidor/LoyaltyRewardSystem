@@ -16,10 +16,13 @@ export function ScannerView({
   return (
     <div className="flex flex-col items-center">
       <div className="relative w-full max-w-sm aspect-square bg-gray-900 rounded-2xl overflow-hidden mb-4 shadow-2xl">
-        <div id={scannerContainerId} className="w-full h-full" />
+        <div
+          id={scannerContainerId}
+          className="absolute inset-0 [&>div]:!w-full [&>div]:!h-full [&_video]:!w-full [&_video]:!h-full [&_video]:!object-cover [&_video]:!min-h-full"
+        />
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-64 h-64 border-2 border-yellow-400 rounded-xl relative">
+            <div className="w-[70%] aspect-square border-2 border-yellow-400 rounded-xl relative">
               <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-yellow-400 rounded-tl-lg" />
               <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-yellow-400 rounded-tr-lg" />
               <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-yellow-400 rounded-bl-lg" />

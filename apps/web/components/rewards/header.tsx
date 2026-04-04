@@ -23,30 +23,30 @@ export function RewardsHeader({
       transition={{ duration: 0.3 }}
     >
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Rewards Catalog</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">Rewards Catalog</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           Create and manage customer rewards
         </p>
       </div>
 
       <div className="flex gap-3 w-full sm:w-auto">
-        <div className="flex gap-1 border border-gray-200 rounded-lg p-1 bg-gray-100">
+        <div className="flex gap-1 border border-border/50 rounded-xl p-1 bg-muted/50">
           <button
             onClick={() => onViewModeChange('grid')}
-            className={`p-2 rounded transition ${
+            className={`p-2 rounded-lg transition-colors ${
               viewMode === 'grid'
-                ? 'bg-primary text-white'
-                : 'hover:bg-gray-200 text-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'hover:bg-muted text-muted-foreground'
             }`}
           >
             <Grid2X2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => onViewModeChange('list')}
-            className={`p-2 rounded transition ${
+            className={`p-2 rounded-lg transition-colors ${
               viewMode === 'list'
-                ? 'bg-primary text-white'
-                : 'hover:bg-gray-200 text-gray-600'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'hover:bg-muted text-muted-foreground'
             }`}
           >
             <List className="w-4 h-4" />
@@ -54,7 +54,8 @@ export function RewardsHeader({
         </div>
 
         <Button
-          className="bg-primary text-primary-foreground gap-2 cursor-pointer"
+          size="sm"
+          className="bg-primary text-primary-foreground gap-2 cursor-pointer rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all"
           onClick={onCreateClick}
         >
           <Plus className="w-4 h-4" />

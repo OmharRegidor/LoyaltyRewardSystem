@@ -16,7 +16,7 @@ export function POSNavTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-0.5 sm:gap-1 bg-muted p-1 rounded-lg w-full sm:w-fit">
+    <div className="flex gap-1 bg-muted/50 border border-border/50 p-1.5 rounded-xl w-full sm:w-fit">
       {tabs.map((tab) => {
         const isActive = pathname === tab.href;
         const Icon = tab.icon;
@@ -25,13 +25,13 @@ export function POSNavTabs() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              'flex flex-1 sm:flex-initial flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-md text-[10px] sm:text-sm font-medium transition-colors',
+              'flex flex-1 sm:flex-initial flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-[10px] sm:text-sm transition-all duration-200',
               isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-background text-foreground shadow-sm font-semibold'
+                : 'text-muted-foreground hover:text-foreground font-medium'
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" />
+            <Icon className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate max-w-full">{tab.label}</span>
           </Link>
         );

@@ -63,7 +63,7 @@ function getRateLimiter(prefix: string, tokens: number, window: string): Ratelim
 // Sensitive endpoints get tighter limits (tokens per window)
 const ENDPOINT_LIMITS: Record<string, { tokens: number; window: string }> = {
   '/api/auth/':     { tokens: 10, window: '60 s' },   // login/check-email: 10/min
-  '/api/billing/':  { tokens: 10, window: '60 s' },   // billing ops: 10/min
+  '/api/billing/':  { tokens: 30, window: '60 s' },   // billing ops: 30/min
   '/api/staff/pos/': { tokens: 30, window: '60 s' },  // POS sales: 30/min
   '/api/public/':   { tokens: 30, window: '60 s' },   // public endpoints: 30/min
 };
@@ -195,9 +195,22 @@ export async function middleware(request: NextRequest) {
       error,
     } = await supabase.auth.getUser();
 
-    // Handle auth errors — clean up bad cookies and redirect to login
+    // Handle auth errors
     if (error) {
       console.log('[Middleware] Auth error:', error.message);
+
+      // Only redirect on actual auth failures, not transient network errors
+      const isTransientError =
+        error.message === 'fetch failed' ||
+        error.message.includes('network') ||
+        error.message.includes('ECONNREFUSED');
+
+      if (isTransientError) {
+        // Let the page load — client-side auth will handle retry
+        return response;
+      }
+
+      // Real auth failure — clean up cookies and redirect
       request.cookies.getAll().forEach((cookie) => {
         if (cookie.name.startsWith('sb-')) {
           response.cookies.delete(cookie.name);

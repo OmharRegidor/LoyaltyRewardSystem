@@ -866,15 +866,15 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="w-full max-w-4xl mx-auto space-y-6 overflow-hidden">
+        <div className="w-full max-w-4xl mx-auto space-y-5 sm:space-y-6 overflow-hidden">
           {/* Header skeleton */}
           <div>
-            <Skeleton className="h-9 w-32 rounded-lg" />
-            <Skeleton className="h-5 w-72 mt-1 rounded-lg" />
+            <Skeleton className="h-8 w-32 rounded-lg" />
+            <Skeleton className="h-5 w-72 mt-1.5 rounded-lg" />
           </div>
 
           {/* Business Profile card skeleton */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <Skeleton className="w-10 h-10 rounded-xl" />
               <div>
@@ -886,11 +886,11 @@ export default function SettingsPage() {
               <Skeleton className="w-24 h-24 rounded-2xl shrink-0" />
               <div className="flex-1 space-y-4">
                 <div>
-                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-3 w-28 mb-2 rounded-lg" />
                   <Skeleton className="h-10 w-full rounded-xl" />
                 </div>
                 <div>
-                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-3 w-28 mb-2 rounded-lg" />
                   <Skeleton className="h-10 w-full rounded-xl" />
                 </div>
               </div>
@@ -898,7 +898,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i}>
-                  <Skeleton className="h-4 w-28 mb-1.5 rounded-lg" />
+                  <Skeleton className="h-3 w-28 mb-2 rounded-lg" />
                   <Skeleton className="h-10 w-full rounded-xl" />
                 </div>
               ))}
@@ -906,7 +906,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Loyalty card skeleton */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <Skeleton className="w-10 h-10 rounded-xl" />
               <div>
@@ -922,7 +922,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Referral card skeleton */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <Skeleton className="w-10 h-10 rounded-xl" />
               <div>
@@ -934,7 +934,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Security card skeleton */}
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
               <Skeleton className="w-10 h-10 rounded-xl" />
               <div>
@@ -956,7 +956,7 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="w-full max-w-4xl mx-auto space-y-6"
+        className="w-full max-w-4xl mx-auto space-y-5 sm:space-y-6"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
@@ -964,15 +964,15 @@ export default function SettingsPage() {
         {/* Header */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
-            <p className="text-gray-500 mt-1 text-sm sm:text-base">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground">Settings</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Manage your business profile and loyalty program
             </p>
           </div>
           {!isEditing ? (
             <button
               onClick={startEditing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition self-start sm:self-auto"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-xl transition-all self-start sm:self-auto"
             >
               <Pencil className="w-4 h-4" />
               <span>Edit</span>
@@ -980,7 +980,7 @@ export default function SettingsPage() {
           ) : (
             <button
               onClick={cancelEditing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition self-start sm:self-auto"
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all self-start sm:self-auto"
             >
               <X className="w-4 h-4" />
               <span>Cancel</span>
@@ -989,16 +989,16 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Single Column Layout */}
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           {/* Business Profile */}
-          <Card className="p-4 sm:p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-primary/10 rounded-xl">
+              <div className="p-2.5 bg-gradient-to-br from-primary/15 to-primary/5 rounded-xl">
                 <Building2 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Business Profile</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Business Profile</h2>
+                <p className="text-sm text-muted-foreground">
                   Your business information
                 </p>
               </div>
@@ -1036,7 +1036,7 @@ export default function SettingsPage() {
                     )}
                   </div>
                   {isEditing && (
-                    <p className="text-xs text-gray-500 text-center mt-2">
+                    <p className="text-xs text-muted-foreground text-center mt-2">
                       Click to upload
                     </p>
                   )}
@@ -1045,7 +1045,7 @@ export default function SettingsPage() {
                 {/* Name & Type */}
                 <div className="flex-1 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                       Business Name
                     </label>
                     <input
@@ -1063,7 +1063,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                       Business Type
                     </label>
                     <Select
@@ -1137,12 +1137,12 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
-                    <Phone className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    <Phone className="w-3.5 h-3.5 inline mr-1.5" />
                     Phone Number
                   </label>
                   <div className="flex">
-                    <span className={`px-3 py-2.5 bg-gray-100 border border-r-0 rounded-l-xl text-gray-500 text-sm ${isEditing ? 'border-gray-200' : 'border-transparent bg-transparent'}`}>
+                    <span className={`px-3 py-2.5 bg-muted border border-r-0 rounded-l-xl text-muted-foreground text-sm ${isEditing ? 'border-gray-200' : 'border-transparent bg-transparent'}`}>
                       +63
                     </span>
                     <input
@@ -1169,22 +1169,22 @@ export default function SettingsPage() {
 
                 {/* Owner Email */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
-                    <Mail className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    <Mail className="w-3.5 h-3.5 inline mr-1.5" />
                     Owner Email
                   </label>
                   <input
                     type="email"
                     value={profile.ownerEmail}
                     disabled
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed text-sm"
+                    className="w-full px-4 py-2.5 border border-border/50 rounded-xl bg-muted/50 text-muted-foreground cursor-not-allowed text-sm"
                   />
                 </div>
 
                 {/* Address */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
-                    <MapPin className="w-3.5 h-3.5 inline mr-1.5 text-gray-500" />
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
                     Address
                   </label>
                   <input
@@ -1204,7 +1204,7 @@ export default function SettingsPage() {
 
                 {/* City */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     City
                   </label>
                   <input
@@ -1222,9 +1222,9 @@ export default function SettingsPage() {
 
               {/* Description - Full Width */}
               <div>
-                <label className="block text-sm font-medium mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                   Description
-                  <span className="text-gray-500 font-normal ml-1">
+                  <span className="font-normal ml-1 normal-case tracking-normal">
                     (optional)
                   </span>
                 </label>
@@ -1246,14 +1246,14 @@ export default function SettingsPage() {
           </Card>
 
           {/* Loyalty Program Type */}
-          <Card className="p-4 sm:p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-violet-500/10 rounded-xl">
-                <Stamp className="w-5 h-5 text-violet-500" />
+              <div className="p-2.5 bg-gradient-to-br from-violet-100 to-violet-50 rounded-xl">
+                <Stamp className="w-5 h-5 text-violet-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Loyalty Program Type</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Loyalty Program Type</h2>
+                <p className="text-sm text-muted-foreground">
                   Choose how customers earn rewards
                 </p>
               </div>
@@ -1285,14 +1285,14 @@ export default function SettingsPage() {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-amber-500/10 rounded-lg">
-                    <Coins className="w-5 h-5 text-amber-500" />
+                  <div className="p-2 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg">
+                    <Coins className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <p className="font-semibold">Points System</p>
+                    <p className="font-semibold text-foreground">Points System</p>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Customers earn points per peso spent and redeem them for rewards
                 </p>
                 {loyaltyMode === 'points' && (
@@ -1329,14 +1329,14 @@ export default function SettingsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-violet-500/10 rounded-lg">
-                      <Stamp className="w-5 h-5 text-violet-500" />
+                    <div className="p-2 bg-gradient-to-br from-violet-100 to-violet-50 rounded-lg">
+                      <Stamp className="w-5 h-5 text-violet-600" />
                     </div>
                     <div>
-                      <p className="font-semibold">Stamp Card</p>
+                      <p className="font-semibold text-foreground">Stamp Card</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Customers collect stamps per visit and earn a reward when the card is full
                   </p>
                   {loyaltyMode === 'stamps' && (
@@ -1361,14 +1361,14 @@ export default function SettingsPage() {
                       <Lock className="w-5 h-5 text-gray-400" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-500">Stamp Card</p>
+                      <p className="font-semibold text-muted-foreground">Stamp Card</p>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 rounded-full">
                         <Crown className="w-3 h-3" />
                         Enterprise
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground/70">
                     Collect stamps per visit and earn a reward when the card is full
                   </p>
                 </button>
@@ -1378,14 +1378,14 @@ export default function SettingsPage() {
 
           {/* Stamp Card Configuration - shown when stamps mode is active and enterprise */}
           {loyaltyMode === 'stamps' && !isSubLoading && subscription?.plan?.hasStampCard && (
-            <Card className="p-4 sm:p-6">
+            <Card className="p-4 sm:p-6 shadow-card border border-border/50">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-violet-500/10 rounded-xl">
-                  <Gift className="w-5 h-5 text-violet-500" />
+                <div className="p-2.5 bg-gradient-to-br from-violet-100 to-violet-50 rounded-xl">
+                  <Gift className="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold">Stamp Card Settings</h2>
-                  <p className="text-sm text-gray-500">
+                  <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Stamp Card Settings</h2>
+                  <p className="text-sm text-muted-foreground">
                     Configure your digital stamp card
                   </p>
                 </div>
@@ -1394,7 +1394,7 @@ export default function SettingsPage() {
               <div className="space-y-5">
                 {/* Card Title */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Card Title
                   </label>
                   <input
@@ -1411,10 +1411,10 @@ export default function SettingsPage() {
 
                 {/* Total Stamps */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Total Stamps to Complete
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-muted-foreground mb-2">
                     Number of stamps needed to earn the reward (1-30)
                   </p>
                   <input
@@ -1443,12 +1443,12 @@ export default function SettingsPage() {
                     }}
                     className="w-32 px-4 py-2.5 border border-gray-200 rounded-xl transition text-center font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
-                  <span className="ml-2 text-sm text-gray-500">stamps</span>
+                  <span className="ml-2 text-sm text-muted-foreground">stamps</span>
                 </div>
 
                 {/* Reward Title */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Reward Title <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1465,12 +1465,12 @@ export default function SettingsPage() {
 
                 {/* Reward Image */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                     Reward Image
-                    <span className="text-gray-500 font-normal ml-1">(optional)</span>
+                    <span className="font-normal ml-1 normal-case tracking-normal">(optional)</span>
                   </label>
                   <div className="flex items-center gap-4">
-                    <label className="relative w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary flex items-center justify-center overflow-hidden cursor-pointer transition">
+                    <label className="relative w-20 h-20 rounded-xl border-2 border-dashed border-border hover:border-primary flex items-center justify-center overflow-hidden cursor-pointer transition">
                       {stampTemplate.rewardImageUrl ? (
                         <img
                           src={stampTemplate.rewardImageUrl}
@@ -1478,7 +1478,7 @@ export default function SettingsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <ImagePlus className="w-6 h-6 text-gray-400" />
+                        <ImagePlus className="w-6 h-6 text-muted-foreground/60" />
                       )}
                       <input
                         type="file"
@@ -1487,7 +1487,7 @@ export default function SettingsPage() {
                         onChange={handleRewardImageUpload}
                       />
                     </label>
-                    <div className="text-xs text-gray-500 space-y-0.5">
+                    <div className="text-xs text-muted-foreground space-y-0.5">
                       <p>PNG, JPG or WebP</p>
                       <p>Max 2MB</p>
                     </div>
@@ -1496,14 +1496,14 @@ export default function SettingsPage() {
 
                 {/* Min Purchase Amount */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                     Minimum Purchase Amount
                   </label>
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-muted-foreground mb-2">
                     Minimum spend required per visit to earn a stamp
                   </p>
                   <div className="relative w-40">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                       ₱
                     </span>
                     <input
@@ -1528,12 +1528,12 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Auto-restart toggle */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <RefreshCw className="w-4 h-4 text-gray-500" />
+                    <RefreshCw className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Auto-restart</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-foreground">Auto-restart</p>
+                      <p className="text-xs text-muted-foreground">
                         Start new card after redemption
                       </p>
                     </div>
@@ -1618,14 +1618,14 @@ export default function SettingsPage() {
 
           {/* Loyalty Points Settings - shown when points mode is active */}
           {loyaltyMode === 'points' && (
-          <Card className="p-4 sm:p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-amber-500/10 rounded-xl">
-                <Coins className="w-5 h-5 text-amber-500" />
+              <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
+                <Coins className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Loyalty Points</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Loyalty Points</h2>
+                <p className="text-sm text-muted-foreground">
                   Configure earning rates
                 </p>
               </div>
@@ -1633,10 +1633,10 @@ export default function SettingsPage() {
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                   Points Name &amp; Icon
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-muted-foreground mb-2">
                   Customize what your customers see instead of &quot;Points&quot; and the default star icon
                 </p>
                 <div className="flex items-start gap-4">
@@ -1666,7 +1666,7 @@ export default function SettingsPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <Coins className="w-5 h-5 text-gray-400" />
+                        <Coins className="w-5 h-5 text-muted-foreground/60" />
                       )}
                       {isEditing && (
                         <input
@@ -1677,14 +1677,14 @@ export default function SettingsPage() {
                         />
                       )}
                     </label>
-                    <span className="text-[10px] text-gray-400">Icon</span>
+                    <span className="text-[10px] text-muted-foreground">Icon</span>
                   </div>
                 </div>
               </div>
 
               {/* Points Rate Selection */}
               <div>
-                <label className="block text-sm font-medium mb-3">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                   Points Earning Rate
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1702,8 +1702,8 @@ export default function SettingsPage() {
                             : 'border-gray-200'
                       }`}
                     >
-                      <p className="font-semibold text-sm">{preset.label}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="font-semibold text-sm text-foreground">{preset.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {preset.description}
                       </p>
                     </button>
@@ -1712,9 +1712,9 @@ export default function SettingsPage() {
 
                 {/* Custom Input */}
                 {showCustomInput && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="mt-3 p-3 bg-muted/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-500">₱</span>
+                      <span className="text-muted-foreground">₱</span>
                       <input
                         type="number"
                         min="1"
@@ -1726,7 +1726,7 @@ export default function SettingsPage() {
                         className={`w-20 px-3 py-2 border rounded-lg text-center font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                         placeholder="1"
                       />
-                      <span className="text-gray-500">= 1 point</span>
+                      <span className="text-muted-foreground">= 1 point</span>
                     </div>
                   </div>
                 )}
@@ -1736,10 +1736,10 @@ export default function SettingsPage() {
               <div className="p-4 bg-linear-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
                 <div className="flex items-center gap-2 mb-3">
                   <Calculator className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-sm">Preview</span>
+                  <span className="font-medium text-sm text-foreground">Preview</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-gray-500">₱</span>
+                  <span className="text-muted-foreground">₱</span>
                   <input
                     type="number"
                     value={inputValues.previewAmount}
@@ -1749,7 +1749,7 @@ export default function SettingsPage() {
                     className="w-20 px-2 py-1 border border-gray-200 rounded-lg bg-background text-center font-semibold"
                     placeholder="0"
                   />
-                  <span className="text-gray-500">=</span>
+                  <span className="text-muted-foreground">=</span>
                   <span className="px-3 py-1 bg-primary text-primary-foreground rounded-lg font-bold">
                     {calculatePoints(
                       parseFloat(inputValues.previewAmount) || 0,
@@ -1760,20 +1760,20 @@ export default function SettingsPage() {
               </div>
 
               {/* Advanced Options */}
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t border-border/40">
                 <div className="flex items-center gap-2 mb-3">
-                  <Info className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-500">
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Advanced
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                       Min. Purchase
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                         ₱
                       </span>
                       <input
@@ -1792,7 +1792,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-1.5">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                       Max Points/Txn
                     </label>
                     <input
@@ -1817,14 +1817,14 @@ export default function SettingsPage() {
           )}
 
           {/* Referral Settings */}
-          <Card className="p-4 sm:p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-orange-500/10 rounded-xl">
-                <Users className="w-5 h-5 text-orange-500" />
+              <div className="p-2.5 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl">
+                <Users className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Referral Program</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Referral Program</h2>
+                <p className="text-sm text-muted-foreground">
                   Reward customers who invite friends
                 </p>
               </div>
@@ -1832,10 +1832,10 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                   Referral Reward Points
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-muted-foreground mb-2">
                   Points awarded to both the referrer and the new customer when a referral is completed.
                 </p>
                 <input
@@ -1862,7 +1862,7 @@ export default function SettingsPage() {
                   }}
                   className={`w-32 px-4 py-2.5 border rounded-xl transition text-center font-semibold ${editableStyle} disabled:opacity-100 disabled:cursor-default`}
                 />
-                <span className="ml-2 text-sm text-gray-500">points each</span>
+                <span className="ml-2 text-sm text-muted-foreground">points each</span>
               </div>
 
               <div className="p-3 bg-orange-50 rounded-xl border border-orange-200/50">
@@ -1874,14 +1874,14 @@ export default function SettingsPage() {
           </Card>
 
           {/* Billing Card (Inline Dropdown) */}
-          <Card id="billing" className="p-4 sm:p-6 scroll-mt-6">
+          <Card id="billing" className="p-4 sm:p-6 shadow-card border border-border/50 scroll-mt-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-green-500/10 rounded-xl">
-                <CreditCard className="w-5 h-5 text-green-500" />
+              <div className="p-2.5 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-xl">
+                <CreditCard className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Billing</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Billing</h2>
+                <p className="text-sm text-muted-foreground">
                   Manage your plan and invoices
                 </p>
               </div>
@@ -1889,23 +1889,23 @@ export default function SettingsPage() {
 
             <button
               onClick={() => setBillingExpanded(!billingExpanded)}
-              className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition group"
+              className="w-full p-4 bg-muted/50 hover:bg-muted/80 rounded-xl flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-background rounded-lg">
-                  <CreditCard className="w-4 h-4 text-gray-500" />
+                  <CreditCard className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium">Plan & Invoices</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground text-sm">Plan & Invoices</p>
+                  <p className="text-sm text-muted-foreground">
                     View your subscription and billing history
                   </p>
                 </div>
               </div>
               {billingExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-500 transition-transform" />
+                <ChevronUp className="w-5 h-5 text-muted-foreground transition-transform" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500 transition-transform" />
+                <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform" />
               )}
             </button>
 
@@ -1925,14 +1925,14 @@ export default function SettingsPage() {
           </Card>
 
           {/* Security Card */}
-          <Card className="p-4 sm:p-6">
+          <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-red-500/10 rounded-xl">
-                <Shield className="w-5 h-5 text-red-500" />
+              <div className="p-2.5 bg-gradient-to-br from-red-100 to-red-50 rounded-xl">
+                <Shield className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold">Security</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Security</h2>
+                <p className="text-sm text-muted-foreground">
                   Manage account security
                 </p>
               </div>
@@ -1940,20 +1940,20 @@ export default function SettingsPage() {
 
             <button
               onClick={() => router.push('/dashboard/settings/security')}
-              className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-xl flex items-center justify-between transition group"
+              className="w-full p-4 bg-muted/50 hover:bg-muted/80 rounded-xl flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-background rounded-lg">
-                  <Shield className="w-4 h-4 text-gray-500" />
+                  <Shield className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium">Change Password</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground text-sm">Change Password</p>
+                  <p className="text-sm text-muted-foreground">
                     Update your account password
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-500 group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </button>
           </Card>
         </div>
@@ -1965,7 +1965,7 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             variants={itemVariants}
           >
-            <Card className="p-4 border-2 border-gray-200/50">
+            <Card className="p-4 shadow-card border-2 border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 {/* Status Messages */}
                 <div className="flex-1 min-w-0">
@@ -1998,7 +1998,7 @@ export default function SettingsPage() {
                     </motion.div>
                   )}
                   {saveStatus === 'idle' && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Review your changes and click save to update
                     </p>
                   )}

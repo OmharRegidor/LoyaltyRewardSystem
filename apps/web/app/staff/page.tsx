@@ -51,6 +51,7 @@ interface StaffData {
   minPurchaseForPoints: number;
   maxPointsPerTransaction: number | null;
   loyaltyMode: 'points' | 'stamps';
+  businessType: string | null;
 }
 
 interface CustomerData {
@@ -140,6 +141,7 @@ export default function StaffScannerPage() {
     customerTier: customer?.tier || "bronze",
     customerId: customer?.id || "",
     businessId: staffData?.businessId,
+    businessType: staffData?.businessType,
     minPurchaseForPoints: staffData?.minPurchaseForPoints ?? 0,
     maxPointsPerTransaction: staffData?.maxPointsPerTransaction ?? null,
     skipPoints: staffData?.loyaltyMode === 'stamps',
@@ -244,7 +246,7 @@ export default function StaffScannerPage() {
           .maybeSingle(),
         supabase
           .from("businesses")
-          .select("id, name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode")
+          .select("id, name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode, business_type")
           .eq("owner_id", user.id)
           .maybeSingle(),
       ]);
@@ -253,7 +255,7 @@ export default function StaffScannerPage() {
         // Active staff — fetch business info
         const { data: business } = await supabase
           .from("businesses")
-          .select("name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode")
+          .select("name, pesos_per_point, min_purchase_for_points, max_points_per_transaction, loyalty_mode, business_type")
           .eq("id", staffRecord.business_id)
           .single();
 
@@ -266,6 +268,7 @@ export default function StaffScannerPage() {
           minPurchaseForPoints: business?.min_purchase_for_points ?? 0,
           maxPointsPerTransaction: business?.max_points_per_transaction ?? null,
           loyaltyMode: (business?.loyalty_mode as 'points' | 'stamps') || 'points',
+          businessType: business?.business_type || null,
         });
 
         await loadTodayStats(staffRecord.id);
@@ -284,6 +287,7 @@ export default function StaffScannerPage() {
           minPurchaseForPoints: ownerBusiness.min_purchase_for_points ?? 0,
           maxPointsPerTransaction: ownerBusiness.max_points_per_transaction ?? null,
           loyaltyMode: (ownerBusiness.loyalty_mode as 'points' | 'stamps') || 'points',
+          businessType: ownerBusiness.business_type || null,
         });
       } else {
         router.push("/login");
@@ -328,12 +332,18 @@ export default function StaffScannerPage() {
     setPendingScan(true);
   };
 
+  const getQrBoxSize = (viewfinderWidth: number, viewfinderHeight: number) => {
+    const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+    const size = Math.max(150, Math.floor(minDimension * 0.7));
+    return { width: size, height: size };
+  };
+
   const initScanner = async () => {
     try {
       const html5QrCode = new Html5Qrcode(scannerContainerId);
       scannerRef.current = html5QrCode;
 
-      const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+      const config = { fps: 10, qrbox: getQrBoxSize, aspectRatio: 1 };
 
       try {
         await html5QrCode.start(
@@ -387,7 +397,7 @@ export default function StaffScannerPage() {
       const html5QrCode = new Html5Qrcode(scannerContainerId);
       scannerRef.current = html5QrCode;
 
-      const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+      const config = { fps: 10, qrbox: getQrBoxSize, aspectRatio: 1 };
 
       try {
         await html5QrCode.start(
@@ -1122,9 +1132,13 @@ export default function StaffScannerPage() {
                     {pos.hasPOSModule && !pos.isLoadingProducts && (
                       <ProductSelector
                         products={pos.products}
+                        services={pos.services}
                         cartItems={pos.cartItems}
                         onAddToCart={(product) => {
                           pos.addProduct(product);
+                        }}
+                        onAddServiceToCart={(service) => {
+                          pos.addService(service);
                         }}
                         disabled={pos.isProcessing}
                       />

@@ -62,31 +62,32 @@ export default function CustomersPage() {
   if (isLoadingBusiness) {
     return (
       <DashboardLayout>
-        <div className="space-y-6 overflow-hidden">
+        <div className="space-y-5 sm:space-y-6 overflow-hidden">
           {/* Header skeleton */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <Skeleton className="h-8 w-40 rounded-lg" />
-              <Skeleton className="h-5 w-64 mt-1 rounded-lg" />
+              <Skeleton className="h-7 w-36 rounded-lg" />
+              <Skeleton className="h-5 w-64 mt-1.5 rounded-lg" />
             </div>
             <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-64 rounded-xl" />
-              <Skeleton className="h-10 w-36 rounded-xl" />
+              <Skeleton className="h-11 w-64 rounded-xl" />
+              <Skeleton className="h-11 w-36 rounded-xl" />
             </div>
           </div>
 
           {/* Filters skeleton */}
-          <div className="flex flex-wrap gap-3">
-            <Skeleton className="h-9 w-20 rounded-full" />
-            <Skeleton className="h-9 w-24 rounded-full" />
-            <Skeleton className="h-9 w-28 rounded-full" />
-            <Skeleton className="h-9 w-24 rounded-full" />
+          <div className="bg-white rounded-2xl shadow-card border border-border/50 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Skeleton className="h-9 w-full rounded-xl" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
           </div>
 
           {/* Table skeleton */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-card border border-border/50 overflow-hidden">
             {/* Table header */}
-            <div className="px-6 py-3 bg-gray-50 flex gap-4">
+            <div className="px-6 py-3 bg-muted/30 flex gap-4">
               <Skeleton className="h-4 w-8" />
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-4 w-24 ml-auto" />
@@ -95,7 +96,7 @@ export default function CustomersPage() {
             </div>
             {/* Table rows */}
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-gray-100">
+              <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-border/50">
                 <Skeleton className="w-5 h-5 rounded" />
                 <Skeleton className="w-10 h-10 rounded-full shrink-0" />
                 <div className="flex-1 space-y-1.5">
@@ -118,7 +119,7 @@ export default function CustomersPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             No business found. Please set up your business first.
           </p>
         </div>
@@ -129,7 +130,7 @@ export default function CustomersPage() {
   return (
     <DashboardLayout>
       <motion.div
-        className="space-y-6"
+        className="space-y-5 sm:space-y-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}

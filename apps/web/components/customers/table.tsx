@@ -221,9 +221,9 @@ export const CustomersTable = memo(function CustomersTable({
   // Loading state
   if (isLoading) {
     return (
-      <Card className="bg-white overflow-hidden">
+      <Card className="bg-white overflow-hidden shadow-card border border-border/50">
         {/* Table header skeleton */}
-        <div className="px-6 py-3 bg-gray-50 flex gap-4">
+        <div className="px-6 py-3 bg-muted/30 flex gap-4">
           <Skeleton className="h-4 w-8" />
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-24 ml-auto" />
@@ -232,7 +232,7 @@ export const CustomersTable = memo(function CustomersTable({
         </div>
         {/* Table rows skeleton */}
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-gray-100">
+          <div key={i} className="px-6 py-4 flex items-center gap-4 border-t border-border/50">
             <Skeleton className="w-5 h-5 rounded" />
             <Skeleton className="w-10 h-10 rounded-full shrink-0" />
             <div className="flex-1 space-y-1.5">
@@ -251,7 +251,7 @@ export const CustomersTable = memo(function CustomersTable({
   // Error state
   if (error) {
     return (
-      <Card className="flex items-center justify-center py-20 bg-white">
+      <Card className="flex items-center justify-center py-20 bg-white shadow-card border border-border/50">
         <p className="text-red-600">{error}</p>
       </Card>
     );
@@ -263,12 +263,12 @@ export const CustomersTable = memo(function CustomersTable({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
     >
-      <Card className="bg-white">
+      <Card className="bg-white shadow-card border border-border/50 hover:shadow-card-hover transition-shadow duration-300">
         {/* Desktop Table */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr className="text-left text-sm font-semibold text-gray-500">
+            <thead className="border-b border-border/50 bg-muted/30">
+              <tr>
                 <th className="px-6 py-4 w-8">
                   <Checkbox
                     checked={allPageSelected}
@@ -277,10 +277,10 @@ export const CustomersTable = memo(function CustomersTable({
                     }
                   />
                 </th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Tier</th>
-                <th className="px-6 py-4">Total Points</th>
-                <th className="px-6 py-4">Last Visit</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Customer</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Tier</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Total Points</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Last Visit</th>
                 <th className="px-6 py-4 w-10"></th>
               </tr>
             </thead>
@@ -288,7 +288,7 @@ export const CustomersTable = memo(function CustomersTable({
               {paginatedCustomers.map((customer, idx) => (
                 <motion.tr
                   key={customer.id}
-                  className={`border-b border-gray-200 last:border-0 hover:bg-gray-50 transition-all cursor-pointer ${
+                  className={`border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors cursor-pointer ${
                     customer.isNew
                       ? 'bg-green-500/10 ring-1 ring-green-500/30 ring-inset'
                       : ''
@@ -316,13 +316,13 @@ export const CustomersTable = memo(function CustomersTable({
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        <AvatarFallback className="bg-gradient-to-br from-primary/15 to-primary/5 text-primary text-sm font-medium">
                           {getInitials(customer.fullName)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-sm text-foreground">
                             {customer.fullName}
                           </p>
                           {customer.isNew && (
@@ -334,7 +334,7 @@ export const CustomersTable = memo(function CustomersTable({
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {customer.email ||
                             customer.phone ||
                             'No contact info'}
@@ -353,14 +353,14 @@ export const CustomersTable = memo(function CustomersTable({
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <Star className="w-4 h-4 text-yellow-500" />
-                      <span className="font-semibold">
+                      <span className="font-display font-semibold tabular-nums tracking-tight text-foreground">
                         {customer.totalPoints.toLocaleString()}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
                     {formatLastVisit(customer.lastVisit)}
                   </td>
                   <td className="px-6 py-4">
@@ -369,8 +369,8 @@ export const CustomersTable = memo(function CustomersTable({
                         asChild
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                          <MoreVertical className="w-4 h-4 text-gray-600" />
+                        <button className="p-2 hover:bg-muted/50 rounded-xl transition-colors">
+                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -385,11 +385,11 @@ export const CustomersTable = memo(function CustomersTable({
         </div>
 
         {/* Mobile Card Layout */}
-        <div className="sm:hidden divide-y divide-gray-200">
+        <div className="sm:hidden divide-y divide-border/50">
           {paginatedCustomers.map((customer) => (
             <div
               key={customer.id}
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-gray-50 ${
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-muted/50 transition-colors ${
                 customer.isNew
                   ? 'bg-green-500/10 ring-1 ring-green-500/30 ring-inset'
                   : ''
@@ -402,13 +402,13 @@ export const CustomersTable = memo(function CustomersTable({
                 onClick={(e) => e.stopPropagation()}
               />
               <Avatar className="h-10 w-10 shrink-0">
-                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                <AvatarFallback className="bg-gradient-to-br from-primary/15 to-primary/5 text-primary text-sm font-medium">
                   {getInitials(customer.fullName)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm truncate">
+                  <p className="font-medium text-sm text-foreground truncate">
                     {customer.fullName}
                   </p>
                   {customer.isNew && (
@@ -420,7 +420,7 @@ export const CustomersTable = memo(function CustomersTable({
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {customer.phone || customer.email || 'No contact info'}
                 </p>
               </div>
@@ -435,7 +435,7 @@ export const CustomersTable = memo(function CustomersTable({
                 </Badge>
                 <div className="flex items-center gap-1">
                   <Star className="w-3 h-3 text-yellow-500" />
-                  <span className="text-xs font-semibold">
+                  <span className="text-xs font-semibold tabular-nums text-foreground">
                     {customer.totalPoints.toLocaleString()}
                   </span>
                 </div>
@@ -445,19 +445,27 @@ export const CustomersTable = memo(function CustomersTable({
         </div>
 
         {sortedCustomers.length === 0 && !isLoading && (
-          <div className="px-6 py-12 text-center">
-            <p className="text-gray-500">
+          <div className="px-6 py-16 text-center">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Star className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <p className="font-display font-semibold text-foreground">
               {customers.length === 0
-                ? 'No customers yet. Add your first customer!'
+                ? 'No customers yet'
                 : 'No customers match your filters'}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {customers.length === 0
+                ? 'Add your first customer to get started.'
+                : 'Try adjusting your search or filter criteria.'}
             </p>
           </div>
         )}
 
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-5 sm:px-6 py-4 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground tabular-nums">
               Showing {paginatedCustomers.length > 0 ? startIndex + 1 : 0}-
               {Math.min(startIndex + pageSize, sortedCustomers.length)} of{' '}
               {sortedCustomers.length} customers
@@ -471,7 +479,7 @@ export const CustomersTable = memo(function CustomersTable({
                   setSelectedRows([]);
                 }}
               >
-                <SelectTrigger className="h-8 w-[70px] text-xs">
+                <SelectTrigger className="h-8 w-[70px] text-xs rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -482,13 +490,13 @@ export const CustomersTable = memo(function CustomersTable({
                   ))}
                 </SelectContent>
               </Select>
-              <span className="text-xs text-gray-400">per page</span>
+              <span className="text-xs text-muted-foreground">per page</span>
             </div>
           </div>
           {totalPages > 1 && (
             <div className="flex gap-2">
               <button
-                className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 border border-border/50 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
               >
@@ -508,10 +516,10 @@ export const CustomersTable = memo(function CustomersTable({
                 return (
                   <button
                     key={pageNum}
-                    className={`px-3 py-1 rounded-lg text-sm ${
+                    className={`px-3 py-1.5 rounded-lg text-sm tabular-nums transition-colors ${
                       currentPage === pageNum
                         ? 'bg-primary text-white'
-                        : 'border border-gray-200 hover:bg-gray-100 transition text-gray-700'
+                        : 'border border-border/50 hover:bg-muted/50 text-foreground'
                     }`}
                     onClick={() => handlePageClick(pageNum)}
                   >
@@ -520,7 +528,7 @@ export const CustomersTable = memo(function CustomersTable({
                 );
               })}
               <button
-                className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-100 transition text-sm text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 border border-border/50 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
               >

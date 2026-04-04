@@ -2,6 +2,7 @@
 
 import ServerRestricted from '@/components/auth/ServerRestricted';
 import AccessDenied from '@/components/auth/AccessDenied';
+import { SubscriptionProvider } from '@/hooks/useSubscription';
 
 export default function DashboardRootLayout({
   children,
@@ -10,7 +11,9 @@ export default function DashboardRootLayout({
 }) {
   return (
     <ServerRestricted allowedRoles={['business_owner', 'admin']} fallback={<AccessDenied />}>
-      {children}
+      <SubscriptionProvider>
+        {children}
+      </SubscriptionProvider>
     </ServerRestricted>
   );
 }
