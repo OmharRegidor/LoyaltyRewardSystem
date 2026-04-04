@@ -60,6 +60,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { createClient } from '@/lib/supabase';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { BillingSection } from '@/components/dashboard/billing-section';
 import { AnimatePresence } from 'framer-motion';
 
@@ -226,7 +236,8 @@ export default function SettingsPage() {
   // Loyalty Mode & Stamp Card State
   const { subscription, isLoading: isSubLoading } = useSubscription();
   const [loyaltyMode, setLoyaltyMode] = useState<LoyaltyMode>('points');
-  const [isModeLocked, setIsModeLocked] = useState(false);
+  const [loyaltyActivityCount, setLoyaltyActivityCount] = useState(0);
+  const [pendingMode, setPendingMode] = useState<LoyaltyMode | null>(null);
   const [stampTemplate, setStampTemplate] = useState<StampTemplate>({
     title: 'Loyalty Card',
     totalStamps: 10,
@@ -321,23 +332,21 @@ export default function SettingsPage() {
           setLoyaltyMode(mode);
         }
 
-        // Lock mode only when customers have actual loyalty activity
-        // Points mode: lock if any customer has points > 0
-        // Stamps mode: lock if any stamp cards exist
+        // Check how many customers have loyalty activity (for confirmation dialog)
         const currentMode = mode || 'points';
         if (currentMode === 'stamps') {
           const { count: stampCount } = await supabase
             .from('stamp_cards')
             .select('id', { count: 'exact', head: true })
             .eq('business_id', business.id);
-          setIsModeLocked((stampCount ?? 0) > 0);
+          setLoyaltyActivityCount(stampCount ?? 0);
         } else {
           const { count: pointsCount } = await supabase
             .from('customer_businesses')
             .select('id', { count: 'exact', head: true })
             .eq('business_id', business.id)
             .gt('points', 0);
-          setIsModeLocked((pointsCount ?? 0) > 0);
+          setLoyaltyActivityCount(pointsCount ?? 0);
         }
 
         // Get user metadata for business_type and phone if not in business table
@@ -502,7 +511,7 @@ export default function SettingsPage() {
   // ============================================
 
   const saveLoyaltyMode = async (mode: LoyaltyMode) => {
-    if (!businessId || isModeLocked) return;
+    if (!businessId) return;
 
     const supabase = createClient();
     try {
@@ -513,8 +522,32 @@ export default function SettingsPage() {
 
       if (error) throw error;
       setLoyaltyMode(mode);
+      // Update activity count for the new mode
+      if (mode === 'stamps') {
+        const { count } = await supabase
+          .from('stamp_cards')
+          .select('id', { count: 'exact', head: true })
+          .eq('business_id', businessId);
+        setLoyaltyActivityCount(count ?? 0);
+      } else {
+        const { count } = await supabase
+          .from('customer_businesses')
+          .select('id', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gt('points', 0);
+        setLoyaltyActivityCount(count ?? 0);
+      }
     } catch (err) {
       console.error('Failed to save loyalty mode:', err);
+    }
+  };
+
+  const handleModeSwitch = (mode: LoyaltyMode) => {
+    if (mode === loyaltyMode) return;
+    if (loyaltyActivityCount > 0) {
+      setPendingMode(mode);
+    } else {
+      saveLoyaltyMode(mode);
     }
   };
 
@@ -1259,29 +1292,15 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {isModeLocked && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200/50 rounded-xl flex items-center gap-2">
-                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                <p className="text-sm text-amber-700">
-                  Cannot change — customers already have {loyaltyMode === 'stamps' ? 'stamp cards' : 'earned points'}
-                </p>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Points System Option */}
               <button
                 type="button"
-                disabled={isModeLocked}
-                onClick={() => {
-                  if (!isModeLocked) saveLoyaltyMode('points');
-                }}
-                className={`relative p-4 rounded-xl border-2 text-left transition-all disabled:cursor-not-allowed ${
+                onClick={() => handleModeSwitch('points')}
+                className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                   loyaltyMode === 'points'
                     ? 'border-primary bg-primary/5 shadow-md'
-                    : isModeLocked
-                      ? 'border-gray-200 opacity-60'
-                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                    : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-3 mb-2">
@@ -1316,16 +1335,11 @@ export default function SettingsPage() {
               ) : subscription?.plan?.hasStampCard ? (
                 <button
                   type="button"
-                  disabled={isModeLocked}
-                  onClick={() => {
-                    if (!isModeLocked) saveLoyaltyMode('stamps');
-                  }}
-                  className={`relative p-4 rounded-xl border-2 text-left transition-all disabled:cursor-not-allowed ${
+                  onClick={() => handleModeSwitch('stamps')}
+                  className={`relative p-4 rounded-xl border-2 text-left transition-all ${
                     loyaltyMode === 'stamps'
                       ? 'border-primary bg-primary/5 shadow-md'
-                      : isModeLocked
-                        ? 'border-gray-200 opacity-60'
-                        : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
+                      : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -2034,6 +2048,33 @@ export default function SettingsPage() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Loyalty Mode Switch Confirmation */}
+      <AlertDialog open={pendingMode !== null} onOpenChange={(open) => { if (!open) setPendingMode(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch to {pendingMode === 'stamps' ? 'Stamp Card' : 'Points System'}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {loyaltyMode === 'stamps'
+                ? `${loyaltyActivityCount} customer${loyaltyActivityCount === 1 ? ' has' : 's have'} active stamp cards. Switching to Points System will freeze their existing stamp cards — no new stamps will be collected.`
+                : `${loyaltyActivityCount} customer${loyaltyActivityCount === 1 ? ' has' : 's have'} earned points. Switching to Stamp Card will freeze their existing points — no new points will be earned.`
+              }
+              {' '}You can switch back anytime.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingMode) saveLoyaltyMode(pendingMode);
+                setPendingMode(null);
+              }}
+            >
+              Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
