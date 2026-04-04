@@ -12,7 +12,6 @@ interface BusinessDirectoryPageProps {
   searchParams: Promise<{
     search?: string;
     type?: string;
-    page?: string;
   }>;
 }
 
@@ -20,13 +19,10 @@ export default async function BusinessDirectoryPage({
   searchParams,
 }: BusinessDirectoryPageProps) {
   const params = await searchParams;
-  const page = Number(params.page) || 1;
 
-  const { businesses, total } = await getPublicBusinesses({
+  const { businesses } = await getPublicBusinesses({
     search: params.search,
     businessType: params.type,
-    page,
-    limit: 12,
   });
 
   return (
@@ -63,10 +59,8 @@ export default async function BusinessDirectoryPage({
       <main>
         <BusinessDirectoryClient
           businesses={businesses}
-          total={total}
           initialSearch={params.search || ''}
           initialType={params.type || ''}
-          initialPage={page}
         />
       </main>
 

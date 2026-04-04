@@ -45,21 +45,17 @@ export interface PublicReward {
 interface GetPublicBusinessesParams {
   search?: string;
   businessType?: string;
-  page?: number;
-  limit?: number;
 }
 
 interface GetPublicBusinessesResult {
   businesses: PublicBusiness[];
-  total: number;
 }
 
 export async function getPublicBusinesses(
   params: GetPublicBusinessesParams = {}
 ): Promise<GetPublicBusinessesResult> {
-  const { search, businessType, page = 1, limit = 12 } = params;
+  const { search, businessType } = params;
   const supabase = createServiceClient();
-  const offset = (page - 1) * limit;
 
   let query = supabase
     .from('businesses')
@@ -79,7 +75,6 @@ export async function getPublicBusinesses(
       loyalty_mode,
       rewards(id)
     `,
-      { count: 'exact' }
     )
     .eq('rewards.is_active', true)
     .eq('rewards.is_visible', true)
@@ -99,13 +94,11 @@ export async function getPublicBusinesses(
     query = query.eq('business_type', businessType);
   }
 
-  query = query.range(offset, offset + limit - 1);
-
-  const { data, error, count } = await query;
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching public businesses:', error);
-    return { businesses: [], total: 0 };
+    return { businesses: [] };
   }
 
   // Stamps-mode businesses don't need rewards (stamp template IS the reward)
@@ -129,7 +122,7 @@ export async function getPublicBusinesses(
     pesos_per_point: b.pesos_per_point,
   }));
 
-  return { businesses, total: count ?? 0 };
+  return { businesses };
 }
 
 // ============================================

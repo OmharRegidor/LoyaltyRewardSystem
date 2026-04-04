@@ -11,8 +11,6 @@ import {
   MapPin,
   ArrowRight,
   Store,
-  ChevronLeft,
-  ChevronRight,
   Gift,
 } from 'lucide-react';
 import type { PublicBusiness } from '@/lib/services/public-business.service';
@@ -30,8 +28,6 @@ const BUSINESS_TYPES = [
 const BUSINESS_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   BUSINESS_TYPES.map((t) => [t.value, t.label]),
 );
-
-const ITEMS_PER_PAGE = 12;
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -52,25 +48,19 @@ const cardVariants = {
 
 interface BusinessDirectoryClientProps {
   businesses: PublicBusiness[];
-  total: number;
   initialSearch: string;
   initialType: string;
-  initialPage: number;
 }
 
 export function BusinessDirectoryClient({
   businesses,
-  total,
   initialSearch,
   initialType,
-  initialPage,
 }: BusinessDirectoryClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -81,9 +71,6 @@ export function BusinessDirectoryClient({
         } else {
           params.delete(key);
         }
-      }
-      if (!('page' in updates)) {
-        params.delete('page');
       }
       router.push(`/business?${params.toString()}`);
     },
@@ -106,10 +93,6 @@ export function BusinessDirectoryClient({
 
   const handleTypeChange = (value: string) => {
     updateParams({ type: value });
-  };
-
-  const handlePageChange = (page: number) => {
-    updateParams({ page: page > 1 ? String(page) : '' });
   };
 
   return (
@@ -188,9 +171,9 @@ export function BusinessDirectoryClient({
         {/* Results Count & Active Filters */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">
-            {total === 0
+            {businesses.length === 0
               ? 'No businesses found'
-              : `Showing ${businesses.length} of ${total} business${total !== 1 ? 'es' : ''}`}
+              : `${businesses.length} business${businesses.length !== 1 ? 'es' : ''}`}
           </p>
           {initialType && (
             <button
@@ -224,7 +207,7 @@ export function BusinessDirectoryClient({
         ) : (
           <>
             <motion.div
-              key={`${initialSearch}-${initialType}-${initialPage}`}
+              key={`${initialSearch}-${initialType}`}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
               variants={containerVariants}
               initial="hidden"
@@ -300,63 +283,6 @@ export function BusinessDirectoryClient({
                 </motion.div>
               ))}
             </motion.div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-10">
-                <button
-                  disabled={initialPage <= 1}
-                  onClick={() => handlePageChange(initialPage - 1)}
-                  className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => {
-                    if (totalPages <= 5) return true;
-                    if (p === 1 || p === totalPages) return true;
-                    return Math.abs(p - initialPage) <= 1;
-                  })
-                  .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
-                    if (i > 0 && p - (arr[i - 1] as number) > 1) {
-                      acc.push('ellipsis');
-                    }
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, i) =>
-                    item === 'ellipsis' ? (
-                      <span
-                        key={`ellipsis-${i}`}
-                        className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm"
-                      >
-                        ...
-                      </span>
-                    ) : (
-                      <button
-                        key={item}
-                        onClick={() => handlePageChange(item)}
-                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                          item === initialPage
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    ),
-                  )}
-
-                <button
-                  disabled={initialPage >= totalPages}
-                  onClick={() => handlePageChange(initialPage + 1)}
-                  className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </>
         )}
       </section>
