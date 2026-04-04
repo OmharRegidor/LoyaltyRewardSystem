@@ -195,7 +195,7 @@ function RewardCardComponent({
             <Text style={styles.pointsCost}>
               {reward.points_cost.toLocaleString()}
             </Text>
-            <Text style={styles.pointsLabel}>{coinName?.toLowerCase() ?? 'pts'}</Text>
+            <Text style={styles.pointsLabel}>{coinName ?? 'pts'}</Text>
           </View>
 
           {isLocked ? (
