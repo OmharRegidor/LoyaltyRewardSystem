@@ -4,16 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Package, Warehouse, BarChart3, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const tabs = [
-  { href: '/dashboard/pos/products', label: 'Products', icon: Package },
-  { href: '/dashboard/pos/inventory', label: 'Inventory', icon: Warehouse },
-  { href: '/dashboard/pos/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/dashboard/pos/history', label: 'History', icon: Receipt },
-];
+import { useBusinessType } from '@/hooks/useBusinessType';
 
 export function POSNavTabs() {
   const pathname = usePathname();
+  const { isService } = useBusinessType();
+
+  const tabs = [
+    { href: '/dashboard/pos/products', label: isService ? 'Services' : 'Products', icon: Package },
+    ...(!isService ? [{ href: '/dashboard/pos/inventory', label: 'Inventory', icon: Warehouse }] : []),
+    { href: '/dashboard/pos/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/dashboard/pos/history', label: 'History', icon: Receipt },
+  ];
 
   return (
     <div className="flex gap-1 bg-muted/50 border border-border/50 p-1.5 rounded-xl w-full sm:w-fit">
