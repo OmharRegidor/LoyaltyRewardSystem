@@ -86,7 +86,10 @@ export default function POSAnalyticsPage() {
 
   useEffect(() => {
     const loadAnalytics = async () => {
-      if (!hasPOS) return;
+      if (!hasPOS) {
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoading(true);
       try {

@@ -1,15 +1,27 @@
 -- ============================================
--- Migration: Cleanup Dead Schema
--- Date: 2026-04-01
--- Description: Remove unused booking tables, Stripe/Xendit columns,
---   card_token system, rate_limits table, and booking-related plan columns
+-- Migration: Add pos_onboarded + finish cleanup
+-- Date: 2026-04-04
+-- Description: Add pos_onboarded column to businesses,
+--   and complete the cleanup that failed on trigger drops
 -- ============================================
 
--- ============================================
--- 1. Drop booking tables (order matters for FK dependencies)
--- ============================================
+-- 1. Add pos_onboarded to businesses
+ALTER TABLE public.businesses
+  ADD COLUMN IF NOT EXISTS pos_onboarded BOOLEAN NOT NULL DEFAULT false;
 
--- Drop triggers (wrapped in DO block since tables may not exist)
+-- 2. Auto-set pos_onboarded for businesses that already have POS products
+DO $$
+BEGIN
+  UPDATE public.businesses
+    SET pos_onboarded = true
+    WHERE id IN (
+      SELECT DISTINCT business_id FROM public.products
+    );
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
+-- 3. Finish the cleanup items that failed in the previous migration
+-- Drop triggers (wrapped to handle missing tables)
 DO $$
 BEGIN
   DROP TRIGGER IF EXISTS trigger_booking_addon_options_updated_at ON public.booking_addon_options;
@@ -26,7 +38,7 @@ BEGIN
 EXCEPTION WHEN undefined_table THEN NULL;
 END $$;
 
--- Drop tables (child tables first)
+-- Drop booking tables
 DROP TABLE IF EXISTS public.booking_addon_selections CASCADE;
 DROP TABLE IF EXISTS public.booking_addon_options CASCADE;
 DROP TABLE IF EXISTS public.booking_addons CASCADE;
@@ -46,68 +58,36 @@ DROP FUNCTION IF EXISTS public.update_booking_addons_updated_at() CASCADE;
 -- Drop booking enum
 DROP TYPE IF EXISTS public.booking_status CASCADE;
 
--- ============================================
--- 2. Drop booking columns from plans/subscriptions
--- ============================================
-
+-- Drop booking columns from plans/subscriptions
 ALTER TABLE public.plans DROP COLUMN IF EXISTS has_booking;
 ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS module_booking_override;
 
--- ============================================
--- 3. Drop Stripe columns
--- ============================================
-
--- Drop unique constraints first
+-- Drop Stripe columns
 ALTER TABLE public.invoices DROP CONSTRAINT IF EXISTS invoices_stripe_invoice_id_key;
 ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS payments_stripe_payment_intent_id_key;
-
--- Drop indexes
 DROP INDEX IF EXISTS public.idx_invoices_stripe_invoice;
 DROP INDEX IF EXISTS public.idx_payments_stripe_payment_intent;
-
--- Drop columns from invoices
 ALTER TABLE public.invoices DROP COLUMN IF EXISTS stripe_invoice_id;
 ALTER TABLE public.invoices DROP COLUMN IF EXISTS stripe_invoice_number;
 ALTER TABLE public.invoices DROP COLUMN IF EXISTS stripe_hosted_invoice_url;
 ALTER TABLE public.invoices DROP COLUMN IF EXISTS stripe_invoice_pdf;
-
--- Drop columns from payments
 ALTER TABLE public.payments DROP COLUMN IF EXISTS stripe_payment_intent_id;
 ALTER TABLE public.payments DROP COLUMN IF EXISTS stripe_invoice_id;
 ALTER TABLE public.payments DROP COLUMN IF EXISTS stripe_charge_id;
 
--- ============================================
--- 4. Drop Xendit columns
--- ============================================
-
+-- Drop Xendit columns
 ALTER TABLE public.businesses DROP COLUMN IF EXISTS xendit_customer_id;
 ALTER TABLE public.businesses DROP COLUMN IF EXISTS xendit_payment_method_id;
-
 ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS xendit_subscription_id;
 ALTER TABLE public.subscriptions DROP COLUMN IF EXISTS xendit_customer_id;
 
--- ============================================
--- 5. Drop card_token columns from customers
--- ============================================
-
--- Drop unique constraint first
+-- Drop card_token columns from customers
 ALTER TABLE public.customers DROP CONSTRAINT IF EXISTS customers_card_token_key;
-
--- Drop index
 DROP INDEX IF EXISTS public.idx_customers_card_token;
-
--- Drop RLS policy
 DROP POLICY IF EXISTS "Public can view customer by card token" ON public.customers;
-
--- Drop columns
 ALTER TABLE public.customers DROP COLUMN IF EXISTS card_token;
 ALTER TABLE public.customers DROP COLUMN IF EXISTS card_token_created_at;
 
--- ============================================
--- 6. Drop rate_limits table
--- ============================================
-
+-- Drop rate_limits table
 DROP TABLE IF EXISTS public.rate_limits CASCADE;
-
--- Drop the check_rate_limit function that uses it
 DROP FUNCTION IF EXISTS public.check_rate_limit(TEXT, TEXT, TEXT, INT, INTERVAL) CASCADE;

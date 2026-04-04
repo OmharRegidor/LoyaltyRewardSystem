@@ -105,7 +105,10 @@ export default function POSHistoryPage() {
   // Load sales
   useEffect(() => {
     const loadSales = async () => {
-      if (!hasPOS) return;
+      if (!hasPOS) {
+        setIsLoading(false);
+        return;
+      }
 
       setIsLoading(true);
       try {
