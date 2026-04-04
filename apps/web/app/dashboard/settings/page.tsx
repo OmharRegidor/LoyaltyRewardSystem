@@ -1552,18 +1552,23 @@ export default function SettingsPage() {
                     Card Preview
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {Array.from({ length: stampTemplate.totalStamps }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold ${
-                          i < 3
-                            ? 'border-violet-400 bg-violet-100 text-violet-600'
-                            : 'border-gray-200 bg-white text-gray-300'
-                        }`}
-                      >
-                        {i < 3 ? <Stamp className="w-4 h-4" /> : i + 1}
-                      </div>
-                    ))}
+                    {Array.from({ length: stampTemplate.totalStamps }).map((_, i) => {
+                      const isLast = i === stampTemplate.totalStamps - 1;
+                      return (
+                        <div
+                          key={i}
+                          className={`${isLast ? 'px-2' : 'w-8'} h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold ${
+                            i < 3
+                              ? 'border-violet-400 bg-violet-100 text-violet-600'
+                              : isLast
+                                ? 'border-violet-300 bg-violet-50 text-violet-500'
+                                : 'border-gray-200 bg-white text-gray-300'
+                          }`}
+                        >
+                          {i < 3 ? <Stamp className="w-4 h-4" /> : isLast ? 'Free' : i + 1}
+                        </div>
+                      );
+                    })}
                   </div>
                   {stampTemplate.rewardTitle && (
                     <p className="mt-2 text-xs text-violet-600">
@@ -1618,6 +1623,7 @@ export default function SettingsPage() {
 
           {/* Loyalty Points Settings - shown when points mode is active */}
           {loyaltyMode === 'points' && (
+          <>
           <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
@@ -1814,9 +1820,8 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
-          )}
 
-          {/* Referral Settings */}
+          {/* Referral Settings - only shown in points mode since referrals award points */}
           <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl">
@@ -1872,6 +1877,8 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+          </>
+          )}
 
           {/* Billing Card (Inline Dropdown) */}
           <Card id="billing" className="p-4 sm:p-6 shadow-card border border-border/50 scroll-mt-6">
