@@ -429,9 +429,6 @@ export default function TeamManagementPage() {
                 award points
               </li>
               <li>
-                • <strong>Managers</strong> can scan QR codes and view reports
-              </li>
-              <li>
                 • Deactivated members cannot access the system until reactivated
               </li>
             </ul>

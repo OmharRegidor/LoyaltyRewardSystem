@@ -13,6 +13,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Build only the minimum viable version of every feature.
 - Follow the anti-overengineering rules.
 
+## Scalability Rules (apply to every feature)
+
+These rules prevent performance crashes at scale. Apply them automatically when writing any code — do not wait for the user to ask.
+
+### Realtime / WebSocket Channels
+- NEVER create global/unscoped realtime channels that listen to an entire table (e.g., `table: 'rewards', event: '*'`). Every connected user receives every event, causing N-query cascades. Always scope channels with a filter (`business_id=eq.X` or `customer_id=eq.X`).
+- If data doesn't need live updates, don't use realtime. Fetch on mount + pull-to-refresh is sufficient for lists that change infrequently (rewards catalog, brand list, settings).
+- Minimize channels per user. Combine multiple `.on()` listeners onto a single channel instead of creating separate channels. One channel can listen to multiple tables and multiple filters.
+- Never create channels inside loops. If you need to watch N items, use one channel with N `.on()` listeners — not N channels.
+- Always clean up channels in useEffect return / component unmount.
+
+### Database Queries
+- NEVER load all rows and filter in memory. Push every filter, search, and match condition into the database query (`.eq()`, `.ilike()`, `.in()`). The database has indexes; JavaScript doesn't.
+- Always add `.limit()` to queries that could return unbounded results. Ask: "what if this table has 100,000 rows?"
+- Do aggregation in the database, not JavaScript. Use SQL `COUNT()`, `SUM()`, `GROUP BY` via RPCs or database views — don't fetch thousands of rows just to `.reduce()` them in the browser.
+- Always add indexes on: (1) foreign key columns, (2) columns used in WHERE/filter clauses, (3) columns used in RLS policy subqueries, (4) columns used in ORDER BY. Create indexes in migrations alongside the tables that need them.
+- Never query inside a loop (N+1 pattern). If you need data for N items, use `.in('id', ids)` in one query or a JOIN — not N separate queries.
+
+### Async / Parallel Execution
+- Use `Promise.all()` for independent async calls, not sequential `for` loops with `await`. If fetching data for 5 items, fire all 5 requests simultaneously.
+- Supabase `.rpc()` and `.from()` return `{ data, error }` — they don't throw. So `Promise.all()` is safe; it won't reject on a single failure. Handle errors per-result.
+
+### Connection Limits
+- Be aware of connection budgets. Supabase Free = 200 realtime + 60 direct connections. Pro = 500 realtime + 200 direct. Every channel, every query, every RPC uses a connection.
+- Use connection pooling (Supavisor) for server-side clients. Use the pooled connection string (port 6543), not the direct one (port 5432).
+
+### API Routes
+- Add rate limiting to public-facing endpoints (customer lookup, signup, QR scan, stamp/redeem).
+- Never do CPU-intensive work in API routes (image generation, PDF rendering) without caching the result. These block the Node.js event loop.
+- Cache deterministic outputs. If the same input always produces the same output (e.g., QR code for a URL), cache it.
+
+### Database Triggers & RLS
+- Be careful with triggers that INSERT rows per-user. A trigger that inserts a notification for every customer turns 1 INSERT into 1,000 INSERTs. Consider async queues or batch processing for fan-out operations.
+- RLS policies with subqueries are expensive. If a policy does `SELECT ... FROM staff WHERE user_id = auth.uid()`, ensure `staff(user_id)` is indexed. Every row evaluation runs the subquery.
+
+### Pre-Flight Checklist (before shipping any feature)
+1. Count the realtime channels: how many per user? Can any be merged or removed?
+2. Count the DB queries per page load: can any be parallelized or combined?
+3. Check for unbounded queries: does every `.select()` have a `.limit()`?
+4. Check for in-memory filtering: is any `.filter()` or loop doing work the database should do?
+5. Check for sequential awaits: can any be converted to `Promise.all()`?
+6. Check indexes: are all filtered/joined columns indexed?
+
 ## Build & Development Commands
 
 ```bash
@@ -87,8 +130,8 @@ supabase/
 
 **Feature Gating:**
 - Server-side checks in `apps/web/lib/feature-gate.ts`
-- Plans: Free (unlimited loyalty features), Enterprise (contact pricing, includes booking/POS)
-- Module flags: `has_loyalty`, `has_booking`, `has_pos`
+- Plans: Free (unlimited loyalty features), Enterprise (contact pricing, includes POS)
+- Module flags: `has_loyalty`, `has_pos`
 - Gates: customer limits, branch limits, staff limits, API access, custom branding
 
 **Billing (Admin-Managed):**

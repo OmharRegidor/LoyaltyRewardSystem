@@ -89,7 +89,7 @@ const BUSINESS_TYPE_OPTIONS: BusinessTypeOption[] = [
     label: 'Hotel & Travel',
     icon: Hotel,
     category: 'service',
-    description: 'Manage hospitality services and bookings',
+    description: 'Manage hospitality and travel services',
   },
   {
     value: 'others',

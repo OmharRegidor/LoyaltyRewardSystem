@@ -8,7 +8,7 @@ import type { Database } from '../../../packages/shared/types/database';
 // TYPES
 // ============================================
 
-type StaffRole = 'owner' | 'manager' | 'cashier';
+type StaffRole = 'owner' | 'cashier';
 type Business = Database['public']['Tables']['businesses']['Row'];
 
 // Helper to generate URL-safe slug from business name

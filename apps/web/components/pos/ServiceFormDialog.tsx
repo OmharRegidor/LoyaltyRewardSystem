@@ -357,7 +357,7 @@ export function ServiceFormDialog({
                 />
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                Max guests or pax per booking
+                Max guests or pax per session
               </p>
             </div>
           </div>

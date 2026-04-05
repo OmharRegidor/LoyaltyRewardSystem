@@ -54,7 +54,7 @@ interface UserData {
   email: string;
   businessName: string;
   logoUrl: string | null;
-  role: 'owner' | 'manager' | 'cashier';
+  role: 'owner' | 'cashier';
 }
 
 interface NavItem {

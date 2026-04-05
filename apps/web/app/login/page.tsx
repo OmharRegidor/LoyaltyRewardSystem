@@ -150,7 +150,7 @@ function LoginForm() {
     if (urlError === 'unauthorized')
       return 'You do not have permission to access that page.';
     if (urlError === 'deactivated')
-      return 'Your account has been deactivated. Contact your manager.';
+      return 'Your account has been deactivated. Contact the business owner.';
     if (urlError === 'session_expired')
       return 'Your session has expired. Please sign in again.';
     if (urlError === 'link_expired')

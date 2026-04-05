@@ -12,11 +12,7 @@ export type FeatureName =
   | 'basic_analytics'
   | 'advanced_analytics'
   | 'standard_support'
-  | 'priority_support'
-  | 'api_access'
-  | 'custom_branding'
-  | 'webhook_notifications'
-  | 'dedicated_account_manager';
+  | 'priority_support';
 
 export type ModuleName = 'loyalty' | 'pos';
 

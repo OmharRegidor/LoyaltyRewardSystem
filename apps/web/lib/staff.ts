@@ -3,7 +3,7 @@
  * Staff Management Module
  *
  * Handles cashier invitations and team management.
- * Note: Only 'cashier' role is used for invites. Managers share owner credentials.
+ * Note: Only 'cashier' role is used for invites.
  */
 
 import { createClient } from './supabase';

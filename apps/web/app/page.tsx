@@ -75,8 +75,6 @@ const PLANS: Plan[] = [
       'Unlimited Branches',
       'Unlimited Staff',
       'Priority Support',
-      'Custom Integrations',
-      'Dedicated Account Manager',
     ],
     cta: 'Contact Us',
     href: '/book-call',

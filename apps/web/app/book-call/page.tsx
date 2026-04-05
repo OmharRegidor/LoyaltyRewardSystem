@@ -37,7 +37,7 @@ export default function BookCallPage() {
             </h1>
             <p className="text-lg text-gray-600 mb-8">
               See how NoxaLoyalty Enterprise can transform your business with
-              our Booking System and POS integration
+              our POS system and loyalty integration
             </p>
 
             <div className="mb-8">

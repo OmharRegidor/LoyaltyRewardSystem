@@ -33,8 +33,6 @@ export function TeamMemberCard({
     switch (role) {
       case 'owner':
         return 'bg-primary/10 text-primary';
-      case 'manager':
-        return 'bg-blue-100 text-blue-700';
       case 'cashier':
         return 'bg-muted text-muted-foreground';
       default:
@@ -46,8 +44,6 @@ export function TeamMemberCard({
     switch (role) {
       case 'owner':
         return <Shield className="w-4 h-4" />;
-      case 'manager':
-        return <Activity className="w-4 h-4" />;
       default:
         return <User className="w-4 h-4" />;
     }
