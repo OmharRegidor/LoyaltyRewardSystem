@@ -64,26 +64,10 @@ export function useBrands() {
     }
   }, []);
 
+  // Fetch on mount — no global realtime channel to avoid cascade when any
+  // reward/business changes. Users see updates via pull-to-refresh or navigation.
   useEffect(() => {
     fetchBrands();
-
-    const channel = supabase
-      .channel('brands_rewards_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'rewards' },
-        () => fetchBrands(),
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'businesses' },
-        () => fetchBrands(),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [fetchBrands]);
 
   const filteredBrands = useMemo((): Brand[] => {

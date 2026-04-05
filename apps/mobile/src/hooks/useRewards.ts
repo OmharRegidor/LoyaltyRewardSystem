@@ -102,21 +102,10 @@ export function useRewards() {
   // EFFECTS
   // ============================================
 
+  // Fetch on mount — no global realtime channel to avoid 10K-query cascade
+  // when any reward changes. Users see updates via pull-to-refresh or navigation.
   useEffect(() => {
     fetchRewards();
-
-    const channel = supabase
-      .channel('rewards_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'rewards' },
-        () => fetchRewards(),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [fetchRewards]);
 
   // ============================================

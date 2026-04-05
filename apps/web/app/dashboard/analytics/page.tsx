@@ -198,11 +198,13 @@ export default function AnalyticsPage() {
       }
     }
 
-    // Get reward performance
+    // Get reward performance (limit to recent 2000 for top-5 calculation)
     const { data: redemptions } = await supabase
       .from('redemptions')
       .select('reward_id, rewards(title)')
-      .eq('business_id', businessId);
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false })
+      .limit(2000);
 
     if (redemptions && redemptions.length > 0) {
       const counts: Record<string, { name: string; count: number }> = {};

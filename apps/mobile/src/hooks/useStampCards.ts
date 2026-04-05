@@ -32,30 +32,30 @@ export function useStampCards() {
     fetchStampCards();
   }, [fetchStampCards]);
 
-  // Realtime subscription for stamp card changes
+  // Single realtime channel for all stamp card changes (instead of N channels)
   useEffect(() => {
     if (customerIds.length === 0) return;
 
-    const channels = customerIds.map((customerId) =>
-      supabase
-        .channel(`stamp-cards-${customerId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'stamp_cards',
-            filter: `customer_id=eq.${customerId}`,
-          },
-          () => {
-            fetchStampCards();
-          }
-        )
-        .subscribe()
-    );
+    const channelName = `stamp-cards-${customerIds[0]}`;
+    let channel = supabase.channel(channelName);
+
+    for (const customerId of customerIds) {
+      channel = channel.on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stamp_cards',
+          filter: `customer_id=eq.${customerId}`,
+        },
+        () => fetchStampCards(),
+      );
+    }
+
+    channel.subscribe();
 
     return () => {
-      channels.forEach((channel) => supabase.removeChannel(channel));
+      supabase.removeChannel(channel);
     };
   }, [customerIds, fetchStampCards]);
 

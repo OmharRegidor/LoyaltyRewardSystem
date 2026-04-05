@@ -146,13 +146,18 @@ export function useBrandRewards(businessId: string) {
 
       setRewards(transformedRewards);
 
-      // Fetch stamp card for stamp-mode businesses
+      // Fetch stamp card for stamp-mode businesses (parallel RPC)
       if (loyaltyMode === 'stamps' && customerIds.length > 0) {
-        for (const cId of customerIds) {
-          const { data: stampData } = await supabase.rpc('get_customer_stamp_cards', {
-            p_customer_id: cId,
-            p_business_id: businessId,
-          });
+        const stampResults = await Promise.all(
+          customerIds.map((cId) =>
+            supabase.rpc('get_customer_stamp_cards', {
+              p_customer_id: cId,
+              p_business_id: businessId,
+            })
+          ),
+        );
+        let found = false;
+        for (const { data: stampData } of stampResults) {
           const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
           if (Array.isArray(cards) && cards.length > 0) {
             setStampCard({
@@ -162,9 +167,11 @@ export function useBrandRewards(businessId: string) {
               reward_title: cards[0].reward_title,
               is_completed: cards[0].is_completed,
             });
+            found = true;
             break;
           }
         }
+        if (!found) setStampCard(null);
       } else {
         setStampCard(null);
       }

@@ -218,15 +218,44 @@ export function useCustomers({
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // Realtime subscription for new customers and updates
+  // Realtime subscriptions — consolidated to 2 channels instead of 4
   useEffect(() => {
     if (!businessId) return;
 
     const supabase = createClient();
 
-    // Subscribe to customer inserts (staff-added)
-    const insertChannel = supabase
-      .channel(`customers-insert-${businessId}`)
+    // Helper: add a new customer to the list with highlight
+    const addNewCustomer = (customer: Customer) => {
+      setCustomers((prev) => {
+        if (prev.some((c) => c.id === customer.id)) return prev;
+        return [customer, ...prev];
+      });
+      setTotalCount((prev) => prev + 1);
+      playNotificationSound();
+      onNewCustomer?.(customer);
+      setTimeout(() => {
+        setCustomers((prev) =>
+          prev.map((c) => (c.id === customer.id ? { ...c, isNew: false } : c)),
+        );
+      }, 3000);
+    };
+
+    // Helper: fetch a single customer by ID and add to list
+    const fetchAndAddCustomer = async (customerId: string) => {
+      if (customersRef.current.some((c) => c.id === customerId)) return;
+      const { data } = await supabase
+        .from('customers')
+        .select('id, full_name, email, phone, total_points, lifetime_points, tier, last_visit, created_at, created_by_staff_id, created_by_business_id')
+        .eq('id', customerId)
+        .single();
+      if (data) {
+        addNewCustomer({ ...mapDatabaseCustomer(data), isNew: true });
+      }
+    };
+
+    // Channel 1: customer table changes (inserts + updates)
+    const customersChannel = supabase
+      .channel(`customers-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -237,37 +266,13 @@ export function useCustomers({
         },
         (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
           if (payload.new && 'id' in payload.new) {
-            const newCustomer: Customer = {
+            addNewCustomer({
               ...mapDatabaseCustomer(payload.new as DatabaseCustomer),
               isNew: true,
-            };
-
-            // Add to top of list if not already present
-            setCustomers((prev) => {
-              if (prev.some((c) => c.id === newCustomer.id)) return prev;
-              return [newCustomer, ...prev];
             });
-            setTotalCount((prev) => prev + 1);
-
-            playNotificationSound();
-            onNewCustomer?.(newCustomer);
-
-            // Remove highlight after 3 seconds
-            setTimeout(() => {
-              setCustomers((prev) =>
-                prev.map((c) =>
-                  c.id === newCustomer.id ? { ...c, isNew: false } : c,
-                ),
-              );
-            }, 3000);
           }
         },
       )
-      .subscribe();
-
-    // Subscribe to customer updates (points changes, tier upgrades)
-    const updateChannel = supabase
-      .channel(`customers-update-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -277,23 +282,13 @@ export function useCustomers({
         },
         (payload: RealtimePostgresChangesPayload<DatabaseCustomer>) => {
           if (payload.new && 'id' in payload.new) {
-            const updatedCustomer = mapDatabaseCustomer(
-              payload.new as DatabaseCustomer,
-            );
-
+            const updatedCustomer = mapDatabaseCustomer(payload.new as DatabaseCustomer);
             setCustomers((prev) => {
-              const exists = prev.some((c) => c.id === updatedCustomer.id);
-              if (exists) {
-                return prev.map((c) =>
-                  c.id === updatedCustomer.id
-                    ? { ...updatedCustomer, isNew: true }
-                    : c,
-                );
-              }
-              return prev;
+              if (!prev.some((c) => c.id === updatedCustomer.id)) return prev;
+              return prev.map((c) =>
+                c.id === updatedCustomer.id ? { ...updatedCustomer, isNew: true } : c,
+              );
             });
-
-            // Remove highlight after 3 seconds
             setTimeout(() => {
               setCustomers((prev) =>
                 prev.map((c) =>
@@ -306,9 +301,9 @@ export function useCustomers({
       )
       .subscribe();
 
-    // Subscribe to new transactions (to add customers who just got scanned)
-    const transactionChannel = supabase
-      .channel(`transactions-${businessId}`)
+    // Channel 2: new links (transactions + customer_businesses inserts)
+    const linksChannel = supabase
+      .channel(`customer-links-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -317,67 +312,12 @@ export function useCustomers({
           table: 'transactions',
           filter: `business_id=eq.${businessId}`,
         },
-        async (payload) => {
+        (payload) => {
           if (payload.new && 'customer_id' in payload.new) {
-            const customerId = payload.new.customer_id as string;
-
-            // Check if customer is already in the list
-            const alreadyExists = customersRef.current.some(
-              (c) => c.id === customerId,
-            );
-
-            if (!alreadyExists) {
-              // Fetch the customer and add to list
-              const { data: customerData } = await supabase
-                .from('customers')
-                .select(
-                  `
-                  id,
-                  full_name,
-                  email,
-                  phone,
-                  total_points,
-                  lifetime_points,
-                  tier,
-                  last_visit,
-                  created_at,
-                  created_by_staff_id,
-                  created_by_business_id
-                `,
-                )
-                .eq('id', customerId)
-                .single();
-
-              if (customerData) {
-                const newCustomer: Customer = {
-                  ...mapDatabaseCustomer(customerData),
-                  isNew: true,
-                };
-
-                setCustomers((prev) => [newCustomer, ...prev]);
-                setTotalCount((prev) => prev + 1);
-
-                playNotificationSound();
-                onNewCustomer?.(newCustomer);
-
-                // Remove highlight after 3 seconds
-                setTimeout(() => {
-                  setCustomers((prev) =>
-                    prev.map((c) =>
-                      c.id === newCustomer.id ? { ...c, isNew: false } : c,
-                    ),
-                  );
-                }, 3000);
-              }
-            }
+            fetchAndAddCustomer(payload.new.customer_id as string);
           }
         },
       )
-      .subscribe();
-
-    // Subscribe to customer_businesses inserts (join code signups)
-    const cbChannel = supabase
-      .channel(`customer-businesses-${businessId}`)
       .on(
         'postgres_changes',
         {
@@ -386,49 +326,17 @@ export function useCustomers({
           table: 'customer_businesses',
           filter: `business_id=eq.${businessId}`,
         },
-        async (payload) => {
+        (payload) => {
           if (payload.new && 'customer_id' in payload.new) {
-            const customerId = payload.new.customer_id as string;
-            const alreadyExists = customersRef.current.some(
-              (c) => c.id === customerId,
-            );
-            if (!alreadyExists) {
-              const { data: customerData } = await supabase
-                .from('customers')
-                .select(
-                  `id, full_name, email, phone, total_points, lifetime_points, tier, last_visit, created_at, created_by_staff_id, created_by_business_id`,
-                )
-                .eq('id', customerId)
-                .single();
-
-              if (customerData) {
-                const newCustomer: Customer = {
-                  ...mapDatabaseCustomer(customerData),
-                  isNew: true,
-                };
-                setCustomers((prev) => [newCustomer, ...prev]);
-                setTotalCount((prev) => prev + 1);
-                playNotificationSound();
-                onNewCustomer?.(newCustomer);
-                setTimeout(() => {
-                  setCustomers((prev) =>
-                    prev.map((c) =>
-                      c.id === newCustomer.id ? { ...c, isNew: false } : c,
-                    ),
-                  );
-                }, 3000);
-              }
-            }
+            fetchAndAddCustomer(payload.new.customer_id as string);
           }
         },
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(insertChannel);
-      supabase.removeChannel(updateChannel);
-      supabase.removeChannel(transactionChannel);
-      supabase.removeChannel(cbChannel);
+      supabase.removeChannel(customersChannel);
+      supabase.removeChannel(linksChannel);
     };
   }, [businessId, onNewCustomer]);
 

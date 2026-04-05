@@ -388,29 +388,30 @@ export async function getCustomerByPhone(
   }
 
   // Fallback: check customers linked to this business via customer_businesses
+  // Filter at database level instead of loading all rows into memory
   const { data: linked } = await supabase
     .from('customer_businesses')
     .select('customers!inner(id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until)')
-    .eq('business_id', businessId);
+    .eq('business_id', businessId)
+    .eq('customers.phone', normalizedPhone)
+    .limit(1)
+    .maybeSingle();
 
   if (linked) {
-    for (const link of linked) {
-      const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
-      if (!c) continue;
-      if (c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone) {
-        return {
-          id: c.id,
-          fullName: c.full_name || '',
-          email: c.email || null,
-          phone: c.phone || null,
-          qrCodeUrl: c.qr_code_url || '',
-          tier: c.tier || 'bronze',
-          totalPoints: c.total_points || 0,
-          pinHash: c.pin_hash || null,
-          failedPinAttempts: c.failed_pin_attempts || 0,
-          pinLockedUntil: c.pin_locked_until || null,
-        };
-      }
+    const c = Array.isArray(linked.customers) ? linked.customers[0] : linked.customers;
+    if (c) {
+      return {
+        id: c.id,
+        fullName: c.full_name || '',
+        email: c.email || null,
+        phone: c.phone || null,
+        qrCodeUrl: c.qr_code_url || '',
+        tier: c.tier || 'bronze',
+        totalPoints: c.total_points || 0,
+        pinHash: c.pin_hash || null,
+        failedPinAttempts: c.failed_pin_attempts || 0,
+        pinLockedUntil: c.pin_locked_until || null,
+      };
     }
   }
 
@@ -448,29 +449,30 @@ export async function getCustomerByEmail(
   }
 
   // Fallback: check customers linked to this business via customer_businesses
+  // Filter at database level instead of loading all rows into memory
   const { data: linked } = await supabase
     .from('customer_businesses')
     .select('customers!inner(id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until)')
-    .eq('business_id', businessId);
+    .eq('business_id', businessId)
+    .eq('customers.email', normalizedEmail)
+    .limit(1)
+    .maybeSingle();
 
   if (linked) {
-    for (const link of linked) {
-      const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
-      if (!c) continue;
-      if (c.email && c.email.toLowerCase() === normalizedEmail) {
-        return {
-          id: c.id,
-          fullName: c.full_name || '',
-          email: c.email || null,
-          phone: c.phone || null,
-          qrCodeUrl: c.qr_code_url || '',
-          tier: c.tier || 'bronze',
-          totalPoints: c.total_points || 0,
-          pinHash: c.pin_hash || null,
-          failedPinAttempts: c.failed_pin_attempts || 0,
-          pinLockedUntil: c.pin_locked_until || null,
-        };
-      }
+    const c = Array.isArray(linked.customers) ? linked.customers[0] : linked.customers;
+    if (c) {
+      return {
+        id: c.id,
+        fullName: c.full_name || '',
+        email: c.email || null,
+        phone: c.phone || null,
+        qrCodeUrl: c.qr_code_url || '',
+        tier: c.tier || 'bronze',
+        totalPoints: c.total_points || 0,
+        pinHash: c.pin_hash || null,
+        failedPinAttempts: c.failed_pin_attempts || 0,
+        pinLockedUntil: c.pin_locked_until || null,
+      };
     }
   }
 
