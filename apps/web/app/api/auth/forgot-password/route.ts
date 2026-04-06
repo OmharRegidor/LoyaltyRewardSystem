@@ -26,9 +26,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit passed — the actual resetPasswordForEmail call
-    // is made from the client-side Supabase client to ensure
-    // PKCE code_verifier is stored properly in the browser
+    // Send password reset email using service client (no PKCE).
+    // This ensures the reset link works regardless of which browser
+    // or context the user opens the email link in.
+    const { createServiceClient } = await import('@/lib/supabase-server');
+    const supabase = createServiceClient();
+
+    const host = request.headers.get('host') || 'noxaloyalty.com';
+    const origin = `https://${host}`;
+
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/reset-password`,
+    });
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: true });

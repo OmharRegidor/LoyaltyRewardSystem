@@ -12,8 +12,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase';
-
 function ForgotPasswordContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -57,13 +55,8 @@ function ForgotPasswordContent() {
         return;
       }
 
-      // Call resetPasswordForEmail from the browser client so the
-      // PKCE code_verifier is stored properly in the browser
-      const supabase = createClient();
-      await supabase.auth.resetPasswordForEmail(
-        email.toLowerCase().trim(),
-        { redirectTo: `${window.location.origin}/auth/callback?type=recovery` },
-      );
+      // The API route sends the reset email server-side (no PKCE),
+      // so the link works regardless of which browser opens it
 
       if (isResend) {
         setResendSuccess(true);

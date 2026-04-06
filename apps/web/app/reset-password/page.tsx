@@ -50,20 +50,28 @@ export default function ResetPasswordPage() {
 
   // ============================================
   // CHECK SESSION ON MOUNT
+  // Handles both implicit flow (hash fragment tokens from email link)
+  // and existing session (from auth callback redirect)
   // ============================================
 
   useEffect(() => {
-    const checkSession = async () => {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const supabase = createClient();
+    let recoveryDetected = false;
 
-      // User should have a valid session from clicking the reset link
-      setIsValidSession(!!session);
-    };
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoveryDetected = true;
+        setIsValidSession(true);
+      } else if (event === 'INITIAL_SESSION') {
+        if (!recoveryDetected) {
+          setIsValidSession(!!session);
+        }
+      }
+    });
 
-    checkSession();
+    return () => subscription.unsubscribe();
   }, []);
 
   // ============================================
