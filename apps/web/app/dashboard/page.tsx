@@ -634,13 +634,19 @@ export default function DashboardPage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Run all 5 independent queries in parallel
+      // Calculate month boundaries for revenue queries
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+      // Run all 7 independent queries in parallel
       const [
         { count: customerCount },
         { count: rewardsCount },
         { data: todayTransactions },
         { data: recentTx },
         { data: topRewardsData },
+        { data: thisMonthSales },
+        { data: lastMonthSales },
       ] = await Promise.all([
         // Get total customers
         supabase
@@ -688,10 +694,37 @@ export default function DashboardPage() {
           .eq('business_id', businessId)
           .order('created_at', { ascending: false })
           .limit(100),
+        // Get this month's revenue from completed sales
+        supabase
+          .from('sales')
+          .select('total_centavos')
+          .eq('business_id', businessId)
+          .eq('status', 'completed')
+          .gte('created_at', startOfMonth.toISOString()),
+        // Get last month's revenue for growth calculation
+        supabase
+          .from('sales')
+          .select('total_centavos')
+          .eq('business_id', businessId)
+          .eq('status', 'completed')
+          .gte('created_at', startOfLastMonth.toISOString())
+          .lt('created_at', startOfMonth.toISOString()),
       ]);
 
       const pointsToday =
         todayTransactions?.reduce((sum, t) => sum + (t.points || 0), 0) || 0;
+
+      // Calculate revenue from sales (centavos → pesos)
+      const revenueThisMonth =
+        (thisMonthSales?.reduce((sum, s) => sum + (s.total_centavos || 0), 0) || 0) / 100;
+      const revenueLastMonth =
+        (lastMonthSales?.reduce((sum, s) => sum + (s.total_centavos || 0), 0) || 0) / 100;
+      const revenueGrowth =
+        revenueLastMonth > 0
+          ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100)
+          : revenueThisMonth > 0
+            ? 100
+            : 0;
 
       // Process top rewards
       const rewardCounts: Record<string, { name: string; count: number }> = {};
@@ -722,8 +755,8 @@ export default function DashboardPage() {
         pointsGrowth: 0,
         activeRewards: rewardsCount || 0,
         rewardsGrowth: 0,
-        revenueThisMonth: 0, // TODO: Implement revenue tracking
-        revenueGrowth: 0,
+        revenueThisMonth,
+        revenueGrowth,
       });
 
       // Transform transactions
