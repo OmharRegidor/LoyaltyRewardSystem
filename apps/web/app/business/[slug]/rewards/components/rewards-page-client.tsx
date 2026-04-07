@@ -145,8 +145,8 @@ export function RewardsPageClient({
                       </Badge>
                     )}
 
-                    {/* Stock Badge */}
-                    {reward.stock !== null && reward.stock <= 10 && (
+                    {/* Stock Badge - hide for unlimited (-1) */}
+                    {reward.stock !== null && reward.stock >= 0 && reward.stock <= 10 && (
                       <Badge
                         variant="destructive"
                         className="absolute top-3 right-3 shadow-md"
