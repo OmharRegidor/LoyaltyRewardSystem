@@ -122,7 +122,7 @@ export function RewardsPageClient({
                   <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
 
                   {/* Reward Image */}
-                  <div className="relative aspect-square bg-muted">
+                  <div className="relative aspect-video bg-muted">
                     {reward.image_url ? (
                       <Image
                         src={reward.image_url}
