@@ -264,7 +264,7 @@ export async function getPublicRewards(
     .eq('business_id', businessId)
     .eq('is_active', true)
     .eq('is_visible', true)
-    .or('stock.is.null,stock.gt.0')
+    .or('stock.is.null,stock.eq.-1,stock.gt.0')
     .order('points_cost');
 
   if (error) {

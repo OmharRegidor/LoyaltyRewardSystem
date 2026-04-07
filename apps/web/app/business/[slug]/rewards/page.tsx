@@ -7,6 +7,9 @@ import {
 } from '@/lib/services/public-business.service';
 import { RewardsPageClient } from './components/rewards-page-client';
 
+// Force dynamic rendering to always fetch fresh data from database
+export const dynamic = 'force-dynamic';
+
 interface RewardsPageProps {
   params: Promise<{ slug: string }>;
 }
