@@ -149,14 +149,24 @@ export async function getBusinessBySlug(
       phone,
       points_per_purchase,
       pesos_per_point,
-      subscription_status
+      subscription_status,
+      loyalty_mode,
+      rewards(id)
     `
     )
+    .eq('rewards.is_active', true)
+    .eq('rewards.is_visible', true)
     .eq('slug', slug)
     .in('subscription_status', ['active', 'trialing', 'free_forever', 'preview'])
     .maybeSingle();
 
   if (error || !data) {
+    return null;
+  }
+
+  // Stamps-mode businesses don't need rewards; points-mode must have at least 1
+  const rewards = (data as Record<string, unknown>).rewards as { id: string }[] | null;
+  if (data.loyalty_mode !== 'stamps' && (!rewards || rewards.length === 0)) {
     return null;
   }
 
