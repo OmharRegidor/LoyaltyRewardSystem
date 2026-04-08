@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const APK_URL =
-  "https://expo.dev/artifacts/eas/jmgRjup6uk4Z3NG6iUPDZ5.apk";
+  "https://expo.dev/artifacts/eas/3bpBnbGf5xuE3SXVENmiPH.apk";
 
 export async function GET() {
   const upstream = await fetch(APK_URL);

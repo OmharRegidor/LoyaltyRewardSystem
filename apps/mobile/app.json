@@ -2,7 +2,7 @@
   "expo": {
     "name": "NoxaLoyalty",
     "slug": "loyaltyhub",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "sdkVersion": "54.0.0",
     "newArchEnabled": true,
     "orientation": "portrait",
@@ -62,6 +62,13 @@
           ]
         }
       ]
+    },
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/be2191a5-1512-4284-a3a5-25820121673a"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     },
     "plugins": [
       "expo-router",

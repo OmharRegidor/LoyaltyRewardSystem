@@ -82,10 +82,15 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
     : stampCard.total_stamps <= 12 ? 4
     : 5;
   const rows = Math.ceil(stampCard.total_stamps / cols);
+  const gridPadding = 24; // horizontal padding inside the card
+  const gridGap = 10;
   const stampAreaH = CARD_HEIGHT - 72; // leave room for header + footer
+  // Slot width = total grid width / cols (each slot centers its stamp)
+  const gridWidth = CARD_WIDTH - gridPadding * 2;
+  const slotWidth = gridWidth / cols;
   const stampSize = Math.min(
-    Math.floor((CARD_WIDTH - 48 - (cols - 1) * 10) / cols),
-    Math.floor((stampAreaH - (rows - 1) * 10) / rows),
+    Math.floor(slotWidth - gridGap),
+    Math.floor((stampAreaH - (rows - 1) * gridGap) / rows),
     42,
   );
 
@@ -125,22 +130,30 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
                 return (
                   <View
                     key={i}
-                    style={[
-                      cardStyles.stampSlot,
-                      { width: stampSize, height: stampSize, borderRadius: stampSize * 0.25 },
-                      isFilled && cardStyles.stampSlotFilled,
-                      isReward && !isFilled && cardStyles.stampSlotReward,
-                    ]}
+                    style={{
+                      width: slotWidth,
+                      alignItems: 'center' as const,
+                      marginBottom: gridGap,
+                    }}
                   >
-                    {isReward && !isFilled ? (
-                      <Text style={cardStyles.rewardSlotText}>FREE</Text>
-                    ) : (
-                      <MaterialCommunityIcons
-                        name="stamper"
-                        size={stampSize * 0.45}
-                        color={isFilled ? '#fff' : COLORS.gray[300]}
-                      />
-                    )}
+                    <View
+                      style={[
+                        cardStyles.stampSlot,
+                        { width: stampSize, height: stampSize, borderRadius: stampSize * 0.25 },
+                        isFilled && cardStyles.stampSlotFilled,
+                        isReward && !isFilled && cardStyles.stampSlotReward,
+                      ]}
+                    >
+                      {isReward && !isFilled ? (
+                        <Text style={cardStyles.rewardSlotText}>FREE</Text>
+                      ) : (
+                        <MaterialCommunityIcons
+                          name="stamper"
+                          size={stampSize * 0.45}
+                          color={isFilled ? '#fff' : COLORS.gray[300]}
+                        />
+                      )}
+                    </View>
                   </View>
                 );
               })}
@@ -237,9 +250,8 @@ const cardStyles = StyleSheet.create({
   stampGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    gap: 10,
     flex: 1,
     paddingVertical: 4,
   },
