@@ -140,23 +140,24 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("POST /api/staff/pos/sale error:", error);
 
-    if (error instanceof Error) {
-      if (error.message === "Insufficient points for exchange") {
-        return NextResponse.json(
-          { error: "Insufficient points for exchange" },
-          { status: 400 },
-        );
-      }
-      if (error.message === "Duplicate sale submission") {
-        return NextResponse.json(
-          { error: "Duplicate sale submission" },
-          { status: 409 },
-        );
-      }
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
+
+    if (message === "Insufficient points for exchange") {
+      return NextResponse.json(
+        { error: "Insufficient points for exchange" },
+        { status: 400 },
+      );
+    }
+    if (message === "Duplicate sale submission") {
+      return NextResponse.json(
+        { error: "Duplicate sale submission" },
+        { status: 409 },
+      );
     }
 
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: message || "Internal server error" },
       { status: 500 },
     );
   }
