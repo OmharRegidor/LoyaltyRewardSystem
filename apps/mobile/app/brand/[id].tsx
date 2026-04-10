@@ -31,7 +31,7 @@ import type { Reward } from '../../src/types/rewards.types';
 import { getTierInfo } from '../../src/types/rewards.types';
 
 const CARD_WIDTH = Dimensions.get('window').width - SPACING.lg * 2;
-const CARD_ASPECT = 1.6; // credit-card ratio
+const CARD_ASPECT = 1.9; // compact card ratio
 const CARD_HEIGHT = CARD_WIDTH / CARD_ASPECT;
 
 interface StampLoyaltyCardProps {
@@ -96,8 +96,8 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
     return best;
   })();
   const rows = Math.ceil(stampCard.total_stamps / cols);
-  const gridPadding = 24; // horizontal padding inside the card
-  const gridGap = 10;
+  const gridPadding = 20;
+  const gridGap = 8;
   const stampAreaH = CARD_HEIGHT - 72; // leave room for header + footer
   // Slot width = total grid width / cols (each slot centers its stamp)
   const gridWidth = CARD_WIDTH - gridPadding * 2;
@@ -105,7 +105,7 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
   const stampSize = Math.min(
     Math.floor(slotWidth - gridGap),
     Math.floor((stampAreaH - (rows - 1) * gridGap) / rows),
-    42,
+    36,
   );
 
   return (
