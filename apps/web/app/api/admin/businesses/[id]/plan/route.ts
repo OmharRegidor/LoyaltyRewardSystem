@@ -65,11 +65,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   if (currentSub) {
     // Update existing subscription
+    const now = new Date().toISOString();
+    const oneYearLater = new Date(
+      Date.now() + 365 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     const { error: updateErr } = await service
       .from('subscriptions')
       .update({
         plan_id: newPlanId,
         ...moduleOverrides,
+        // Reset billing period when upgrading to enterprise
+        ...(isEnterprise && {
+          current_period_start: now,
+          current_period_end: oneYearLater,
+          billing_interval: 'annual',
+          status: 'active',
+        }),
       })
       .eq('id', currentSub.id);
 
