@@ -76,11 +76,25 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
     outputRange: [1, 1, 0, 0],
   });
 
-  // Calculate grid layout: best fit for the card area
-  const cols = stampCard.total_stamps <= 5 ? stampCard.total_stamps
-    : stampCard.total_stamps <= 10 ? 5
-    : stampCard.total_stamps <= 12 ? 4
-    : 5;
+  // Calculate grid layout: pick columns that create the most balanced grid
+  const cols = (() => {
+    const total = stampCard.total_stamps;
+    if (total <= 5) return total; // single row
+    const maxCols = total <= 10 ? 5 : total <= 20 ? 6 : 7;
+    let best = maxCols;
+    let bestScore = -Infinity;
+    for (let c = 3; c <= maxCols; c++) {
+      const r = Math.ceil(total / c);
+      const empty = (c - (total % c)) % c; // empty cells in last row
+      // Prefer fewer empty cells (×10 weight), then fewer rows
+      const score = -empty * 10 - r;
+      if (score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    return best;
+  })();
   const rows = Math.ceil(stampCard.total_stamps / cols);
   const gridPadding = 24; // horizontal padding inside the card
   const gridGap = 10;
