@@ -12,6 +12,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
 import { AuthProvider } from '../src/providers/AuthProvider';
 
 // Prevent splash screen from auto-hiding
@@ -60,6 +61,22 @@ export default function RootLayout() {
       setAppReady(true);
     }, 3000);
     return () => clearTimeout(timeout);
+  }, []);
+
+  // Check for OTA updates and apply immediately
+  useEffect(() => {
+    if (__DEV__) return;
+    (async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {
+        // Silent fail — update will apply on next natural restart
+      }
+    })();
   }, []);
 
   if (!fontsLoaded || !appReady) {
