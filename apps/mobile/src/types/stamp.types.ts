@@ -1,3 +1,14 @@
+export interface StampMilestone {
+  position: number;
+  label: string;
+}
+
+export interface RedeemedMilestone {
+  position: number;
+  redeemed_at: string;
+  redeemed_by: string;
+}
+
 export interface StampCard {
   id: string;
   business_id: string;
@@ -13,4 +24,7 @@ export interface StampCard {
   loyalty_mode: string;
   reward_image_url: string | null;
   reward_description: string | null;
+  milestones: StampMilestone[];
+  redeemed_milestones: RedeemedMilestone[];
+  paused_at_milestone: number | null;
 }

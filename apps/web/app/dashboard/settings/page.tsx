@@ -71,6 +71,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { BillingSection } from '@/components/dashboard/billing-section';
+import { getStampGridCols, STAMP_CARD_ASPECT } from '@/lib/stamp-grid';
 import { AnimatePresence } from 'framer-motion';
 
 // ============================================
@@ -114,6 +115,11 @@ interface EditSnapshot {
   customBusinessType: string;
 }
 
+interface Milestone {
+  position: number;
+  label: string;
+}
+
 interface StampTemplate {
   title: string;
   totalStamps: number;
@@ -122,6 +128,7 @@ interface StampTemplate {
   rewardImageUrl: string | null;
   minPurchaseAmount: number;
   autoReset: boolean;
+  milestones: Milestone[];
 }
 
 type LoyaltyMode = 'points' | 'stamps';
@@ -238,6 +245,8 @@ export default function SettingsPage() {
   const [loyaltyMode, setLoyaltyMode] = useState<LoyaltyMode>('points');
   const [loyaltyActivityCount, setLoyaltyActivityCount] = useState(0);
   const [pendingMode, setPendingMode] = useState<LoyaltyMode | null>(null);
+  const [posMode, setPosMode] = useState<'products' | 'services' | 'both'>('both');
+  const [posModeLoaded, setPosModeLoaded] = useState(false);
   const [stampTemplate, setStampTemplate] = useState<StampTemplate>({
     title: 'Loyalty Card',
     totalStamps: 10,
@@ -246,7 +255,10 @@ export default function SettingsPage() {
     rewardImageUrl: null,
     minPurchaseAmount: 0,
     autoReset: true,
+    milestones: [],
   });
+  const [editingMilestone, setEditingMilestone] = useState<number | null>(null);
+  const [milestoneInput, setMilestoneInput] = useState('');
   const [stampSaveStatus, setStampSaveStatus] = useState<SaveStatus>('idle');
   const [stampErrorMessage, setStampErrorMessage] = useState('');
 
@@ -331,6 +343,14 @@ export default function SettingsPage() {
         if (mode === 'stamps' || mode === 'points') {
           setLoyaltyMode(mode);
         }
+
+        // Load POS mode
+        const bizAny = business as Record<string, unknown>;
+        const loadedPosMode = bizAny.pos_mode as string | undefined;
+        if (loadedPosMode === 'products' || loadedPosMode === 'services' || loadedPosMode === 'both') {
+          setPosMode(loadedPosMode);
+        }
+        setPosModeLoaded(true);
 
         // Check how many customers have loyalty activity (for confirmation dialog)
         const currentMode = mode || 'points';
@@ -451,6 +471,7 @@ export default function SettingsPage() {
           rewardImageUrl: data.template.reward_image_url || null,
           minPurchaseAmount: data.template.min_purchase_amount || 0,
           autoReset: data.template.auto_reset !== false,
+          milestones: Array.isArray(data.template.milestones) ? data.template.milestones : [],
         });
       }
     } catch (err) {
@@ -473,8 +494,8 @@ export default function SettingsPage() {
       if (!stampTemplate.rewardTitle.trim()) {
         throw new Error('Reward title is required');
       }
-      if (stampTemplate.totalStamps < 1 || stampTemplate.totalStamps > 30) {
-        throw new Error('Total stamps must be between 1 and 30');
+      if (stampTemplate.totalStamps < 1 || stampTemplate.totalStamps > 50) {
+        throw new Error('Total stamps must be between 1 and 50');
       }
 
       const res = await fetch('/api/dashboard/stamp-template', {
@@ -488,6 +509,7 @@ export default function SettingsPage() {
           rewardImageUrl: stampTemplate.rewardImageUrl,
           minPurchaseAmount: stampTemplate.minPurchaseAmount,
           autoReset: stampTemplate.autoReset,
+          milestones: stampTemplate.milestones,
         }),
       });
 
@@ -1390,6 +1412,64 @@ export default function SettingsPage() {
             </div>
           </Card>
 
+          {/* POS Mode — shown when POS is enabled */}
+          {!isSubLoading && subscription?.plan?.hasPOS && posModeLoaded && (
+            <Card className="p-4 sm:p-6 shadow-card border border-border/50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
+                  <Store className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">POS Catalog Mode</h2>
+                  <p className="text-sm text-muted-foreground">
+                    What does your POS sell?
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                This only controls what appears in your POS. Your data is never deleted — switching back restores everything.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: 'products' as const, label: 'Products Only', desc: 'Food, drinks, goods' },
+                  { value: 'services' as const, label: 'Services Only', desc: 'Haircuts, bookings' },
+                  { value: 'both' as const, label: 'Both', desc: 'Products & services' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={async () => {
+                      setPosMode(opt.value);
+                      const supabase = createClient();
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) return;
+                      const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single();
+                      if (!biz) return;
+                      await fetch('/api/dashboard/pos/business-type', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pos_mode: opt.value }),
+                      }).catch(() => {
+                        // Fallback: direct update
+                        (supabase as unknown as { from: (t: string) => { update: (d: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<unknown> } } })
+                          .from('businesses')
+                          .update({ pos_mode: opt.value })
+                          .eq('id', biz.id);
+                      });
+                    }}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      posMode === opt.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Stamp Card Configuration - shown when stamps mode is active and enterprise */}
           {loyaltyMode === 'stamps' && !isSubLoading && subscription?.plan?.hasStampCard && (
             <Card className="p-4 sm:p-6 shadow-card border border-border/50">
@@ -1429,12 +1509,12 @@ export default function SettingsPage() {
                     Total Stamps to Complete
                   </label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Number of stamps needed to earn the reward (1-30)
+                    Number of stamps needed to earn the reward (1–50)
                   </p>
                   <input
                     type="number"
                     min={1}
-                    max={30}
+                    max={50}
                     value={stampTemplate.totalStamps === 0 ? '' : stampTemplate.totalStamps}
                     onChange={(e) => {
                       const raw = e.target.value;
@@ -1444,9 +1524,12 @@ export default function SettingsPage() {
                       }
                       const val = parseInt(raw);
                       if (!isNaN(val)) {
+                        const clamped = Math.min(50, Math.max(0, val));
                         setStampTemplate((prev) => ({
                           ...prev,
-                          totalStamps: Math.min(30, Math.max(0, val)),
+                          totalStamps: clamped,
+                          // Remove milestones beyond the new total
+                          milestones: prev.milestones.filter(m => m.position < clamped),
                         }));
                       }
                     }}
@@ -1560,35 +1643,198 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Stamp preview */}
-                <div className="p-4 bg-linear-to-r from-violet-50 to-violet-100/50 rounded-xl border border-violet-200/50">
-                  <p className="text-sm font-medium text-violet-700 mb-2">
+                {/* Card Preview — realistic mobile card replica */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-violet-700">
                     Card Preview
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Array.from({ length: stampTemplate.totalStamps }).map((_, i) => {
-                      const isLast = i === stampTemplate.totalStamps - 1;
-                      return (
+                  <p className="text-xs text-muted-foreground">
+                    This is how your customers will see the stamp card on their phone.
+                  </p>
+
+                  {(() => {
+                    const cols = getStampGridCols(stampTemplate.totalStamps);
+                    const rows = Math.ceil(stampTemplate.totalStamps / cols);
+                    const gap = stampTemplate.totalStamps > 30 ? '4px' : stampTemplate.totalStamps > 15 ? '5px' : '6px';
+                    return (
+                      <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                        {/* BACK — Stamp Grid (default view) */}
                         <div
-                          key={i}
-                          className={`${isLast ? 'px-2' : 'w-8'} h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold ${
-                            i < 3
-                              ? 'border-violet-400 bg-violet-100 text-violet-600'
-                              : isLast
-                                ? 'border-violet-300 bg-violet-50 text-violet-500'
-                                : 'border-gray-200 bg-white text-gray-300'
-                          }`}
+                          className="flex-1 rounded-2xl border border-amber-200/80 shadow-lg overflow-hidden"
+                          style={{ aspectRatio: `${STAMP_CARD_ASPECT}` }}
                         >
-                          {i < 3 ? <Stamp className="w-4 h-4" /> : isLast ? 'Free' : i + 1}
+                          <div className="h-full bg-gradient-to-br from-amber-50 via-orange-50/80 to-yellow-50 p-4 flex flex-col">
+                            {/* Header */}
+                            <div className="flex items-center justify-between shrink-0 pb-1">
+                              <span className="text-sm font-bold text-gray-800">
+                                3/{stampTemplate.totalStamps} stamps
+                              </span>
+                              <span className="text-[9px] font-semibold text-amber-600/50 uppercase tracking-wider">
+                                Stamp Side
+                              </span>
+                            </div>
+
+                            {/* Stamp grid — clickable for milestones */}
+                            <div
+                              className="flex-1 grid min-h-0 place-items-center"
+                              style={{
+                                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                gridTemplateRows: `repeat(${rows}, 1fr)`,
+                                gap,
+                              }}
+                            >
+                              {Array.from({ length: stampTemplate.totalStamps }).map((_, i) => {
+                                const position = i + 1;
+                                const isFilled = i < 3;
+                                const isLast = i === stampTemplate.totalStamps - 1;
+                                const milestone = stampTemplate.milestones.find(m => m.position === position);
+                                const isMilestone = !!milestone;
+                                const isEditing = editingMilestone === position;
+
+                                return (
+                                  <div
+                                    key={i}
+                                    onClick={() => {
+                                      if (isLast) return; // Last stamp is always the final reward
+                                      if (isMilestone) {
+                                        // Remove milestone
+                                        setStampTemplate(prev => ({
+                                          ...prev,
+                                          milestones: prev.milestones.filter(m => m.position !== position),
+                                        }));
+                                        setEditingMilestone(null);
+                                      } else {
+                                        // Start editing new milestone
+                                        setEditingMilestone(position);
+                                        setMilestoneInput('');
+                                      }
+                                    }}
+                                    className={`w-full h-full max-h-16 max-w-16 rounded-sm border-[1.5px] flex items-center justify-center font-bold transition-all cursor-pointer relative ${
+                                      isMilestone
+                                        ? 'border-amber-400 bg-amber-50 text-amber-700 border-dashed hover:border-amber-500'
+                                        : isFilled
+                                          ? 'border-primary bg-primary text-white shadow-sm hover:opacity-90'
+                                          : isLast
+                                            ? 'border-orange-400 bg-orange-50 text-orange-500 border-dashed'
+                                            : 'border-stone-200/80 bg-white/60 text-stone-300 hover:border-violet-300 hover:bg-violet-50/30'
+                                    }`}
+                                    title={isLast ? 'Final reward' : isMilestone ? `Click to remove: ${milestone.label}` : 'Click to add milestone reward'}
+                                  >
+                                    {isEditing ? (
+                                      <form
+                                        className="absolute inset-0 z-10 flex items-center justify-center p-0.5"
+                                        onSubmit={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (milestoneInput.trim()) {
+                                            setStampTemplate(prev => ({
+                                              ...prev,
+                                              milestones: [...prev.milestones, { position, label: milestoneInput.trim().slice(0, 20) }],
+                                            }));
+                                          }
+                                          setEditingMilestone(null);
+                                        }}
+                                      >
+                                        <input
+                                          autoFocus
+                                          value={milestoneInput}
+                                          onChange={(e) => setMilestoneInput(e.target.value)}
+                                          onBlur={() => setEditingMilestone(null)}
+                                          onClick={(e) => e.stopPropagation()}
+                                          placeholder="50% OFF"
+                                          maxLength={20}
+                                          className="w-full h-full text-center text-[8px] font-bold bg-amber-100 border border-amber-400 rounded-md outline-none focus:ring-1 focus:ring-amber-500 px-0.5"
+                                        />
+                                      </form>
+                                    ) : isMilestone ? (
+                                      <span className="text-[7px] leading-tight text-center break-words overflow-hidden px-0.5">
+                                        {milestone.label}
+                                      </span>
+                                    ) : isLast ? (
+                                      <span className="text-[9px]">FREE</span>
+                                    ) : (
+                                      <Stamp className="w-[40%] h-[40%]" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Milestone hint */}
+                            {stampTemplate.milestones.length === 0 && (
+                              <p className="text-[9px] text-amber-600/60 text-center shrink-0">
+                                Click any stamp to add a milestone reward
+                              </p>
+                            )}
+
+                            {/* Footer */}
+                            <div className="flex items-center gap-2 shrink-0 pt-1">
+                              {stampTemplate.rewardImageUrl && (
+                                <img
+                                  src={stampTemplate.rewardImageUrl}
+                                  alt=""
+                                  className="w-5 h-5 rounded object-cover shrink-0"
+                                />
+                              )}
+                              <p className="text-[11px] font-semibold text-gray-500 truncate">
+                                {stampTemplate.rewardTitle
+                                  ? `${stampTemplate.totalStamps - 3} more → ${stampTemplate.rewardTitle}`
+                                  : 'Set a reward title'}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                  {stampTemplate.rewardTitle && (
-                    <p className="mt-2 text-xs text-violet-600">
-                      Reward: <strong>{stampTemplate.rewardTitle}</strong>
-                    </p>
-                  )}
+
+                        {/* FRONT — Branding side */}
+                        <div
+                          className="flex-1 rounded-2xl shadow-lg relative overflow-hidden"
+                          style={{
+                            aspectRatio: `${STAMP_CARD_ASPECT}`,
+                            ...(stampTemplate.rewardImageUrl
+                              ? {
+                                  backgroundImage: `url(${stampTemplate.rewardImageUrl})`,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                }
+                              : { backgroundColor: 'rgb(124, 58, 237)' }),
+                          }}
+                        >
+                          {stampTemplate.rewardImageUrl && (
+                            <div className="absolute inset-0 bg-black/50" />
+                          )}
+                          <div className="relative z-10 h-full flex flex-col items-center justify-center gap-1.5 p-5">
+                            <span className="text-[9px] font-semibold text-white/40 uppercase tracking-wider absolute top-3 right-4">
+                              Front Side
+                            </span>
+                            {profile.logoUrl ? (
+                              <img
+                                src={profile.logoUrl}
+                                alt=""
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white/30 shadow-md"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                <span className="text-xl font-bold text-white">
+                                  {profile.businessName?.charAt(0)?.toUpperCase() || '?'}
+                                </span>
+                              </div>
+                            )}
+                            <span className="text-[9px] font-semibold text-white/60 tracking-[3px] uppercase">
+                              Loyalty Card
+                            </span>
+                            <span className="text-base font-extrabold text-white text-center leading-tight drop-shadow-md">
+                              {profile.businessName || 'Business Name'}
+                            </span>
+                            {stampTemplate.rewardTitle && (
+                              <span className="text-xs font-medium text-white/80 drop-shadow-sm">
+                                {stampTemplate.rewardTitle}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Save Stamp Template Button */}

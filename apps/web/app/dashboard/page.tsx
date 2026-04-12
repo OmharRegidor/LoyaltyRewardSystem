@@ -694,19 +694,18 @@ export default function DashboardPage() {
           .eq('business_id', businessId)
           .order('created_at', { ascending: false })
           .limit(100),
-        // Get this month's revenue from completed sales
-        supabase
-          .from('sales')
+        // Get this month's revenue from completed POS sales
+        // pos_sales may not be in generated types — use cast
+        (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (c: string, v: string) => { gte: (c: string, v: string) => Promise<{ data: Array<{ total_centavos: number }> | null }> } } } })
+          .from('pos_sales')
           .select('total_centavos')
           .eq('business_id', businessId)
-          .eq('status', 'completed')
           .gte('created_at', startOfMonth.toISOString()),
         // Get last month's revenue for growth calculation
-        supabase
-          .from('sales')
+        (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (c: string, v: string) => { gte: (c: string, v: string) => { lt: (c: string, v: string) => Promise<{ data: Array<{ total_centavos: number }> | null }> } } } } })
+          .from('pos_sales')
           .select('total_centavos')
           .eq('business_id', businessId)
-          .eq('status', 'completed')
           .gte('created_at', startOfLastMonth.toISOString())
           .lt('created_at', startOfMonth.toISOString()),
       ]);

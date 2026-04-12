@@ -283,6 +283,42 @@ export async function POST(
       businessPoints = bpData.points || 0;
     }
 
+    // Fetch stamp card data for stamp-mode businesses
+    let stampCardData = null;
+    const { data: bizMode } = await serviceClient
+      .from('businesses')
+      .select('loyalty_mode')
+      .eq('id', business.id)
+      .single();
+
+    if (bizMode?.loyalty_mode === 'stamps') {
+      const { data: stampData } = await serviceClient.rpc('get_customer_stamp_cards', {
+        p_customer_id: customer.id,
+        p_business_id: business.id,
+      });
+      const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
+      if (Array.isArray(cards) && cards.length > 0) {
+        const card = cards[0];
+        stampCardData = {
+          stamps_collected: card.stamps_collected,
+          total_stamps: card.total_stamps,
+          reward_title: card.reward_title,
+          is_completed: card.is_completed,
+          milestones: card.milestones || [],
+          redeemed_milestones: card.redeemed_milestones || [],
+          paused_at_milestone: card.paused_at_milestone || null,
+          reward_image_url: card.reward_image_url || null,
+        };
+      }
+    }
+
+    // Get business logo for stamp card display
+    const { data: bizInfo } = await serviceClient
+      .from('businesses')
+      .select('logo_url')
+      .eq('id', business.id)
+      .single();
+
     return NextResponse.json({
       success: true,
       data: {
@@ -291,6 +327,9 @@ export async function POST(
         qrCodeUrl: customer.qrCodeUrl,
         tier: customer.tier,
         totalPoints: businessPoints,
+        stampCard: stampCardData,
+        loyaltyMode: bizMode?.loyalty_mode || 'points',
+        businessLogoUrl: bizInfo?.logo_url || null,
       },
     });
   } catch (error) {

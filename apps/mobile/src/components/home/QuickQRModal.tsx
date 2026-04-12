@@ -65,9 +65,9 @@ export function QuickQRModal({
           >
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Earn Points</Text>
+              <Text style={styles.title}>Earn Rewards</Text>
               <Text style={styles.subtitle}>
-                Show this to the cashier to earn points
+                Show this to the cashier to earn points or stamps
               </Text>
             </View>
 
@@ -120,7 +120,7 @@ export function QuickQRModal({
                   <Text style={styles.instructionNumberText}>3</Text>
                 </View>
                 <Text style={styles.instructionText}>
-                  Earn points automatically!
+                  Earn rewards automatically!
                 </Text>
               </View>
             </View>

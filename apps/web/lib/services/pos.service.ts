@@ -359,13 +359,19 @@ export async function createSale(
       p_points: points_earned,
     });
 
+    // Build description with item names
+    const itemSummary = input.items
+      .map((item) => item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name)
+      .join(', ');
+    const txDescription = itemSummary || `POS Sale #${sale_number}`;
+
     // Create transaction record
     await supabase.from("transactions").insert({
       customer_id: input.customer_id,
       business_id: input.business_id,
       type: "earn",
       points: points_earned,
-      description: `POS Sale #${sale_number}`,
+      description: txDescription,
       amount_spent: total_centavos / 100,
     });
   }

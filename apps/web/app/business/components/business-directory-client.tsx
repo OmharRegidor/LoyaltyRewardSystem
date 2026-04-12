@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Store,
   Gift,
+  Stamp,
+  Star,
 } from 'lucide-react';
 import type { PublicBusiness } from '@/lib/services/public-business.service';
 
@@ -258,21 +260,29 @@ export function BusinessDirectoryClient({
                         <div className="mb-3" />
                       )}
 
-                      {/* Bottom: Location + CTA */}
+                      {/* Bottom: Location + badge + CTA */}
                       <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        {biz.city || biz.address ? (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate max-w-[140px]">
-                              {biz.city || biz.address}
+                        <div className="flex items-center gap-2">
+                          {(biz.city || biz.address) && (
+                            <div className="flex items-center gap-1 text-xs text-gray-400">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              <span className="truncate max-w-[90px]">
+                                {biz.city || biz.address}
+                              </span>
+                            </div>
+                          )}
+                          {biz.loyalty_mode === 'stamps' ? (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                              <Stamp className="w-2.5 h-2.5" />
+                              Stamps
                             </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                            <Gift className="w-3.5 h-3.5 shrink-0" />
-                            <span>Loyalty rewards</span>
-                          </div>
-                        )}
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-md">
+                              <Star className="w-2.5 h-2.5" />
+                              Points
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs font-semibold text-primary flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                           Visit store
                           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />

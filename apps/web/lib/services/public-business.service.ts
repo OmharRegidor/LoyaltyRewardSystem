@@ -14,6 +14,13 @@ type Reward = Database['public']['Tables']['rewards']['Row'];
 // TYPES
 // ============================================
 
+export interface StampTemplatePublic {
+  total_stamps: number;
+  reward_title: string;
+  reward_image_url: string | null;
+  milestones: Array<{ position: number; label: string }>;
+}
+
 export interface PublicBusiness {
   id: string;
   name: string;
@@ -26,6 +33,8 @@ export interface PublicBusiness {
   phone: string | null;
   points_per_purchase: number | null;
   pesos_per_point: number | null;
+  loyalty_mode: 'points' | 'stamps';
+  stamp_template: StampTemplatePublic | null;
 }
 
 export interface PublicReward {
@@ -120,6 +129,8 @@ export async function getPublicBusinesses(
     phone: b.phone,
     points_per_purchase: b.points_per_purchase,
     pesos_per_point: b.pesos_per_point,
+    loyalty_mode: (b.loyalty_mode === 'stamps' ? 'stamps' : 'points') as 'points' | 'stamps',
+    stamp_template: null, // Not fetched in directory listing for performance
   }));
 
   return { businesses };
@@ -170,6 +181,28 @@ export async function getBusinessBySlug(
     return null;
   }
 
+  // Fetch stamp template for stamp-mode businesses
+  let stamp_template: StampTemplatePublic | null = null;
+  if (data.loyalty_mode === 'stamps') {
+    // milestones column may not be in generated types yet — select without it and cast
+    const { data: tmpl } = await supabase
+      .from('stamp_card_templates')
+      .select('*')
+      .eq('business_id', data.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (tmpl) {
+      const tmplAny = tmpl as Record<string, unknown>;
+      stamp_template = {
+        total_stamps: tmpl.total_stamps,
+        reward_title: tmpl.reward_title,
+        reward_image_url: tmpl.reward_image_url ?? null,
+        milestones: Array.isArray(tmplAny.milestones) ? (tmplAny.milestones as Array<{ position: number; label: string }>) : [],
+      };
+    }
+  }
+
   return {
     id: data.id,
     name: data.name,
@@ -182,6 +215,8 @@ export async function getBusinessBySlug(
     phone: data.phone,
     points_per_purchase: data.points_per_purchase,
     pesos_per_point: data.pesos_per_point,
+    loyalty_mode: (data.loyalty_mode === 'stamps' ? 'stamps' : 'points') as 'points' | 'stamps',
+    stamp_template,
   };
 }
 
@@ -210,7 +245,8 @@ export async function getBusinessByJoinCode(
       phone,
       points_per_purchase,
       pesos_per_point,
-      subscription_status
+      subscription_status,
+      loyalty_mode
     `,
     )
     .eq('join_code', joinCode.toUpperCase())
@@ -222,6 +258,27 @@ export async function getBusinessByJoinCode(
       console.error('getBusinessByJoinCode error:', error.message, { joinCode });
     }
     return null;
+  }
+
+  // Fetch stamp template for stamp-mode businesses
+  let stamp_template: StampTemplatePublic | null = null;
+  if (data.loyalty_mode === 'stamps') {
+    const { data: tmpl } = await supabase
+      .from('stamp_card_templates')
+      .select('*')
+      .eq('business_id', data.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (tmpl) {
+      const tmplAny = tmpl as Record<string, unknown>;
+      stamp_template = {
+        total_stamps: tmpl.total_stamps,
+        reward_title: tmpl.reward_title,
+        reward_image_url: tmpl.reward_image_url ?? null,
+        milestones: Array.isArray(tmplAny.milestones) ? (tmplAny.milestones as Array<{ position: number; label: string }>) : [],
+      };
+    }
   }
 
   return {
@@ -236,6 +293,8 @@ export async function getBusinessByJoinCode(
     phone: data.phone,
     points_per_purchase: data.points_per_purchase,
     pesos_per_point: data.pesos_per_point,
+    loyalty_mode: (data.loyalty_mode === 'stamps' ? 'stamps' : 'points') as 'points' | 'stamps',
+    stamp_template,
   };
 }
 
@@ -425,6 +484,29 @@ export async function getCustomerByPhone(
     }
   }
 
+  // Fallback 3: global search for mobile-app customers (have user_id)
+  const { data: globalMatch } = await supabase
+    .from('customers')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
+    .eq('phone', normalizedPhone)
+    .not('user_id', 'is', null)
+    .maybeSingle();
+
+  if (globalMatch) {
+    return {
+      id: globalMatch.id,
+      fullName: globalMatch.full_name || '',
+      email: globalMatch.email || null,
+      phone: globalMatch.phone || null,
+      qrCodeUrl: globalMatch.qr_code_url || '',
+      tier: globalMatch.tier || 'bronze',
+      totalPoints: globalMatch.total_points || 0,
+      pinHash: globalMatch.pin_hash || null,
+      failedPinAttempts: globalMatch.failed_pin_attempts || 0,
+      pinLockedUntil: globalMatch.pin_locked_until || null,
+    };
+  }
+
   return null;
 }
 
@@ -484,6 +566,29 @@ export async function getCustomerByEmail(
         pinLockedUntil: c.pin_locked_until || null,
       };
     }
+  }
+
+  // Fallback 3: global search for mobile-app customers (have user_id)
+  const { data: globalMatch } = await supabase
+    .from('customers')
+    .select('id, full_name, email, phone, qr_code_url, tier, total_points, pin_hash, failed_pin_attempts, pin_locked_until')
+    .eq('email', normalizedEmail)
+    .not('user_id', 'is', null)
+    .maybeSingle();
+
+  if (globalMatch) {
+    return {
+      id: globalMatch.id,
+      fullName: globalMatch.full_name || '',
+      email: globalMatch.email || null,
+      phone: globalMatch.phone || null,
+      qrCodeUrl: globalMatch.qr_code_url || '',
+      tier: globalMatch.tier || 'bronze',
+      totalPoints: globalMatch.total_points || 0,
+      pinHash: globalMatch.pin_hash || null,
+      failedPinAttempts: globalMatch.failed_pin_attempts || 0,
+      pinLockedUntil: globalMatch.pin_locked_until || null,
+    };
   }
 
   return null;

@@ -5,7 +5,8 @@
 import { useState } from 'react';
 import { LookupForm } from './lookup-form';
 import { CardModal } from './card-modal';
-import { Gift, Star, CreditCard, ArrowRight } from 'lucide-react';
+import { Gift, Star, CreditCard, ArrowRight, Stamp } from 'lucide-react';
+import { PublicStampCard } from '@/components/public/stamp-card-preview';
 
 // ============================================
 // TYPES
@@ -19,12 +20,22 @@ interface InitialCardData {
   totalPoints: number;
 }
 
+interface StampTemplateData {
+  total_stamps: number;
+  reward_title: string;
+  reward_image_url: string | null;
+  milestones: Array<{ position: number; label: string }>;
+}
+
 interface CardPageClientProps {
   slug: string;
   businessName: string;
   business: {
     points_per_purchase: number | null;
     pesos_per_point: number | null;
+    loyalty_mode?: 'points' | 'stamps';
+    stamp_template?: StampTemplateData | null;
+    logo_url?: string | null;
   };
   joinCode: string | null;
   initialCardData?: InitialCardData | null;
@@ -56,26 +67,43 @@ export function CardPageClient({
               {businessName} Loyalty
             </h1>
             <p className="text-gray-600">
-              Join {businessName}&apos;s rewards program and start earning points today!
+              {business.loyalty_mode === 'stamps'
+                ? `Collect stamps at ${businessName} and earn rewards!`
+                : `Join ${businessName}'s rewards program and start earning points today!`}
             </p>
           </div>
 
           {/* Benefits */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="bg-linear-to-br from-secondary/10 to-secondary/5 border border-secondary/20 rounded-2xl p-4 text-center">
-              <Star className="w-6 h-6 text-secondary mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-900">Earn Points</p>
-              <p className="text-xs text-gray-600">
-                {business.points_per_purchase || 1} pt per{' '}
-                {business.pesos_per_point ? `₱${business.pesos_per_point}` : 'purchase'}
-              </p>
+          {business.loyalty_mode === 'stamps' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="bg-linear-to-br from-amber-50 to-amber-100/50 border border-amber-200 rounded-2xl p-4 text-center">
+                <Stamp className="w-6 h-6 text-amber-500 mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-900">Collect Stamps</p>
+                <p className="text-xs text-gray-600">1 stamp per visit</p>
+              </div>
+              <div className="bg-linear-to-br from-primary/5 to-secondary/5 border border-primary/10 rounded-2xl p-4 text-center">
+                <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-900">Earn Rewards</p>
+                <p className="text-xs text-gray-600">Complete your card for a reward</p>
+              </div>
             </div>
-            <div className="bg-linear-to-br from-primary/5 to-secondary/5 border border-primary/10 rounded-2xl p-4 text-center">
-              <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-900">Get Rewards</p>
-              <p className="text-xs text-gray-600">Redeem for exclusive perks</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="bg-linear-to-br from-secondary/10 to-secondary/5 border border-secondary/20 rounded-2xl p-4 text-center">
+                <Star className="w-6 h-6 text-secondary mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-900">Earn Points</p>
+                <p className="text-xs text-gray-600">
+                  {business.points_per_purchase || 1} pt per{' '}
+                  {business.pesos_per_point ? `₱${business.pesos_per_point}` : 'purchase'}
+                </p>
+              </div>
+              <div className="bg-linear-to-br from-primary/5 to-secondary/5 border border-primary/10 rounded-2xl p-4 text-center">
+                <Gift className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium text-gray-900">Get Rewards</p>
+                <p className="text-xs text-gray-600">Redeem for exclusive perks</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Layout: New Customer CTA + Lookup */}
           <div className="grid md:grid-cols-2 gap-6 items-start">

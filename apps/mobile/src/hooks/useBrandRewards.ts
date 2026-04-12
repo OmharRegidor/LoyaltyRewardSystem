@@ -41,6 +41,10 @@ export function useBrandRewards(businessId: string) {
     total_stamps: number;
     reward_title: string;
     is_completed: boolean;
+    reward_image_url: string | null;
+    milestones: Array<{ position: number; label: string }>;
+    redeemed_milestones: Array<{ position: number }>;
+    paused_at_milestone: number | null;
   } | null>(null);
 
   // Find the customer ID linked to this specific business
@@ -166,6 +170,10 @@ export function useBrandRewards(businessId: string) {
               total_stamps: cards[0].total_stamps,
               reward_title: cards[0].reward_title,
               is_completed: cards[0].is_completed,
+              reward_image_url: cards[0].reward_image_url ?? null,
+              milestones: cards[0].milestones ?? [],
+              redeemed_milestones: cards[0].redeemed_milestones ?? [],
+              paused_at_milestone: cards[0].paused_at_milestone ?? null,
             });
             found = true;
             break;

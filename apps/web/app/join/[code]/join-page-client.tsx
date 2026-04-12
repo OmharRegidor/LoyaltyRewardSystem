@@ -18,6 +18,7 @@ import {
   CreditCard,
   Users,
   Lock,
+  Stamp,
 } from 'lucide-react';
 import { CardModal } from '@/app/business/[slug]/card/card-modal';
 
@@ -61,6 +62,7 @@ interface JoinPageClientProps {
   pointsPerPurchase: number | null;
   pesosPerPoint: number | null;
   prefillEmail: string;
+  loyaltyMode?: 'points' | 'stamps';
 }
 
 type Step = 'info' | 'success';
@@ -84,6 +86,7 @@ export function JoinPageClient({
   pointsPerPurchase,
   pesosPerPoint,
   prefillEmail,
+  loyaltyMode = 'points',
 }: JoinPageClientProps) {
   const [step, setStep] = useState<Step>('info');
   const [error, setError] = useState<string | null>(null);
@@ -178,18 +181,30 @@ export function JoinPageClient({
           {step === 'info' && (
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
-                <Star className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
-                <p className="text-xs font-medium text-gray-900">Earn Points</p>
-                <p className="text-[10px] text-gray-500">
-                  {pointsPerPurchase || 1} pt per{' '}
-                  {pesosPerPoint ? `P${pesosPerPoint}` : 'purchase'}
-                </p>
+                {loyaltyMode === 'stamps' ? (
+                  <>
+                    <Stamp className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+                    <p className="text-xs font-medium text-gray-900">Collect Stamps</p>
+                    <p className="text-[10px] text-gray-500">1 stamp per visit</p>
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-5 h-5 text-yellow-500 mx-auto mb-1" />
+                    <p className="text-xs font-medium text-gray-900">Earn Points</p>
+                    <p className="text-[10px] text-gray-500">
+                      {pointsPerPurchase || 1} pt per{' '}
+                      {pesosPerPoint ? `P${pesosPerPoint}` : 'purchase'}
+                    </p>
+                  </>
+                )}
               </div>
               <div className="bg-white border border-gray-200 rounded-xl p-3 text-center">
                 <Gift className="w-5 h-5 text-primary mx-auto mb-1" />
-                <p className="text-xs font-medium text-gray-900">Get Rewards</p>
+                <p className="text-xs font-medium text-gray-900">
+                  {loyaltyMode === 'stamps' ? 'Earn Rewards' : 'Get Rewards'}
+                </p>
                 <p className="text-[10px] text-gray-500">
-                  Redeem for exclusive perks
+                  {loyaltyMode === 'stamps' ? 'Complete your card for a reward' : 'Redeem for exclusive perks'}
                 </p>
               </div>
             </div>

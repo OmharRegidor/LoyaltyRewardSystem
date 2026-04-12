@@ -154,8 +154,9 @@ function friendlyTitle(description: string | null, isEarn: boolean): string {
   if (lower.includes('referral')) return 'Referral Bonus';
   if (lower.includes('welcome')) return 'Welcome Bonus';
   if (lower.includes('bonus')) return 'Bonus Points';
-  // Strip POS Sale reference IDs like "POS Sale #20260227-0001"
-  if (lower.startsWith('pos sale')) return 'Purchase';
+  // Old POS Sales with reference IDs like "POS Sale #20260227-0001" → generic "Purchase"
+  // New sales store item names directly (e.g., "Americano, Accommodation x2") — pass through
+  if (lower.startsWith('pos sale #')) return 'Purchase';
   if (lower.includes('redeem') || lower.includes('redemption'))
     return 'Reward Redeemed';
   return description;

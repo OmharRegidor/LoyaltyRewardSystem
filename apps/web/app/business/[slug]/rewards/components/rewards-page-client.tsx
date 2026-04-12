@@ -12,11 +12,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Star, Sparkles } from 'lucide-react';
+import { Gift, Star, Sparkles, Stamp } from 'lucide-react';
 import type {
   PublicBusiness,
   PublicReward,
 } from '@/lib/services/public-business.service';
+import { PublicStampCard } from '@/components/public/stamp-card-preview';
 
 // ============================================
 // TYPES
@@ -76,6 +77,36 @@ export function RewardsPageClient({
 
   if (!mounted) {
     return null;
+  }
+
+  // Stamp-mode businesses show stamp card instead of rewards catalog
+  if (business.loyalty_mode === 'stamps' && business.stamp_template) {
+    return (
+      <div className="relative min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-6">
+              <Stamp className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                {business.name} Stamp Card
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Collect stamps with every visit and earn rewards!
+              </p>
+            </div>
+            <PublicStampCard
+              totalStamps={business.stamp_template.total_stamps}
+              rewardTitle={business.stamp_template.reward_title}
+              rewardImageUrl={business.stamp_template.reward_image_url}
+              milestones={business.stamp_template.milestones}
+              businessName={business.name}
+              businessLogoUrl={business.logo_url}
+              mode="flippable"
+            />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

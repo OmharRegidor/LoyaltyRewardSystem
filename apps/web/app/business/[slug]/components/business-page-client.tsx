@@ -19,8 +19,10 @@ import {
   Phone,
   Gift,
   Star,
+  Stamp,
 } from 'lucide-react';
 import type { PublicBusiness } from '@/lib/services/public-business.service';
+import { PublicStampCard } from '@/components/public/stamp-card-preview';
 
 // ============================================
 // TYPES
@@ -144,17 +146,31 @@ export function BusinessPageClient({
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 mt-2">
-                <Button
-                  variant="outline"
-                  asChild
-                  size="lg"
-                  className="rounded-xl px-4 sm:px-8 h-10 sm:h-12 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold"
-                >
-                  <Link href={`/business/${slug}/rewards`}>
-                    <Gift className="mr-2 h-5 w-5" />
-                    View Rewards
-                  </Link>
-                </Button>
+                {business.loyalty_mode === 'stamps' ? (
+                  <Button
+                    variant="outline"
+                    asChild
+                    size="lg"
+                    className="rounded-xl px-4 sm:px-8 h-10 sm:h-12 border-2 border-amber-500 text-amber-700 hover:bg-amber-500 hover:text-white transition-all font-semibold"
+                  >
+                    <Link href={`/business/${slug}/card`}>
+                      <Stamp className="mr-2 h-5 w-5" />
+                      Get My Stamp Card
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    asChild
+                    size="lg"
+                    className="rounded-xl px-4 sm:px-8 h-10 sm:h-12 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold"
+                  >
+                    <Link href={`/business/${slug}/rewards`}>
+                      <Gift className="mr-2 h-5 w-5" />
+                      View Rewards
+                    </Link>
+                  </Button>
+                )}
               </div>
             </motion.div>
 
@@ -214,16 +230,29 @@ export function BusinessPageClient({
                 <CardHeader className="relative pb-3">
                   <CardTitle className="flex items-center gap-3 text-base text-gray-900">
                     <div className="p-2 rounded-xl bg-linear-to-br from-primary to-secondary text-white">
-                      <Star className="h-4 w-4" />
+                      {business.loyalty_mode === 'stamps' ? (
+                        <Stamp className="h-4 w-4" />
+                      ) : (
+                        <Star className="h-4 w-4" />
+                      )}
                     </div>
-                    Loyalty Program
+                    {business.loyalty_mode === 'stamps' ? 'Stamp Card' : 'Loyalty Program'}
                   </CardTitle>
                   <CardDescription className="text-sm text-gray-500">
-                    Earn points with every purchase
+                    {business.loyalty_mode === 'stamps'
+                      ? 'Collect stamps with every visit'
+                      : 'Earn points with every purchase'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="relative pt-0">
-                  {business.points_per_purchase || business.pesos_per_point ? (
+                  {business.loyalty_mode === 'stamps' && business.stamp_template ? (
+                    <PublicStampCard
+                      totalStamps={business.stamp_template.total_stamps}
+                      rewardTitle={business.stamp_template.reward_title}
+                      rewardImageUrl={business.stamp_template.reward_image_url}
+                      milestones={business.stamp_template.milestones}
+                    />
+                  ) : business.points_per_purchase || business.pesos_per_point ? (
                     <div className="space-y-3">
                       {business.points_per_purchase && (
                         <div className="p-3 rounded-xl bg-linear-to-r from-primary/10 to-secondary/10 border border-primary/20">
