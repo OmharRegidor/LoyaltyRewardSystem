@@ -390,7 +390,7 @@ export async function getSales(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
     .order("created_at", { ascending: false });
@@ -404,9 +404,7 @@ export async function getSales(
   if (filter?.payment_method) {
     query = query.eq("payment_method", filter.payment_method);
   }
-  if (filter?.status) {
-    query = query.eq("status", filter.status);
-  }
+  // Note: pos_sales table doesn't have a status column, skip that filter
   if (filter?.customer_id) {
     query = query.eq("customer_id", filter.customer_id);
   }
@@ -439,10 +437,10 @@ export async function getSales(
 export async function getSaleById(id: string): Promise<SaleWithItems | null> {
   const supabase = createServiceClient();
 
-  // Get sale
+  // Get sale from pos_sales
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sale, error: saleError } = await (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .select("*")
     .eq("id", id)
     .single();
@@ -502,7 +500,7 @@ export async function voidSale(input: VoidSaleInput): Promise<Sale> {
   // Get the sale first to check if it can be voided
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existingSale, error: fetchError } = await (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .select("*, customer_id, points_earned, business_id, sale_number")
     .eq("id", input.sale_id)
     .single();
@@ -518,7 +516,7 @@ export async function voidSale(input: VoidSaleInput): Promise<Sale> {
   // Void the sale
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sale, error: voidError } = await (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .update({
       status: "voided",
       voided_at: new Date().toISOString(),
@@ -579,10 +577,10 @@ export async function getDailySummary(
   const startOfDay = `${targetDate}T00:00:00+08:00`;
   const endOfDay = `${targetDate}T23:59:59.999+08:00`;
 
-  // Get all sales for the day
+  // Get all sales for the day from pos_sales
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sales, error } = await (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
     .gte("created_at", startOfDay)
@@ -835,13 +833,12 @@ export async function getSalesAnalytics(
 ): Promise<SalesAnalytics> {
   const supabase = createServiceClient();
 
-  // Get all completed sales in the date range
+  // Get all sales in the date range from pos_sales
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sales, error } = await (supabase as any)
-    .from("sales")
+    .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
-    .eq("status", "completed")
     .gte("created_at", `${startDate}T00:00:00.000Z`)
     .lte("created_at", `${endDate}T23:59:59.999Z`);
 
