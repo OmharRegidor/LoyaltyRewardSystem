@@ -32,10 +32,22 @@ const nextConfig = {
       },
     ];
   },
-}
+};
 
-export default withSentryConfig(nextConfig, {
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-});
+// Only wrap with Sentry when the required credentials are present.
+// Without SENTRY_AUTH_TOKEN the sourcemap upload step fails the Vercel build.
+// Locally and in preview environments without Sentry set up, export the
+// plain Next.js config so the build succeeds without Sentry instrumentation.
+const hasSentryCreds = Boolean(
+  process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT &&
+    process.env.SENTRY_AUTH_TOKEN,
+);
+
+export default hasSentryCreds
+  ? withSentryConfig(nextConfig, {
+      silent: true,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+    })
+  : nextConfig;
