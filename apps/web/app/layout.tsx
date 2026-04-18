@@ -2,7 +2,9 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "sonner";
 import type { Viewport } from "next";
+import { ImpersonationBanner } from "@/components/shared/impersonation-banner";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -51,7 +53,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${plusJakartaSans.variable} scroll-smooth`}>
       <body className="font-sans antialiased overflow-x-hidden" suppressHydrationWarning>
+        <ImpersonationBanner />
         {children}
+        <Toaster richColors position="top-center" />
         <Analytics />
       </body>
     </html>

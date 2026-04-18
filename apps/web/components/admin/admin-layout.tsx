@@ -9,6 +9,7 @@ import {
   Shield,
   LayoutDashboard,
   Building2,
+  Users,
   ArrowUpCircle,
   Receipt,
   ScrollText,
@@ -27,6 +28,7 @@ interface AdminLayoutProps {
 const baseNavigation = [
   { name: 'Overview', path: '', icon: LayoutDashboard },
   { name: 'Businesses', path: '/businesses', icon: Building2 },
+  { name: 'Users', path: '/users', icon: Users },
   { name: 'Upgrades', path: '/upgrades', icon: ArrowUpCircle },
   { name: 'Invoices', path: '/invoices', icon: Receipt },
   { name: 'Audit Logs', path: '/audit-logs', icon: ScrollText },

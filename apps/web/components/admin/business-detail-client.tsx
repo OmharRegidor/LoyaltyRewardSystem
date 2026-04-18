@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -128,6 +129,7 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
   const [submittingPlan, setSubmittingPlan] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [showAllPlanChanges, setShowAllPlanChanges] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -161,7 +163,12 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
       const note: AdminNote = await res.json();
       setData((prev) => prev ? { ...prev, notes: [note, ...prev.notes] } : prev);
       setNoteContent('');
-    } catch { /* Silently fail */ } finally { setSubmittingNote(false); }
+      toast.success('Note added');
+    } catch {
+      toast.error('Failed to add note. Please try again.');
+    } finally {
+      setSubmittingNote(false);
+    }
   }
 
   async function handleAddTag(tag?: string) {
@@ -173,16 +180,30 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
     setSubmittingTag(true);
     try {
       const res = await fetch(`/api/admin/businesses/${businessId}/tags`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tag: tagValue }) });
-      if (!res.ok) setData((prev) => prev ? { ...prev, tags: prev.tags.filter((t) => t.id !== optimisticTag.id) } : prev);
-    } catch { setData((prev) => prev ? { ...prev, tags: prev.tags.filter((t) => t.id !== optimisticTag.id) } : prev); } finally { setSubmittingTag(false); }
+      if (!res.ok) {
+        setData((prev) => prev ? { ...prev, tags: prev.tags.filter((t) => t.id !== optimisticTag.id) } : prev);
+        toast.error('Failed to add tag.');
+      }
+    } catch {
+      setData((prev) => prev ? { ...prev, tags: prev.tags.filter((t) => t.id !== optimisticTag.id) } : prev);
+      toast.error('Failed to add tag.');
+    } finally {
+      setSubmittingTag(false);
+    }
   }
 
   async function handleRemoveTag(tag: string) {
     setData((prev) => prev ? { ...prev, tags: prev.tags.filter((t) => t.tag !== tag) } : prev);
     try {
       const res = await fetch(`/api/admin/businesses/${businessId}/tags`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tag }) });
-      if (!res.ok) fetchData();
-    } catch { fetchData(); }
+      if (!res.ok) {
+        toast.error('Failed to remove tag.');
+        fetchData();
+      }
+    } catch {
+      toast.error('Failed to remove tag.');
+      fetchData();
+    }
   }
 
   async function handleChangePlan() {
@@ -202,18 +223,30 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
           }),
         }),
       });
-      if (!res.ok) throw new Error('Failed to change plan');
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Failed to change plan');
+      }
       setPlanModalOpen(false); setSelectedPlanId(''); setPlanChangeReason('');
       setPlanModulePos(false);
+      toast.success('Plan updated');
       await fetchData();
-    } catch { /* Keep modal open */ } finally { setSubmittingPlan(false); }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to change plan.');
+    } finally {
+      setSubmittingPlan(false);
+    }
   }
 
-  function handleCopyEmail() {
+  async function handleCopyEmail() {
     if (!data?.business.owner_email) return;
-    navigator.clipboard.writeText(data.business.owner_email);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(data.business.owner_email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy to clipboard.');
+    }
   }
 
   if (loading) {
@@ -414,7 +447,21 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
         {planChanges.length === 0 ? (
           <p className="text-sm text-gray-400">No plan changes recorded. Business has been on {business.plan_name} plan since signup.</p>
         ) : (
-          <div className="space-y-4">{planChanges.map((change) => <PlanChangeItem key={change.id} change={change} />)}</div>
+          <>
+            <div className="space-y-4">
+              {(showAllPlanChanges ? planChanges : planChanges.slice(0, 3)).map((change) => (
+                <PlanChangeItem key={change.id} change={change} />
+              ))}
+            </div>
+            {planChanges.length > 3 && (
+              <button
+                onClick={() => setShowAllPlanChanges((v) => !v)}
+                className="mt-3 text-sm text-orange-600 hover:text-orange-700 transition-colors"
+              >
+                {showAllPlanChanges ? 'Show less' : `Show all ${planChanges.length} changes`}
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -422,6 +469,11 @@ export function BusinessDetailClient({ businessId }: BusinessDetailClientProps) 
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/businesses/${businessId}/customers`} className="gap-1.5">
+              <Users className="w-3.5 h-3.5" />View Customers
+            </Link>
+          </Button>
           {business.slug && <Button variant="outline" size="sm" asChild><a href={`/b/${business.slug}`} target="_blank" rel="noopener noreferrer" className="gap-1.5"><ExternalLink className="w-3.5 h-3.5" />Visit Public Page</a></Button>}
           {business.owner_email && <Button variant="outline" size="sm" asChild><a href={`mailto:${business.owner_email}`} className="gap-1.5"><Mail className="w-3.5 h-3.5" />Email Owner</a></Button>}
           {business.owner_email && <Button variant="outline" size="sm" onClick={handleCopyEmail} className="gap-1.5"><Copy className="w-3.5 h-3.5" />{copied ? 'Copied!' : 'Copy Owner Email'}</Button>}

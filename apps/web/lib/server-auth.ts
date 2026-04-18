@@ -11,6 +11,38 @@ export interface AuthUser {
   role: AppRole;
 }
 
+// In-process role cache — avoids a DB roundtrip per request on every admin route.
+// 60s TTL is safe because role changes are rare admin ops; worst case is a brief
+// mismatch until the cache expires.
+interface CachedRole {
+  role: AppRole;
+  expiresAt: number;
+}
+const ROLE_CACHE_TTL_MS = 60_000;
+const roleCache = new Map<string, CachedRole>();
+
+function getCachedRole(userId: string): AppRole | null {
+  const entry = roleCache.get(userId);
+  if (!entry) return null;
+  if (entry.expiresAt < Date.now()) {
+    roleCache.delete(userId);
+    return null;
+  }
+  return entry.role;
+}
+
+function setCachedRole(userId: string, role: AppRole): void {
+  roleCache.set(userId, {
+    role,
+    expiresAt: Date.now() + ROLE_CACHE_TTL_MS,
+  });
+}
+
+export function invalidateRoleCache(userId?: string): void {
+  if (userId) roleCache.delete(userId);
+  else roleCache.clear();
+}
+
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const supabase = await createServerSupabaseClient();
 
@@ -21,6 +53,15 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   if (error || !user) return null;
 
+  const cachedRole = getCachedRole(user.id);
+  if (cachedRole) {
+    return {
+      id: user.id,
+      email: user.email ?? '',
+      role: cachedRole,
+    };
+  }
+
   const { data: profile } = await supabase
     .from('users')
     .select('role_id, roles(name)')
@@ -29,6 +70,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   const role =
     (profile?.roles as unknown as { name: AppRole } | null)?.name ?? 'customer';
+
+  setCachedRole(user.id, role);
 
   return {
     id: user.id,

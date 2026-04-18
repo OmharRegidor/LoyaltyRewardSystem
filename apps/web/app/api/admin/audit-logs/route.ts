@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase-server';
+import { createAdminServiceClient } from '@/lib/supabase-server';
 import { getApiUser } from '@/lib/server-auth';
 import { isAdmin } from '@/lib/rbac';
+import { sanitizeIlikeSearch } from '@/lib/security';
 import type { AuditLogEntry, AuditLogsResponse } from '@/lib/admin';
 
 const PAGE_SIZE = 50;
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const service = createServiceClient();
+  const service = createAdminServiceClient();
   const params = request.nextUrl.searchParams;
 
   const eventType = params.get('eventType') || '';
@@ -26,14 +27,14 @@ export async function GET(request: NextRequest) {
   // If searching by business name, resolve matching business IDs first
   let businessIds: string[] | null = null;
   if (businessSearch) {
-    const sanitizedBizSearch = businessSearch
-      .replace(/%/g, '\\%')
-      .replace(/_/g, '\\_')
-      .slice(0, 100);
-    const { data: matchedBusinesses } = await service
-      .from('businesses')
-      .select('id')
-      .ilike('name', `%${sanitizedBizSearch}%`);
+    const sanitizedBizSearch = sanitizeIlikeSearch(businessSearch);
+    const { data: matchedBusinesses } = sanitizedBizSearch
+      ? await service
+          .from('businesses')
+          .select('id')
+          .ilike('name', `%${sanitizedBizSearch}%`)
+          .limit(200)
+      : { data: [] };
 
     businessIds = (matchedBusinesses ?? []).map((b) => b.id);
 
@@ -79,15 +80,9 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  // Fetch distinct event types for filter dropdown (capped to avoid full table scan)
-  const eventTypesQuery = service
-    .from('audit_logs')
-    .select('event_type')
-    .limit(5000);
-
   const [dataResult, eventTypesResult] = await Promise.all([
     query,
-    eventTypesQuery,
+    service.rpc('get_audit_event_types'),
   ]);
 
   if (dataResult.error) {
@@ -97,12 +92,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Extract unique event types
-  const uniqueEventTypes = [
-    ...new Set(
-      (eventTypesResult.data ?? []).map((r) => r.event_type),
-    ),
-  ].sort();
+  const uniqueEventTypes = (eventTypesResult.data ?? []) as string[];
 
   interface AuditLogRow {
     id: string;

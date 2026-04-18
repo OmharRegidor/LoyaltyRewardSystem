@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Bell, Check, X, ExternalLink, Loader2 } from 'lucide-react';
 import {
   Popover,
@@ -29,10 +30,16 @@ export function NotificationBell() {
   const fetchCount = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/upgrade-requests?status=pending&countOnly=true');
+      if (res.status === 401) {
+        // Session expired — send user back to login instead of looping silently
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) return;
       const data = await res.json();
       setPendingCount(data.count ?? 0);
     } catch {
-      // Silently fail
+      // Transient network error — try again on next poll
     }
   }, []);
 
@@ -51,8 +58,38 @@ export function NotificationBell() {
 
   useEffect(() => {
     fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
+
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const start = () => {
+      if (interval) return;
+      interval = setInterval(fetchCount, 60000);
+    };
+    const stop = () => {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+    };
+
+    if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+      start();
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCount();
+        start();
+      } else {
+        stop();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      stop();
+    };
   }, [fetchCount]);
 
   useEffect(() => {
@@ -70,9 +107,12 @@ export function NotificationBell() {
       if (res.ok) {
         setRequests((prev) => prev.filter((r) => r.id !== id));
         setPendingCount((prev) => Math.max(0, prev - 1));
+        toast.success('Upgrade approved');
+      } else {
+        toast.error('Failed to approve upgrade request.');
       }
     } catch {
-      // Error handling
+      toast.error('Failed to approve upgrade request.');
     } finally {
       setActionLoading(null);
     }
@@ -91,9 +131,12 @@ export function NotificationBell() {
         setPendingCount((prev) => Math.max(0, prev - 1));
         setRejectingId(null);
         setRejectReason('');
+        toast.success('Upgrade rejected');
+      } else {
+        toast.error('Failed to reject upgrade request.');
       }
     } catch {
-      // Error handling
+      toast.error('Failed to reject upgrade request.');
     } finally {
       setActionLoading(null);
     }

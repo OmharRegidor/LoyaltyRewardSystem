@@ -5,7 +5,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { AdminLayout } from '@/components/admin/admin-layout';
-import { Badge } from '@/components/ui/badge';
+import { PlanBadge, StatusBadge } from '@/components/admin/shared/badges';
+import { formatCompactNumber as formatNumber, formatRelativeTime } from '@/lib/format';
 import {
   Building2,
   Users,
@@ -17,33 +18,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import type { AdminPlatformStats, AdminBusinessStats } from '@/lib/admin';
-
-// ============================================
-// HELPERS
-// ============================================
-
-function formatNumber(num: number): string {
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return num.toLocaleString();
-}
-
-function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return 'N/A';
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffMins = Math.floor(diffMs / 60_000);
-  const diffHours = Math.floor(diffMs / 3_600_000);
-  const diffDays = Math.floor(diffMs / 86_400_000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 30) return `${diffDays}d ago`;
-  return new Date(dateStr).toLocaleDateString();
-}
 
 // ============================================
 // TYPES
@@ -64,6 +38,7 @@ export default function AdminOverviewPage() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   const fetchStats = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -72,6 +47,7 @@ export default function AdminOverviewPage() {
       if (res.ok) {
         const json: StatsResponse = await res.json();
         setData(json);
+        setUpdatedAt(new Date().toISOString());
       }
     } finally {
       setLoading(false);
@@ -112,14 +88,21 @@ export default function AdminOverviewPage() {
             <h1 className="text-2xl font-bold text-gray-900">Platform Overview</h1>
             <p className="text-gray-500 mt-1">NoxaLoyalty admin dashboard</p>
           </div>
-          <button onClick={() => fetchStats(true)} disabled={refreshing} className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 transition-colors disabled:opacity-50">
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            {updatedAt && (
+              <span className="text-xs text-gray-400 hidden sm:inline">
+                Updated {formatRelativeTime(updatedAt).toLowerCase()}
+              </span>
+            )}
+            <button onClick={() => fetchStats(true)} disabled={refreshing} className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-xl border border-gray-200 transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {statCards.map((stat) => (
             <div key={stat.label} className="bg-white border border-gray-200 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-3">
@@ -241,21 +224,3 @@ function LoadingSkeleton() {
   );
 }
 
-function PlanBadge({ plan }: { plan: string | null }) {
-  if (!plan) return <span className="text-gray-400">-</span>;
-  const isEnterprise = plan.toLowerCase().includes('enterprise');
-  return (
-    <Badge className={isEnterprise ? 'bg-orange-50 text-orange-700 border-orange-200' : 'bg-gray-100 text-gray-500 border-gray-200'}>
-      {plan}
-    </Badge>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    active: 'bg-green-50 text-green-700 border-green-200',
-    cancelled: 'bg-red-50 text-red-700 border-red-200',
-    expired: 'bg-gray-100 text-gray-500 border-gray-200',
-  };
-  return <Badge className={styles[status] ?? 'bg-gray-100 text-gray-500 border-gray-200'}>{status}</Badge>;
-}
