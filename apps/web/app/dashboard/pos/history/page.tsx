@@ -343,7 +343,7 @@ export default function POSHistoryPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredSales.map((sale) => {
-                      const paymentConfig = paymentMethodConfig[sale.payment_method];
+                      const paymentConfig = paymentMethodConfig[(sale.payment_method ?? 'cash') as PaymentMethod];
                       const PaymentIcon = paymentConfig.icon;
 
                       return (
@@ -537,7 +537,7 @@ export default function POSHistoryPage() {
                   <span className="text-muted-foreground">Payment</span>
                   <span className="inline-flex items-center gap-1.5">
                     {(() => {
-                      const config = paymentMethodConfig[selectedSale.payment_method];
+                      const config = paymentMethodConfig[(selectedSale.payment_method ?? 'cash') as PaymentMethod];
                       const Icon = config.icon;
                       return (
                         <>

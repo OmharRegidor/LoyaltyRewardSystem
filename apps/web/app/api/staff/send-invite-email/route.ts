@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase-server';
 import { sendStaffInviteEmail } from '@/lib/email';
 import { z } from 'zod';
 
 const SendInviteEmailSchema = z.object({
   email: z.string().email(),
   staffName: z.string().min(1),
-  businessName: z.string().min(1),
   inviteUrl: z.string().url(),
   role: z.string().min(1),
 });
@@ -25,6 +24,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const serviceClient = createServiceClient();
+    const { data: business } = await serviceClient
+      .from('businesses')
+      .select('name')
+      .eq('owner_id', user.id)
+      .single();
+
+    if (!business) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
     const parsed = SendInviteEmailSchema.safeParse(body);
 
@@ -35,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, staffName, businessName, inviteUrl, role } = parsed.data;
+    const { email, staffName, inviteUrl, role } = parsed.data;
 
     // Validate inviteUrl matches our app domain to prevent phishing
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -58,7 +71,7 @@ export async function POST(request: NextRequest) {
     const result = await sendStaffInviteEmail({
       to: email,
       staffName,
-      businessName,
+      businessName: business.name,
       inviteUrl,
       role,
     });

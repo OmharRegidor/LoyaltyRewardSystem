@@ -448,8 +448,8 @@ export function JoinPageClient({
                 Welcome to {businessName}!
               </h2>
               <p className="text-sm text-gray-500 mb-6">
-                Your loyalty card is ready. Show the QR code at checkout to earn
-                points!
+                Your loyalty card is ready. Show the QR code at checkout to{' '}
+                {loyaltyMode === 'stamps' ? 'collect stamps' : 'earn points'}!
               </p>
               <button
                 onClick={() => setShowCardModal(true)}

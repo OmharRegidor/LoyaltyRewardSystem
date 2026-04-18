@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const email = parsed.data.email.toLowerCase().trim();
 
     // Per-email rate limit: 5 attempts / 15 min
-    const rateLimit = checkRateLimit(email, 'login');
+    const rateLimit = await checkRateLimit(email, 'login');
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },

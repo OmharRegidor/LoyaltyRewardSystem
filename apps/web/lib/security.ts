@@ -2,6 +2,8 @@
 
 import { headers } from 'next/headers';
 import { createServiceClient } from './supabase-server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 // ============================================
 // TYPES
@@ -21,12 +23,6 @@ interface RateLimitResult {
 // ============================================
 // RATE LIMITING
 // ============================================
-
-/**
- * Simple in-memory rate limiter
- * For production, consider using Redis or Upstash
- */
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 /**
  * Rate limit configurations for different endpoints
@@ -50,44 +46,80 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   points_award: { windowMs: 60 * 1000, maxRequests: 20 }, // 20 awards per minute
 };
 
+// Lazy Redis singleton — only initialized when env vars are present
+let _redis: Redis | null = null;
+function getRedis(): Redis | null {
+  if (_redis) return _redis;
+  if (
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
+    _redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+  return _redis;
+}
+
+// Cache Ratelimit instances per endpoint type
+const _limiters = new Map<string, Ratelimit>();
+function getRatelimiter(endpointType: string, config: RateLimitConfig): Ratelimit {
+  const cached = _limiters.get(endpointType);
+  if (cached) return cached;
+
+  const redis = getRedis();
+  if (!redis) {
+    // Should not be called when Redis is absent; caller guards this
+    throw new Error('Redis not configured');
+  }
+
+  const windowSeconds = Math.round(config.windowMs / 1000);
+  const limiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(config.maxRequests, `${windowSeconds} s`),
+    prefix: `rl:${endpointType}`,
+  });
+  _limiters.set(endpointType, limiter);
+  return limiter;
+}
+
 /**
- * Check rate limit for a given key and endpoint type
+ * Check rate limit for a given key and endpoint type.
+ * Falls open (allowed: true) if Redis is not configured.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   endpointType: keyof typeof RATE_LIMITS
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const config = RATE_LIMITS[endpointType];
   if (!config) {
     return { allowed: true, remaining: Infinity, resetAt: new Date() };
   }
 
-  const now = Date.now();
-  const storeKey = `${endpointType}:${key}`;
-  const existing = rateLimitStore.get(storeKey);
-
-  // Reset if window expired
-  if (!existing || existing.resetAt < now) {
-    rateLimitStore.set(storeKey, {
-      count: 1,
-      resetAt: now + config.windowMs,
-    });
-    return {
-      allowed: true,
-      remaining: config.maxRequests - 1,
-      resetAt: new Date(now + config.windowMs),
-    };
+  // Fall open when Redis is not configured (local dev or missing env vars)
+  const redis = getRedis();
+  if (!redis) {
+    return { allowed: true, remaining: config.maxRequests, resetAt: new Date() };
   }
 
-  // Increment count
-  existing.count++;
-  const allowed = existing.count <= config.maxRequests;
-
-  return {
-    allowed,
-    remaining: Math.max(0, config.maxRequests - existing.count),
-    resetAt: new Date(existing.resetAt),
-  };
+  const limiter = getRatelimiter(endpointType as string, config);
+  try {
+    const result = await limiter.limit(key);
+    return {
+      allowed: result.success,
+      remaining: result.remaining,
+      resetAt: new Date(result.reset),
+    };
+  } catch (err) {
+    // Redis is configured but unreachable — fail closed to prevent abuse.
+    console.error('[rate-limit] Redis error, failing closed:', err);
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date(Date.now() + config.windowMs),
+    };
+  }
 }
 
 /**
@@ -118,23 +150,10 @@ export interface AbuseCheckResult {
 }
 
 /**
- * Detect multiple organizations using same payment method
- */
-export async function checkPaymentMethodAbuse(
-  stripeCustomerId: string
-): Promise<AbuseCheckResult> {
-  // This would query Stripe to check if the payment method
-  // is associated with multiple customers
-  // Implementation depends on your abuse tolerance
-
-  return { suspicious: false, severity: 'low' };
-}
-
-/**
  * Detect rapid signups from same IP
  */
 export async function checkSignupAbuse(ip: string): Promise<AbuseCheckResult> {
-  const result = checkRateLimit(ip, 'signup');
+  const result = await checkRateLimit(ip, 'signup');
 
   if (!result.allowed) {
     return {

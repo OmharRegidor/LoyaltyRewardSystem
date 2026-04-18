@@ -47,8 +47,7 @@ interface ProcessStaffSaleResult {
 export async function getProducts(businessId: string): Promise<Product[]> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("business_id", businessId)
@@ -73,8 +72,7 @@ export async function getActiveProducts(
 ): Promise<Product[]> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("business_id", businessId)
@@ -96,8 +94,7 @@ export async function getActiveProducts(
 export async function getProductById(id: string): Promise<Product | null> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("id", id)
@@ -120,8 +117,7 @@ export async function createProduct(
 ): Promise<Product> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("products")
     .insert({
       business_id: businessId,
@@ -172,8 +168,7 @@ export async function updateProduct(
   if (input.low_stock_threshold !== undefined)
     updateData.low_stock_threshold = input.low_stock_threshold;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("products")
     .update(updateData)
     .eq("id", id)
@@ -191,8 +186,7 @@ export async function updateProduct(
 export async function deleteProduct(id: string): Promise<void> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("products")
     .delete()
     .eq("id", id);
@@ -271,8 +265,7 @@ export async function createSale(
   // Generate sale number using the database function (may not exist yet)
   let sale_number = `SALE-${Date.now()}`;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: saleNumberData } = await (supabase as any).rpc(
+    const { data: saleNumberData } = await supabase.rpc(
       "generate_sale_number",
       {
         p_business_id: input.business_id,
@@ -286,8 +279,7 @@ export async function createSale(
   }
 
   // Create the sale
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sale, error: saleError } = await (supabase as any)
+  const { data: sale, error: saleError } = await supabase
     .from("sales")
     .insert({
       business_id: input.business_id,
@@ -327,8 +319,7 @@ export async function createSale(
     total_centavos: item.unit_price_centavos * item.quantity,
   }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: items, error: itemsError } = await (supabase as any)
+  const { data: items, error: itemsError } = await supabase
     .from("sale_items")
     .insert(itemsToInsert)
     .select();
@@ -388,8 +379,7 @@ export async function getSales(
 ): Promise<Sale[]> {
   const supabase = createServiceClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase as any)
+  let query = supabase
     .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
@@ -438,8 +428,7 @@ export async function getSaleById(id: string): Promise<SaleWithItems | null> {
   const supabase = createServiceClient();
 
   // Get sale from pos_sales
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sale, error: saleError } = await (supabase as any)
+  const { data: sale, error: saleError } = await supabase
     .from("pos_sales")
     .select("*")
     .eq("id", id)
@@ -457,8 +446,7 @@ export async function getSaleById(id: string): Promise<SaleWithItems | null> {
   }
 
   // Get sale items
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: items } = await (supabase as any)
+  const { data: items } = await supabase
     .from("sale_items")
     .select("*")
     .eq("sale_id", id)
@@ -498,8 +486,7 @@ export async function voidSale(input: VoidSaleInput): Promise<Sale> {
   const supabase = createServiceClient();
 
   // Get the sale first to check if it can be voided
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existingSale, error: fetchError } = await (supabase as any)
+  const { data: existingSale, error: fetchError } = await supabase
     .from("pos_sales")
     .select("*, customer_id, points_earned, business_id, sale_number")
     .eq("id", input.sale_id)
@@ -514,8 +501,7 @@ export async function voidSale(input: VoidSaleInput): Promise<Sale> {
   }
 
   // Void the sale
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sale, error: voidError } = await (supabase as any)
+  const { data: sale, error: voidError } = await supabase
     .from("pos_sales")
     .update({
       status: "voided",
@@ -578,13 +564,13 @@ export async function getDailySummary(
   const endOfDay = `${targetDate}T23:59:59.999+08:00`;
 
   // Get all sales for the day from pos_sales
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sales, error } = await (supabase as any)
+  const { data: sales, error } = await supabase
     .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
     .gte("created_at", startOfDay)
-    .lte("created_at", endOfDay);
+    .lte("created_at", endOfDay)
+    .limit(5000);
 
   if (error) {
     if (error.code === "42P01" || error.message?.includes("does not exist")) {
@@ -632,8 +618,7 @@ export async function getDailySummary(
   let total_items_sold = 0;
 
   if (saleIds.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: items } = await (supabase as any)
+    const { data: items } = await supabase
       .from("sale_items")
       .select("quantity")
       .in("sale_id", saleIds);
@@ -834,13 +819,13 @@ export async function getSalesAnalytics(
   const supabase = createServiceClient();
 
   // Get all sales in the date range from pos_sales
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sales, error } = await (supabase as any)
+  const { data: sales, error } = await supabase
     .from("pos_sales")
     .select("*")
     .eq("business_id", businessId)
     .gte("created_at", `${startDate}T00:00:00.000Z`)
-    .lte("created_at", `${endDate}T23:59:59.999Z`);
+    .lte("created_at", `${endDate}T23:59:59.999Z`)
+    .limit(10000);
 
   if (error) {
     if (error.code === "42P01" || error.message?.includes("does not exist")) {
@@ -875,8 +860,7 @@ export async function getSalesAnalytics(
   > = {};
 
   if (saleIds.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: items } = await (supabase as any)
+    const { data: items } = await supabase
       .from("sale_items")
       .select("product_id, name, quantity, total_centavos")
       .in("sale_id", saleIds);

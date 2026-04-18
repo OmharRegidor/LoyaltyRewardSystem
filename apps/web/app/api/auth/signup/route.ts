@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const email = parsed.data.email.toLowerCase().trim();
 
     // Per-email rate limit: 3 attempts / 60 min
-    const rateLimit = checkRateLimit(email, 'signup');
+    const rateLimit = await checkRateLimit(email, 'signup');
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many signup attempts. Please try again later.' },

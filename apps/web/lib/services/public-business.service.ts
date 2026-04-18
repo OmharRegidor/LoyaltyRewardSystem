@@ -626,22 +626,35 @@ export async function createSelfSignupCustomer(
   // business via customer_businesses (e.g. mobile-originated customers who
   // earned points but have created_by_business_id = NULL and may have
   // different email/phone than what was entered on the web form).
-  if (!existingCustomer) {
-    const { data: linkedCustomers } = await supabase
-      .from('customer_businesses')
-      .select('customer_id, customers!inner(id, qr_code_url, email, phone)')
-      .eq('business_id', businessId);
-
-    if (linkedCustomers && linkedCustomers.length > 0) {
-      for (const link of linkedCustomers) {
-        const c = Array.isArray(link.customers) ? link.customers[0] : link.customers;
-        if (!c) continue;
-        const emailMatch = normalizedEmail && c.email && c.email.toLowerCase() === normalizedEmail;
-        const phoneMatch = normalizedPhone && c.phone && c.phone.replace(/\s+/g, '') === normalizedPhone;
-        if (emailMatch || phoneMatch) {
-          existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, email: c.email, phone: c.phone };
-          break;
-        }
+  // Lookup 2: Search for customer already linked to this business
+  // Push filter to DB instead of loading all rows into memory
+  if (!existingCustomer && (normalizedEmail || normalizedPhone)) {
+    // Try email match first
+    if (normalizedEmail) {
+      const { data } = await supabase
+        .from('customer_businesses')
+        .select('customer_id, customers!inner(id, qr_code_url, email, phone)')
+        .eq('business_id', businessId)
+        .eq('customers.email', normalizedEmail)
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        const c = Array.isArray(data.customers) ? data.customers[0] : data.customers;
+        if (c) existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, email: c.email, phone: c.phone };
+      }
+    }
+    // Try phone match if email didn't find anything
+    if (!existingCustomer && normalizedPhone) {
+      const { data } = await supabase
+        .from('customer_businesses')
+        .select('customer_id, customers!inner(id, qr_code_url, email, phone)')
+        .eq('business_id', businessId)
+        .eq('customers.phone', normalizedPhone)
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        const c = Array.isArray(data.customers) ? data.customers[0] : data.customers;
+        if (c) existingCustomer = { id: c.id, qr_code_url: c.qr_code_url, email: c.email, phone: c.phone };
       }
     }
   }

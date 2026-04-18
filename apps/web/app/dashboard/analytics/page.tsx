@@ -36,7 +36,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 const DEFAULT_KPI = {
   totalPoints: 0,
   avgPointsPerTx: 0,
-  customerLTV: 0,
   repeatRate: 0,
 };
 
@@ -235,7 +234,7 @@ export default function AnalyticsPage() {
       'Metric,Value',
       `Total Points Issued,"${kpi.totalPoints.toLocaleString()}"`,
       `Avg Points/Transaction,${kpi.avgPointsPerTx.toLocaleString()}`,
-      `Customer Lifetime Value,${kpi.customerLTV.toLocaleString()} pts`,
+      `Total Redemptions,${rewardPerformance.reduce((sum, r) => sum + r.redemptions, 0).toLocaleString()}`,
       `Repeat Customer Rate,${kpi.repeatRate}%`,
       '',
       'Monthly Points',
@@ -365,8 +364,8 @@ export default function AnalyticsPage() {
               icon: BarChart3,
             },
             {
-              label: 'Customer Lifetime Value',
-              value: `${kpi.customerLTV.toLocaleString()} pts`,
+              label: 'Total Redemptions',
+              value: rewardPerformance.reduce((sum, r) => sum + r.redemptions, 0).toLocaleString(),
               color: 'blue',
               icon: Gift,
             },
@@ -391,9 +390,6 @@ export default function AnalyticsPage() {
                 </div>
                 <p className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
                   {item.value}
-                </p>
-                <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1 font-medium">
-                  <TrendingUp className="w-3.5 h-3.5" /> vs last month
                 </p>
               </Card>
             </motion.div>

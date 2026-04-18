@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
   LogOut,
@@ -126,6 +127,8 @@ export default function StaffScannerPage() {
     paused_at_milestone?: number | null;
   } | null>(null);
   const [isQuickStamping, setIsQuickStamping] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isRedeemingMilestone, setIsRedeemingMilestone] = useState(false);
   const [showStampPOS, setShowStampPOS] = useState(false);
   const [lastSaleStampResult, setLastSaleStampResult] = useState<{
     stamps_collected: number;
@@ -648,14 +651,22 @@ export default function StaffScannerPage() {
     if (!customer || !staffData) return;
     setIsQuickStamping(true);
     try {
+      const idempotencyKey = `stamp-${customer.id}-${Date.now()}`;
       const res = await fetch('/api/staff/stamp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-idempotency-key': idempotencyKey,
+        },
         body: JSON.stringify({
           customerId: customer.id,
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to stamp card');
+        return;
+      }
       if (data.success) {
         setStampCardData(prev => ({
           card_id: data.card_id ?? prev?.card_id ?? '',
@@ -677,13 +688,15 @@ export default function StaffScannerPage() {
       }
     } catch (err) {
       console.error('Quick stamp error:', err);
+      toast.error('Failed to stamp card. Please try again.');
     } finally {
       setIsQuickStamping(false);
     }
   };
 
   const handleRedeemMilestone = async () => {
-    if (!stampCardData?.card_id || !staffData) return;
+    if (!stampCardData?.card_id || !staffData || isRedeemingMilestone) return;
+    setIsRedeemingMilestone(true);
     try {
       const res = await fetch('/api/staff/stamp/redeem-milestone', {
         method: 'POST',
@@ -691,6 +704,10 @@ export default function StaffScannerPage() {
         body: JSON.stringify({ stampCardId: stampCardData.card_id }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to redeem milestone');
+        return;
+      }
       if (data.success) {
         setStampCardData(prev => prev ? {
           ...prev,
@@ -703,11 +720,15 @@ export default function StaffScannerPage() {
       }
     } catch (err) {
       console.error('Redeem milestone error:', err);
+      toast.error('Failed to redeem milestone. Please try again.');
+    } finally {
+      setIsRedeemingMilestone(false);
     }
   };
 
   const handleRedeemStampCard = async () => {
-    if (!stampCardData?.card_id || !staffData) return;
+    if (!stampCardData?.card_id || !staffData || isRedeeming) return;
+    setIsRedeeming(true);
     try {
       const res = await fetch('/api/staff/stamp/redeem', {
         method: 'POST',
@@ -717,6 +738,10 @@ export default function StaffScannerPage() {
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to redeem card');
+        return;
+      }
       if (data.success) {
         setStampCardData({
           card_id: data.new_card_id ?? '',
@@ -731,6 +756,9 @@ export default function StaffScannerPage() {
       }
     } catch (err) {
       console.error('Redeem stamp card error:', err);
+      toast.error('Failed to redeem card. Please try again.');
+    } finally {
+      setIsRedeeming(false);
     }
   };
 

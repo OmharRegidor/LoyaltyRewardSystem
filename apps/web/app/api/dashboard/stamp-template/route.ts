@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { createServiceClient } from '@/lib/supabase-server';
+import type { Json } from '../../../../../../packages/shared/types/database';
 
 function createSupabaseClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return createServerClient(
@@ -145,7 +146,7 @@ export async function PUT(request: Request) {
       min_purchase_amount: minPurchaseAmount || 0,
       auto_reset: autoReset !== false,
       is_active: true,
-      milestones: validatedMilestones,
+      milestones: validatedMilestones as unknown as Json,
     };
 
     let template;
@@ -194,7 +195,7 @@ export async function PUT(request: Request) {
       .update({
         total_stamps: totalStamps,
         reward_title: rewardTitle,
-        milestones: validatedMilestones,
+        milestones: validatedMilestones as unknown as Json,
       })
       .eq('template_id', template.id)
       .eq('is_completed', false)

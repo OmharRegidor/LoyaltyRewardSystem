@@ -17,15 +17,12 @@ export default function Index() {
 
     if (segments.length > 0) return;
 
-    // Delay navigation to let native touch handlers fully register
     InteractionManager.runAfterInteractions(() => {
-      setTimeout(() => {
-        if (user) {
-          router.replace('/(main)');
-        } else {
-          router.replace('/(auth)/welcome');
-        }
-      }, 300);
+      if (user) {
+        router.replace('/(main)');
+      } else {
+        router.replace('/(auth)/welcome');
+      }
     });
   }, [user, isInitialized, isLoading, segments]);
 
