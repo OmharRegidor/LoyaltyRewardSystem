@@ -314,8 +314,17 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
   }, []);
 
   const addManualItem = useCallback((name: string, pricePesos: number) => {
+    // Defense in depth: UI validates as well, but guard against overflow/garbage here.
+    const MAX_PRICE_PESOS = 1_000_000;
+    if (
+      !Number.isFinite(pricePesos) ||
+      pricePesos <= 0 ||
+      pricePesos > MAX_PRICE_PESOS ||
+      !name.trim()
+    ) {
+      return;
+    }
     const priceCentavos = Math.round(pricePesos * 100);
-    if (priceCentavos <= 0 || !name.trim()) return;
 
     setCartItems((prev) => [
       ...prev,
