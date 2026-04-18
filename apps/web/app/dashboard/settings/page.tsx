@@ -1300,6 +1300,64 @@ export default function SettingsPage() {
             </div>
           </Card>
 
+          {/* POS Mode — shown when POS is enabled */}
+          {!isSubLoading && subscription?.plan?.hasPOS && posModeLoaded && (
+            <Card className="p-4 sm:p-6 shadow-card border border-border/50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
+                  <Store className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">POS Catalog Mode</h2>
+                  <p className="text-sm text-muted-foreground">
+                    What does your POS sell?
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                This only controls what appears in your POS. Your data is never deleted — switching back restores everything.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: 'products' as const, label: 'Products Only', desc: 'Food, drinks, goods' },
+                  { value: 'services' as const, label: 'Services Only', desc: 'Haircuts, bookings' },
+                  { value: 'both' as const, label: 'Both', desc: 'Products & services' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={async () => {
+                      setPosMode(opt.value);
+                      const supabase = createClient();
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) return;
+                      const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single();
+                      if (!biz) return;
+                      await fetch('/api/dashboard/pos/business-type', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pos_mode: opt.value }),
+                      }).catch(() => {
+                        // Fallback: direct update
+                        (supabase as unknown as { from: (t: string) => { update: (d: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<unknown> } } })
+                          .from('businesses')
+                          .update({ pos_mode: opt.value })
+                          .eq('id', biz.id);
+                      });
+                    }}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      posMode === opt.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Loyalty Program Type */}
           <Card className="p-4 sm:p-6 shadow-card border border-border/50">
             <div className="flex items-center gap-3 mb-6">
@@ -1411,64 +1469,6 @@ export default function SettingsPage() {
               )}
             </div>
           </Card>
-
-          {/* POS Mode — shown when POS is enabled */}
-          {!isSubLoading && subscription?.plan?.hasPOS && posModeLoaded && (
-            <Card className="p-4 sm:p-6 shadow-card border border-border/50">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2.5 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
-                  <Store className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">POS Catalog Mode</h2>
-                  <p className="text-sm text-muted-foreground">
-                    What does your POS sell?
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                This only controls what appears in your POS. Your data is never deleted — switching back restores everything.
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { value: 'products' as const, label: 'Products Only', desc: 'Food, drinks, goods' },
-                  { value: 'services' as const, label: 'Services Only', desc: 'Haircuts, bookings' },
-                  { value: 'both' as const, label: 'Both', desc: 'Products & services' },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={async () => {
-                      setPosMode(opt.value);
-                      const supabase = createClient();
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const { data: biz } = await supabase.from('businesses').select('id').eq('owner_id', user.id).single();
-                      if (!biz) return;
-                      await fetch('/api/dashboard/pos/business-type', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pos_mode: opt.value }),
-                      }).catch(() => {
-                        // Fallback: direct update
-                        (supabase as unknown as { from: (t: string) => { update: (d: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<unknown> } } })
-                          .from('businesses')
-                          .update({ pos_mode: opt.value })
-                          .eq('id', biz.id);
-                      });
-                    }}
-                    className={`p-3 rounded-xl border-2 text-left transition-all ${
-                      posMode === opt.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </Card>
-          )}
 
           {/* Stamp Card Configuration - shown when stamps mode is active and enterprise */}
           {loyaltyMode === 'stamps' && !isSubLoading && subscription?.plan?.hasStampCard && (
@@ -1796,7 +1796,7 @@ export default function SettingsPage() {
                                   backgroundSize: 'cover',
                                   backgroundPosition: 'center',
                                 }
-                              : { backgroundColor: 'rgb(124, 58, 237)' }),
+                              : { backgroundColor: '#7F0404' }),
                           }}
                         >
                           {stampTemplate.rewardImageUrl && (
