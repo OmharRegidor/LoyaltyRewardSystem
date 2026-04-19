@@ -549,6 +549,33 @@ export default function SettingsPage() {
       setLoyaltyMode(mode);
       // Update activity count for the new mode
       if (mode === 'stamps') {
+        // Ensure an active stamp template exists so the card renders
+        // immediately in mobile/public surfaces. Best-effort — never fail
+        // the mode switch if this auxiliary write fails.
+        try {
+          const existing = await fetch('/api/dashboard/stamp-template');
+          const existingData = existing.ok ? await existing.json() : null;
+          if (!existingData?.template) {
+            await fetch('/api/dashboard/stamp-template', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: 'Loyalty Card',
+                totalStamps: 10,
+                rewardTitle: 'Free Reward',
+                rewardDescription: null,
+                rewardImageUrl: null,
+                minPurchaseAmount: 0,
+                autoReset: true,
+                milestones: [],
+              }),
+            });
+            await loadStampTemplate();
+          }
+        } catch (templateErr) {
+          console.error('Failed to ensure default stamp template:', templateErr);
+        }
+
         const { count } = await supabase
           .from('stamp_cards')
           .select('id', { count: 'exact', head: true })
