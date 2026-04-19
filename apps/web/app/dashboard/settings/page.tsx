@@ -60,6 +60,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { createClient } from '@/lib/supabase';
+import type { Database } from '../../../../../packages/shared/types/database';
+
+type BusinessUpdate = Database['public']['Tables']['businesses']['Update'];
 import {
   AlertDialog,
   AlertDialogAction,
@@ -396,7 +399,7 @@ export default function SettingsPage() {
 
         // Backfill missing fields from auth metadata for existing accounts
         if (!business.business_type || !business.phone || !business.owner_email) {
-          const updates: Record<string, string> = {};
+          const updates: BusinessUpdate = {};
           if (!business.business_type && metadata.business_type) updates.business_type = metadata.business_type;
           if (!business.phone && metadata.phone) updates.phone = metadata.phone;
           if (!business.owner_email && user.email) updates.owner_email = user.email;
