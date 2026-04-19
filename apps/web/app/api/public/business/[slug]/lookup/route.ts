@@ -9,7 +9,9 @@ import {
 } from '@/lib/services/public-business.service';
 import { verifyPin, PIN_MAX_ATTEMPTS, LOCKOUT_MINUTES } from '@/lib/services/pin.service';
 import { z } from 'zod';
-import type { Json } from '../../../../../../../../packages/shared/types/database';
+import type { Database, Json } from '../../../../../../../../packages/shared/types/database';
+
+type CustomerUpdate = Database['public']['Tables']['customers']['Update'];
 
 // ============================================
 // VALIDATION SCHEMA
@@ -208,7 +210,7 @@ export async function POST(
 
     if (!pinValid) {
       const newAttempts = customer.failedPinAttempts + 1;
-      const updateData: Record<string, unknown> = {
+      const updateData: CustomerUpdate = {
         failed_pin_attempts: newAttempts,
       };
 
