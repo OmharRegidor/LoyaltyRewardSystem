@@ -91,13 +91,19 @@ function wrapFromBuilder(builder: unknown, table: string) {
       if (EDIT_MODE_BLOCKED_TABLES.has(table)) {
         return () => blockedBuilder(prop, 'billing tables are off-limits in edit mode');
       }
-      if (table === 'businesses' && prop === 'update') {
-        const original = Reflect.get(target, prop, receiver) as (payload: Record<string, unknown>) => unknown;
-        return (payload: Record<string, unknown>) => {
-          const keys = payload ? Object.keys(payload) : [];
-          const touchesProtected = keys.some((k) => BUSINESSES_PROTECTED_COLUMNS.has(k));
+      if (table === 'businesses' && (prop === 'update' || prop === 'upsert')) {
+        type BusinessesPayload = Record<string, unknown> | Record<string, unknown>[];
+        const original = Reflect.get(target, prop, receiver) as (payload: BusinessesPayload) => unknown;
+        return (payload: BusinessesPayload) => {
+          const rows = Array.isArray(payload) ? payload : [payload];
+          const touchesProtected = rows.some(
+            (row) =>
+              row != null &&
+              typeof row === 'object' &&
+              Object.keys(row).some((k) => BUSINESSES_PROTECTED_COLUMNS.has(k)),
+          );
           if (touchesProtected) {
-            return blockedBuilder('update', 'plan/module flags are off-limits in edit mode');
+            return blockedBuilder(prop, 'plan/module flags are off-limits in edit mode');
           }
           return original.call(target, payload);
         };
