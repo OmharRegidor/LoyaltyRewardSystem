@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
     adminUserId: session.admin_user_id,
     targetUserId: session.target_user_id,
     targetRole: session.target_role as 'business_owner' | 'staff',
+    // TODO(task-6): replace with sessionMode derived from session.mode
     mode: 'read_only',
   });
   response.cookies.set(IMPERSONATION_COOKIE_NAME, encoded, {
