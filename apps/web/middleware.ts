@@ -15,6 +15,18 @@ function isImpersonationAllowedWrite(pathname: string): boolean {
   return IMPERSONATION_ALLOWED_WRITE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+const EDIT_MODE_BLOCKED_WRITE_PATHS = [
+  '/api/billing/',
+  '/api/admin/',
+  '/api/manual-invoices/',
+];
+
+function isEditModeBlocked(pathname: string): boolean {
+  return EDIT_MODE_BLOCKED_WRITE_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p),
+  );
+}
+
 const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -118,20 +130,30 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Impersonation: read-only enforcement
+  // Impersonation: enforce mode-aware write rules.
   const impersonationPayload = await decodeImpersonationCookie(
     request.cookies.get(IMPERSONATION_COOKIE_NAME)?.value,
   );
-  const isImpersonating = impersonationPayload !== null;
 
-  if (isImpersonating) {
+  if (impersonationPayload) {
     const method = request.method.toUpperCase();
     const isWrite = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-    if (isWrite && !isImpersonationAllowedWrite(pathname)) {
-      return new NextResponse(
-        JSON.stringify({ error: 'Read-only during impersonation' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } },
-      );
+    if (isWrite) {
+      const alwaysAllowed = isImpersonationAllowedWrite(pathname);
+      if (!alwaysAllowed) {
+        if (impersonationPayload.mode === 'read_only') {
+          return new NextResponse(
+            JSON.stringify({ error: 'Read-only during impersonation' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        if (impersonationPayload.mode === 'edit' && isEditModeBlocked(pathname)) {
+          return new NextResponse(
+            JSON.stringify({ error: 'Blocked: billing and plan endpoints are off-limits during impersonation edit mode' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+      }
     }
   }
 

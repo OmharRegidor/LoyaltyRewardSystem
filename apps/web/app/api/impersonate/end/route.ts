@@ -4,6 +4,7 @@ import { createAdminServiceClient } from '@/lib/supabase-server';
 import {
   IMPERSONATION_COOKIE_NAME,
   IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
   decodeImpersonationCookie,
 } from '@/lib/impersonation';
 import type { Database } from '../../../../../../packages/shared/types/database';
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
 
   response.cookies.delete(IMPERSONATION_COOKIE_NAME);
   response.cookies.delete(IMPERSONATION_DISPLAY_COOKIE_NAME);
+  response.cookies.delete(IMPERSONATION_MODE_COOKIE_NAME);
 
   if (payload) {
     const service = createAdminServiceClient();

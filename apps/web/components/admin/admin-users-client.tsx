@@ -61,6 +61,9 @@ export function AdminUsersClient() {
     { userId: string; email: string; role: string } | null
   >(null);
   const [impersonating, setImpersonating] = useState(false);
+  const [mode, setMode] = useState<'read_only' | 'edit'>('read_only');
+  const [reason, setReason] = useState('');
+  const REASON_MIN_LENGTH = 10;
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -95,12 +98,17 @@ export function AdminUsersClient() {
 
   const handleImpersonate = async () => {
     if (!impersonateTarget || impersonating) return;
+    if (mode === 'edit' && reason.trim().length < REASON_MIN_LENGTH) return;
     setImpersonating(true);
     try {
       const res = await fetch('/api/admin/impersonate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: impersonateTarget.userId }),
+        body: JSON.stringify({
+          targetUserId: impersonateTarget.userId,
+          mode,
+          reason: mode === 'edit' ? reason.trim() : undefined,
+        }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -109,6 +117,8 @@ export function AdminUsersClient() {
       const payload = (await res.json()) as { activationUrl: string };
       window.open(payload.activationUrl, '_blank', 'noopener,noreferrer');
       setImpersonateTarget(null);
+      setMode('read_only');
+      setReason('');
       toast.success('Impersonation link opened in a new tab');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start impersonation');
@@ -262,7 +272,13 @@ export function AdminUsersClient() {
 
       <AlertDialog
         open={!!impersonateTarget}
-        onOpenChange={(open) => { if (!open && !impersonating) setImpersonateTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open && !impersonating) {
+            setImpersonateTarget(null);
+            setMode('read_only');
+            setReason('');
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -271,15 +287,67 @@ export function AdminUsersClient() {
               Login as {impersonateTarget?.email}?
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p>
                   You will be signed in as this {impersonateTarget?.role === 'business_owner' ? 'business owner' : 'staff member'} in a new tab.
                 </p>
-                <p className="text-sm">
-                  <strong>Read-only mode</strong> — you will not be able to create, update, or delete anything while impersonating. A red banner will appear at the top of the page.
-                </p>
-                <p className="text-sm text-gray-500">
-                  This action is logged to the audit trail. The activation link expires in 5 minutes and can only be used once.
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium text-gray-900">Mode</legend>
+                  <label className="flex items-start gap-2 cursor-pointer rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="impersonation-mode"
+                      value="read_only"
+                      checked={mode === 'read_only'}
+                      onChange={() => setMode('read_only')}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm">
+                      <span className="font-medium">Read-only</span>{' '}
+                      <span className="text-gray-500">(recommended)</span>
+                      <span className="block text-xs text-gray-500">
+                        View only — no writes allowed.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="impersonation-mode"
+                      value="edit"
+                      checked={mode === 'edit'}
+                      onChange={() => setMode('edit')}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm">
+                      <span className="font-medium text-amber-700">Edit mode</span>
+                      <span className="block text-xs text-gray-500">
+                        Writes are saved as this user. Billing and plan changes are still blocked.
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+                {mode === 'edit' && (
+                  <div className="space-y-1">
+                    <label htmlFor="impersonation-reason" className="text-sm font-medium text-gray-900">
+                      Reason (required)
+                    </label>
+                    <textarea
+                      id="impersonation-reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="e.g., Owner requested update to store hours"
+                      rows={3}
+                      maxLength={500}
+                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Your reason is saved to the audit log. Minimum {REASON_MIN_LENGTH} characters.
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">
+                  This action is logged. The activation link expires in 5 minutes and can only be used once.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -287,7 +355,13 @@ export function AdminUsersClient() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={impersonating}>Cancel</AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Button onClick={handleImpersonate} disabled={impersonating}>
+              <Button
+                onClick={handleImpersonate}
+                disabled={
+                  impersonating ||
+                  (mode === 'edit' && reason.trim().length < REASON_MIN_LENGTH)
+                }
+              >
                 {impersonating && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
                 Open impersonation tab
               </Button>

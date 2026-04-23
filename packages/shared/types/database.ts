@@ -626,7 +626,9 @@ export type Database = {
           id: string
           ip_address: unknown
           magic_otp: string
+          mode: string
           opaque_token_hash: string
+          reason: string | null
           target_email: string
           target_role: string
           target_user_id: string
@@ -642,7 +644,9 @@ export type Database = {
           id?: string
           ip_address?: unknown
           magic_otp: string
+          mode?: string
           opaque_token_hash: string
+          reason?: string | null
           target_email: string
           target_role: string
           target_user_id: string
@@ -658,7 +662,9 @@ export type Database = {
           id?: string
           ip_address?: unknown
           magic_otp?: string
+          mode?: string
           opaque_token_hash?: string
+          reason?: string | null
           target_email?: string
           target_role?: string
           target_user_id?: string

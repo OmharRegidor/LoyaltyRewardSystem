@@ -4,9 +4,16 @@ import { getApiUser } from '@/lib/server-auth';
 import { isAdmin } from '@/lib/rbac';
 import { generateOpaqueToken, hashOpaqueToken } from '@/lib/impersonation';
 
+type ImpersonationModeInput = 'read_only' | 'edit';
+
 interface Body {
   targetUserId: string;
+  mode: ImpersonationModeInput;
+  reason?: string;
 }
+
+const MIN_REASON_LENGTH = 10;
+const MAX_REASON_LENGTH = 500;
 
 function getClientIp(request: NextRequest): string | null {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -24,6 +31,15 @@ export async function POST(request: NextRequest) {
   if (!body?.targetUserId) {
     return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 });
   }
+  if (body.mode !== 'read_only' && body.mode !== 'edit') {
+    return NextResponse.json({ error: 'invalid_mode' }, { status: 400 });
+  }
+  const reasonTrimmed = (body.reason ?? '').trim();
+  if (body.mode === 'edit' && reasonTrimmed.length < MIN_REASON_LENGTH) {
+    return NextResponse.json({ error: 'reason_required' }, { status: 400 });
+  }
+  const reasonToStore =
+    body.mode === 'edit' ? reasonTrimmed.slice(0, MAX_REASON_LENGTH) : null;
 
   const service = createAdminServiceClient();
 
@@ -81,6 +97,8 @@ export async function POST(request: NextRequest) {
       expires_at: expiresAt,
       ip_address: getClientIp(request),
       user_agent: request.headers.get('user-agent'),
+      mode: body.mode,
+      reason: reasonToStore,
     })
     .select('id')
     .single();

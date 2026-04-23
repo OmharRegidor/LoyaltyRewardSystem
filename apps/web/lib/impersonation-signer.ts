@@ -2,11 +2,14 @@
 // Edge-compatible HMAC-SHA256 cookie signer using WebCrypto.
 // Works in both Node and Edge middleware runtimes.
 
+import type { ImpersonationMode } from './impersonation-client';
+
 export interface ImpersonationCookiePayload {
   sessionId: string;
   adminUserId: string;
   targetUserId: string;
   targetRole: 'business_owner' | 'staff';
+  mode: ImpersonationMode;
 }
 
 function getSecretString(): string {
@@ -79,6 +82,10 @@ export async function decodeImpersonationCookie(
     const json = new TextDecoder().decode(bytes as unknown as BufferSource);
     const parsed = JSON.parse(json) as ImpersonationCookiePayload;
     if (!parsed.sessionId || !parsed.adminUserId || !parsed.targetUserId) return null;
+    // Backward compat: cookies minted before the mode field default to read_only.
+    if (parsed.mode !== 'read_only' && parsed.mode !== 'edit') {
+      parsed.mode = 'read_only';
+    }
     return parsed;
   } catch {
     return null;
