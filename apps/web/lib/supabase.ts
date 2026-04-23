@@ -2,26 +2,60 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../../../packages/shared/types/database';
-import { IMPERSONATION_DISPLAY_COOKIE_NAME } from './impersonation-client';
+import {
+  IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
+  type ImpersonationMode,
+} from './impersonation-client';
 
-// Writes are blocked at two layers during impersonation:
-//   1. Next.js middleware blocks any POST/PUT/PATCH/DELETE to our own routes.
+// Writes are blocked at multiple layers during impersonation:
+//   1. Next.js middleware blocks POST/PUT/PATCH/DELETE on our own routes.
 //   2. This wrapper intercepts direct client-side Supabase mutations
-//      (.update/.insert/.delete/.upsert/.rpc) that would otherwise bypass (1)
+//      (.update/.insert/.delete/.upsert) that would otherwise bypass (1)
 //      by going straight to the Supabase REST endpoint.
-const BLOCKED_METHODS = new Set(['update', 'insert', 'delete', 'upsert']);
+//
+// In read-only mode every mutation is blocked. In edit mode, writes pass
+// through EXCEPT writes to billing tables, and `businesses.update()` payloads
+// that attempt to change plan / module flags.
 
-function isImpersonating(): boolean {
-  if (typeof document === 'undefined') return false;
-  return document.cookie
-    .split('; ')
-    .some((c) => c.startsWith(`${IMPERSONATION_DISPLAY_COOKIE_NAME}=`));
+const BLOCKED_METHODS = new Set(['update', 'insert', 'delete', 'upsert']);
+const EDIT_MODE_BLOCKED_TABLES = new Set([
+  'manual_invoices',
+  'manual_invoice_payments',
+]);
+const BUSINESSES_PROTECTED_COLUMNS = new Set(['plan', 'has_loyalty', 'has_pos']);
+
+interface ImpersonationState {
+  active: boolean;
+  mode: ImpersonationMode;
 }
 
-function blockedBuilder(method: string): unknown {
+function readCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const prefix = `${name}=`;
+  const match = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(prefix));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match.slice(prefix.length));
+  } catch {
+    return null;
+  }
+}
+
+function getImpersonationState(): ImpersonationState {
+  const active = readCookie(IMPERSONATION_DISPLAY_COOKIE_NAME) !== null;
+  if (!active) return { active: false, mode: 'read_only' };
+  const modeRaw = readCookie(IMPERSONATION_MODE_COOKIE_NAME);
+  const mode: ImpersonationMode = modeRaw === 'edit' ? 'edit' : 'read_only';
+  return { active: true, mode };
+}
+
+function blockedBuilder(method: string, reason: string): unknown {
   const error = {
-    message: `Blocked: cannot ${method} during impersonation (read-only mode).`,
-    code: 'impersonation_read_only',
+    message: `Blocked: cannot ${method} during impersonation (${reason}).`,
+    code: 'impersonation_blocked',
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rejection: any = Promise.resolve({ data: null, error });
@@ -31,19 +65,42 @@ function blockedBuilder(method: string): unknown {
       if (prop === 'then' || prop === 'catch' || prop === 'finally') {
         return rejection[prop as keyof typeof rejection];
       }
-      // chainable filter/select methods stay on the same rejected builder
       return () => new Proxy({}, handler);
     },
   };
   return new Proxy({}, handler);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function wrapFromBuilder(builder: any) {
-  return new Proxy(builder, {
+function wrapFromBuilder(builder: unknown, table: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new Proxy(builder as any, {
     get(target, prop, receiver) {
-      if (typeof prop === 'string' && BLOCKED_METHODS.has(prop) && isImpersonating()) {
-        return () => blockedBuilder(prop);
+      if (typeof prop !== 'string' || !BLOCKED_METHODS.has(prop)) {
+        const value = Reflect.get(target, prop, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+      const state = getImpersonationState();
+      if (!state.active) {
+        const value = Reflect.get(target, prop, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+      if (state.mode === 'read_only') {
+        return () => blockedBuilder(prop, 'read-only mode');
+      }
+      // state.mode === 'edit'
+      if (EDIT_MODE_BLOCKED_TABLES.has(table)) {
+        return () => blockedBuilder(prop, 'billing tables are off-limits in edit mode');
+      }
+      if (table === 'businesses' && prop === 'update') {
+        const original = Reflect.get(target, prop, receiver) as (payload: Record<string, unknown>) => unknown;
+        return (payload: Record<string, unknown>) => {
+          const keys = payload ? Object.keys(payload) : [];
+          const touchesProtected = keys.some((k) => BUSINESSES_PROTECTED_COLUMNS.has(k));
+          if (touchesProtected) {
+            return blockedBuilder('update', 'plan/module flags are off-limits in edit mode');
+          }
+          return original.call(target, payload);
+        };
       }
       const value = Reflect.get(target, prop, receiver);
       return typeof value === 'function' ? value.bind(target) : value;
@@ -62,9 +119,11 @@ export function createClient() {
 
   const originalFrom = raw.from.bind(raw);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (raw as any).from = (table: string) => wrapFromBuilder(originalFrom(table as never));
+  (raw as any).from = (table: string) =>
+    wrapFromBuilder(originalFrom(table as never), table);
 
-  // Block storage mutations (uploads, deletes) during impersonation.
+  // Block storage mutations in read-only only. In edit mode, logo uploads on
+  // behalf of the owner are a valid use case.
   const STORAGE_BLOCKED = new Set(['upload', 'update', 'remove', 'move', 'copy', 'createSignedUploadUrl']);
   const originalStorageFrom = raw.storage.from.bind(raw.storage);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,14 +131,18 @@ export function createClient() {
     const bucketApi = originalStorageFrom(bucket);
     return new Proxy(bucketApi, {
       get(target, prop, receiver) {
-        if (typeof prop === 'string' && STORAGE_BLOCKED.has(prop) && isImpersonating()) {
-          return () => Promise.resolve({
-            data: null,
-            error: {
-              message: `Blocked: cannot ${prop} during impersonation (read-only mode).`,
-              code: 'impersonation_read_only',
-            },
-          });
+        if (typeof prop === 'string' && STORAGE_BLOCKED.has(prop)) {
+          const state = getImpersonationState();
+          if (state.active && state.mode === 'read_only') {
+            return () =>
+              Promise.resolve({
+                data: null,
+                error: {
+                  message: `Blocked: cannot ${prop} during impersonation (read-only mode).`,
+                  code: 'impersonation_read_only',
+                },
+              });
+          }
         }
         const value = Reflect.get(target, prop, receiver);
         return typeof value === 'function' ? value.bind(target) : value;
