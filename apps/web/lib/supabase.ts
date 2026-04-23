@@ -93,7 +93,7 @@ function wrapFromBuilder(builder: unknown, table: string) {
       }
       if (table === 'businesses' && (prop === 'update' || prop === 'upsert')) {
         type BusinessesPayload = Record<string, unknown> | Record<string, unknown>[];
-        const original = Reflect.get(target, prop, receiver) as (payload: BusinessesPayload) => unknown;
+        const original = Reflect.get(target, prop, receiver) as (_payload: BusinessesPayload) => unknown;
         return (payload: BusinessesPayload) => {
           const rows = Array.isArray(payload) ? payload : [payload];
           const touchesProtected = rows.some(
