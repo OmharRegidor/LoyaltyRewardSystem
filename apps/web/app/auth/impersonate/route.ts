@@ -6,6 +6,7 @@ import {
   hashOpaqueToken,
   IMPERSONATION_COOKIE_NAME,
   IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
 } from '@/lib/impersonation';
 import { getRoleHomePath, type AppRole } from '@/lib/rbac';
 import type { Database } from '../../../../../packages/shared/types/database';
@@ -89,13 +90,13 @@ export async function GET(request: NextRequest) {
   // Attach the impersonation cookies to the same response so they're guaranteed
   // to be set atomically with the Supabase session cookies.
   const secure = process.env.NODE_ENV === 'production';
+  const sessionMode = session.mode === 'edit' ? 'edit' : 'read_only';
   const encoded = await encodeImpersonationCookie({
     sessionId: session.id,
     adminUserId: session.admin_user_id,
     targetUserId: session.target_user_id,
     targetRole: session.target_role as 'business_owner' | 'staff',
-    // TODO(task-6): replace with sessionMode derived from session.mode
-    mode: 'read_only',
+    mode: sessionMode,
   });
   response.cookies.set(IMPERSONATION_COOKIE_NAME, encoded, {
     httpOnly: true,
@@ -104,6 +105,12 @@ export async function GET(request: NextRequest) {
     path: '/',
   });
   response.cookies.set(IMPERSONATION_DISPLAY_COOKIE_NAME, session.target_email, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure,
+    path: '/',
+  });
+  response.cookies.set(IMPERSONATION_MODE_COOKIE_NAME, sessionMode, {
     httpOnly: false,
     sameSite: 'lax',
     secure,
