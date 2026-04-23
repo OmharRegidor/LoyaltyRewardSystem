@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { AlertTriangle, LogOut, Loader2 } from 'lucide-react';
-import { IMPERSONATION_DISPLAY_COOKIE_NAME } from '@/lib/impersonation-client';
+import {
+  IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
+  type ImpersonationMode,
+} from '@/lib/impersonation-client';
 
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -18,38 +22,49 @@ function readCookie(name: string): string | null {
   }
 }
 
+function readMode(): ImpersonationMode {
+  const raw = readCookie(IMPERSONATION_MODE_COOKIE_NAME);
+  return raw === 'edit' ? 'edit' : 'read_only';
+}
+
 export function ImpersonationBanner() {
   const [email, setEmail] = useState<string | null>(null);
+  const [mode, setMode] = useState<ImpersonationMode>('read_only');
   const [ending, setEnding] = useState(false);
 
   useEffect(() => {
-    const check = () => setEmail(readCookie(IMPERSONATION_DISPLAY_COOKIE_NAME));
+    const check = () => {
+      setEmail(readCookie(IMPERSONATION_DISPLAY_COOKIE_NAME));
+      setMode(readMode());
+    };
     check();
     const interval = setInterval(check, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  // Toggle a body attribute so global CSS can mark the viewport as read-only.
+  // Toggle body attributes so global CSS can scope dimming to read-only only.
   useEffect(() => {
     if (typeof document === 'undefined') return;
     if (email) {
       document.body.setAttribute('data-impersonation', 'true');
+      document.body.setAttribute('data-impersonation-mode', mode);
       document.body.style.paddingTop = '52px';
     } else {
       document.body.removeAttribute('data-impersonation');
+      document.body.removeAttribute('data-impersonation-mode');
       document.body.style.paddingTop = '';
     }
     return () => {
       document.body.removeAttribute('data-impersonation');
+      document.body.removeAttribute('data-impersonation-mode');
       document.body.style.paddingTop = '';
     };
-  }, [email]);
+  }, [email, mode]);
 
-  // Capture-phase interceptor: block every interaction with write controls
-  // (buttons, inputs, etc.) while the cursor still renders not-allowed.
-  // Anchor tags and anything marked data-allow-during-impersonation pass through.
+  // Capture-phase interceptor: only installed in read-only mode. In edit mode
+  // writes flow to their handlers normally.
   useEffect(() => {
-    if (typeof document === 'undefined' || !email) return;
+    if (typeof document === 'undefined' || !email || mode !== 'read_only') return;
 
     const isBlocked = (el: Element | null): boolean => {
       if (!el) return false;
@@ -84,7 +99,7 @@ export function ImpersonationBanner() {
     return () => {
       events.forEach((evt) => document.removeEventListener(evt, block, true));
     };
-  }, [email]);
+  }, [email, mode]);
 
   if (!email) return null;
 
@@ -99,17 +114,24 @@ export function ImpersonationBanner() {
     }
   };
 
+  const bannerClass =
+    mode === 'edit'
+      ? 'bg-amber-600 text-white'
+      : 'bg-red-600 text-white';
+  const message =
+    mode === 'edit'
+      ? `Editing as ${email} — changes are saved as this user`
+      : `You are viewing as ${email} — read-only mode`;
+
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[100] bg-red-600 text-white px-4 py-2.5 flex items-center justify-between gap-3 shadow-md"
+      className={`fixed top-0 left-0 right-0 z-[100] px-4 py-2.5 flex items-center justify-between gap-3 shadow-md ${bannerClass}`}
       role="alert"
       aria-live="polite"
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
-        <p className="text-sm truncate">
-          You are viewing as <span className="font-semibold">{email}</span> — read-only mode
-        </p>
+        <p className="text-sm truncate">{message}</p>
       </div>
       <button
         onClick={handleEnd}
