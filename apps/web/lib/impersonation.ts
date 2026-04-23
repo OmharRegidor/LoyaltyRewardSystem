@@ -7,6 +7,8 @@ import { cookies } from 'next/headers';
 import {
   IMPERSONATION_COOKIE_NAME,
   IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
+  type ImpersonationMode,
 } from './impersonation-client';
 import {
   encodeImpersonationCookie,
@@ -21,7 +23,9 @@ export {
 export {
   IMPERSONATION_COOKIE_NAME,
   IMPERSONATION_DISPLAY_COOKIE_NAME,
+  IMPERSONATION_MODE_COOKIE_NAME,
 };
+export type { ImpersonationMode };
 
 export function generateOpaqueToken(): string {
   return crypto.randomBytes(24).toString('base64url');
@@ -50,10 +54,17 @@ export async function setImpersonationCookies(
     secure,
     path: '/',
   });
+  store.set(IMPERSONATION_MODE_COOKIE_NAME, payload.mode, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure,
+    path: '/',
+  });
 }
 
 export async function clearImpersonationCookies(): Promise<void> {
   const store = await cookies();
   store.delete(IMPERSONATION_COOKIE_NAME);
   store.delete(IMPERSONATION_DISPLAY_COOKIE_NAME);
+  store.delete(IMPERSONATION_MODE_COOKIE_NAME);
 }
