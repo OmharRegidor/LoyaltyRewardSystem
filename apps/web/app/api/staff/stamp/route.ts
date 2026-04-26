@@ -14,13 +14,27 @@ const StampSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createSupabaseFromCookies(cookieStore);
+    const service = createServiceClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    // Accept Bearer token (preferred for client-initiated calls that follow
+    // a Bearer-authed POS sale) and fall back to cookie session.
+    const authHeader = request.headers.get('authorization');
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+
+    let userId: string | null = null;
+    if (bearerToken) {
+      const { data: { user: bearerUser } } = await service.auth.getUser(bearerToken);
+      userId = bearerUser?.id ?? null;
+    }
+    if (!userId) {
+      const cookieStore = await cookies();
+      const cookieSupabase = createSupabaseFromCookies(cookieStore);
+      const { data: { user: cookieUser } } = await cookieSupabase.auth.getUser();
+      userId = cookieUser?.id ?? null;
+    }
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -36,10 +50,8 @@ export async function POST(request: Request) {
     }
     const { customerId, saleId, notes } = parsed.data;
 
-    const service = createServiceClient();
-
     // Server-side staff/owner verification — derive businessId and staffId from auth
-    const access = await verifyStaffAccess(service, user.id);
+    const access = await verifyStaffAccess(service, userId);
     if (!access) {
       return NextResponse.json(
         { error: 'Not authorized as staff or business owner' },

@@ -395,6 +395,26 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
       const { data } = await res.json();
       setSaleResult(data);
 
+      // Optimistically decrement stock for sold products so the UI reflects
+      // the change even if the realtime UPDATE event is delayed or dropped.
+      const soldQtyByProductId = new Map<string, number>();
+      for (const item of cartItems) {
+        if (!item.product_id) continue;
+        soldQtyByProductId.set(
+          item.product_id,
+          (soldQtyByProductId.get(item.product_id) || 0) + item.quantity,
+        );
+      }
+      if (soldQtyByProductId.size > 0) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            soldQtyByProductId.has(p.id)
+              ? { ...p, stock_quantity: p.stock_quantity - (soldQtyByProductId.get(p.id) || 0) }
+              : p,
+          ),
+        );
+      }
+
       return data;
     } finally {
       setIsProcessing(false);

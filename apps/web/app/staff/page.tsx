@@ -595,9 +595,15 @@ export default function StaffScannerPage() {
       // Auto-add stamp in stamps mode
       if (staffData.loyaltyMode === 'stamps') {
         try {
+          const { data: { session } } = await createClient().auth.getSession();
           const stampRes = await fetch('/api/staff/stamp', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(session?.access_token && {
+                Authorization: `Bearer ${session.access_token}`,
+              }),
+            },
             body: JSON.stringify({
               customerId: customer.id,
               saleId: result.sale_id,
@@ -605,7 +611,7 @@ export default function StaffScannerPage() {
             }),
           });
           const stampData = await stampRes.json();
-          if (stampData.success) {
+          if (stampRes.ok && stampData.success) {
             const stampResult = {
               stamps_collected: stampData.stamps_collected ?? 0,
               total_stamps: stampData.total_stamps ?? 10,
@@ -617,9 +623,14 @@ export default function StaffScannerPage() {
               ...stampResult,
             });
             setLastSaleStampResult(stampResult);
+          } else {
+            const reason = stampData?.error || 'Sale completed but stamp not added.';
+            console.error('Auto-stamp after sale failed:', reason);
+            toast.error(`Stamp not added: ${reason}`);
           }
         } catch (stampErr) {
           console.error('Auto-stamp after sale failed:', stampErr);
+          toast.error('Sale completed but stamp not added. Please try Add Stamp.');
         }
       }
 
