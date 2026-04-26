@@ -600,6 +600,9 @@ export default function StaffScannerPage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              // Stable idempotency key tied to the sale: a network retry or a
+              // double-fire of handleCompleteSale must not double-stamp.
+              'x-idempotency-key': `stamp-sale-${result.sale_id}`,
               ...(session?.access_token && {
                 Authorization: `Bearer ${session.access_token}`,
               }),
@@ -624,7 +627,10 @@ export default function StaffScannerPage() {
             });
             setLastSaleStampResult(stampResult);
           } else {
-            const reason = stampData?.error || 'Sale completed but stamp not added.';
+            const reason =
+              stampData?.error ||
+              stampData?.message ||
+              'Sale completed but stamp not added.';
             console.error('Auto-stamp after sale failed:', reason);
             toast.error(`Stamp not added: ${reason}`);
           }

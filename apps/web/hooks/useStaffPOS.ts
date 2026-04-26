@@ -409,7 +409,13 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         setProducts((prev) =>
           prev.map((p) =>
             soldQtyByProductId.has(p.id)
-              ? { ...p, stock_quantity: p.stock_quantity - (soldQtyByProductId.get(p.id) || 0) }
+              ? {
+                  ...p,
+                  stock_quantity: Math.max(
+                    0,
+                    p.stock_quantity - (soldQtyByProductId.get(p.id) ?? 0),
+                  ),
+                }
               : p,
           ),
         );
