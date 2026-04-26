@@ -101,21 +101,20 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
   })();
   const rows = Math.ceil(stampCard.total_stamps / cols);
 
-  // Stamps adapt to the fixed card size — card shape never changes
+  // Stamps adapt to the fixed card size — card shape never changes.
+  // Cells are square at min(availableWidthPerCell, availableHeightPerRow) so
+  // the grid scales naturally with screen size: small phones get smaller
+  // stamps, big phones get bigger ones, no awkward gaps in the middle.
   const cardPadding = 12;
   const gridGap = stampCard.total_stamps > 30 ? 3 : stampCard.total_stamps > 15 ? 4 : 5;
   const headerH = 24;
   const footerH = 20;
   const gridWidth = CARD_WIDTH - cardPadding * 2;
   const stampAreaH = CARD_HEIGHT - headerH - footerH - cardPadding * 2;
-  // Stamps fill their full cell — NOT forced square
   const cellW = (gridWidth - (cols - 1) * gridGap) / cols;
   const cellH = (stampAreaH - (rows - 1) * gridGap) / rows;
-  // Cap cell height so low stamp counts don't stretch absurdly
-  const maxCellH = 56;
-  const cappedCellH = Math.min(cellH, maxCellH);
-  // Icon size scales to the smaller dimension so it fits inside
-  const iconSize = Math.floor(Math.min(cellW, cappedCellH) * 0.45);
+  const cellSize = Math.floor(Math.min(cellW, cellH));
+  const iconSize = Math.floor(cellSize * 0.45);
 
   return (
     <View style={cardStyles.section}>
@@ -148,20 +147,20 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
               </Text>
             </View>
 
-            {/* Stamp grid — fills card */}
-            <View style={cardStyles.stampGrid}>
+            {/* Stamp grid — fills card with square cells, centered both axes */}
+            <View style={[cardStyles.stampGrid, { gap: gridGap }]}>
               {Array.from({ length: rows }, (_, row) => (
                 <View
                   key={row}
                   style={{
                     flexDirection: 'row' as const,
-                    flex: 1,
                     gap: gridGap,
+                    justifyContent: 'center',
                   }}
                 >
                   {Array.from({ length: cols }, (__, col) => {
                     const i = row * cols + col;
-                    if (i >= stampCard.total_stamps) return <View key={col} style={{ flex: 1 }} />;
+                    if (i >= stampCard.total_stamps) return <View key={col} style={{ width: cellSize, height: cellSize }} />;
                     const position = i + 1;
                     const isFilled = i < stampCard.stamps_collected;
                     const isLast = i === stampCard.total_stamps - 1;
@@ -172,7 +171,7 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
                         key={col}
                         style={[
                           cardStyles.stampSlot,
-                          { flex: 1, maxHeight: maxCellH, maxWidth: maxCellH, borderRadius: 2 },
+                          { width: cellSize, height: cellSize, borderRadius: 4 },
                           milestone && isFilled && isRedeemedMilestone && cardStyles.stampSlotMilestoneRedeemed,
                           milestone && isFilled && !isRedeemedMilestone && cardStyles.stampSlotMilestoneFilled,
                           milestone && !isFilled && cardStyles.stampSlotMilestone,
@@ -343,7 +342,7 @@ const cardStyles = StyleSheet.create({
   },
   stampGrid: {
     flex: 1,
-    gap: 3,
+    justifyContent: 'center',
   },
   stampSlot: {
     backgroundColor: '#F5F0EB',
