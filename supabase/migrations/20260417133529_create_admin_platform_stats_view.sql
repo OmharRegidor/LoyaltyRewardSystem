@@ -1,3 +1,10 @@
+-- Drop first so we can change column ordering. Postgres' CREATE OR REPLACE
+-- VIEW requires the new column list to start with the same names/types as the
+-- old; an existing prod view had `active_subscriptions` where this revision
+-- needs `total_bookings`. CASCADE is included for safety though no dependents
+-- exist on either dev or prod at the time of writing.
+DROP VIEW IF EXISTS public.admin_platform_stats CASCADE;
+
 CREATE OR REPLACE VIEW public.admin_platform_stats AS
 SELECT
   (SELECT count(*) FROM public.businesses) AS total_businesses,
