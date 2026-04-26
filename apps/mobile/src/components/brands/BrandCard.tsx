@@ -41,18 +41,6 @@ function BrandCardComponent({ brand, onPress }: BrandCardProps) {
           {brand.name}
         </Text>
 
-        <View style={styles.metaRow}>
-          <Ionicons
-            name="location-outline"
-            size={14}
-            color={COLORS.gray[400]}
-          />
-          <Text style={styles.metaText}>
-            {brand.branches.length}{' '}
-            {brand.branches.length === 1 ? 'branch' : 'branches'}
-          </Text>
-        </View>
-
         {brand.loyalty_mode !== 'stamps' && brand.min_purchase_for_points != null && brand.min_purchase_for_points > 0 && (
           <View style={styles.metaRow}>
             <Ionicons name="cart-outline" size={14} color={COLORS.gray[400]} />
