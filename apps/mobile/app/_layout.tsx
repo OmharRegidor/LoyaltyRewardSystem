@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { InteractionManager, View, Text, TouchableOpacity } from 'react-native';
+import { InteractionManager, Platform, View, Text, TouchableOpacity } from 'react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -94,9 +94,24 @@ export default function RootLayout() {
     <AuthProvider>
       <StatusBar style="dark" />
       {updateAvailable && (
-        <View style={{ backgroundColor: '#7F0404', padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View
+          style={{
+            backgroundColor: '#7F0404',
+            // Push the banner below the iOS status bar / Dynamic Island so the
+            // tap target isn't intercepted by the system status area.
+            paddingTop: Platform.OS === 'ios' ? 50 : 12,
+            paddingBottom: 12,
+            paddingHorizontal: 12,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Text style={{ color: 'white', fontSize: 14 }}>Update available</Text>
-          <TouchableOpacity onPress={handleApplyUpdate}>
+          <TouchableOpacity
+            onPress={handleApplyUpdate}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
             <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>Restart Now</Text>
           </TouchableOpacity>
         </View>
