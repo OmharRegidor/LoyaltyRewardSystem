@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { InteractionManager } from 'react-native';
+import { InteractionManager, View, Text, TouchableOpacity } from 'react-native';
 import {
   useFonts,
   Inter_400Regular,
@@ -14,6 +14,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import * as Updates from 'expo-updates';
 import { AuthProvider } from '../src/providers/AuthProvider';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +43,7 @@ export default function RootLayout() {
     'Inter-Bold': Inter_700Bold,
   });
   const [appReady, setAppReady] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -63,7 +65,7 @@ export default function RootLayout() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Check for OTA updates and apply immediately
+  // Check for OTA updates and prompt the user before applying
   useEffect(() => {
     if (__DEV__) return;
     (async () => {
@@ -71,7 +73,7 @@ export default function RootLayout() {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
           await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
+          setUpdateAvailable(true);
         }
       } catch {
         // Silent fail — update will apply on next natural restart
@@ -79,13 +81,26 @@ export default function RootLayout() {
     })();
   }, []);
 
+  const handleApplyUpdate = async () => {
+    await Updates.reloadAsync();
+  };
+
   if (!fontsLoaded || !appReady) {
     return null;
   }
 
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <StatusBar style="dark" />
+      {updateAvailable && (
+        <View style={{ backgroundColor: '#7F0404', padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ color: 'white', fontSize: 14 }}>Update available</Text>
+          <TouchableOpacity onPress={handleApplyUpdate}>
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>Restart Now</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <PushNotificationHandler />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -96,6 +111,7 @@ export default function RootLayout() {
         <Stack.Screen name="notifications" />
       </Stack>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

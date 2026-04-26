@@ -75,7 +75,7 @@ export interface SaleItemInput {
 export interface Sale {
   id: string;
   business_id: string;
-  branch_id: string | null;
+  branch_id?: string | null;
   customer_id: string | null;
   staff_id: string | null;
   sale_number: string;
@@ -84,15 +84,15 @@ export interface Sale {
   discount_type: DiscountType | null;
   discount_reason: string | null;
   total_centavos: number;
-  payment_method: PaymentMethod;
-  payment_reference: string | null;
+  payment_method: string | null;
+  payment_reference?: string | null;
   amount_tendered_centavos: number | null;
-  change_centavos: number | null;
+  change_centavos: number;
   points_earned: number;
   points_redeemed: number;
-  reward_id: string | null;
-  notes: string | null;
-  status: SaleStatus;
+  reward_id?: string | null;
+  notes?: string | null;
+  status: string | null;
   voided_at: string | null;
   voided_by: string | null;
   void_reason: string | null;

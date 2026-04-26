@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { PlanBadge, StatusBadge } from '@/components/admin/shared/badges';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Search,
   ChevronUp,
@@ -52,6 +63,7 @@ interface BusinessListTableProps {
   selected: Set<string>;
   onSearchInput: (value: string) => void;
   onFilterChange: (key: keyof BusinessFilters, value: string | number) => void;
+  onFiltersPatch: (patch: Partial<BusinessFilters>) => void;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onClearSelected: () => void;
@@ -74,6 +86,7 @@ export function BusinessListTable({
   selected,
   onSearchInput,
   onFilterChange,
+  onFiltersPatch,
   onToggleSelect,
   onToggleSelectAll,
   onClearSelected,
@@ -91,6 +104,9 @@ export function BusinessListTable({
 
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [bulkTagOpen, setBulkTagOpen] = useState(false);
+  const [bulkTagValue, setBulkTagValue] = useState('');
+  const [bulkTagSubmitting, setBulkTagSubmitting] = useState(false);
 
   const handleDeleteSingle = (biz: AdminBusinessStats) => {
     setDeleteTarget({ ids: [biz.id], names: [biz.name] });
@@ -109,24 +125,41 @@ export function BusinessListTable({
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const errors: string[] = [];
-      for (const id of deleteTarget.ids) {
-        const res = await fetch(`/api/admin/businesses/${id}`, { method: 'DELETE' });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({ error: 'Unknown error' }));
-          const name = deleteTarget.names[deleteTarget.ids.indexOf(id)];
-          errors.push(`${name}: ${body.error ?? 'Unknown error'}`);
-        }
-      }
-      if (errors.length === 0) {
+      const results = await Promise.all(
+        deleteTarget.ids.map(async (id, index) => {
+          const name = deleteTarget.names[index];
+          try {
+            const res = await fetch(`/api/admin/businesses/${id}`, { method: 'DELETE' });
+            if (!res.ok) {
+              const body = (await res.json().catch(() => ({ error: 'Unknown error' }))) as {
+                error?: string;
+              };
+              return { ok: false, name, error: body.error ?? 'Unknown error' };
+            }
+            return { ok: true, name };
+          } catch {
+            return { ok: false, name, error: 'Network error' };
+          }
+        }),
+      );
+      const failures = results.filter((r) => !r.ok);
+      if (failures.length === 0) {
+        toast.success(
+          deleteTarget.ids.length > 1
+            ? `${deleteTarget.ids.length} businesses deleted`
+            : `Deleted ${deleteTarget.names[0]}`,
+        );
         onClearSelected();
-        onRefresh();
       } else {
-        window.alert(`Failed to delete:\n\n${errors.join('\n')}`);
-        onRefresh();
+        toast.error(
+          `Failed to delete ${failures.length} of ${results.length}: ${failures
+            .map((f) => `${f.name} (${f.error})`)
+            .join(', ')}`,
+        );
       }
+      onRefresh();
     } catch {
-      window.alert('Failed to delete. Please try again.');
+      toast.error('Failed to delete. Please try again.');
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -196,8 +229,7 @@ export function BusinessListTable({
           value={`${filters.sort}:${filters.order}`}
           onChange={(e) => {
             const [sort, order] = e.target.value.split(':');
-            onFilterChange('sort', sort);
-            setTimeout(() => onFilterChange('order', order), 0);
+            onFiltersPatch({ sort, order });
           }}
           className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-orange-500"
         >
@@ -233,14 +265,15 @@ export function BusinessListTable({
             {selected.size} selected
           </span>
           <button
-            onClick={() => handleExportCsv(businesses, selected)}
+            onClick={() => handleExportCsv(filters)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-sm rounded-md border border-gray-200 transition-colors"
+            title="Export all businesses matching the current filters"
           >
             <Download className="w-3.5 h-3.5" />
             Export CSV
           </button>
           <button
-            onClick={() => handleBulkTag(selected)}
+            onClick={() => { setBulkTagValue(''); setBulkTagOpen(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-sm rounded-md border border-gray-200 transition-colors"
           >
             <Tag className="w-3.5 h-3.5" />
@@ -282,7 +315,7 @@ export function BusinessListTable({
                   column="name"
                   currentSort={filters.sort}
                   currentOrder={filters.order}
-                  onSort={(col) => handleSort(col, filters, onFilterChange)}
+                  onSort={(col) => handleSort(col, filters, onFiltersPatch)}
                 />
                 <th className="text-left px-4 py-4 text-gray-500 font-medium">
                   Email
@@ -298,7 +331,7 @@ export function BusinessListTable({
                   column="customer_count"
                   currentSort={filters.sort}
                   currentOrder={filters.order}
-                  onSort={(col) => handleSort(col, filters, onFilterChange)}
+                  onSort={(col) => handleSort(col, filters, onFiltersPatch)}
                   className="text-right"
                 />
                 <SortableHeader
@@ -306,7 +339,7 @@ export function BusinessListTable({
                   column="transactions_30d"
                   currentSort={filters.sort}
                   currentOrder={filters.order}
-                  onSort={(col) => handleSort(col, filters, onFilterChange)}
+                  onSort={(col) => handleSort(col, filters, onFiltersPatch)}
                   className="text-right"
                 />
                 <th className="text-left px-4 py-4 text-gray-500 font-medium hidden md:table-cell">
@@ -317,7 +350,7 @@ export function BusinessListTable({
                   column="created_at"
                   currentSort={filters.sort}
                   currentOrder={filters.order}
-                  onSort={(col) => handleSort(col, filters, onFilterChange)}
+                  onSort={(col) => handleSort(col, filters, onFiltersPatch)}
                 />
                 <th className="px-4 py-4 text-gray-500 font-medium w-16"></th>
               </tr>
@@ -408,6 +441,54 @@ export function BusinessListTable({
         />
       )}
 
+      {/* Bulk Tag Dialog */}
+      <Dialog open={bulkTagOpen} onOpenChange={(open) => { if (!bulkTagSubmitting) setBulkTagOpen(open); }}>
+        <DialogContent className="bg-white border-gray-200 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">Tag selected businesses</DialogTitle>
+            <DialogDescription className="text-gray-500">
+              Apply a tag to {selected.size} selected {selected.size === 1 ? 'business' : 'businesses'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Input
+              placeholder="Tag name"
+              value={bulkTagValue}
+              onChange={(e) => setBulkTagValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && bulkTagValue.trim() && !bulkTagSubmitting) {
+                  e.preventDefault();
+                  (async () => {
+                    setBulkTagSubmitting(true);
+                    const ok = await applyBulkTag(selected, bulkTagValue);
+                    setBulkTagSubmitting(false);
+                    if (ok) { setBulkTagOpen(false); onRefresh(); }
+                  })();
+                }
+              }}
+              className="!bg-white border-gray-200 text-gray-900"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkTagOpen(false)} disabled={bulkTagSubmitting}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (!bulkTagValue.trim() || bulkTagSubmitting) return;
+                setBulkTagSubmitting(true);
+                const ok = await applyBulkTag(selected, bulkTagValue);
+                setBulkTagSubmitting(false);
+                if (ok) { setBulkTagOpen(false); onRefresh(); }
+              }}
+              disabled={!bulkTagValue.trim() || bulkTagSubmitting}
+            >
+              {bulkTagSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
+              Apply tag
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}>
         <AlertDialogContent>
@@ -454,44 +535,6 @@ export function BusinessListTable({
 // ============================================
 // SUB-COMPONENTS
 // ============================================
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    active: 'bg-green-50 text-green-700 border-green-200',
-    cancelled: 'bg-red-50 text-red-700 border-red-200',
-    expired: 'bg-gray-100 text-gray-500 border-gray-200',
-  };
-  return (
-    <Badge
-      className={
-        styles[status] ?? 'bg-gray-100 text-gray-500 border-gray-200'
-      }
-    >
-      {status}
-    </Badge>
-  );
-}
-
-function PlanBadge({ plan }: { plan: string | null }) {
-  if (!plan)
-    return (
-      <Badge className="bg-gray-100 text-gray-500 border-gray-200">
-        Free
-      </Badge>
-    );
-  const isEnterprise = plan.toLowerCase().includes('enterprise');
-  return (
-    <Badge
-      className={
-        isEnterprise
-          ? 'bg-orange-50 text-orange-700 border-orange-200'
-          : 'bg-gray-100 text-gray-500 border-gray-200'
-      }
-    >
-      {plan}
-    </Badge>
-  );
-}
 
 function SortableHeader({
   label,
@@ -618,84 +661,59 @@ function buildPageNumbers(current: number, total: number): (number | '...')[] {
 function handleSort(
   column: string,
   filters: BusinessFilters,
-  onFilterChange: (key: keyof BusinessFilters, value: string | number) => void,
+  onFiltersPatch: (patch: Partial<BusinessFilters>) => void,
 ) {
   if (filters.sort === column) {
-    onFilterChange('order', filters.order === 'asc' ? 'desc' : 'asc');
+    onFiltersPatch({ order: filters.order === 'asc' ? 'desc' : 'asc' });
   } else {
-    onFilterChange('sort', column);
-    setTimeout(() => onFilterChange('order', 'desc'), 0);
+    onFiltersPatch({ sort: column, order: 'desc' });
   }
 }
 
-function handleExportCsv(
-  businesses: AdminBusinessStats[],
-  selected: Set<string>,
-) {
-  const rows = businesses.filter((b) => selected.has(b.id));
-  const headers = [
-    'Name',
-    'Email',
-    'Plan',
-    'Status',
-    'Type',
-    'Customers',
-    'Transactions (30d)',
-    'Staff',
-    'Branches',
-    'Points Issued',
-    'Created',
-  ];
-
-  const csvRows = [
-    headers.join(','),
-    ...rows.map((b) =>
-      [
-        `"${(b.name ?? '').replace(/"/g, '""')}"`,
-        `"${(b.owner_email ?? '').replace(/"/g, '""')}"`,
-        b.plan_name ?? 'Free',
-        b.subscription_status,
-        b.business_type ?? '',
-        b.customer_count,
-        b.transactions_30d,
-        b.staff_count,
-        b.branch_count,
-        b.points_issued,
-        b.created_at ? new Date(b.created_at).toISOString().split('T')[0] : '',
-      ].join(','),
-    ),
-  ];
-
-  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `businesses-export-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+async function handleExportCsv(filters: BusinessFilters) {
+  const params = new URLSearchParams();
+  if (filters.search) params.set('search', filters.search);
+  if (filters.plan) params.set('plan', filters.plan);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.status) params.set('status', filters.status);
+  params.set('sort', filters.sort);
+  params.set('order', filters.order);
+  try {
+    const res = await fetch(`/api/admin/businesses/export?${params.toString()}`);
+    if (!res.ok) {
+      toast.error('Failed to export businesses.');
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    toast.error('Failed to export businesses.');
+  }
 }
 
-async function handleBulkTag(selected: Set<string>) {
-  const tag = window.prompt('Enter tag name:');
-  if (!tag?.trim()) return;
-
+async function applyBulkTag(selected: Set<string>, tag: string): Promise<boolean> {
+  const trimmed = tag.trim();
+  if (!trimmed) return false;
   try {
     const res = await fetch('/api/admin/businesses/tags', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        businessIds: Array.from(selected),
-        tag: tag.trim(),
-      }),
+      body: JSON.stringify({ businessIds: Array.from(selected), tag: trimmed }),
     });
-
-    if (res.ok) {
-      const data = (await res.json()) as { count: number };
-      window.alert(`Tagged ${data.count} businesses with "${tag.trim()}"`);
-    } else {
-      window.alert('Failed to apply tags');
+    if (!res.ok) {
+      toast.error('Failed to apply tags.');
+      return false;
     }
+    const data = (await res.json()) as { count: number };
+    toast.success(`Tagged ${data.count} ${data.count === 1 ? 'business' : 'businesses'} with "${trimmed}"`);
+    return true;
   } catch {
-    window.alert('Failed to apply tags');
+    toast.error('Failed to apply tags.');
+    return false;
   }
 }

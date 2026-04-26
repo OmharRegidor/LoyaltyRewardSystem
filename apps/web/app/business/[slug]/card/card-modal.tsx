@@ -4,10 +4,22 @@
 
 import { useEffect, useState } from 'react';
 import { X, Star, RotateCw } from 'lucide-react';
+import { PublicStampCard } from '@/components/public/stamp-card-preview';
 
 // ============================================
 // TYPES
 // ============================================
+
+interface StampCardInfo {
+  stamps_collected: number;
+  total_stamps: number;
+  reward_title: string;
+  is_completed: boolean;
+  milestones: Array<{ position: number; label: string }>;
+  redeemed_milestones: Array<{ position: number }>;
+  paused_at_milestone: number | null;
+  reward_image_url?: string | null;
+}
 
 interface CardModalProps {
   isOpen: boolean;
@@ -18,6 +30,9 @@ interface CardModalProps {
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
+  loyaltyMode?: 'points' | 'stamps';
+  stampCard?: StampCardInfo | null;
+  businessLogoUrl?: string | null;
 }
 
 // ============================================
@@ -98,6 +113,9 @@ export function CardModal({
   qrCodeUrl,
   tier,
   totalPoints,
+  loyaltyMode = 'points',
+  stampCard,
+  businessLogoUrl,
 }: CardModalProps) {
   const [isFlipped, setIsFlipped] = useState(true);
   const tierStyle = TIER_STYLES[tier] || TIER_STYLES.bronze;
@@ -150,7 +168,44 @@ export function CardModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* 3D Card Container */}
+        {/* Stamp mode — show stamp card with QR */}
+        {loyaltyMode === 'stamps' && stampCard ? (
+          <div className="space-y-4">
+            <PublicStampCard
+              totalStamps={stampCard.total_stamps}
+              rewardTitle={stampCard.reward_title}
+              rewardImageUrl={stampCard.reward_image_url}
+              milestones={stampCard.milestones}
+              stampsCollected={stampCard.stamps_collected}
+              redeemedMilestones={stampCard.redeemed_milestones}
+              businessName={businessName}
+              businessLogoUrl={businessLogoUrl}
+              mode="flippable"
+            />
+
+            {/* QR Code + customer info below the card */}
+            <div className="bg-white rounded-2xl shadow-lg p-4 flex items-center gap-4">
+              <div className="shrink-0 w-28">
+                <div className="bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                  <img
+                    src={`/api/qr/${encodeURIComponent(qrCodeUrl)}`}
+                    alt="Your QR Code"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-gray-900 text-sm break-words">{customerName}</h3>
+                {phone && <p className="text-xs text-gray-500">{formatPhone(phone)}</p>}
+                <p className="text-xs font-semibold text-amber-600 mt-1">
+                  {stampCard.stamps_collected}/{stampCard.total_stamps} stamps
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+        /* Points mode — original 3D flip card */
+        <>
         <div style={{ perspective: '1000px' }}>
           <div
             className="relative w-full transition-transform duration-600"
@@ -279,6 +334,8 @@ export function CardModal({
         <p className="text-center text-xs text-white/60 mt-3">
           Tap the flip button to see {isFlipped ? 'front' : 'your details'}
         </p>
+        </>
+        )}
       </div>
     </div>
   );

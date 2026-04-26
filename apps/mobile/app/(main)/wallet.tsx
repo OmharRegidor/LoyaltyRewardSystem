@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   SectionList,
   FlatList,
   RefreshControl,
 } from 'react-native';
-import { COLORS, SPACING } from '../../src/lib/constants';
-import { useWallet } from '../../src/hooks/useWallet';
+import { COLORS, SPACING, FONT_SIZE } from '../../src/lib/constants';
+import { useWallet, TRANSACTION_RETENTION_DAYS } from '../../src/hooks/useWallet';
 import {
   WalletHeader,
   SegmentTabs,
@@ -111,6 +112,8 @@ function TransactionsTab({
     return <EmptyWallet type="transactions" />;
   }
 
+  const retentionMonths = Math.round(TRANSACTION_RETENTION_DAYS / 30);
+
   return (
     <SectionList
       sections={groupedTransactions}
@@ -123,6 +126,11 @@ function TransactionsTab({
       renderSectionHeader={({ section: { title } }) => (
         <SectionHeader title={title} />
       )}
+      ListFooterComponent={
+        <Text style={styles.retentionNote}>
+          Showing last {retentionMonths} months
+        </Text>
+      }
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -207,6 +215,14 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   cardWrapper: {
+    paddingHorizontal: SPACING.lg,
+  },
+  retentionNote: {
+    textAlign: 'center',
+    color: COLORS.gray[500],
+    fontSize: FONT_SIZE.xs,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.sm,
     paddingHorizontal: SPACING.lg,
   },
 });

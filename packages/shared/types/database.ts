@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_notes: {
@@ -262,6 +287,7 @@ export type Database = {
           logo_url: string | null
           loyalty_mode: string
           max_points_per_transaction: number | null
+          min_purchase: number | null
           min_purchase_for_points: number | null
           name: string
           owner_email: string | null
@@ -270,6 +296,7 @@ export type Database = {
           phone: string | null
           points_expiry_days: number | null
           points_per_purchase: number | null
+          pos_mode: string | null
           pos_onboarded: boolean
           qr_code_url: string | null
           referral_reward_points: number
@@ -291,6 +318,7 @@ export type Database = {
           logo_url?: string | null
           loyalty_mode?: string
           max_points_per_transaction?: number | null
+          min_purchase?: number | null
           min_purchase_for_points?: number | null
           name: string
           owner_email?: string | null
@@ -299,6 +327,7 @@ export type Database = {
           phone?: string | null
           points_expiry_days?: number | null
           points_per_purchase?: number | null
+          pos_mode?: string | null
           pos_onboarded?: boolean
           qr_code_url?: string | null
           referral_reward_points?: number
@@ -320,6 +349,7 @@ export type Database = {
           logo_url?: string | null
           loyalty_mode?: string
           max_points_per_transaction?: number | null
+          min_purchase?: number | null
           min_purchase_for_points?: number | null
           name?: string
           owner_email?: string | null
@@ -328,6 +358,7 @@ export type Database = {
           phone?: string | null
           points_expiry_days?: number | null
           points_per_purchase?: number | null
+          pos_mode?: string | null
           pos_onboarded?: boolean
           qr_code_url?: string | null
           referral_reward_points?: number
@@ -528,6 +559,116 @@ export type Database = {
           template_id?: string
           to_email?: string
           to_name?: string | null
+        }
+        Relationships: []
+      }
+      impersonation_logs: {
+        Row: {
+          admin_email: string
+          admin_user_id: string | null
+          created_at: string
+          details: Json | null
+          event: string
+          id: string
+          ip_address: unknown
+          session_id: string | null
+          target_email: string
+          target_role: string
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          admin_email: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event: string
+          id?: string
+          ip_address?: unknown
+          session_id?: string | null
+          target_email: string
+          target_role: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          admin_email?: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event?: string
+          id?: string
+          ip_address?: unknown
+          session_id?: string | null
+          target_email?: string
+          target_role?: string
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impersonation_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "impersonation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          activated_at: string | null
+          admin_email: string
+          admin_user_id: string
+          created_at: string
+          ended_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          magic_otp: string
+          mode: string
+          opaque_token_hash: string
+          reason: string | null
+          target_email: string
+          target_role: string
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          admin_email: string
+          admin_user_id: string
+          created_at?: string
+          ended_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          magic_otp: string
+          mode?: string
+          opaque_token_hash: string
+          reason?: string | null
+          target_email: string
+          target_role: string
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          admin_email?: string
+          admin_user_id?: string
+          created_at?: string
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          magic_otp?: string
+          mode?: string
+          opaque_token_hash?: string
+          reason?: string | null
+          target_email?: string
+          target_role?: string
+          target_user_id?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -942,6 +1083,118 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_sales: {
+        Row: {
+          amount_tendered_centavos: number | null
+          business_id: string
+          change_centavos: number
+          created_at: string
+          customer_id: string | null
+          discount_centavos: number
+          discount_reason: string | null
+          discount_type: string | null
+          exchange_discount_centavos: number
+          exchange_points: number
+          id: string
+          idempotency_key: string | null
+          payment_method: string | null
+          points_earned: number
+          points_redeemed: number
+          sale_number: string
+          staff_id: string | null
+          staff_name: string | null
+          status: string | null
+          subtotal_centavos: number
+          tier_multiplier: number
+          tier_name: string | null
+          total_centavos: number
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_tendered_centavos?: number | null
+          business_id: string
+          change_centavos?: number
+          created_at?: string
+          customer_id?: string | null
+          discount_centavos?: number
+          discount_reason?: string | null
+          discount_type?: string | null
+          exchange_discount_centavos?: number
+          exchange_points?: number
+          id?: string
+          idempotency_key?: string | null
+          payment_method?: string | null
+          points_earned?: number
+          points_redeemed?: number
+          sale_number: string
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          subtotal_centavos?: number
+          tier_multiplier?: number
+          tier_name?: string | null
+          total_centavos?: number
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_tendered_centavos?: number | null
+          business_id?: string
+          change_centavos?: number
+          created_at?: string
+          customer_id?: string | null
+          discount_centavos?: number
+          discount_reason?: string | null
+          discount_type?: string | null
+          exchange_discount_centavos?: number
+          exchange_points?: number
+          id?: string
+          idempotency_key?: string | null
+          payment_method?: string | null
+          points_earned?: number
+          points_redeemed?: number
+          sale_number?: string
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          subtotal_centavos?: number
+          tier_multiplier?: number
+          tier_name?: string | null
+          total_centavos?: number
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sales_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "admin_business_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           business_id: string
@@ -1042,6 +1295,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          id: string
+          identifier: string
+          identifier_type: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
       }
       redemptions: {
         Row: {
@@ -1386,7 +1666,7 @@ export type Database = {
             foreignKeyName: "sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
-            referencedRelation: "sales"
+            referencedRelation: "pos_sales"
             referencedColumns: ["id"]
           },
         ]
@@ -1532,7 +1812,7 @@ export type Database = {
           id: string
           points_awarded: number
           scanned_at: string | null
-          staff_id: string
+          staff_id: string | null
           transaction_amount: number | null
         }
         Insert: {
@@ -1541,7 +1821,7 @@ export type Database = {
           id?: string
           points_awarded?: number
           scanned_at?: string | null
-          staff_id: string
+          staff_id?: string | null
           transaction_amount?: number | null
         }
         Update: {
@@ -1550,7 +1830,7 @@ export type Database = {
           id?: string
           points_awarded?: number
           scanned_at?: string | null
-          staff_id?: string
+          staff_id?: string | null
           transaction_amount?: number | null
         }
         Relationships: [
@@ -1596,6 +1876,7 @@ export type Database = {
           deposit_percentage: number | null
           description: string | null
           duration_minutes: number
+          duration_unit: string
           id: string
           image_url: string | null
           inventory_count: number | null
@@ -1618,6 +1899,7 @@ export type Database = {
           deposit_percentage?: number | null
           description?: string | null
           duration_minutes?: number
+          duration_unit?: string
           id?: string
           image_url?: string | null
           inventory_count?: number | null
@@ -1640,6 +1922,7 @@ export type Database = {
           deposit_percentage?: number | null
           description?: string | null
           duration_minutes?: number
+          duration_unit?: string
           id?: string
           image_url?: string | null
           inventory_count?: number | null
@@ -1860,6 +2143,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          milestones: Json
           min_purchase_amount: number
           reward_description: string | null
           reward_image_url: string | null
@@ -1874,6 +2158,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          milestones?: Json
           min_purchase_amount?: number
           reward_description?: string | null
           reward_image_url?: string | null
@@ -1888,6 +2173,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          milestones?: Json
           min_purchase_amount?: number
           reward_description?: string | null
           reward_image_url?: string | null
@@ -1922,7 +2208,10 @@ export type Database = {
           id: string
           is_completed: boolean
           is_redeemed: boolean
+          milestones: Json
+          paused_at_milestone: number | null
           redeemed_at: string | null
+          redeemed_milestones: Json
           reward_title: string
           stamps_collected: number
           template_id: string
@@ -1936,7 +2225,10 @@ export type Database = {
           id?: string
           is_completed?: boolean
           is_redeemed?: boolean
+          milestones?: Json
+          paused_at_milestone?: number | null
           redeemed_at?: string | null
+          redeemed_milestones?: Json
           reward_title: string
           stamps_collected?: number
           template_id: string
@@ -1950,7 +2242,10 @@ export type Database = {
           id?: string
           is_completed?: boolean
           is_redeemed?: boolean
+          milestones?: Json
+          paused_at_milestone?: number | null
           redeemed_at?: string | null
+          redeemed_milestones?: Json
           reward_title?: string
           stamps_collected?: number
           template_id?: string
@@ -1991,6 +2286,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          idempotency_key: string | null
           is_undone: boolean
           notes: string | null
           sale_id: string | null
@@ -2002,6 +2298,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          idempotency_key?: string | null
           is_undone?: boolean
           notes?: string | null
           sale_id?: string | null
@@ -2013,6 +2310,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          idempotency_key?: string | null
           is_undone?: boolean
           notes?: string | null
           sale_id?: string | null
@@ -2234,6 +2532,8 @@ export type Database = {
           id: string
           points: number
           reward_id: string | null
+          sale_id: string | null
+          stamps_added: number
           type: Database["public"]["Enums"]["transaction_type"]
         }
         Insert: {
@@ -2245,6 +2545,8 @@ export type Database = {
           id?: string
           points: number
           reward_id?: string | null
+          sale_id?: string | null
+          stamps_added?: number
           type: Database["public"]["Enums"]["transaction_type"]
         }
         Update: {
@@ -2256,6 +2558,8 @@ export type Database = {
           id?: string
           points?: number
           reward_id?: string | null
+          sale_id?: string | null
+          stamps_added?: number
           type?: Database["public"]["Enums"]["transaction_type"]
         }
         Relationships: [
@@ -2285,6 +2589,13 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
             referencedColumns: ["id"]
           },
         ]
@@ -2518,6 +2829,25 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_platform_stats: {
+        Row: {
+          active_subscriptions: number | null
+          bookings_30d: number | null
+          businesses_30d: number | null
+          businesses_7d: number | null
+          customers_30d: number | null
+          enterprise_count: number | null
+          free_count: number | null
+          points_issued_30d: number | null
+          total_bookings: number | null
+          total_businesses: number | null
+          total_customers: number | null
+          total_points_issued: number | null
+          total_transactions: number | null
+          transactions_30d: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_staff_invite: {
@@ -2532,15 +2862,86 @@ export type Database = {
         Args: { p_customer_id: string; p_points: number }
         Returns: undefined
       }
-      add_stamp: {
+      add_stamp:
+        | {
+            Args: {
+              p_business_id: string
+              p_customer_id: string
+              p_notes?: string
+              p_sale_id?: string
+              p_staff_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_business_id: string
+              p_customer_id: string
+              p_idempotency_key?: string
+              p_notes?: string
+              p_sale_id?: string
+              p_staff_id: string
+            }
+            Returns: Json
+          }
+      admin_get_customer_detail: {
+        Args: { p_customer_id: string }
+        Returns: {
+          customer_id: string
+          email: string
+          memberships: Json
+          phone: string
+          recent_transactions: Json
+        }[]
+      }
+      admin_list_business_customers: {
         Args: {
           p_business_id: string
-          p_customer_id: string
-          p_notes?: string
-          p_sale_id?: string
-          p_staff_id: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
         }
-        Returns: Json
+        Returns: {
+          customer_id: string
+          email: string
+          followed_at: string
+          last_transaction_at: string
+          phone: string
+          points: number
+          total_count: number
+          transaction_count: number
+        }[]
+      }
+      admin_list_enterprise_accounts: {
+        Args: never
+        Returns: {
+          business_id: string
+          business_name: string
+          has_pos: boolean
+          owner_email: string
+          plan_display_name: string
+          plan_name: string
+          subscription_id: string
+          upgraded_at: string
+        }[]
+      }
+      admin_list_users: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_role?: string
+          p_search?: string
+        }
+        Returns: {
+          business_count: number
+          business_id: string
+          business_name: string
+          created_at: string
+          email: string
+          role: string
+          total_count: number
+          user_id: string
+        }[]
       }
       check_plan_limit: {
         Args: { p_business_id: string; p_limit_type: string }
@@ -2569,6 +2970,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_verification_codes: { Args: never; Returns: number }
+      clear_invalid_milestone_pauses: {
+        Args: { p_template_id: string; p_valid_positions?: number[] }
+        Returns: undefined
+      }
       complete_redemption: {
         Args: { p_completed_by: string; p_redemption_id: string }
         Returns: Json
@@ -2593,6 +2998,13 @@ export type Database = {
         Args: { p_customer_id: string; p_points: number }
         Returns: undefined
       }
+      delete_business: {
+        Args: { p_admin_email?: string; p_business_id: string }
+        Returns: {
+          business_name: string
+          owner_id: string
+        }[]
+      }
       find_or_create_customer_by_email: {
         Args: {
           p_age: number
@@ -2615,6 +3027,8 @@ export type Database = {
       }
       generate_sale_number: { Args: { p_business_id: string }; Returns: string }
       generate_slug: { Args: { name: string }; Returns: string }
+      get_admin_business_facets: { Args: never; Returns: Json }
+      get_audit_event_types: { Args: never; Returns: string[] }
       get_business_activity_trend: {
         Args: { p_business_id: string; p_days?: number }
         Returns: {
@@ -2702,6 +3116,25 @@ export type Database = {
           user_id: string
         }[]
       }
+      process_staff_sale: {
+        Args: {
+          p_amount_tendered_centavos?: number
+          p_business_id: string
+          p_customer_id: string
+          p_discount_centavos?: number
+          p_discount_reason?: string
+          p_discount_type?: string
+          p_exchange_points?: number
+          p_idempotency_key?: string
+          p_sale_items?: Json
+          p_staff_id: string
+          p_staff_name: string
+          p_subtotal_centavos: number
+          p_tier_multiplier?: number
+          p_tier_name?: string
+        }
+        Returns: Json
+      }
       recalculate_usage_counts: {
         Args: { p_business_id: string }
         Returns: undefined
@@ -2713,6 +3146,10 @@ export type Database = {
           p_points: number
           p_staff_id: string
         }
+        Returns: Json
+      }
+      redeem_milestone: {
+        Args: { p_staff_id: string; p_stamp_card_id: string }
         Returns: Json
       }
       redeem_reward: {
@@ -2736,6 +3173,10 @@ export type Database = {
           total_points: number
           user_id: string
         }[]
+      }
+      sum_business_points_30d: {
+        Args: { p_business_id: string }
+        Returns: number
       }
       undo_last_stamp: {
         Args: { p_staff_id: string; p_stamp_card_id: string }
@@ -2905,6 +3346,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "business_owner", "staff", "customer"],

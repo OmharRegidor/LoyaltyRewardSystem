@@ -49,6 +49,7 @@ export function TransactionCard({
   onPress,
 }: TransactionCardProps) {
   const isCredit = transaction.type === 'credit';
+  const isStamp = transaction.stamps > 0;
 
   return (
     <TouchableOpacity
@@ -93,16 +94,22 @@ export function TransactionCard({
         </Text>
       </View>
 
-      {/* Points Badge */}
-      <Text
-        style={[
-          styles.points,
-          isCredit ? styles.pointsCredit : styles.pointsDebit,
-        ]}
-      >
-        {isCredit ? '+' : '-'}
-        {transaction.amount}
-      </Text>
+      {/* Right-side badge: stamps for stamps-mode rows, points otherwise */}
+      {isStamp ? (
+        <Text style={[styles.points, styles.pointsCredit]}>
+          +{transaction.stamps} stamp{transaction.stamps > 1 ? 's' : ''}
+        </Text>
+      ) : (
+        <Text
+          style={[
+            styles.points,
+            isCredit ? styles.pointsCredit : styles.pointsDebit,
+          ]}
+        >
+          {isCredit ? '+' : '-'}
+          {transaction.amount}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }

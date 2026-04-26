@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
   LogOut,
@@ -37,6 +38,7 @@ import { PaymentPanel } from "@/components/staff/pos/payment-panel";
 import { ReceiptModal } from "@/components/staff/pos/receipt-modal";
 import type { PaymentMethod } from "@/types/pos.types";
 import type { StaffCartItem } from "@/types/staff-pos.types";
+import { getStampGridCols, STAMP_CARD_ASPECT } from "@/lib/stamp-grid";
 
 // ============================================
 // TYPES
@@ -120,8 +122,13 @@ export default function StaffScannerPage() {
     total_stamps: number;
     reward_title: string;
     is_completed: boolean;
+    milestones?: Array<{ position: number; label: string }>;
+    redeemed_milestones?: Array<{ position: number }>;
+    paused_at_milestone?: number | null;
   } | null>(null);
   const [isQuickStamping, setIsQuickStamping] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isRedeemingMilestone, setIsRedeemingMilestone] = useState(false);
   const [showStampPOS, setShowStampPOS] = useState(false);
   const [lastSaleStampResult, setLastSaleStampResult] = useState<{
     stamps_collected: number;
@@ -551,6 +558,9 @@ export default function StaffScannerPage() {
             total_stamps: card.total_stamps,
             reward_title: card.reward_title,
             is_completed: card.is_completed,
+            milestones: card.milestones || [],
+            redeemed_milestones: card.redeemed_milestones || [],
+            paused_at_milestone: card.paused_at_milestone || null,
           });
         } else {
           setStampCardData(null);
@@ -579,7 +589,12 @@ export default function StaffScannerPage() {
     setLastSaleStampResult(null);
 
     try {
-      const result = await pos.completeSale();
+      // Fetch the session once and reuse the token for both the sale and the
+      // auto-stamp call so we don't hit auth.getSession() twice per click.
+      const { data: { session } } = await createClient().auth.getSession();
+      const accessToken = session?.access_token;
+
+      const result = await pos.completeSale(accessToken);
       setSaleResult(result);
 
       // Auto-add stamp in stamps mode
@@ -587,7 +602,15 @@ export default function StaffScannerPage() {
         try {
           const stampRes = await fetch('/api/staff/stamp', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              // Stable idempotency key tied to the sale: a network retry or a
+              // double-fire of handleCompleteSale must not double-stamp.
+              'x-idempotency-key': `stamp-sale-${result.sale_id}`,
+              ...(accessToken && {
+                Authorization: `Bearer ${accessToken}`,
+              }),
+            },
             body: JSON.stringify({
               customerId: customer.id,
               saleId: result.sale_id,
@@ -595,7 +618,7 @@ export default function StaffScannerPage() {
             }),
           });
           const stampData = await stampRes.json();
-          if (stampData.success) {
+          if (stampRes.ok && stampData.success) {
             const stampResult = {
               stamps_collected: stampData.stamps_collected ?? 0,
               total_stamps: stampData.total_stamps ?? 10,
@@ -607,9 +630,17 @@ export default function StaffScannerPage() {
               ...stampResult,
             });
             setLastSaleStampResult(stampResult);
+          } else {
+            const reason =
+              stampData?.error ||
+              stampData?.message ||
+              'Sale completed but stamp not added.';
+            console.error('Auto-stamp after sale failed:', reason);
+            toast.error(`Stamp not added: ${reason}`);
           }
         } catch (stampErr) {
           console.error('Auto-stamp after sale failed:', stampErr);
+          toast.error('Sale completed but stamp not added. Please try Add Stamp.');
         }
       }
 
@@ -641,33 +672,84 @@ export default function StaffScannerPage() {
     if (!customer || !staffData) return;
     setIsQuickStamping(true);
     try {
+      const idempotencyKey = `stamp-${customer.id}-${Date.now()}`;
       const res = await fetch('/api/staff/stamp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-idempotency-key': idempotencyKey,
+        },
         body: JSON.stringify({
           customerId: customer.id,
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to stamp card');
+        return;
+      }
       if (data.success) {
-        setStampCardData({
-          card_id: data.card_id ?? '',
+        setStampCardData(prev => ({
+          card_id: data.card_id ?? prev?.card_id ?? '',
           stamps_collected: data.stamps_collected ?? 0,
-          total_stamps: data.total_stamps ?? 10,
-          reward_title: data.reward_title ?? '',
+          total_stamps: data.total_stamps ?? prev?.total_stamps ?? 10,
+          reward_title: data.reward_title ?? prev?.reward_title ?? '',
           is_completed: data.is_completed ?? false,
-        });
+          milestones: prev?.milestones ?? [],
+          redeemed_milestones: prev?.redeemed_milestones ?? [],
+          paused_at_milestone: data.is_milestone ? data.stamps_collected : null,
+        }));
         setStats((prev) => ({ ...prev, scansToday: prev.scansToday + 1 }));
+      } else if (data.is_milestone_paused) {
+        // Card is paused — update UI to show redeem milestone button
+        setStampCardData(prev => prev ? {
+          ...prev,
+          paused_at_milestone: data.milestone_position,
+        } : prev);
       }
     } catch (err) {
       console.error('Quick stamp error:', err);
+      toast.error('Failed to stamp card. Please try again.');
     } finally {
       setIsQuickStamping(false);
     }
   };
 
+  const handleRedeemMilestone = async () => {
+    if (!stampCardData?.card_id || !staffData || isRedeemingMilestone) return;
+    setIsRedeemingMilestone(true);
+    try {
+      const res = await fetch('/api/staff/stamp/redeem-milestone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stampCardId: stampCardData.card_id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to redeem milestone');
+        return;
+      }
+      if (data.success) {
+        setStampCardData(prev => prev ? {
+          ...prev,
+          paused_at_milestone: null,
+          redeemed_milestones: [
+            ...(prev.redeemed_milestones ?? []),
+            { position: data.milestone_position },
+          ],
+        } : prev);
+      }
+    } catch (err) {
+      console.error('Redeem milestone error:', err);
+      toast.error('Failed to redeem milestone. Please try again.');
+    } finally {
+      setIsRedeemingMilestone(false);
+    }
+  };
+
   const handleRedeemStampCard = async () => {
-    if (!stampCardData?.card_id || !staffData) return;
+    if (!stampCardData?.card_id || !staffData || isRedeeming) return;
+    setIsRedeeming(true);
     try {
       const res = await fetch('/api/staff/stamp/redeem', {
         method: 'POST',
@@ -677,6 +759,10 @@ export default function StaffScannerPage() {
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to redeem card');
+        return;
+      }
       if (data.success) {
         setStampCardData({
           card_id: data.new_card_id ?? '',
@@ -684,10 +770,16 @@ export default function StaffScannerPage() {
           total_stamps: stampCardData.total_stamps,
           reward_title: data.reward_title ?? stampCardData.reward_title,
           is_completed: false,
+          milestones: stampCardData.milestones,
+          redeemed_milestones: [],
+          paused_at_milestone: null,
         });
       }
     } catch (err) {
       console.error('Redeem stamp card error:', err);
+      toast.error('Failed to redeem card. Please try again.');
+    } finally {
+      setIsRedeeming(false);
     }
   };
 
@@ -927,42 +1019,59 @@ export default function StaffScannerPage() {
                 {/* Stamp Card — physical card style */}
                 {stampCardData && (() => {
                   const total = stampCardData.total_stamps;
-                  const cols = total <= 5 ? total : total <= 10 ? 5 : total <= 12 ? 4 : 5;
+                  const cols = getStampGridCols(total);
+                  const rows = Math.ceil(total / cols);
+                  const gap = total > 30 ? '4px' : total > 15 ? '5px' : '6px';
                   return (
-                    <div className="w-full rounded-2xl border border-gray-200 shadow-sm overflow-hidden" style={{ aspectRatio: '1.6 / 1' }}>
-                      {/* Card body */}
-                      <div className="h-full bg-gradient-to-br from-white to-gray-50 p-4 flex flex-col justify-between">
+                    <div className="w-full rounded-2xl border border-amber-200/80 shadow-sm overflow-hidden" style={{ aspectRatio: `${STAMP_CARD_ASPECT}` }}>
+                      <div className="h-full bg-gradient-to-br from-amber-50 via-orange-50/80 to-yellow-50 p-4 flex flex-col">
                         {/* Header */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-900">Stamp Card</span>
-                          <span className="text-sm font-bold text-primary">
-                            {stampCardData.stamps_collected} / {total}
+                        <div className="flex items-center justify-between shrink-0 pb-1">
+                          <span className="text-sm font-bold text-gray-800">
+                            {stampCardData.stamps_collected}/{total} stamps
                           </span>
                         </div>
 
-                        {/* Stamp grid — even columns */}
+                        {/* Stamp grid — fills card, stamps adapt to cell size */}
                         <div
-                          className="grid place-items-center gap-2 py-2"
-                          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+                          className="flex-1 grid min-h-0 place-items-center"
+                          style={{
+                            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                            gridTemplateRows: `repeat(${rows}, 1fr)`,
+                            gap,
+                          }}
                         >
                           {Array.from({ length: total }, (_, i) => {
+                            const position = i + 1;
                             const isFilled = i < stampCardData.stamps_collected;
                             const isLast = i === total - 1;
+                            const milestone = stampCardData.milestones?.find(m => m.position === position);
+                            const isRedeemed = stampCardData.redeemed_milestones?.some(r => r.position === position);
                             return (
                               <div
                                 key={i}
-                                className={`aspect-square w-full max-w-[44px] rounded-xl flex items-center justify-center transition-all ${
-                                  isFilled
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                    : isLast
-                                      ? 'bg-amber-50 border-2 border-dashed border-amber-400 text-amber-600'
-                                      : 'bg-gray-100/80 border-2 border-dashed border-gray-200 text-gray-300'
+                                className={`w-full h-full max-h-16 max-w-16 rounded-sm border-[1.5px] flex items-center justify-center transition-all ${
+                                  milestone && isFilled && isRedeemed
+                                    ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                                    : milestone && isFilled && !isRedeemed
+                                      ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                                    : milestone && !isFilled
+                                      ? 'border-amber-400 bg-amber-50 text-amber-700 border-dashed'
+                                    : isFilled
+                                      ? 'border-primary bg-primary text-white shadow-sm'
+                                      : isLast
+                                        ? 'border-orange-400 bg-orange-50 text-orange-500 border-dashed'
+                                        : 'border-stone-200/80 bg-white/60 text-stone-300'
                                 }`}
                               >
-                                {isLast && !isFilled ? (
+                                {milestone ? (
+                                  <span className="text-[7px] font-bold leading-tight text-center overflow-hidden px-0.5">
+                                    {milestone.label}
+                                  </span>
+                                ) : isLast && !isFilled ? (
                                   <span className="text-[9px] font-extrabold tracking-wide">FREE</span>
                                 ) : (
-                                  <Stamp className="w-[45%] h-[45%]" />
+                                  <Stamp className="w-[40%] h-[40%]" />
                                 )}
                               </div>
                             );
@@ -970,10 +1079,10 @@ export default function StaffScannerPage() {
                         </div>
 
                         {/* Footer */}
-                        <p className="text-center text-xs text-gray-500">
+                        <p className="text-center text-xs font-semibold text-gray-500 shrink-0 pt-1">
                           {stampCardData.is_completed
-                            ? `Card complete — ${stampCardData.reward_title}`
-                            : `${total - stampCardData.stamps_collected} more to earn ${stampCardData.reward_title}`}
+                            ? `🎉 Reward ready: ${stampCardData.reward_title}`
+                            : `${total - stampCardData.stamps_collected} more → ${stampCardData.reward_title}`}
                         </p>
                       </div>
                     </div>
@@ -989,6 +1098,14 @@ export default function StaffScannerPage() {
                     >
                       <Gift className="w-5 h-5" />
                       Redeem Reward
+                    </button>
+                  ) : stampCardData?.paused_at_milestone ? (
+                    <button
+                      onClick={handleRedeemMilestone}
+                      className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-2.5 transition-colors shadow-sm"
+                    >
+                      <Gift className="w-5 h-5" />
+                      Redeem: {stampCardData.milestones?.find(m => m.position === stampCardData.paused_at_milestone)?.label ?? 'Milestone'}
                     </button>
                   ) : (
                     <button

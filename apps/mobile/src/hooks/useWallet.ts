@@ -36,6 +36,7 @@ interface TransactionRow {
   reward_id: string | null;
   type: string;
   points: number;
+  stamps_added: number;
   amount_spent: number | null;
   description: string | null;
   created_at: string;
@@ -148,16 +149,25 @@ function inferReferenceType(
 /**
  * Creates a friendly title from a raw transaction description
  */
-function friendlyTitle(description: string | null, isEarn: boolean): string {
-  if (!description) return isEarn ? 'Points Earned' : 'Points Redeemed';
+function friendlyTitle(
+  description: string | null,
+  isEarn: boolean,
+  isStampOnly: boolean,
+): string {
+  if (!description) {
+    if (isStampOnly) return 'Stamp Earned';
+    return isEarn ? 'Points Earned' : 'Points Redeemed';
+  }
   const lower = description.toLowerCase();
   if (lower.includes('referral')) return 'Referral Bonus';
   if (lower.includes('welcome')) return 'Welcome Bonus';
   if (lower.includes('bonus')) return 'Bonus Points';
-  // Strip POS Sale reference IDs like "POS Sale #20260227-0001"
-  if (lower.startsWith('pos sale')) return 'Purchase';
+  // Old POS Sales with reference IDs like "POS Sale #20260227-0001" → generic "Purchase"
+  // New sales store item names directly (e.g., "Americano, Accommodation x2") — pass through
+  if (lower.startsWith('pos sale #')) return 'Purchase';
   if (lower.includes('redeem') || lower.includes('redemption'))
     return 'Reward Redeemed';
+  if (isStampOnly && lower === 'stamp earned') return 'Stamp Earned';
   return description;
 }
 
@@ -167,6 +177,8 @@ function friendlyTitle(description: string | null, isEarn: boolean): string {
 function transformTransaction(row: TransactionRow): Transaction {
   const business = extractFirstFromJoin<BusinessJoin>(row.businesses);
   const isEarn = row.type === 'earn';
+  const stamps = row.stamps_added ?? 0;
+  const isStampOnly = isEarn && stamps > 0 && row.points === 0 && row.amount_spent == null;
 
   return {
     id: row.id,
@@ -174,7 +186,8 @@ function transformTransaction(row: TransactionRow): Transaction {
     business_id: row.business_id,
     type: isEarn ? 'credit' : 'debit',
     amount: row.points,
-    title: friendlyTitle(row.description, isEarn),
+    stamps,
+    title: friendlyTitle(row.description, isEarn, isStampOnly),
     description: row.amount_spent
       ? `₱${row.amount_spent.toFixed(2)} spent`
       : null,
@@ -247,6 +260,7 @@ const TRANSACTION_SELECT = `
   reward_id,
   type,
   points,
+  stamps_added,
   amount_spent,
   description,
   created_at,
@@ -270,6 +284,12 @@ const REDEMPTION_SELECT = `
 
 const TRANSACTION_LIMIT = 50;
 
+// Wallet activity is shown for the last 6 months. Older rows still live in
+// the DB (kept for audit, dispute resolution, and BIR record-keeping); they
+// just don't surface in the customer's Transactions tab.
+export const TRANSACTION_RETENTION_DAYS = 180;
+const TRANSACTION_RETENTION_MS = TRANSACTION_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
 // ============================================
 // HOOK
 // ============================================
@@ -291,10 +311,14 @@ export function useWallet() {
 
   const fetchTransactions = useCallback(
     async (ids: string[]): Promise<Transaction[]> => {
+      const cutoffIso = new Date(
+        Date.now() - TRANSACTION_RETENTION_MS,
+      ).toISOString();
       const { data, error } = await supabase
         .from('transactions')
         .select(TRANSACTION_SELECT)
         .in('customer_id', ids)
+        .gte('created_at', cutoffIso)
         .order('created_at', { ascending: false })
         .limit(TRANSACTION_LIMIT);
 

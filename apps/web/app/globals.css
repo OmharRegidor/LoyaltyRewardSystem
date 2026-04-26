@@ -259,3 +259,26 @@
     box-shadow: none;
   }
 }
+
+/* Impersonation read-only mode.
+   Visual disabled state (opacity + not-allowed cursor) applies only to
+   buttons and role=button widgets. A capture-phase listener in the
+   ImpersonationBanner component additionally blocks form submissions,
+   typing, and clicks on any interactive control regardless of styling. */
+body[data-impersonation-mode='read_only'] :where(
+  button,
+  [role='button'],
+  [type='submit'],
+  [data-write-action]
+) {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+
+/* Opt-in escape hatch: the "End impersonation" button and any other
+   explicitly-allowed control stays at full opacity with a pointer cursor. */
+body[data-impersonation-mode='read_only'] [data-allow-during-impersonation],
+body[data-impersonation-mode='read_only'] [data-allow-during-impersonation] * {
+  opacity: 1 !important;
+  cursor: pointer !important;
+}

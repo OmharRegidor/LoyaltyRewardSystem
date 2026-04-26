@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  ImageBackground,
   Alert,
   RefreshControl,
   Animated,
@@ -31,7 +32,7 @@ import type { Reward } from '../../src/types/rewards.types';
 import { getTierInfo } from '../../src/types/rewards.types';
 
 const CARD_WIDTH = Dimensions.get('window').width - SPACING.lg * 2;
-const CARD_ASPECT = 1.9; // compact card ratio
+const CARD_ASPECT = 1.586; // standard loyalty card proportions — fixed, never changes
 const CARD_HEIGHT = CARD_WIDTH / CARD_ASPECT;
 
 interface StampLoyaltyCardProps {
@@ -40,6 +41,10 @@ interface StampLoyaltyCardProps {
     total_stamps: number;
     reward_title: string;
     is_completed: boolean;
+    reward_image_url: string | null;
+    milestones?: Array<{ position: number; label: string }>;
+    redeemed_milestones?: Array<{ position: number }>;
+    paused_at_milestone?: number | null;
   };
   brandName: string;
   brandLogoUrl: string | null;
@@ -79,34 +84,38 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
   // Calculate grid layout: pick columns that create the most balanced grid
   const cols = (() => {
     const total = stampCard.total_stamps;
-    if (total <= 5) return total; // single row
-    const maxCols = total <= 10 ? 5 : total <= 20 ? 6 : 7;
+    if (total <= 3) return total;
+    if (total <= 5) return 3;
+    const maxCols = total <= 10 ? 5 : total <= 20 ? 7 : 10;
+    const maxRows = 7;
     let best = maxCols;
     let bestScore = -Infinity;
     for (let c = 3; c <= maxCols; c++) {
       const r = Math.ceil(total / c);
-      const empty = (c - (total % c)) % c; // empty cells in last row
-      // Prefer fewer empty cells (×10 weight), then fewer rows
-      const score = -empty * 10 - r;
-      if (score > bestScore) {
-        bestScore = score;
-        best = c;
-      }
+      const empty = (c - (total % c)) % c;
+      const rowPenalty = r > maxRows ? (r - maxRows) * 100 : 0;
+      const score = -empty * 10 - r - rowPenalty;
+      if (score > bestScore) { bestScore = score; best = c; }
     }
     return best;
   })();
   const rows = Math.ceil(stampCard.total_stamps / cols);
-  const gridPadding = 20;
-  const gridGap = 8;
-  const stampAreaH = CARD_HEIGHT - 72; // leave room for header + footer
-  // Slot width = total grid width / cols (each slot centers its stamp)
-  const gridWidth = CARD_WIDTH - gridPadding * 2;
-  const slotWidth = gridWidth / cols;
-  const stampSize = Math.min(
-    Math.floor(slotWidth - gridGap),
-    Math.floor((stampAreaH - (rows - 1) * gridGap) / rows),
-    36,
-  );
+
+  // Stamps adapt to the fixed card size — card shape never changes
+  const cardPadding = 12;
+  const gridGap = stampCard.total_stamps > 30 ? 3 : stampCard.total_stamps > 15 ? 4 : 5;
+  const headerH = 24;
+  const footerH = 20;
+  const gridWidth = CARD_WIDTH - cardPadding * 2;
+  const stampAreaH = CARD_HEIGHT - headerH - footerH - cardPadding * 2;
+  // Stamps fill their full cell — NOT forced square
+  const cellW = (gridWidth - (cols - 1) * gridGap) / cols;
+  const cellH = (stampAreaH - (rows - 1) * gridGap) / rows;
+  // Cap cell height so low stamp counts don't stretch absurdly
+  const maxCellH = 56;
+  const cappedCellH = Math.min(cellH, maxCellH);
+  // Icon size scales to the smaller dimension so it fits inside
+  const iconSize = Math.floor(Math.min(cellW, cappedCellH) * 0.45);
 
   return (
     <View style={cardStyles.section}>
@@ -132,51 +141,81 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
               },
             ]}
           >
+            {/* Header */}
             <View style={cardStyles.backHeader}>
               <Text style={cardStyles.backTitle}>
                 {stampCard.stamps_collected}/{stampCard.total_stamps} stamps
               </Text>
             </View>
+
+            {/* Stamp grid — fills card */}
             <View style={cardStyles.stampGrid}>
-              {Array.from({ length: stampCard.total_stamps }, (_, i) => {
-                const isFilled = i < stampCard.stamps_collected;
-                const isReward = i === stampCard.total_stamps - 1;
-                return (
-                  <View
-                    key={i}
-                    style={{
-                      width: slotWidth,
-                      alignItems: 'center' as const,
-                      marginBottom: gridGap,
-                    }}
-                  >
-                    <View
-                      style={[
-                        cardStyles.stampSlot,
-                        { width: stampSize, height: stampSize, borderRadius: stampSize * 0.25 },
-                        isFilled && cardStyles.stampSlotFilled,
-                        isReward && !isFilled && cardStyles.stampSlotReward,
-                      ]}
-                    >
-                      {isReward && !isFilled ? (
-                        <Text style={cardStyles.rewardSlotText}>FREE</Text>
-                      ) : (
-                        <MaterialCommunityIcons
-                          name="stamper"
-                          size={stampSize * 0.45}
-                          color={isFilled ? '#fff' : COLORS.gray[300]}
-                        />
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
+              {Array.from({ length: rows }, (_, row) => (
+                <View
+                  key={row}
+                  style={{
+                    flexDirection: 'row' as const,
+                    flex: 1,
+                    gap: gridGap,
+                  }}
+                >
+                  {Array.from({ length: cols }, (__, col) => {
+                    const i = row * cols + col;
+                    if (i >= stampCard.total_stamps) return <View key={col} style={{ flex: 1 }} />;
+                    const position = i + 1;
+                    const isFilled = i < stampCard.stamps_collected;
+                    const isLast = i === stampCard.total_stamps - 1;
+                    const milestone = stampCard.milestones?.find(m => m.position === position);
+                    const isRedeemedMilestone = stampCard.redeemed_milestones?.some(r => r.position === position);
+                    return (
+                      <View
+                        key={col}
+                        style={[
+                          cardStyles.stampSlot,
+                          { flex: 1, maxHeight: maxCellH, maxWidth: maxCellH, borderRadius: 2 },
+                          milestone && isFilled && isRedeemedMilestone && cardStyles.stampSlotMilestoneRedeemed,
+                          milestone && isFilled && !isRedeemedMilestone && cardStyles.stampSlotMilestoneFilled,
+                          milestone && !isFilled && cardStyles.stampSlotMilestone,
+                          !milestone && isFilled && cardStyles.stampSlotFilled,
+                          !milestone && isLast && !isFilled && cardStyles.stampSlotReward,
+                        ]}
+                      >
+                        {milestone ? (
+                          <Text style={[cardStyles.rewardSlotText, { fontSize: Math.max(6, iconSize * 0.35), color: isFilled ? '#fff' : '#B45309' }]}>
+                            {milestone.label}
+                          </Text>
+                        ) : isLast && !isFilled ? (
+                          <Text style={[cardStyles.rewardSlotText, { fontSize: Math.max(7, iconSize * 0.4) }]}>FREE</Text>
+                        ) : (
+                          <MaterialCommunityIcons
+                            name="stamper"
+                            size={iconSize}
+                            color={isFilled ? '#fff' : COLORS.gray[300]}
+                          />
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
             </View>
-            <Text style={cardStyles.backFooter} numberOfLines={1}>
-              {stampCard.is_completed
-                ? `🎉 Reward ready: ${stampCard.reward_title}`
-                : `${stampCard.total_stamps - stampCard.stamps_collected} more → ${stampCard.reward_title}`}
-            </Text>
+
+            {/* Footer */}
+            <View style={cardStyles.backFooterRow}>
+              {stampCard.reward_image_url && (
+                <Image
+                  source={{ uri: stampCard.reward_image_url }}
+                  style={cardStyles.rewardImage}
+                />
+              )}
+              <Text style={[cardStyles.backFooter, { flex: 1 }]} numberOfLines={1}>
+                {stampCard.paused_at_milestone
+                  ? `⭐ Show to staff: ${stampCard.milestones?.find(m => m.position === stampCard.paused_at_milestone)?.label ?? 'Milestone'}`
+                  : stampCard.is_completed
+                    ? `🎉 Reward ready: ${stampCard.reward_title}`
+                    : `${stampCard.total_stamps - stampCard.stamps_collected} more → ${stampCard.reward_title}`}
+              </Text>
+            </View>
           </Animated.View>
 
           {/* FRONT — branding */}
@@ -184,24 +223,51 @@ function StampLoyaltyCard({ stampCard, brandName, brandLogoUrl }: StampLoyaltyCa
             style={[
               cardStyles.card,
               cardStyles.cardFront,
+              !stampCard.reward_image_url && { backgroundColor: COLORS.primary },
               {
                 transform: [{ perspective: 1000 }, { rotateY: frontRotate }],
                 opacity: frontOpacity,
               },
             ]}
           >
-            {brandLogoUrl ? (
-              <Image source={{ uri: brandLogoUrl }} style={cardStyles.frontLogo} />
+            {stampCard.reward_image_url ? (
+              <ImageBackground
+                source={{ uri: stampCard.reward_image_url }}
+                style={cardStyles.frontBgImage}
+                imageStyle={{ borderRadius: 16 }}
+                resizeMode="cover"
+              >
+                <View style={cardStyles.frontOverlay}>
+                  {brandLogoUrl ? (
+                    <Image source={{ uri: brandLogoUrl }} style={cardStyles.frontLogo} />
+                  ) : (
+                    <View style={cardStyles.frontLogoFallback}>
+                      <Text style={cardStyles.frontLogoText}>
+                        {brandName.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={cardStyles.frontTitle}>LOYALTY CARD</Text>
+                  <Text style={cardStyles.frontBrand}>{brandName}</Text>
+                  <Text style={cardStyles.frontReward}>{stampCard.reward_title}</Text>
+                </View>
+              </ImageBackground>
             ) : (
-              <View style={cardStyles.frontLogoFallback}>
-                <Text style={cardStyles.frontLogoText}>
-                  {brandName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <>
+                {brandLogoUrl ? (
+                  <Image source={{ uri: brandLogoUrl }} style={cardStyles.frontLogo} />
+                ) : (
+                  <View style={cardStyles.frontLogoFallback}>
+                    <Text style={cardStyles.frontLogoText}>
+                      {brandName.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <Text style={cardStyles.frontTitle}>LOYALTY CARD</Text>
+                <Text style={cardStyles.frontBrand}>{brandName}</Text>
+                <Text style={cardStyles.frontReward}>{stampCard.reward_title}</Text>
+              </>
             )}
-            <Text style={cardStyles.frontTitle}>LOYALTY CARD</Text>
-            <Text style={cardStyles.frontBrand}>{brandName}</Text>
-            <Text style={cardStyles.frontReward}>{stampCard.reward_title}</Text>
           </Animated.View>
         </View>
       </TouchableOpacity>
@@ -238,8 +304,7 @@ const cardStyles = StyleSheet.create({
     height: CARD_HEIGHT,
     borderRadius: 16,
     backfaceVisibility: 'hidden',
-    padding: SPACING.md,
-    justifyContent: 'space-between',
+    padding: 12,
   },
   cardBack: {
     backgroundColor: '#FFF9F0',
@@ -247,9 +312,24 @@ const cardStyles = StyleSheet.create({
     borderColor: '#F0E0CC',
   },
   cardFront: {
-    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    padding: 0,
+  },
+  frontBgImage: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 16,
+  },
+  frontOverlay: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    padding: SPACING.md,
   },
   backHeader: {
     flexDirection: 'row',
@@ -262,12 +342,8 @@ const cardStyles = StyleSheet.create({
     color: COLORS.gray[800],
   },
   stampGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     flex: 1,
-    paddingVertical: 4,
+    gap: 3,
   },
   stampSlot: {
     backgroundColor: '#F5F0EB',
@@ -285,17 +361,40 @@ const cardStyles = StyleSheet.create({
     borderColor: '#FFB74D',
     borderStyle: 'dashed',
   },
+  stampSlotMilestone: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+  },
+  stampSlotMilestoneFilled: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
+  },
+  stampSlotMilestoneRedeemed: {
+    backgroundColor: '#22C55E',
+    borderColor: '#22C55E',
+  },
   rewardSlotText: {
     fontSize: 9,
     fontWeight: '800',
     color: '#E65100',
     letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  backFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  rewardImage: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   backFooter: {
     fontSize: FONT_SIZE.xs,
     fontWeight: '600',
     color: COLORS.gray[600],
-    textAlign: 'center',
   },
   frontLogo: {
     width: 64,

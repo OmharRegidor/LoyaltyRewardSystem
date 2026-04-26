@@ -64,6 +64,7 @@ export default async function JoinPage({ params, searchParams }: JoinPageProps) 
       pointsPerPurchase={business.points_per_purchase}
       pesosPerPoint={business.pesos_per_point}
       prefillEmail={email || ''}
+      loyaltyMode={business.loyalty_mode}
     />
   );
 }

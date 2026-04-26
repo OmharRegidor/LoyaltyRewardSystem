@@ -31,24 +31,17 @@ export async function POST(req: NextRequest) {
 
     const customerIds = customers?.map((c: { id: string }) => c.id) || [];
 
-    if (customerIds.length > 0) {
-      // 2. Delete customer_businesses links
-      await adminClient
-        .from('customer_businesses')
-        .delete()
-        .in('customer_id', customerIds);
-
-      // 3. Delete transactions
-      await adminClient
-        .from('transactions')
-        .delete()
-        .in('customer_id', customerIds);
-
-      // 4. Delete customers
-      await adminClient
-        .from('customers')
-        .delete()
-        .eq('user_id', user.id);
+    if (customers && customers.length > 0) {
+      for (const customer of customers) {
+        // Delete all FK-dependent data in parallel (these are independent)
+        await Promise.all([
+          adminClient.from('stamp_cards').delete().eq('customer_id', customer.id),
+          adminClient.from('customer_businesses').delete().eq('customer_id', customer.id),
+          adminClient.from('transactions').delete().eq('customer_id', customer.id),
+        ]);
+        // Delete customer last (after all references removed)
+        await adminClient.from('customers').delete().eq('id', customer.id);
+      }
     }
 
     // 5. Delete the auth user

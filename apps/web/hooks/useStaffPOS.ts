@@ -64,7 +64,7 @@ interface UseStaffPOSReturn {
   addManualItem: (name: string, pricePesos: number) => void;
   setDiscount: (discount: DiscountInfo | null) => void;
   setExchange: (points: number) => void;
-  completeSale: () => Promise<StaffSaleResult>;
+  completeSale: (accessToken?: string) => Promise<StaffSaleResult>;
   reset: () => void;
 }
 
@@ -95,13 +95,20 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
     async function loadCatalog() {
       try {
-        // Fetch products and services in parallel
+        // Fetch pos_mode to determine what to load
+        const modeRes = await fetch("/api/dashboard/pos/business-type");
+        const modeData = modeRes.ok ? await modeRes.json() : null;
+        const posMode = modeData?.pos_mode || 'both';
+        const loadProducts = posMode === 'products' || posMode === 'both';
+        const loadServices = posMode === 'services' || posMode === 'both';
+
+        // Fetch products and services based on pos_mode
         const [productsRes, servicesRes] = await Promise.all([
-          fetch("/api/dashboard/pos/products"),
-          fetch("/api/dashboard/pos/services"),
+          loadProducts ? fetch("/api/dashboard/pos/products") : Promise.resolve(null),
+          loadServices ? fetch("/api/dashboard/pos/services") : Promise.resolve(null),
         ]);
 
-        if (productsRes.status === 403) {
+        if (productsRes && productsRes.status === 403) {
           setHasPOSModule(false);
           setProducts([]);
           setServices([]);
@@ -109,7 +116,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         }
 
         if (!cancelled) {
-          if (productsRes.ok) {
+          if (productsRes && productsRes.ok) {
             const data = await productsRes.json();
             setProducts(
               (data.products || []).filter((p: Product) => p.is_active),
@@ -118,7 +125,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
             setProducts([]);
           }
 
-          if (servicesRes.ok) {
+          if (servicesRes && servicesRes.ok) {
             const data = await servicesRes.json();
             setServices(
               (data.services || []).filter((s: Service) => s.is_active),
@@ -307,8 +314,17 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
   }, []);
 
   const addManualItem = useCallback((name: string, pricePesos: number) => {
+    // Defense in depth: UI validates as well, but guard against overflow/garbage here.
+    const MAX_PRICE_PESOS = 1_000_000;
+    if (
+      !Number.isFinite(pricePesos) ||
+      pricePesos <= 0 ||
+      pricePesos > MAX_PRICE_PESOS ||
+      !name.trim()
+    ) {
+      return;
+    }
     const priceCentavos = Math.round(pricePesos * 100);
-    if (priceCentavos <= 0 || !name.trim()) return;
 
     setCartItems((prev) => [
       ...prev,
@@ -336,7 +352,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     [maxExchangePoints, pesosPerPoint],
   );
 
-  const completeSale = useCallback(async (): Promise<StaffSaleResult> => {
+  const completeSale = useCallback(async (accessToken?: string): Promise<StaffSaleResult> => {
     setIsProcessing(true);
     try {
       const payload = {
@@ -357,8 +373,12 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         ...(skipPoints && { skip_points: true }),
       };
 
-      const { data: { session } } = await createClient().auth.getSession();
-      if (!session?.access_token) {
+      let token = accessToken;
+      if (!token) {
+        const { data: { session } } = await createClient().auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) {
         throw new Error("Not authenticated");
       }
 
@@ -366,7 +386,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -378,6 +398,32 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
 
       const { data } = await res.json();
       setSaleResult(data);
+
+      // Optimistically decrement stock for sold products so the UI reflects
+      // the change even if the realtime UPDATE event is delayed or dropped.
+      const soldQtyByProductId = new Map<string, number>();
+      for (const item of cartItems) {
+        if (!item.product_id) continue;
+        soldQtyByProductId.set(
+          item.product_id,
+          (soldQtyByProductId.get(item.product_id) ?? 0) + item.quantity,
+        );
+      }
+      if (soldQtyByProductId.size > 0) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            soldQtyByProductId.has(p.id)
+              ? {
+                  ...p,
+                  stock_quantity: Math.max(
+                    0,
+                    p.stock_quantity - (soldQtyByProductId.get(p.id) ?? 0),
+                  ),
+                }
+              : p,
+          ),
+        );
+      }
 
       return data;
     } finally {

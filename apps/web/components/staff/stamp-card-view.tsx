@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Stamp, Undo2, Gift, Loader2, CheckCircle } from 'lucide-react';
+import { getStampGridCols, STAMP_CARD_ASPECT } from '@/lib/stamp-grid';
 
 interface StampCardData {
   card_id: string;
@@ -10,6 +11,9 @@ interface StampCardData {
   total_stamps: number;
   reward_title: string;
   is_completed: boolean;
+  milestones?: Array<{ position: number; label: string }>;
+  redeemed_milestones?: Array<{ position: number }>;
+  paused_at_milestone?: number | null;
 }
 
 interface StampCardViewProps {
@@ -46,6 +50,10 @@ export function StampCardView({
   const totalStamps = stampCard?.total_stamps ?? 10;
   const isCompleted = stampCard?.is_completed ?? false;
   const rewardTitle = stampCard?.reward_title ?? '';
+  const pausedAt = stampCard?.paused_at_milestone ?? null;
+  const milestoneLabel = pausedAt
+    ? stampCard?.milestones?.find(m => m.position === pausedAt)?.label ?? 'Milestone'
+    : null;
 
   async function handleAddStamp() {
     setIsAddingStamp(true);
@@ -91,6 +99,31 @@ export function StampCardView({
     }
   }
 
+  async function handleRedeemMilestone() {
+    if (!stampCard?.card_id) return;
+    setIsRedeeming(true);
+    try {
+      const res = await fetch('/api/staff/stamp/redeem-milestone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stampCardId: stampCard.card_id, staffId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onStampAdded({
+          success: true,
+          card_id: stampCard.card_id,
+          stamps_collected: data.stamps_collected,
+          total_stamps: data.total_stamps,
+          is_completed: false,
+          reward_title: stampCard.reward_title,
+        });
+      }
+    } finally {
+      setIsRedeeming(false);
+    }
+  }
+
   async function handleRedeem() {
     if (!stampCard?.card_id) return;
     setIsRedeeming(true);
@@ -116,50 +149,76 @@ export function StampCardView({
     }
   }
 
-  // Generate stamp grid
-  const stamps = Array.from({ length: totalStamps }, (_, i) => i < stampsCollected);
-
+  const cols = getStampGridCols(totalStamps);
+  const rows = Math.ceil(totalStamps / cols);
+  const gap = totalStamps > 30 ? '4px' : totalStamps > 15 ? '5px' : '6px';
   return (
     <div className="space-y-6">
-      {/* Stamp Grid */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border">
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Stamp Card</h3>
-          <p className="text-sm text-gray-500">
-            {stampsCollected} / {totalStamps} stamps
-          </p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-3 mb-4">
-          {stamps.map((filled, index) => (
-            <motion.div
-              key={index}
-              initial={false}
-              animate={{
-                scale: filled ? 1 : 0.9,
-                opacity: filled ? 1 : 0.3,
-              }}
-              className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${
-                filled
-                  ? 'bg-primary border-primary text-white'
-                  : 'bg-gray-50 border-gray-200 text-gray-300'
-              }`}
-            >
-              <Stamp className="w-5 h-5" />
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Reward info */}
-        <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-200">
-          <div className="flex items-center justify-center gap-2 text-amber-800">
-            <Gift className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {isCompleted
-                ? `Reward Ready: ${rewardTitle}`
-                : `${totalStamps - stampsCollected} more → ${rewardTitle}`}
+      {/* Stamp Card */}
+      <div className="rounded-2xl border border-amber-200/80 shadow-sm overflow-hidden" style={{ aspectRatio: `${STAMP_CARD_ASPECT}` }}>
+        <div className="h-full bg-gradient-to-br from-amber-50 via-orange-50/80 to-yellow-50 p-4 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between shrink-0 pb-1">
+            <span className="text-base font-bold text-gray-800">Stamp Card</span>
+            <span className="text-sm font-bold text-primary">
+              {stampsCollected}/{totalStamps}
             </span>
           </div>
+
+          {/* Stamp grid — fills card, stamps adapt to cell size */}
+          <div
+            className="flex-1 grid min-h-0 place-items-center"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, 1fr)`,
+              gap,
+            }}
+          >
+            {Array.from({ length: totalStamps }, (_, i) => {
+              const position = i + 1;
+              const isFilled = i < stampsCollected;
+              const isLast = i === totalStamps - 1;
+              const milestone = stampCard?.milestones?.find(m => m.position === position);
+              const isRedeemedMilestone = stampCard?.redeemed_milestones?.some(r => r.position === position);
+              return (
+                <motion.div
+                  key={i}
+                  initial={false}
+                  animate={{ scale: isFilled ? 1 : 0.92 }}
+                  className={`w-full h-full max-h-16 max-w-16 rounded-sm border-[1.5px] flex items-center justify-center transition-colors ${
+                    milestone && isFilled && isRedeemedMilestone
+                      ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                      : milestone && isFilled && !isRedeemedMilestone
+                        ? 'border-amber-500 bg-amber-500 text-white shadow-sm'
+                      : milestone && !isFilled
+                        ? 'border-amber-400 bg-amber-50 text-amber-700 border-dashed'
+                      : isFilled
+                        ? 'border-primary bg-primary text-white shadow-sm'
+                        : isLast
+                          ? 'border-orange-400 bg-orange-50 text-orange-500 border-dashed'
+                          : 'border-stone-200/80 bg-white/60 text-stone-300'
+                  }`}
+                >
+                  {milestone ? (
+                    <span className="text-[7px] font-bold leading-tight text-center overflow-hidden px-0.5">
+                      {milestone.label}
+                    </span>
+                  ) : isLast && !isFilled ? (
+                    <span className="text-[9px] font-extrabold tracking-wide">FREE</span>
+                  ) : (
+                    <Stamp className="w-[40%] h-[40%]" />
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs font-semibold text-gray-500 shrink-0 pt-1">
+            {isCompleted
+              ? `🎉 Reward ready: ${rewardTitle}`
+              : `${totalStamps - stampsCollected} more → ${rewardTitle}`}
+          </p>
         </div>
       </div>
 
@@ -177,6 +236,19 @@ export function StampCardView({
               <Gift className="w-5 h-5" />
             )}
             Redeem Reward
+          </button>
+        ) : pausedAt ? (
+          <button
+            onClick={handleRedeemMilestone}
+            disabled={isRedeeming}
+            className="w-full py-4 px-6 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+          >
+            {isRedeeming ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Gift className="w-5 h-5" />
+            )}
+            Redeem: {milestoneLabel}
           </button>
         ) : (
           <button

@@ -1,6 +1,6 @@
 // app/(main)/index.tsx
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useCustomer } from '../../src/hooks/useCustomer';
@@ -31,9 +32,16 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user, isLoading } = useAuth();
   const { qrCodeUrl, points, lifetimePoints, refreshCustomer } = useCustomer();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refresh: refreshNotifications } = useNotifications();
   const { stampCards } = useStampCards();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+
+  // Refresh notification count when screen regains focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotifications();
+    }, [refreshNotifications])
+  );
 
   // Get display name from Google OAuth metadata
   const displayName =

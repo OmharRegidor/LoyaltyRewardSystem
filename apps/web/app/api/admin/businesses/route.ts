@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminServiceClient } from '@/lib/supabase-server';
 import { getApiUser } from '@/lib/server-auth';
 import { isAdmin } from '@/lib/rbac';
+import { sanitizeIlikeSearch } from '@/lib/security';
 import type {
   AdminBusinessListResponse,
   AdminBusinessStats,
@@ -48,13 +49,10 @@ export async function GET(request: NextRequest) {
     .select('*', { count: 'exact' });
 
   if (search) {
-    const sanitized = search
-      .replace(/[,().]/g, '')
-      .replace(/%/g, '\\%')
-      .replace(/_/g, '\\_')
-      .trim()
-      .slice(0, 100);
-    query = query.or(`name.ilike.%${sanitized}%,owner_email.ilike.%${sanitized}%`);
+    const sanitized = sanitizeIlikeSearch(search);
+    if (sanitized) {
+      query = query.or(`name.ilike.%${sanitized}%,owner_email.ilike.%${sanitized}%`);
+    }
   }
 
   if (plan) {
@@ -77,13 +75,10 @@ export async function GET(request: NextRequest) {
     .order(sort, { ascending: order })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
-  // Facet query (capped at 5000 rows for count aggregation)
-  const facetQuery = service
-    .from('admin_business_stats')
-    .select('plan_name, business_type, subscription_status')
-    .limit(5000);
-
-  const [dataResult, facetResult] = await Promise.all([query, facetQuery]);
+  const [dataResult, facetResult] = await Promise.all([
+    query,
+    service.rpc('get_admin_business_facets'),
+  ]);
 
   if (dataResult.error) {
     return NextResponse.json(
@@ -92,34 +87,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Compute facet counts
-  interface FacetRow {
-    plan_name: string | null;
-    business_type: string | null;
-    subscription_status: string;
-  }
-
-  const facetRows = (facetResult.data ?? []) as FacetRow[];
-  const plans: Record<string, number> = {};
-  const types: Record<string, number> = {};
-  const statuses: Record<string, number> = {};
-
-  for (const row of facetRows) {
-    const p = row.plan_name ?? 'free';
-    plans[p] = (plans[p] ?? 0) + 1;
-
-    if (row.business_type) {
-      types[row.business_type] = (types[row.business_type] ?? 0) + 1;
-    }
-
-    const s = row.subscription_status;
-    statuses[s] = (statuses[s] ?? 0) + 1;
-  }
+  const facetsRaw = (facetResult.data ?? {
+    plans: {},
+    types: {},
+    statuses: {},
+  }) as {
+    plans: Record<string, number>;
+    types: Record<string, number>;
+    statuses: Record<string, number>;
+  };
 
   const response: AdminBusinessListResponse = {
     businesses: (dataResult.data ?? []) as unknown as AdminBusinessStats[],
     totalCount: dataResult.count ?? 0,
-    facets: { plans, types, statuses },
+    facets: {
+      plans: facetsRaw.plans ?? {},
+      types: facetsRaw.types ?? {},
+      statuses: facetsRaw.statuses ?? {},
+    },
     adminEmail: user.email,
   };
 

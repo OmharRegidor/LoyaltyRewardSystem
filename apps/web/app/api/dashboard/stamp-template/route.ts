@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { createServiceClient } from '@/lib/supabase-server';
+import type { Json } from '../../../../../../packages/shared/types/database';
 
 function createSupabaseClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return createServerClient(
@@ -94,6 +95,7 @@ export async function PUT(request: Request) {
       rewardImageUrl,
       minPurchaseAmount,
       autoReset,
+      milestones,
     } = body;
 
     if (!rewardTitle || !totalStamps) {
@@ -103,11 +105,25 @@ export async function PUT(request: Request) {
       );
     }
 
-    if (totalStamps < 1 || totalStamps > 30) {
+    if (totalStamps < 1 || totalStamps > 50) {
       return NextResponse.json(
-        { error: 'totalStamps must be between 1 and 30' },
+        { error: 'totalStamps must be between 1 and 50' },
         { status: 400 }
       );
+    }
+
+    // Validate milestones
+    interface MilestoneInput { position: number; label: string }
+    const validatedMilestones: MilestoneInput[] = [];
+    if (Array.isArray(milestones)) {
+      const seen = new Set<number>();
+      for (const m of milestones as MilestoneInput[]) {
+        if (!m.position || !m.label || typeof m.position !== 'number' || typeof m.label !== 'string') continue;
+        if (m.position < 1 || m.position >= totalStamps) continue;
+        if (seen.has(m.position)) continue;
+        seen.add(m.position);
+        validatedMilestones.push({ position: m.position, label: m.label.slice(0, 20) });
+      }
     }
 
     const service = createServiceClient();
@@ -130,6 +146,7 @@ export async function PUT(request: Request) {
       min_purchase_amount: minPurchaseAmount || 0,
       auto_reset: autoReset !== false,
       is_active: true,
+      milestones: validatedMilestones as unknown as Json,
     };
 
     let template;
@@ -150,6 +167,52 @@ export async function PUT(request: Request) {
         .single();
       if (error) throw error;
       template = data;
+    }
+
+    // Cascade total_stamps & reward_title to active (non-completed) stamp cards
+    // Step 1: Auto-complete cards where stamps already meet/exceed new threshold
+    const { error: completeErr } = await service
+      .from('stamp_cards')
+      .update({
+        total_stamps: totalStamps,
+        stamps_collected: totalStamps,
+        reward_title: rewardTitle,
+        is_completed: true,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('template_id', template.id)
+      .eq('is_completed', false)
+      .eq('is_redeemed', false)
+      .gte('stamps_collected', totalStamps);
+
+    if (completeErr) {
+      console.error('Error auto-completing stamp cards:', completeErr);
+    }
+
+    // Step 2: Update remaining active cards (stamps_collected < new total)
+    const { error: cascadeErr } = await service
+      .from('stamp_cards')
+      .update({
+        total_stamps: totalStamps,
+        reward_title: rewardTitle,
+        milestones: validatedMilestones as unknown as Json,
+      })
+      .eq('template_id', template.id)
+      .eq('is_completed', false)
+      .eq('is_redeemed', false);
+
+    if (cascadeErr) {
+      console.error('Error cascading stamp card changes:', cascadeErr);
+    }
+
+    // Step 3: Clear pauses for milestones that were removed
+    const milestonePositions = validatedMilestones.map((m: MilestoneInput) => m.position);
+    const { error: pauseErr } = await service.rpc('clear_invalid_milestone_pauses' as never, {
+      p_template_id: template.id,
+      p_valid_positions: milestonePositions,
+    } as never);
+    if (pauseErr) {
+      console.error('Error clearing invalid milestone pauses:', pauseErr);
     }
 
     return NextResponse.json({ template });

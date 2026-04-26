@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/layout';
 import {
@@ -549,6 +549,7 @@ export default function DashboardPage() {
   const [pesosPerPoint, setPesosPerPoint] = useState<number | null>(null);
   const [referralRewardPoints, setReferralRewardPoints] = useState<number | null>(null);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const reloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -614,14 +615,17 @@ export default function DashboardPage() {
           table: 'transactions',
           filter: `business_id=eq.${businessId}`,
         },
-        (payload) => {
-          // Reload data when new transaction comes in
-          loadRealTimeData(supabase, businessId);
+        () => {
+          if (reloadTimeoutRef.current) clearTimeout(reloadTimeoutRef.current);
+          reloadTimeoutRef.current = setTimeout(() => {
+            loadRealTimeData(supabase, businessId);
+          }, 2000);
         },
       )
       .subscribe();
 
     return () => {
+      if (reloadTimeoutRef.current) clearTimeout(reloadTimeoutRef.current);
       supabase.removeChannel(channel);
     };
   }, [businessId]);
@@ -694,19 +698,18 @@ export default function DashboardPage() {
           .eq('business_id', businessId)
           .order('created_at', { ascending: false })
           .limit(100),
-        // Get this month's revenue from completed sales
-        supabase
-          .from('sales')
+        // Get this month's revenue from completed POS sales
+        // pos_sales may not be in generated types — use cast
+        (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (c: string, v: string) => { gte: (c: string, v: string) => Promise<{ data: Array<{ total_centavos: number }> | null }> } } } })
+          .from('pos_sales')
           .select('total_centavos')
           .eq('business_id', businessId)
-          .eq('status', 'completed')
           .gte('created_at', startOfMonth.toISOString()),
         // Get last month's revenue for growth calculation
-        supabase
-          .from('sales')
+        (supabase as unknown as { from: (t: string) => { select: (c: string) => { eq: (c: string, v: string) => { gte: (c: string, v: string) => { lt: (c: string, v: string) => Promise<{ data: Array<{ total_centavos: number }> | null }> } } } } })
+          .from('pos_sales')
           .select('total_centavos')
           .eq('business_id', businessId)
-          .eq('status', 'completed')
           .gte('created_at', startOfLastMonth.toISOString())
           .lt('created_at', startOfMonth.toISOString()),
       ]);
@@ -747,10 +750,33 @@ export default function DashboardPage() {
         0,
       );
 
+      // Calculate customer growth: this month vs last month
+      const now = new Date();
+      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const startOfLastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
+      const [{ count: thisMonthCustomers }, { count: lastMonthCustomers }] = await Promise.all([
+        supabase
+          .from('customer_businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gte('created_at', startOfThisMonth),
+        supabase
+          .from('customer_businesses')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gte('created_at', startOfLastMonthDate)
+          .lt('created_at', startOfThisMonth),
+      ]);
+
+      const customersGrowth = lastMonthCustomers
+        ? Math.round((((thisMonthCustomers ?? 0) - lastMonthCustomers) / lastMonthCustomers) * 100)
+        : 0;
+
       // Update state with real data
       setStats({
         totalCustomers: customerCount || 0,
-        customersGrowth: 0, // TODO: Calculate actual growth
+        customersGrowth,
         pointsIssuedToday: pointsToday,
         pointsGrowth: 0,
         activeRewards: rewardsCount || 0,

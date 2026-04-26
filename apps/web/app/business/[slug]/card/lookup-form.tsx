@@ -70,12 +70,26 @@ interface LookupFormProps {
   businessName: string;
 }
 
+interface StampCardInfo {
+  stamps_collected: number;
+  total_stamps: number;
+  reward_title: string;
+  is_completed: boolean;
+  milestones: Array<{ position: number; label: string }>;
+  redeemed_milestones: Array<{ position: number }>;
+  paused_at_milestone: number | null;
+  reward_image_url: string | null;
+}
+
 interface CardData {
   customerName: string;
   phone: string | null;
   qrCodeUrl: string;
   tier: string;
   totalPoints: number;
+  loyaltyMode: 'points' | 'stamps';
+  stampCard: StampCardInfo | null;
+  businessLogoUrl: string | null;
 }
 
 type Step = 'lookup' | 'pin_setup_prompt' | 'reset_request' | 'reset_verify';
@@ -149,6 +163,9 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
         qrCodeUrl: json.data.qrCodeUrl,
         tier: json.data.tier,
         totalPoints: json.data.totalPoints,
+        loyaltyMode: json.data.loyaltyMode || 'points',
+        stampCard: json.data.stampCard || null,
+        businessLogoUrl: json.data.businessLogoUrl || null,
       });
     } catch {
       setError('Network error. Please check your connection.');
@@ -635,6 +652,9 @@ export function LookupForm({ businessSlug, businessName }: LookupFormProps) {
           qrCodeUrl={cardData.qrCodeUrl}
           tier={cardData.tier}
           totalPoints={cardData.totalPoints}
+          loyaltyMode={cardData.loyaltyMode}
+          stampCard={cardData.stampCard}
+          businessLogoUrl={cardData.businessLogoUrl}
         />
       )}
     </>

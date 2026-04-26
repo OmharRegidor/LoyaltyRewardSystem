@@ -2,55 +2,18 @@
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase-server';
+import { createSupabaseFromCookies, verifyStaffAccess } from '@/lib/staff-auth';
 
-function createSupabaseClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
-  );
-}
-
-async function verifyStaffAccess(service: ReturnType<typeof createServiceClient>, userId: string) {
-  const { data: staff } = await service
-    .from('staff')
-    .select('id, business_id')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (staff) return { staffId: staff.id, businessId: staff.business_id };
-
-  const { data: business } = await service
-    .from('businesses')
-    .select('id')
-    .eq('owner_id', userId)
-    .maybeSingle();
-
-  if (business) return { staffId: userId, businessId: business.id };
-
-  return null;
-}
+const UndoSchema = z.object({
+  stampCardId: z.string().uuid('stampCardId must be a valid UUID'),
+});
 
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const supabase = createSupabaseClient(cookieStore);
+    const supabase = createSupabaseFromCookies(cookieStore);
 
     const {
       data: { user },
@@ -60,14 +23,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { stampCardId } = body;
-
-    if (!stampCardId) {
+    const parsed = UndoSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'stampCardId is required' },
+        { error: parsed.error.issues[0]?.message || 'Invalid input' },
         { status: 400 }
       );
     }
+    const { stampCardId } = parsed.data;
 
     const service = createServiceClient();
 

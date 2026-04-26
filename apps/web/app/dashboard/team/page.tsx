@@ -115,6 +115,7 @@ export default function TeamManagementPage() {
     // Compute today's stats per staff member from scan_logs
     const statsMap = new Map<string, { scans: number; points: number; lastScan: string | null }>();
     for (const scan of todayScans ?? []) {
+      if (!scan.staff_id) continue;
       const existing = statsMap.get(scan.staff_id) ?? { scans: 0, points: 0, lastScan: null };
       existing.scans += 1;
       existing.points += scan.points_awarded || 0;

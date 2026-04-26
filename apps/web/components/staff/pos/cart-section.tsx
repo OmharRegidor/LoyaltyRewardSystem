@@ -42,15 +42,54 @@ export function CartSection({
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualPrice, setManualPrice] = useState("");
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  // Hard cap per custom item. ₱1,000,000 is already absurdly high for a single
+  // line item but leaves plenty of headroom for hotels or appliances.
+  const MAX_PRICE_PESOS = 1_000_000;
+
+  function validatePrice(raw: string): { ok: boolean; value: number; error: string | null } {
+    if (!raw || raw.trim() === "") return { ok: false, value: 0, error: null };
+    // Reject scientific notation and anything that isn't a plain decimal with up to 2 dp.
+    if (!/^\d{1,7}(\.\d{1,2})?$/.test(raw.trim())) {
+      return { ok: false, value: 0, error: "Enter a valid amount (e.g. 150.00)" };
+    }
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return { ok: false, value: 0, error: "Amount must be greater than 0" };
+    }
+    if (parsed > MAX_PRICE_PESOS) {
+      return { ok: false, value: 0, error: `Amount cannot exceed ₱${MAX_PRICE_PESOS.toLocaleString()}` };
+    }
+    return { ok: true, value: parsed, error: null };
+  }
+
+  function handlePriceChange(raw: string) {
+    // Strip anything that isn't a digit or dot (covers e, E, +, -, spaces).
+    const cleaned = raw.replace(/[^\d.]/g, "");
+    // Keep at most one decimal separator.
+    const firstDot = cleaned.indexOf(".");
+    const normalized = firstDot === -1
+      ? cleaned
+      : cleaned.slice(0, firstDot + 1) + cleaned.slice(firstDot + 1).replace(/\./g, "");
+    setManualPrice(normalized);
+    if (!normalized) { setPriceError(null); return; }
+    const { error } = validatePrice(normalized);
+    setPriceError(error);
+  }
 
   const handleAddManual = () => {
-    const price = parseFloat(manualPrice);
-    if (manualName.trim() && price > 0) {
-      onAddManualItem(manualName, price);
-      setManualName("");
-      setManualPrice("");
-      setShowManualInput(false);
+    const { ok, value, error } = validatePrice(manualPrice);
+    if (!ok) {
+      setPriceError(error ?? "Enter a valid amount");
+      return;
     }
+    if (!manualName.trim()) return;
+    onAddManualItem(manualName, value);
+    setManualName("");
+    setManualPrice("");
+    setPriceError(null);
+    setShowManualInput(false);
   };
 
   return (
@@ -150,30 +189,41 @@ export function CartSection({
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₱</span>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={manualPrice}
-                onChange={(e) => setManualPrice(e.target.value)}
+                onChange={(e) => handlePriceChange(e.target.value)}
+                onKeyDown={(e) => {
+                  // Block the characters <input type="number"> would otherwise accept.
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
                 placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="w-full pl-7 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-secondary focus:ring-1 focus:ring-secondary/20"
+                aria-invalid={priceError ? "true" : "false"}
+                className={`w-full pl-7 pr-3 py-2 bg-gray-50 border rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:ring-1 ${
+                  priceError
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-gray-200 focus:border-secondary focus:ring-secondary/20"
+                }`}
               />
             </div>
             <button
               type="submit"
-              disabled={!manualName.trim() || !manualPrice || parseFloat(manualPrice) <= 0}
+              disabled={!manualName.trim() || !manualPrice || !!priceError || !validatePrice(manualPrice).ok}
               className="px-4 py-2 bg-secondary hover:bg-secondary/90 text-gray-900 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add
             </button>
             <button
               type="button"
-              onClick={() => { setShowManualInput(false); setManualName(""); setManualPrice(""); }}
+              onClick={() => { setShowManualInput(false); setManualName(""); setManualPrice(""); setPriceError(null); }}
               className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm rounded-lg transition-colors"
             >
               Cancel
             </button>
           </div>
+          {priceError && (
+            <p className="text-xs text-red-600">{priceError}</p>
+          )}
         </form>
       ) : (
         <button

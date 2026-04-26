@@ -58,20 +58,22 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       )
       .eq('id', id)
       .maybeSingle(),
-    // Admin notes
+    // Admin notes (capped — older notes are still accessible via a paginated endpoint if needed)
     service
       .from('admin_notes')
       .select('*')
       .eq('business_id', id)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(100),
     // Admin tags
-    service.from('admin_tags').select('*').eq('business_id', id),
+    service.from('admin_tags').select('*').eq('business_id', id).limit(200),
     // Plan change history
     service
       .from('admin_plan_changes')
       .select('*')
       .eq('business_id', id)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(100),
     // Activity trend RPC
     service.rpc('get_business_activity_trend', {
       p_business_id: id,
@@ -89,13 +91,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .select('*', { count: 'exact', head: true })
       .eq('business_id', id)
       .gte('followed_at', thirtyDaysAgo),
-    // Points issued in last 30 days
-    service
-      .from('transactions')
-      .select('points')
-      .eq('business_id', id)
-      .eq('type', 'earn')
-      .gte('created_at', thirtyDaysAgo),
+    // Points issued in last 30 days (DB-side aggregation)
+    service.rpc('sum_business_points_30d', { p_business_id: id }),
     // Active rewards
     service
       .from('rewards')
@@ -145,11 +142,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }),
   );
 
-  // Sum points issued in last 30 days
-  const pointsIssued30d = (pointsIssued30dResult.data ?? []).reduce(
-    (sum: number, t: { points: number }) => sum + (t.points ?? 0),
-    0,
-  );
+  const pointsIssued30d =
+    typeof pointsIssued30dResult.data === 'number'
+      ? pointsIssued30dResult.data
+      : 0;
 
   const statsRow = statsResult.data;
 
@@ -208,121 +204,36 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const service = createAdminServiceClient();
 
-  // Verify business exists and get owner_id
-  const { data: business } = await service
-    .from('businesses')
-    .select('id, name, owner_id')
-    .eq('id', id)
-    .maybeSingle();
+  const { data, error } = await service.rpc('delete_business', {
+    p_business_id: id,
+    p_admin_email: user.email,
+  });
 
-  if (!business) {
-    return NextResponse.json({ error: 'Business not found' }, { status: 404 });
-  }
-
-  try {
-    // Get IDs needed for cascading deletes
-    const [salesRes, invoicesRes, customerBizRes, staffRes] = await Promise.all([
-      service.from('sales').select('id').eq('business_id', id),
-      service.from('manual_invoices').select('id').eq('business_id', id),
-      service.from('customer_businesses').select('customer_id').eq('business_id', id),
-      service.from('staff').select('id').eq('business_id', id),
-    ]);
-
-    const saleIds = (salesRes.data ?? []).map((s: { id: string }) => s.id);
-    const invoiceIds = (invoicesRes.data ?? []).map((i: { id: string }) => i.id);
-    const customerIds = (customerBizRes.data ?? []).map((c: { customer_id: string }) => c.customer_id);
-    const staffIds = (staffRes.data ?? []).map((s: { id: string }) => s.id);
-
-    // Layer 1: Deepest children (sale_items → sales, manual_invoice_payments → manual_invoices, staff_services → staff)
-    if (saleIds.length > 0) {
-      await service.from('sale_items').delete().in('sale_id', saleIds);
-    }
-    if (invoiceIds.length > 0) {
-      await service.from('manual_invoice_payments').delete().in('invoice_id', invoiceIds);
-    }
-    if (staffIds.length > 0) {
-      await (service.from as (table: string) => ReturnType<typeof service.from>)('staff_services').delete().in('staff_id', staffIds);
-    }
-
-    // Layer 2: Tables with business_id that are referenced by nothing or already cleared
-    await service.from('stock_movements').delete().eq('business_id', id);
-    await service.from('sales').delete().eq('business_id', id);
-    await service.from('referral_completions').delete().eq('business_id', id);
-    await service.from('scan_logs').delete().eq('business_id', id);
-    await service.from('verification_codes').delete().eq('business_id', id);
-
-    // Layer 3: Tables with FK to rewards/customers
-    await service.from('redemptions').delete().eq('business_id', id);
-    await service.from('transactions').delete().eq('business_id', id);
-    await service.from('notifications').delete().eq('business_id', id);
-
-    // Layer 4: push_tokens for customers of this business
-    if (customerIds.length > 0) {
-      await service.from('push_tokens').delete().in('customer_id', customerIds);
-    }
-
-    // Layer 5: rewards, referral_codes, customer_businesses
-    await service.from('rewards').delete().eq('business_id', id);
-    await service.from('referral_codes').delete().eq('business_id', id);
-    await service.from('customer_businesses').delete().eq('business_id', id);
-
-    // Layer 6: Nullify created_by_business_id on customers still linked to other businesses, delete orphans
-    await service.from('customers').update({ created_by_business_id: null }).eq('created_by_business_id', id);
-    if (customerIds.length > 0) {
-      const { data: stillLinked } = await service
-        .from('customer_businesses')
-        .select('customer_id')
-        .in('customer_id', customerIds);
-      const stillLinkedIds = new Set((stillLinked ?? []).map((c: { customer_id: string }) => c.customer_id));
-      const orphanIds = customerIds.filter((cid: string) => !stillLinkedIds.has(cid));
-      if (orphanIds.length > 0) {
-        await service.from('customers').delete().in('id', orphanIds);
-      }
-    }
-
-    // Layer 7: staff_invites, staff (staff_services already cleared)
-    await service.from('staff_invites').delete().eq('business_id', id);
-    await service.from('staff').delete().eq('business_id', id);
-
-    // Layer 8: Everything else
-    await service.from('branches').delete().eq('business_id', id);
-    await service.from('products').delete().eq('business_id', id);
-    await service.from('manual_invoices').delete().eq('business_id', id);
-    await service.from('invoices').delete().eq('business_id', id);
-    await service.from('payment_history').delete().eq('business_id', id);
-    await service.from('payments').delete().eq('business_id', id);
-    await service.from('subscriptions').delete().eq('business_id', id);
-    await service.from('upgrade_requests').delete().eq('business_id', id);
-    await service.from('usage_tracking').delete().eq('business_id', id);
-    await service.from('audit_logs').delete().eq('business_id', id);
-    await service.from('admin_notes').delete().eq('business_id', id);
-    await service.from('admin_tags').delete().eq('business_id', id);
-    await service.from('admin_plan_changes').delete().eq('business_id', id);
-
-    // Layer 9: Delete the business itself
-    const { error: bizError } = await service
-      .from('businesses')
-      .delete()
-      .eq('id', id);
-
-    if (bizError) {
-      return NextResponse.json(
-        { error: `Failed to delete business: ${bizError.message}` },
-        { status: 500 },
-      );
-    }
-
-    // Delete the auth user if owner_id exists
-    if (business.owner_id) {
-      await service.auth.admin.deleteUser(business.owner_id);
-    }
-
-    return NextResponse.json({ success: true, name: business.name });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
+  if (error) {
+    const notFound = error.code === 'P0002' || /not found/i.test(error.message);
     return NextResponse.json(
-      { error: `Delete failed: ${message}` },
-      { status: 500 },
+      { error: notFound ? 'Business not found' : `Delete failed: ${error.message}` },
+      { status: notFound ? 404 : 500 },
     );
   }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const ownerId = (row as { owner_id: string | null } | null)?.owner_id ?? null;
+  const businessName = (row as { business_name: string | null } | null)?.business_name ?? '';
+
+  if (ownerId) {
+    const { error: authError } = await service.auth.admin.deleteUser(ownerId);
+    if (authError && authError.status !== 404) {
+      return NextResponse.json(
+        {
+          success: true,
+          name: businessName,
+          warning: `Business data deleted but owner auth cleanup failed: ${authError.message}`,
+        },
+        { status: 200 },
+      );
+    }
+  }
+
+  return NextResponse.json({ success: true, name: businessName });
 }

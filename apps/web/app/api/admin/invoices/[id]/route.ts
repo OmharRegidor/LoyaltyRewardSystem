@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminServiceClient } from '@/lib/supabase-server';
 import { getApiUser } from '@/lib/server-auth';
 import { isAdmin } from '@/lib/rbac';
+import type { Database } from '../../../../../../../packages/shared/types/database';
+
+type ManualInvoiceUpdate = Database['public']['Tables']['manual_invoices']['Update'];
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -75,7 +78,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
   }
 
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const updates: ManualInvoiceUpdate = { updated_at: new Date().toISOString() };
 
   if (body.status === 'void') {
     if (existing.status === 'paid') {

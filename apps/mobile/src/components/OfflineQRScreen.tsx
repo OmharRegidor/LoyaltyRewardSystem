@@ -44,12 +44,23 @@ export function OfflineQRScreen() {
       {/* QR Card */}
       <View style={styles.qrCard}>
         <View style={styles.qrContainer}>
-          <QRCode
-            value={qrCodeUrl || 'NoxaLoyalty://customer/default'}
-            size={QR_SIZE}
-            backgroundColor="white"
-            color="#1F2937"
-          />
+          {qrCodeUrl ? (
+            <QRCode
+              value={qrCodeUrl}
+              size={QR_SIZE}
+              backgroundColor="white"
+              color="#1F2937"
+            />
+          ) : (
+            <View style={[styles.qrPlaceholder, { width: QR_SIZE, height: QR_SIZE }]}>
+              <Text style={styles.qrPlaceholderText}>
+                Setting up your loyalty card…
+              </Text>
+              <Text style={styles.qrPlaceholderHint}>
+                Connect to the internet to finish setup.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.customerInfo}>
@@ -122,6 +133,25 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
+  },
+  qrPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.gray[100],
+    borderRadius: BORDER_RADIUS.lg,
+    paddingHorizontal: SPACING.base,
+  },
+  qrPlaceholderText: {
+    fontSize: FONT_SIZE.base,
+    fontWeight: '600',
+    color: COLORS.gray[700],
+    textAlign: 'center',
+    marginBottom: SPACING.xs,
+  },
+  qrPlaceholderHint: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.gray[500],
+    textAlign: 'center',
   },
   customerInfo: {
     marginTop: SPACING.base,

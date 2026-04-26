@@ -108,6 +108,13 @@ function AdminBusinessesContent() {
     });
   }, []);
 
+  const handleFiltersPatch = useCallback((patch: Partial<BusinessFilters>) => {
+    setFilters((prev) => {
+      const hasNonPageKey = Object.keys(patch).some((k) => k !== 'page');
+      return { ...prev, ...patch, ...(hasNonPageKey ? { page: 1 } : {}) };
+    });
+  }, []);
+
   const handleToggleSelect = useCallback((id: string) => {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }, []);
@@ -144,7 +151,7 @@ function AdminBusinessesContent() {
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
-        <BusinessListTable data={data} filters={filters} searchInput={searchInput} selected={selected} onSearchInput={setSearchInput} onFilterChange={handleFilterChange} onToggleSelect={handleToggleSelect} onToggleSelectAll={handleToggleSelectAll} onClearSelected={handleClearSelected} onRefresh={() => fetchData(true)} />
+        <BusinessListTable data={data} filters={filters} searchInput={searchInput} selected={selected} onSearchInput={setSearchInput} onFilterChange={handleFilterChange} onFiltersPatch={handleFiltersPatch} onToggleSelect={handleToggleSelect} onToggleSelectAll={handleToggleSelectAll} onClearSelected={handleClearSelected} onRefresh={() => fetchData(true)} />
       </div>
     </AdminLayout>
   );

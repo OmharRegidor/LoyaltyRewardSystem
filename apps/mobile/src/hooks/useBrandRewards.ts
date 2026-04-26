@@ -41,6 +41,10 @@ export function useBrandRewards(businessId: string) {
     total_stamps: number;
     reward_title: string;
     is_completed: boolean;
+    reward_image_url: string | null;
+    milestones: Array<{ position: number; label: string }>;
+    redeemed_milestones: Array<{ position: number }>;
+    paused_at_milestone: number | null;
   } | null>(null);
 
   // Find the customer ID linked to this specific business
@@ -146,32 +150,69 @@ export function useBrandRewards(businessId: string) {
 
       setRewards(transformedRewards);
 
-      // Fetch stamp card for stamp-mode businesses (parallel RPC)
-      if (loyaltyMode === 'stamps' && customerIds.length > 0) {
-        const stampResults = await Promise.all(
-          customerIds.map((cId) =>
-            supabase.rpc('get_customer_stamp_cards', {
-              p_customer_id: cId,
-              p_business_id: businessId,
-            })
-          ),
-        );
+      // Fetch stamp card for stamp-mode businesses (parallel RPC).
+      // If the customer has no card yet, fall back to the business's active
+      // stamp_card_templates row so the UI can show an empty card (0/N stamps)
+      // instead of hiding the card entirely.
+      if (loyaltyMode === 'stamps') {
         let found = false;
-        for (const { data: stampData } of stampResults) {
-          const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
-          if (Array.isArray(cards) && cards.length > 0) {
-            setStampCard({
-              id: cards[0].id,
-              stamps_collected: cards[0].stamps_collected,
-              total_stamps: cards[0].total_stamps,
-              reward_title: cards[0].reward_title,
-              is_completed: cards[0].is_completed,
-            });
-            found = true;
-            break;
+
+        if (customerIds.length > 0) {
+          const stampResults = await Promise.all(
+            customerIds.map((cId) =>
+              supabase.rpc('get_customer_stamp_cards', {
+                p_customer_id: cId,
+                p_business_id: businessId,
+              })
+            ),
+          );
+          for (const { data: stampData } of stampResults) {
+            const cards = typeof stampData === 'string' ? JSON.parse(stampData) : stampData;
+            if (Array.isArray(cards) && cards.length > 0) {
+              setStampCard({
+                id: cards[0].id,
+                stamps_collected: cards[0].stamps_collected,
+                total_stamps: cards[0].total_stamps,
+                reward_title: cards[0].reward_title,
+                is_completed: cards[0].is_completed,
+                reward_image_url: cards[0].reward_image_url ?? null,
+                milestones: cards[0].milestones ?? [],
+                redeemed_milestones: cards[0].redeemed_milestones ?? [],
+                paused_at_milestone: cards[0].paused_at_milestone ?? null,
+              });
+              found = true;
+              break;
+            }
           }
         }
-        if (!found) setStampCard(null);
+
+        if (!found) {
+          // No customer card yet — fetch the active template and render an empty card.
+          const { data: template } = await supabase
+            .from('stamp_card_templates')
+            .select('id, total_stamps, reward_title, reward_image_url, milestones')
+            .eq('business_id', businessId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (template) {
+            setStampCard({
+              id: `empty-${template.id}`,
+              stamps_collected: 0,
+              total_stamps: template.total_stamps ?? 10,
+              reward_title: template.reward_title ?? '',
+              is_completed: false,
+              reward_image_url: template.reward_image_url ?? null,
+              milestones: Array.isArray(template.milestones) ? template.milestones : [],
+              redeemed_milestones: [],
+              paused_at_milestone: null,
+            });
+          } else {
+            setStampCard(null);
+          }
+        }
       } else {
         setStampCard(null);
       }

@@ -13,3 +13,8 @@ dist
 build
 text.mcp.json
 text
+
+# Seed scripts with hardcoded production credentials — never commit.
+# Use env vars or service accounts instead.
+/seed-new-biz.mjs
+/seed-pos-prod.mjs

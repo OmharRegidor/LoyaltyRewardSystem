@@ -50,6 +50,9 @@ export default async function CardSignupPage({ params }: PageProps) {
       business={{
         points_per_purchase: business.points_per_purchase,
         pesos_per_point: business.pesos_per_point,
+        loyalty_mode: business.loyalty_mode,
+        stamp_template: business.stamp_template,
+        logo_url: business.logo_url,
       }}
       joinCode={joinCode}
       initialCardData={null}

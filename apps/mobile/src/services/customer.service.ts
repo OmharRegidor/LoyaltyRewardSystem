@@ -254,7 +254,8 @@ export const customerService = {
     const { data, error } = await supabase
       .from('customers')
       .select('id')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .limit(500);
 
     if (error) {
       console.error('[CustomerService] getAllCustomerIds error:', error.message);
@@ -271,7 +272,8 @@ export const customerService = {
     const { data, error } = await supabase
       .from('customers')
       .select('total_points, lifetime_points')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .limit(500);
 
     if (error) {
       console.error('[CustomerService] getAggregatedPoints error:', error.message);

@@ -4,6 +4,28 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { IMPERSONATION_COOKIE_NAME } from '@/lib/impersonation-client';
+import { decodeImpersonationCookie } from '@/lib/impersonation-signer';
+
+const IMPERSONATION_ALLOWED_WRITE_PATHS = [
+  '/api/impersonate/end',
+];
+
+function isImpersonationAllowedWrite(pathname: string): boolean {
+  return IMPERSONATION_ALLOWED_WRITE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+const EDIT_MODE_BLOCKED_WRITE_PATHS = [
+  '/api/billing/',
+  '/api/admin/',
+  '/api/manual-invoices/',
+];
+
+function isEditModeBlocked(pathname: string): boolean {
+  return EDIT_MODE_BLOCKED_WRITE_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p),
+  );
+}
 
 const PUBLIC_ROUTES = [
   '/',
@@ -13,6 +35,7 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/verify-email',
   '/auth/callback',
+  '/auth/impersonate',
   '/terms',
   '/privacy',
   '/book-call',
@@ -66,6 +89,8 @@ const ENDPOINT_LIMITS: Record<string, { tokens: number; window: string }> = {
   '/api/billing/':  { tokens: 30, window: '60 s' },   // billing ops: 30/min
   '/api/staff/pos/': { tokens: 30, window: '60 s' },  // POS sales: 30/min
   '/api/public/':   { tokens: 30, window: '60 s' },   // public endpoints: 30/min
+  '/api/admin/impersonate': { tokens: 10, window: '600 s' }, // impersonation: 10 per 10 min
+  '/api/admin/':    { tokens: 60, window: '60 s' },   // general admin: 60/min
 };
 
 function getEndpointLimiter(pathname: string): Ratelimit | null {
@@ -103,6 +128,33 @@ export async function middleware(request: NextRequest) {
   // Always allow static assets
   if (isStaticAsset(pathname)) {
     return NextResponse.next();
+  }
+
+  // Impersonation: enforce mode-aware write rules.
+  const impersonationPayload = await decodeImpersonationCookie(
+    request.cookies.get(IMPERSONATION_COOKIE_NAME)?.value,
+  );
+
+  if (impersonationPayload) {
+    const method = request.method.toUpperCase();
+    const isWrite = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+    if (isWrite) {
+      const alwaysAllowed = isImpersonationAllowedWrite(pathname);
+      if (!alwaysAllowed) {
+        if (impersonationPayload.mode === 'read_only') {
+          return new NextResponse(
+            JSON.stringify({ error: 'Read-only during impersonation' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        if (impersonationPayload.mode === 'edit' && isEditModeBlocked(pathname)) {
+          return new NextResponse(
+            JSON.stringify({ error: 'Blocked: billing and plan endpoints are off-limits during impersonation edit mode' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+      }
+    }
   }
 
   // Rate limit API routes, then let them through (they handle their own auth)
@@ -227,7 +279,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // User is authenticated — role checks are handled by layout-level components
+    // Role enforcement for admin routes is handled by the page-level
+    // ServerRestricted layout guard (which uses the cached getCurrentUser
+    // from server-auth.ts). The middleware only needs to ensure the user
+    // is authenticated — removing the duplicate DB query saves a round-trip
+    // on every admin page navigation.
     return response;
   } catch (err) {
     console.error('[Middleware] Unexpected error:', err);
