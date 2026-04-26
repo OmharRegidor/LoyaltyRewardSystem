@@ -36,6 +36,7 @@ interface TransactionRow {
   reward_id: string | null;
   type: string;
   points: number;
+  stamps_added: number;
   amount_spent: number | null;
   description: string | null;
   created_at: string;
@@ -148,8 +149,15 @@ function inferReferenceType(
 /**
  * Creates a friendly title from a raw transaction description
  */
-function friendlyTitle(description: string | null, isEarn: boolean): string {
-  if (!description) return isEarn ? 'Points Earned' : 'Points Redeemed';
+function friendlyTitle(
+  description: string | null,
+  isEarn: boolean,
+  isStampOnly: boolean,
+): string {
+  if (!description) {
+    if (isStampOnly) return 'Stamp Earned';
+    return isEarn ? 'Points Earned' : 'Points Redeemed';
+  }
   const lower = description.toLowerCase();
   if (lower.includes('referral')) return 'Referral Bonus';
   if (lower.includes('welcome')) return 'Welcome Bonus';
@@ -159,6 +167,7 @@ function friendlyTitle(description: string | null, isEarn: boolean): string {
   if (lower.startsWith('pos sale #')) return 'Purchase';
   if (lower.includes('redeem') || lower.includes('redemption'))
     return 'Reward Redeemed';
+  if (isStampOnly && lower === 'stamp earned') return 'Stamp Earned';
   return description;
 }
 
@@ -168,6 +177,8 @@ function friendlyTitle(description: string | null, isEarn: boolean): string {
 function transformTransaction(row: TransactionRow): Transaction {
   const business = extractFirstFromJoin<BusinessJoin>(row.businesses);
   const isEarn = row.type === 'earn';
+  const stamps = row.stamps_added ?? 0;
+  const isStampOnly = isEarn && stamps > 0 && row.points === 0 && row.amount_spent == null;
 
   return {
     id: row.id,
@@ -175,7 +186,8 @@ function transformTransaction(row: TransactionRow): Transaction {
     business_id: row.business_id,
     type: isEarn ? 'credit' : 'debit',
     amount: row.points,
-    title: friendlyTitle(row.description, isEarn),
+    stamps,
+    title: friendlyTitle(row.description, isEarn, isStampOnly),
     description: row.amount_spent
       ? `₱${row.amount_spent.toFixed(2)} spent`
       : null,
@@ -248,6 +260,7 @@ const TRANSACTION_SELECT = `
   reward_id,
   type,
   points,
+  stamps_added,
   amount_spent,
   description,
   created_at,

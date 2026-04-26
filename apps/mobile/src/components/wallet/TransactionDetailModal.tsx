@@ -66,6 +66,7 @@ export function TransactionDetailModal({
   if (!transaction) return null;
 
   const isCredit = transaction.type === 'credit';
+  const isStamp = transaction.stamps > 0;
   const refType = transaction.reference_type ?? 'purchase';
   const typeColor = TYPE_COLORS[refType];
   const typeLabel = TYPE_LABELS[refType];
@@ -84,16 +85,23 @@ export function TransactionDetailModal({
               {/* Handle bar */}
               <View style={styles.handle} />
 
-              {/* Points hero */}
+              {/* Points / stamp hero */}
               <View style={styles.pointsHero}>
-                <Text
-                  style={[
-                    styles.pointsText,
-                    isCredit ? styles.pointsCredit : styles.pointsDebit,
-                  ]}
-                >
-                  {isCredit ? '+' : '-'}{transaction.amount} pts
-                </Text>
+                {isStamp ? (
+                  <Text style={[styles.pointsText, styles.pointsCredit]}>
+                    +{transaction.stamps} stamp
+                    {transaction.stamps > 1 ? 's' : ''}
+                  </Text>
+                ) : (
+                  <Text
+                    style={[
+                      styles.pointsText,
+                      isCredit ? styles.pointsCredit : styles.pointsDebit,
+                    ]}
+                  >
+                    {isCredit ? '+' : '-'}{transaction.amount} pts
+                  </Text>
+                )}
               </View>
 
               {/* Title */}

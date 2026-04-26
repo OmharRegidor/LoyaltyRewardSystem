@@ -14,6 +14,10 @@ export interface Transaction {
   business_id: string | null;
   type: TransactionType;
   amount: number;
+  // Stamp count for the row. > 0 means a stamps-mode business event (Ring Up
+  // Sale + Stamp or quick stamp); the wallet renders a stamp badge instead of
+  // a points badge when this is set. 0 for points-mode rows.
+  stamps: number;
   title: string;
   description: string | null;
   reference_id: string | null;

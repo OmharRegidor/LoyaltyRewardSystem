@@ -2532,6 +2532,8 @@ export type Database = {
           id: string
           points: number
           reward_id: string | null
+          sale_id: string | null
+          stamps_added: number
           type: Database["public"]["Enums"]["transaction_type"]
         }
         Insert: {
@@ -2543,6 +2545,8 @@ export type Database = {
           id?: string
           points: number
           reward_id?: string | null
+          sale_id?: string | null
+          stamps_added?: number
           type: Database["public"]["Enums"]["transaction_type"]
         }
         Update: {
@@ -2554,6 +2558,8 @@ export type Database = {
           id?: string
           points?: number
           reward_id?: string | null
+          sale_id?: string | null
+          stamps_added?: number
           type?: Database["public"]["Enums"]["transaction_type"]
         }
         Relationships: [
@@ -2583,6 +2589,13 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
             referencedColumns: ["id"]
           },
         ]
