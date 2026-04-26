@@ -72,7 +72,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to add stamp';
+    console.error('POST /api/staff/stamp error:', error);
+    // Postgrest errors thrown from supabase-js are plain objects with a
+    // `.message` field, not Error instances — preserve their text instead
+    // of swallowing it as a generic fallback.
+    let message = 'Failed to add stamp';
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as { message?: unknown }).message === 'string'
+    ) {
+      message = (error as { message: string }).message;
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
