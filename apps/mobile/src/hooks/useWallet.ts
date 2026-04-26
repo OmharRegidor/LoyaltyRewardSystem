@@ -284,6 +284,12 @@ const REDEMPTION_SELECT = `
 
 const TRANSACTION_LIMIT = 50;
 
+// Wallet activity is shown for the last 6 months. Older rows still live in
+// the DB (kept for audit, dispute resolution, and BIR record-keeping); they
+// just don't surface in the customer's Transactions tab.
+export const TRANSACTION_RETENTION_DAYS = 180;
+const TRANSACTION_RETENTION_MS = TRANSACTION_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
 // ============================================
 // HOOK
 // ============================================
@@ -305,10 +311,14 @@ export function useWallet() {
 
   const fetchTransactions = useCallback(
     async (ids: string[]): Promise<Transaction[]> => {
+      const cutoffIso = new Date(
+        Date.now() - TRANSACTION_RETENTION_MS,
+      ).toISOString();
       const { data, error } = await supabase
         .from('transactions')
         .select(TRANSACTION_SELECT)
         .in('customer_id', ids)
+        .gte('created_at', cutoffIso)
         .order('created_at', { ascending: false })
         .limit(TRANSACTION_LIMIT);
 
