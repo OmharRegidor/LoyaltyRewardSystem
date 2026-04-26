@@ -589,13 +589,17 @@ export default function StaffScannerPage() {
     setLastSaleStampResult(null);
 
     try {
-      const result = await pos.completeSale();
+      // Fetch the session once and reuse the token for both the sale and the
+      // auto-stamp call so we don't hit auth.getSession() twice per click.
+      const { data: { session } } = await createClient().auth.getSession();
+      const accessToken = session?.access_token;
+
+      const result = await pos.completeSale(accessToken);
       setSaleResult(result);
 
       // Auto-add stamp in stamps mode
       if (staffData.loyaltyMode === 'stamps') {
         try {
-          const { data: { session } } = await createClient().auth.getSession();
           const stampRes = await fetch('/api/staff/stamp', {
             method: 'POST',
             headers: {
@@ -603,8 +607,8 @@ export default function StaffScannerPage() {
               // Stable idempotency key tied to the sale: a network retry or a
               // double-fire of handleCompleteSale must not double-stamp.
               'x-idempotency-key': `stamp-sale-${result.sale_id}`,
-              ...(session?.access_token && {
-                Authorization: `Bearer ${session.access_token}`,
+              ...(accessToken && {
+                Authorization: `Bearer ${accessToken}`,
               }),
             },
             body: JSON.stringify({

@@ -25,8 +25,19 @@ export async function POST(request: Request) {
 
     let userId: string | null = null;
     if (bearerToken) {
-      const { data: { user: bearerUser } } = await service.auth.getUser(bearerToken);
-      userId = bearerUser?.id ?? null;
+      // Isolate Bearer resolution: if the SDK throws (network blip, malformed
+      // JWT) we want to fall through to cookie auth, not turn into a 500.
+      try {
+        const { data: { user: bearerUser }, error: bearerError } =
+          await service.auth.getUser(bearerToken);
+        if (bearerError) {
+          console.warn('Bearer token rejected, falling back to cookie auth:', bearerError.message);
+        } else {
+          userId = bearerUser?.id ?? null;
+        }
+      } catch (bearerThrown) {
+        console.warn('Bearer auth.getUser threw, falling back to cookie auth:', bearerThrown);
+      }
     }
     if (!userId) {
       const cookieStore = await cookies();

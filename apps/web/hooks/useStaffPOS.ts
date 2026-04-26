@@ -64,7 +64,7 @@ interface UseStaffPOSReturn {
   addManualItem: (name: string, pricePesos: number) => void;
   setDiscount: (discount: DiscountInfo | null) => void;
   setExchange: (points: number) => void;
-  completeSale: () => Promise<StaffSaleResult>;
+  completeSale: (accessToken?: string) => Promise<StaffSaleResult>;
   reset: () => void;
 }
 
@@ -352,7 +352,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
     [maxExchangePoints, pesosPerPoint],
   );
 
-  const completeSale = useCallback(async (): Promise<StaffSaleResult> => {
+  const completeSale = useCallback(async (accessToken?: string): Promise<StaffSaleResult> => {
     setIsProcessing(true);
     try {
       const payload = {
@@ -373,8 +373,12 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         ...(skipPoints && { skip_points: true }),
       };
 
-      const { data: { session } } = await createClient().auth.getSession();
-      if (!session?.access_token) {
+      let token = accessToken;
+      if (!token) {
+        const { data: { session } } = await createClient().auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) {
         throw new Error("Not authenticated");
       }
 
@@ -382,7 +386,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -402,7 +406,7 @@ export function useStaffPOS(options: UseStaffPOSOptions): UseStaffPOSReturn {
         if (!item.product_id) continue;
         soldQtyByProductId.set(
           item.product_id,
-          (soldQtyByProductId.get(item.product_id) || 0) + item.quantity,
+          (soldQtyByProductId.get(item.product_id) ?? 0) + item.quantity,
         );
       }
       if (soldQtyByProductId.size > 0) {
