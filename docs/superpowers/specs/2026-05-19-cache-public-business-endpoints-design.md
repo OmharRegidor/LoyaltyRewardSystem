@@ -132,13 +132,13 @@ This is already implemented in `cacheGet`. No new code needed.
 |---|---|
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` env vars missing | `getRedis()` returns `null` → `cacheGet` calls the fetcher directly. Endpoints work normally with no caching. |
 | Redis is configured but errors mid-request (network blip, Upstash outage) | Exception propagates out of `cacheGet` and is caught by the route's existing `try/catch`, which returns a 500. Sentry captures the error. **Acceptable** — Redis outages are rare, and we want visibility, not silent fallback. |
-| Fetcher (Supabase) returns `null` (business not found) | `null` is stored in Redis with the same TTL. Subsequent requests for the same slug return 404 without hitting the DB. Prevents a typo'd slug from DoS-ing the DB. **Tradeoff:** if a real business is created with that slug within 5 minutes, customers see 404 until the cached `null` expires. Accepted — slug creation is rare. |
+| Fetcher (Supabase) returns `null` (business not found) | `null` propagates back to the route, which returns 404. The `null` is **not** cached — `cacheGet`'s hit-check is `cached !== null && cached !== undefined`, so a stored `null` falls through to the fetcher on the next request. **Implication:** repeated requests for a non-existent slug each hit Supabase. Acceptable for MVP — non-existent slugs are rare and existing IP rate limiting on other public endpoints absorbs most abuse. Negative caching is deferred to a future change to `cacheGet` if it becomes a problem. |
 | Fetcher throws | Lock is released in the `finally` block. No cache entry written. Next request retries. |
 
 ## Tradeoffs
 
 1. **Up to 5 minutes of staleness** after an owner edits branding or rewards. Mitigation: TTL is configurable in one place (`CacheTTL`). If owners complain, lower to 60 seconds (the DB savings still apply at 1-minute TTL for high-traffic shops). If they complain again, upgrade to active invalidation (see Future Work).
-2. **`null` is cached for the same TTL as a real value.** A typo'd URL won't DoS the DB, but a newly created business is invisible until the cached miss expires. Accepted for MVP.
+2. **`null` results are not cached.** Repeated 404 lookups for the same slug each hit Supabase. This is a property of the existing `cacheGet` helper, not the endpoint changes. Adding negative caching would require modifying `cacheGet` to use a sentinel or a separate "miss" marker; deferred to a future PR if needed.
 3. **No metrics on cache hit rate yet.** Sentry only catches errors. If we want to tune TTL based on real hit rates, add a metric later. Not in scope.
 
 ## Scalability Sanity Check (against `CLAUDE.md` rules)
@@ -158,7 +158,7 @@ No test framework is configured in the project (per `CLAUDE.md`), so verificatio
 3. **TTL expiry.** Wait 5+ minutes, hit again, confirm a fresh Supabase query happens (check Supabase logs or just observe timing).
 4. **No Redis configured.** Temporarily unset `UPSTASH_REDIS_REST_URL` in the local env, restart dev server, hit endpoints, confirm they still work and return correct data.
 5. **Stale-data check.** Edit a logo in the dashboard. Confirm customer side shows new logo within 5 minutes (or immediately after manually deleting the cache key from Upstash).
-6. **404 caching.** Hit `/api/public/business/<nonexistent-slug>`. Confirm 404. Hit again — confirm Upstash shows the key with a `null` value and the second request is fast.
+6. **404 behavior.** Hit `/api/public/business/<nonexistent-slug>`. Confirm 404. Hit again — confirm 404 still returns and that `cacheGet` does NOT store the `null` in Upstash (no `business:slug:<nonexistent-slug>` key appears). Both requests touch Supabase; this is the documented non-caching of negatives.
 7. **Lint + typecheck.** `npm run lint` and `npm run typecheck` from `apps/web` pass with no new errors (per project pre-commit rule).
 
 ## Future Work (out of scope for this PR)
