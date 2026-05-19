@@ -73,12 +73,14 @@ export async function cacheInvalidatePrefix(prefix: string): Promise<void> {
 // ============================================
 
 export const CacheKeys = {
+  business: (slug: string) => `business:slug:${slug}`,
   rewards: (businessId: string) => `rewards:${businessId}`,
   points: (customerId: string) => `points:${customerId}`,
   leaderboard: (businessId: string) => `leaderboard:${businessId}`,
 };
 
 export const CacheTTL = {
+  business: 300,     // 5 minutes — business profile changes rarely
   rewards: 300,      // 5 minutes
   points: 10,        // 10 seconds
   leaderboard: 60,   // 1 minute

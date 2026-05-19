@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBusinessBySlug } from '@/lib/services/public-business.service';
+import { cacheGet, CacheKeys, CacheTTL } from '@/lib/cache';
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -9,7 +10,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
 
-    const business = await getBusinessBySlug(slug);
+    const business = await cacheGet(
+      CacheKeys.business(slug),
+      () => getBusinessBySlug(slug),
+      { ttlSeconds: CacheTTL.business },
+    );
 
     if (!business) {
       return NextResponse.json(
